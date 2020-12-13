@@ -13,7 +13,7 @@ WORKDIR /src/
 # commands to ensure any errors are caught.
 RUN find . -name '*.tar.gz' -type f | xargs -rn1 tar -xzf
 RUN if [ -f Makefile ]; then make; fi
-RUN cp "$(find . -name 'louketo-proxy' -type f -print -quit)" /louketo-proxy
+RUN cp "$(find . -name 'gatekeeper' -type f -print -quit)" /gatekeeper
 
 #
 # Actual image
@@ -21,21 +21,21 @@ RUN cp "$(find . -name 'louketo-proxy' -type f -print -quit)" /louketo-proxy
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.2
 
-LABEL Name=louketo-proxy \
-      Release=https://github.com/louketo/louketo-proxy \
-      Url=https://github.com/louketo/louketo-proxy \
-      Help=https://github.com/louketo/louketo-proxy/issues
+LABEL Name=gatekeeper \
+      Release=https://github.com/go-gatekeeper/gatekeeper \
+      Url=https://github.com/go-gatekeeper/gatekeeper \
+      Help=https://github.com/go-gatekeeper/gatekeeper/issues
 
-WORKDIR "/opt/louketo"
+WORKDIR "/opt/gatekeeper"
 
-RUN echo "louketo:x:1000:louketo" >> /etc/group && \
-    echo "louketo:x:1000:1000:louketo user:/opt/louketo:/sbin/nologin" >> /etc/passwd && \
-    chown -R louketo:louketo /opt/louketo && \
-    chmod -R g+rw /opt/louketo
+RUN echo "gatekeeper:x:1000:gatekeeper" >> /etc/group && \
+    echo "gatekeeper:x:1000:1000:gatekeeper user:/opt/gatekeeper:/sbin/nologin" >> /etc/passwd && \
+    chown -R gatekeeper:gatekeeper /opt/gatekeeper && \
+    chmod -R g+rw /opt/gatekeeper
 
 COPY templates ./templates
-COPY --from=build-env /louketo-proxy ./
-RUN chmod +x louketo-proxy
+COPY --from=build-env /gatekeeper ./
+RUN chmod +x gatekeeper
 
 USER 1000
-ENTRYPOINT [ "/opt/louketo/louketo-proxy" ]
+ENTRYPOINT [ "/opt/gatekeeper/gatekeeper" ]
