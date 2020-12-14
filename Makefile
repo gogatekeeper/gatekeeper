@@ -36,6 +36,7 @@ static: golang
 container-build: docker-build
 docker-build:
 	@echo "--> Compiling the project, inside a temporary container"
+	@mkdir -p bin
 	$(eval IMAGE=$(shell uuidgen))
 	${CONTAINER_TOOL} build --target build-env -t ${IMAGE} .
 	${CONTAINER_TOOL} run --rm ${IMAGE} /bin/cat /gatekeeper > bin/gatekeeper
