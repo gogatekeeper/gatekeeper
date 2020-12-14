@@ -138,7 +138,9 @@ cover:
 spelling:
 	@echo "--> Checking the spelling"
 	@which misspell 2>/dev/null ; if [ $$? -eq 1 ]; then \
+		cd ..; \
 		go get -u github.com/client9/misspell/cmd/misspell; \
+		cd -; \
 	fi
 	@misspell -error *.go
 	@misspell -error *.md
