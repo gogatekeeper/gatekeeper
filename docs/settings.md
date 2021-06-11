@@ -20,10 +20,10 @@
 |    --upstream-url value                    | url for the upstream endpoint you wish to proxy | | PROXY_UPSTREAM_URL
 |    --upstream-ca value                     | the path to a file container a CA certificate to validate the upstream tls endpoint | | PROXY_UPSTREAM_CA
 |    --resources value                       | list of resources 'uri=/admin*\|methods=GET,PUT\|roles=role1,role2' | | PROXY_RESOURCES
-|    --headers value                         | custom headers to the upstream request, key=value
+|    --headers value                         | custom headers to the upstream request, key=value | | PROXY_HEADERS
 |    --preserve-host                         | preserve the host header of the proxied request in the upstream request | false | PROXY_PRESERVE_HOST
 |    --request-id-header value               | the http header name for request id | X-Request-ID | PROXY_REQUEST_ID_HEADER
-|    --response-headers value                | custom headers to added to the http response key=value
+|    --response-headers value                | custom headers to added to the http response key=value | | PROXY_RESPONSE_HEADERS
 |    --enable-self-signed-tls                | create self signed certificates for the proxy | false | PROXY_ENABLE_SELF_SIGNED_TLS
 |    --self-signed-tls-hostnames value       | a list of hostnames to place on the self-signed certificate | | PROXY_SELF_SIGNED_TLS_HOSTNAMES
 |    --self-signed-tls-expiration value      | the expiration of the certificate before rotation | 3h0m0s | PROXY_SELF_SIGNED_TLS_EXPIRATION
@@ -58,7 +58,7 @@
 |    --secure-cookie                         | enforces the cookie to be secure | true | PROXY_SECURE_COOKIE
 |    --http-only-cookie                      | enforces the cookie is in http only mode | true | PROXY_HTTP_ONLY_COOKIE
 |    --same-site-cookie value                | enforces cookies to be send only to same site requests according to the policy (can be \| Strict\|Lax\|None) | Lax | PROXY_SAME_SITE_COOKIE
-|    --match-claims value                    | keypair values for matching access token claims e.g. aud=myapp, iss=http://example.*
+|    --match-claims value                    | keypair values for matching access token claims e.g. aud=myapp, iss=http://example.* | | PROXY_MATCH_CLAIMS
 |    --add-claims value                      | extra claims from the token and inject into headers, e.g given_name -> X-Auth-Given-Name | | PROXY_ADD_CLAIMS
 |    --tls-cert value                        | path to ths TLS certificate | | PROXY_TLS_CERTIFICATE
 |    --tls-private-key value                 | path to the private key for TLS | | PROXY_TLS_PRIVATE_KEY
@@ -102,7 +102,7 @@
 |    --sign-in-page value                     | path to custom template displayed for signin | | PROXY_SIGN_IN_PAGE
 |    --forbidden-page value                   | path to custom template used for access forbidden | | PROXY_FORBIDDEN_PAGE
 |    --error-page value                       | path to custom template displayed for http.StatusBadRequest | | PROXY_ERROR_PAGE
-|    --tags value                             | keypairs passed to the templates at render,e.g title=Page
+|    --tags value                             | keypairs passed to the templates at render,e.g title=Page | | PROXY_TAGS
 |    --forwarding-grant-type value            | grant-type to use when logging into the openid provider, can be one of password, client_credentials | password | PROXY_FORWARDING_GRANT_TYPE
 |    --forwarding-username value              | username to use when logging into the openid provider | | PROXY_FORWARDING_USERNAME
 |    --forwarding-password value              | password to use when logging into the openid provider | | PROXY_FORWARDING_PASSWORD

@@ -181,13 +181,13 @@ type Config struct {
 	// Resources is a list of protected resources
 	Resources []*Resource `json:"resources" yaml:"resources" usage:"list of resources 'uri=/admin*|methods=GET,PUT|roles=role1,role2'" env:"RESOURCES"`
 	// Headers permits adding customs headers across the board
-	Headers map[string]string `json:"headers" yaml:"headers" usage:"custom headers to the upstream request, key=value"`
+	Headers map[string]string `json:"headers" yaml:"headers" usage:"custom headers to the upstream request, key=value" env:"HEADERS"`
 	// PreserveHost preserves the host header of the proxied request in the upstream request
 	PreserveHost bool `json:"preserve-host" yaml:"preserve-host" usage:"preserve the host header of the proxied request in the upstream request" env:"PRESERVE_HOST"`
 	// RequestIDHeader is the header name for request ids
 	RequestIDHeader string `json:"request-id-header" yaml:"request-id-header" usage:"the http header name for request id" env:"REQUEST_ID_HEADER"`
 	// ResponseHeader is a map of response headers to add to the response
-	ResponseHeaders map[string]string `json:"response-headers" yaml:"response-headers" usage:"custom headers to added to the http response key=value"`
+	ResponseHeaders map[string]string `json:"response-headers" yaml:"response-headers" usage:"custom headers to added to the http response key=value" env:"RESPONSE_HEADERS"`
 
 	// EnableSelfSignedTLS indicates we should create a self-signed ceritificate for the service
 	EnabledSelfSignedTLS bool `json:"enable-self-signed-tls" yaml:"enable-self-signed-tls" usage:"create self signed certificates for the proxy" env:"ENABLE_SELF_SIGNED_TLS"`
@@ -261,7 +261,7 @@ type Config struct {
 	SameSiteCookie string `json:"same-site-cookie" yaml:"same-site-cookie" usage:"enforces cookies to be send only to same site requests according to the policy (can be Strict|Lax|None)" env:"SAME_SITE_COOKIE"`
 
 	// MatchClaims is a series of checks, the claims in the token must match those here
-	MatchClaims map[string]string `json:"match-claims" yaml:"match-claims" usage:"keypair values for matching access token claims e.g. aud=myapp, iss=http://example.*"`
+	MatchClaims map[string]string `json:"match-claims" yaml:"match-claims" usage:"keypair values for matching access token claims e.g. aud=myapp, iss=http://example.*" env:"MATCH_CLAIMS"`
 	// AddClaims is a series of claims that should be added to the auth headers
 	AddClaims []string `json:"add-claims" yaml:"add-claims" usage:"extra claims from the token and inject into headers, e.g given_name -> X-Auth-Given-Name" env:"ADD_CLAIMS"`
 
@@ -360,7 +360,7 @@ type Config struct {
 	// ErrorPage is the relative url for the custom error page
 	ErrorPage string `json:"error-page" yaml:"error-page" usage:"path to custom template displayed for http.StatusBadRequest" env:"ERROR_PAGE"`
 	// Tags is passed to the templates
-	Tags map[string]string `json:"tags" yaml:"tags" usage:"keypairs passed to the templates at render,e.g title=Page"`
+	Tags map[string]string `json:"tags" yaml:"tags" usage:"keypairs passed to the templates at render,e.g title=Page" env:"TAGS"`
 
 	ForwardingGrantType string `json:"forwarding-grant-type" yaml:"forwarding-grant-type" usage:"grant-type to use when logging into the openid provider, can be one of password, client_credentials" env:"FORWARDING_GRANT_TYPE"`
 	// ForwardingUsername is the username to login to the oauth service
