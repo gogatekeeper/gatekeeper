@@ -19,7 +19,7 @@
 |    --scopes value                          | list of scopes requested when authenticating the user | | PROXY_SCOPES
 |    --upstream-url value                    | url for the upstream endpoint you wish to proxy | | PROXY_UPSTREAM_URL
 |    --upstream-ca value                     | the path to a file container a CA certificate to validate the upstream tls endpoint | | PROXY_UPSTREAM_CA
-|    --resources value                       | list of resources 'uri=/admin*\|methods=GET,PUT\|roles=role1,role2'
+|    --resources value                       | list of resources 'uri=/admin*\|methods=GET,PUT\|roles=role1,role2' | | PROXY_RESOURCES
 |    --headers value                         | custom headers to the upstream request, key=value
 |    --preserve-host                         | preserve the host header of the proxied request in the upstream request | false | PROXY_PRESERVE_HOST
 |    --request-id-header value               | the http header name for request id | X-Request-ID | PROXY_REQUEST_ID_HEADER
