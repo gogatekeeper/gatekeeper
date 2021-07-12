@@ -6,6 +6,7 @@ This repository is a work in progress and contains the source code for the Gatek
 ## Help and Documentation
 
 * [Gatekeeper documentation](docs/user-guide.md)
+* [Gatekeeper security issues](SECURITY.md)
 * [Gatekeeper chat](https://discord.com/invite/zRqVXXTMCv)
 * [Issue Tracker](https://github.com/gogatekeeper/gatekeeper/issues) - Issue tracker for bugs and feature requests
 
