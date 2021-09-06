@@ -17,7 +17,7 @@ You can view all settings also in this table [Settings](settings.md)
 
 ## Requirements
 
-  - Go 1.13 or higher
+  - Go 1.16 or higher
   - Make
 
 ## Configuration options
@@ -233,7 +233,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:1.3.4
+  image: quay.io/gogatekeeper/gatekeeper:1.3.5
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -260,7 +260,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:1.3.4
+  image: quay.io/gogatekeeper/gatekeeper:1.3.5
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
