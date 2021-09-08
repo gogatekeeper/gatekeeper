@@ -119,16 +119,21 @@ func (r *oauthProxy) dropRefreshTokenCookie(req *http.Request, w http.ResponseWr
 	r.dropCookieWithChunks(req, w, r.config.CookieRefreshName, value, duration)
 }
 
-// writeStateParameterCookie sets a state parameter cookie into the response
-func (r *oauthProxy) writeStateParameterCookie(req *http.Request, w http.ResponseWriter) string {
+// writeStateParameterCookieInner sets a state parameter cookie into the response
+func (r *oauthProxy) writeStateParameterCookieInner(req *http.Request, w http.ResponseWriter, requestUriValue string) string {
 	uuid, err := uuid.NewV4()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-	requestURI := base64.StdEncoding.EncodeToString([]byte(req.URL.RequestURI()))
+	requestURI := base64.StdEncoding.EncodeToString([]byte(requestUriValue))
 	r.dropCookie(w, req.Host, r.config.CookieRequestURIName, requestURI, 0)
 	r.dropCookie(w, req.Host, r.config.CookieOAuthStateName, uuid.String(), 0)
 	return uuid.String()
+}
+
+// writeStateParameterCookieInner helper method to set current request URL with a state parameter cookie into the response
+func (r *oauthProxy) writeStateParameterCookie(req *http.Request, w http.ResponseWriter) string {
+	return r.writeStateParameterCookieInner(req, w, req.URL.RequestURI())
 }
 
 // clearAllCookies is just a helper function for the below

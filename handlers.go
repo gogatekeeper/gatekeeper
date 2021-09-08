@@ -59,13 +59,16 @@ func (r *oauthProxy) getRedirectionURL(w http.ResponseWriter, req *http.Request)
 		redirect = r.config.RedirectionURL
 	}
 
+	return fmt.Sprintf("%s%s", redirect, r.config.WithOAuthURI("callback"))
+}
+
+// checkState checks "state" in url and cookie
+func (r *oauthProxy) checkState(w http.ResponseWriter, req *http.Request) {
 	state, _ := req.Cookie(r.config.CookieOAuthStateName)
 	if state != nil && req.URL.Query().Get("state") != state.Value {
 		r.log.Error("state parameter mismatch")
 		w.WriteHeader(http.StatusForbidden)
-		return ""
 	}
-	return fmt.Sprintf("%s%s", redirect, r.config.WithOAuthURI("callback"))
 }
 
 // oauthAuthorizationHandler is responsible for performing the redirection to oauth provider
@@ -74,6 +77,28 @@ func (r *oauthProxy) oauthAuthorizationHandler(w http.ResponseWriter, req *http.
 		w.WriteHeader(http.StatusNotAcceptable)
 		return
 	}
+	
+	// take "state" from query
+	authState := req.URL.Query().Get("state")
+	
+	if r.config.NoRedirects {
+		// rebuild state cookie in case of direct call ("no-redirects=true", SPA for example)
+		// we cannot be here as a result of an automatic redirect from some inner endpoint and get "state" there
+		refererHeader := req.Header.Get("Referer")
+		refUrl, refErr := url.ParseRequestURI(refererHeader)
+		
+		// store Referer header as final redirect page in case of "same domain" only (!)
+		// otherwise cookies would not be used for requests (from SPA to API)
+		// TODO: it would be better to use the "samesite" rule
+		if refErr == nil && refUrl.Host == req.Host {
+			uuid := r.writeStateParameterCookieInner(req, w, refererHeader)
+			authState = fmt.Sprintf("%s", uuid)
+		}
+	} else {
+		// check state in case of automatical redirect
+		r.checkState(w, req)
+	}
+	
 	conf := r.newOAuth2Config(r.getRedirectionURL(w, req))
 	// step: set the access type of the session
 	accessType := oauth2.AccessTypeOnline
@@ -81,7 +106,7 @@ func (r *oauthProxy) oauthAuthorizationHandler(w http.ResponseWriter, req *http.
 		accessType = oauth2.AccessTypeOffline
 	}
 
-	authURL := conf.AuthCodeURL(req.URL.Query().Get("state"), accessType)
+	authURL := conf.AuthCodeURL(authState, accessType)
 	r.log.Debug("incoming authorization request from client address",
 		zap.Any("access_type", accessType),
 		zap.String("auth_url", authURL),
@@ -114,6 +139,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	conf := r.newOAuth2Config(r.getRedirectionURL(w, req))
+	r.checkState(w, req)
 
 	resp, err := exchangeAuthenticationCode(conf, code, r.config.SkipOpenIDProviderTLSVerify)
 	if err != nil {
@@ -352,6 +378,7 @@ func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
 		}
 
 		conf := r.newOAuth2Config(r.getRedirectionURL(w, req))
+		r.checkState(w, req)
 
 		start := time.Now()
 		token, err := conf.PasswordCredentialsToken(ctx, username, password)

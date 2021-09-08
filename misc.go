@@ -107,11 +107,16 @@ func (r *oauthProxy) redirectToURL(url string, w http.ResponseWriter, req *http.
 // redirectToAuthorization redirects the user to authorization handler
 func (r *oauthProxy) redirectToAuthorization(w http.ResponseWriter, req *http.Request) context.Context {
 	if r.config.NoRedirects {
+		// set Location header to descibe where authorization endpoint is
+		// otherwise it must be stored on client-side too (with "oauth-uri" config value)
+		w.Header().Set("Location", r.config.WithOAuthURI(authorizationURL))
+		
 		w.WriteHeader(http.StatusUnauthorized)
 		return r.revokeProxy(w, req)
 	}
 
 	// step: add a state referrer to the authorization page
+	// NB: in case of redirect to auth-endpoint
 	uuid := r.writeStateParameterCookie(req, w)
 	authQuery := fmt.Sprintf("?state=%s", uuid)
 
