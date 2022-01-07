@@ -145,7 +145,7 @@ spelling:
 	@misspell -error *.go
 	@misspell -error *.md
 
-.PHONY: test all changelog
+.PHONY: test all changelog e2e
 test:
 	@echo "--> Running the tests"
 	@go test -v
@@ -154,6 +154,24 @@ test:
 	@$(MAKE) spelling
 	@$(MAKE) vet
 	@$(MAKE) cover
+
+e2e:
+	@echo "--> Running E2E tests"
+	@which k3d 2>/dev/null ; if [ $$? -eq 1 ]; then \
+		wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v4.0.0 bash; \
+	fi
+	@which kubectl 2>/dev/null ; if [ $$? -eq 1 ]; then \
+		curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.20.2/bin/linux/amd64/kubectl && \
+		chmod +x ./kubectl && \
+		sudo mv ./kubectl /usr/local/bin/kubectl; \
+	fi
+	@k3d cluster list|grep testcluster; if [ $$? -eq 1 ]; then \
+		k3d cluster create testcluster -p "8081:80@loadbalancer"; \
+	fi
+	@k3d cluster start testcluster
+	@k3d kubeconfig merge testcluster --kubeconfig-switch-context
+	@KUBECONFIG=~/.k3d/kubeconfig-testcluster.yaml kubectl apply -f ./e2e/k8s/manifest.yml
+	@go test -v --tags=e2e
 
 all: test
 	echo "--> Performing all tests"

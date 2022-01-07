@@ -6,6 +6,7 @@ require (
 	github.com/alicebob/miniredis/v2 v2.14.5
 	github.com/andybalholm/brotli v1.0.3 // indirect
 	github.com/armon/go-proxyproto v0.0.0-20200108142055-f0b8253b1507
+	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/coreos/go-oidc/v3 v3.0.0-alpha.1.0.20200720190252-3bc5a7eb4df0
 	github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e
 	github.com/fsnotify/fsnotify v1.4.10-0.20200417215612-7f4cf4dd2b52
@@ -33,6 +34,7 @@ require (
 	golang.org/x/sys v0.0.0-20210816183151-1e6c022a8912 // indirect
 	gopkg.in/bsm/ratelimit.v1 v1.0.0-20160220154919-db14e161995a // indirect
 	gopkg.in/redis.v4 v4.2.4
+	gopkg.in/resty.v1 v1.12.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect

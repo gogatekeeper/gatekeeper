@@ -1,3 +1,5 @@
+// +build !e2e
+
 /*
 Copyright 2017 All rights reserved.
 

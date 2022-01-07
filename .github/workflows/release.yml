@@ -30,6 +30,17 @@ jobs:
         with:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
+      - name: "Create k3d Cluster for E2E testing"
+        uses: AbsaOSS/k3d-action@v2
+        with:
+          cluster-name: "testcluster"
+          args: >-
+            -p "8081:80@loadbalancer"
+      - name: "Run E2E tests"
+        run: |
+        	k3d kubeconfig merge testcluster --kubeconfig-switch-context
+        	KUBECONFIG=~/.k3d/kubeconfig-testcluster.yaml kubectl apply -f ./e2e/k8s/manifest.yml
+          go test -v --tags=e2e
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
