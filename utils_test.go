@@ -127,7 +127,7 @@ func TestGetRequestHostURL(t *testing.T) {
 		},
 	}
 
-	for i, _ := range cs {
+	for i := range cs {
 		request := &http.Request{
 			Method: http.MethodGet,
 			Host:   cs[i].Hostname,
@@ -136,7 +136,7 @@ func TestGetRequestHostURL(t *testing.T) {
 
 		if cs[i].Headers != nil {
 			request.Header = make(http.Header)
-			for key, _ := range cs[i].Headers {
+			for key := range cs[i].Headers {
 				request.Header.Set(key, cs[i].Headers[key])
 			}
 		}
