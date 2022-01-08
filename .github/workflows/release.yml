@@ -31,7 +31,7 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
       - name: "Create k3d Cluster for E2E testing"
-        uses: AbsaOSS/k3d-action@v2
+        uses: AbsaOSS/k3d-action@v1.5.0
         with:
           cluster-name: "testcluster"
           args: >-
