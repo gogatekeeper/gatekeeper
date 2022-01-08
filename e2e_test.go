@@ -57,6 +57,8 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
+	time.Sleep(30 * time.Second)
+
 	code := m.Run()
 	os.Exit(code)
 }
