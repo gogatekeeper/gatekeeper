@@ -126,19 +126,23 @@ func TestGetRequestHostURL(t *testing.T) {
 			Hostname: "www.override.com",
 		},
 	}
-	for i, c := range cs {
+
+	for i, _ := range cs {
 		request := &http.Request{
 			Method: http.MethodGet,
-			Host:   c.Hostname,
-			TLS:    c.TLS,
+			Host:   cs[i].Hostname,
+			TLS:    cs[i].TLS,
 		}
-		if c.Headers != nil {
-			for key, value := range c.Headers {
-				request.Header = make(http.Header)
-				request.Header.Set(key, value)
+
+		if cs[i].Headers != nil {
+			request.Header = make(http.Header)
+			for key, _ := range cs[i].Headers {
+				request.Header.Set(key, cs[i].Headers[key])
 			}
 		}
-		assert.Equal(t, c.Expected, getRequestHostURL(request), "case %d, expected: %s, got: %s", i, c.Expected, getRequestHostURL(request))
+
+		url := getRequestHostURL(request)
+		assert.Equal(t, cs[i].Expected, url, "case %d, expected: %s, got: %s", i, cs[i].Expected, url)
 	}
 }
 
