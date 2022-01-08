@@ -56,6 +56,7 @@ func TestIsExpired(t *testing.T) {
 	user := &userContext{
 		expiresAt: time.Now(),
 	}
+	time.Sleep(1 * time.Millisecond)
 	if !user.isExpired() {
 		t.Error("we should have been false")
 	}
