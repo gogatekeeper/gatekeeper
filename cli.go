@@ -141,9 +141,10 @@ func getCommandLineOptions() []cli.Flag {
 			case durationType:
 				dv := reflect.ValueOf(defaults).Elem().FieldByName(field.Name).Int()
 				flags = append(flags, cli.DurationFlag{
-					Name:  optName,
-					Usage: usage,
-					Value: time.Duration(dv),
+					Name:   optName,
+					Usage:  usage,
+					Value:  time.Duration(dv),
+					EnvVar: envName,
 				})
 			default:
 				panic("unknown uint64 type in the Config struct")
