@@ -166,7 +166,7 @@ e2e:
 		sudo mv ./kubectl /usr/local/bin/kubectl; \
 	fi
 	@k3d cluster list|grep testcluster; if [ $$? -eq 1 ]; then \
-		k3d cluster create testcluster -p "8081:80@loadbalancer"; \
+		k3d cluster create testcluster -p "8081:80@loadbalancer" -p "4010:30010@agent[0]" --agents 2; \
 	fi
 	@k3d cluster start testcluster
 	@k3d kubeconfig merge testcluster --kubeconfig-switch-context
