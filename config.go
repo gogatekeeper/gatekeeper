@@ -285,3 +285,23 @@ func (r *Config) hasCustomForbiddenPage() bool {
 func (r *Config) hasCustomErrorPage() bool {
 	return r.ErrorPage != ""
 }
+
+func (r *Config) isListenValid() bool            {}
+func (r *Config) isListenAdminValid() bool       {}
+func (r *Config) isListenAdminSchemeValid() bool {}
+func (r *Config) isMaxIdlleConnValid() bool      {}
+func (r *Config) isSameSiteValid() bool          {}
+func (r *Config) isTLSFilesValid() bool          {}
+func (r *Config) isAdminTLSFilesValid() bool     {}
+func (r *Config) isLetsEncryptValid() bool       {}
+func (r *Config) isTLSMinValid() bool            {}
+func (r *Config) isEnableForwardingValid() bool  {}
+func (r *Config) isUpstreamValid() bool          {}
+func (r *Config) isUpstreamTLSValid() bool       {}
+func (r *Config) isClientIdValid() bool          {}
+func (r *Config) isRedirectionUrlValid() bool    {}
+func (r *Config) isTokenEncryptionValid() bool   {}
+func (r *Config) isSecurityFilterValid() bool    {}
+func (r *Config) isStoreUrlValid() bool          {}
+func (r *Config) isResourceValid() bool          {}
+func (r *Config) isMatchClaimValid() bool        {}
