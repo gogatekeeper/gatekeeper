@@ -1,3 +1,4 @@
+//go:build !e2e
 // +build !e2e
 
 /*
@@ -96,8 +97,9 @@ func TestResourceParseOk(t *testing.T) {
 
 func TestIsValid(t *testing.T) {
 	testCases := []struct {
-		Resource *Resource
-		Ok       bool
+		Resource          *Resource
+		CustomHTTPMethods []string
+		Ok                bool
 	}{
 		{
 			Resource: &Resource{URL: "/test"},
@@ -125,10 +127,18 @@ func TestIsValid(t *testing.T) {
 				Methods: []string{"NO_SUCH_METHOD"},
 			},
 		},
+		{
+			Resource: &Resource{
+				URL:     "/test",
+				Methods: []string{"PROPFIND"},
+			},
+			CustomHTTPMethods: []string{"PROPFIND"},
+			Ok:                true,
+		},
 	}
 
 	for i, c := range testCases {
-		err := c.Resource.valid()
+		err := c.Resource.valid(c.CustomHTTPMethods)
 		if err != nil && c.Ok {
 			t.Errorf("case %d should not have failed, error: %s", i, err)
 		}

@@ -231,6 +231,17 @@ func isValidHTTPMethod(method string) bool {
 	return false
 }
 
+// isValidCustomHTTPMethod ensure this is a valid custom http method type
+func isValidCustomHTTPMethod(method string, customHTTPMethods []string) bool {
+	for _, x := range customHTTPMethods {
+		if method == x {
+			return true
+		}
+	}
+
+	return false
+}
+
 // defaultTo returns the value of the default
 func defaultTo(v, d string) string {
 	if v != "" {
