@@ -1,3 +1,4 @@
+//go:build !e2e
 // +build !e2e
 
 /*
@@ -1031,4 +1032,55 @@ func TestTLS(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestCustomHTTPMethod(t *testing.T) {
+	config := newFakeKeycloakConfig()
+	config.EnableDefaultDeny = true
+	config.CustomHTTPMethods = []string{"PROPFIND"} // WebDav method
+	config.Resources = []*Resource{
+		{
+			URL:         "/public/*",
+			Methods:     allHTTPMethods,
+			WhiteListed: true,
+		},
+		{
+			URL:     "/api/*",
+			Methods: []string{http.MethodGet, http.MethodPost, http.MethodPut},
+		},
+		{
+			URL:     "/webdav/*",
+			Methods: []string{"PROPFIND"},
+		},
+	}
+	requests := []fakeRequest{
+		{
+			URI:           "/public/allowed",
+			ExpectedProxy: true,
+			ExpectedCode:  http.StatusOK,
+		},
+		{
+			Method: "PROPFIND",
+			URI:    "/public/allowed",
+			// FIXME: It should return 405, see https://github.com/gogatekeeper/gatekeeper/issues/142
+			ExpectedCode: http.StatusUnauthorized,
+		},
+		{
+			Method:    "PROPFIND",
+			URI:       "/api/test",
+			HasLogin:  true,
+			Redirects: true,
+			// FIXME: It should return 405, see https://github.com/gogatekeeper/gatekeeper/issues/142
+			ExpectedCode: http.StatusUnauthorized,
+		},
+		{
+			Method:        "PROPFIND",
+			URI:           "/webdav/test",
+			HasLogin:      true,
+			Redirects:     true,
+			ExpectedProxy: true,
+			ExpectedCode:  http.StatusOK,
+		},
+	}
+	newFakeProxy(config, &fakeAuthConfig{}).RunTests(t, requests)
 }

@@ -285,6 +285,14 @@ func (r *oauthProxy) createReverseProxy() error {
 	if err := r.createTemplates(); err != nil {
 		return err
 	}
+
+	// step: add custom http methods
+	if r.config.CustomHTTPMethods != nil {
+		for _, customHTTPMethod := range r.config.CustomHTTPMethods {
+			chi.RegisterMethod(customHTTPMethod)
+		}
+	}
+
 	// step: provision in the protected resources
 	enableDefaultDeny := r.config.EnableDefaultDeny
 	for _, x := range r.config.Resources {

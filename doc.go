@@ -188,6 +188,8 @@ type Config struct {
 	RequestIDHeader string `json:"request-id-header" yaml:"request-id-header" usage:"the http header name for request id" env:"REQUEST_ID_HEADER"`
 	// ResponseHeader is a map of response headers to add to the response
 	ResponseHeaders map[string]string `json:"response-headers" yaml:"response-headers" usage:"custom headers to added to the http response key=value"`
+	// CustomHTTPMethods is a list of additional non-standard http methods. If additional method is required it has to explicitly allowed at resource allowed method definition.
+	CustomHTTPMethods []string `json:"custom-http-methods" yaml:"custom-http-methods" usage:"list of additional non-standard http methods"`
 
 	// EnableSelfSignedTLS indicates we should create a self-signed ceritificate for the service
 	EnabledSelfSignedTLS bool `json:"enable-self-signed-tls" yaml:"enable-self-signed-tls" usage:"create self signed certificates for the proxy" env:"ENABLE_SELF_SIGNED_TLS"`
