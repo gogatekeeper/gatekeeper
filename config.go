@@ -23,6 +23,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // newDefaultConfig returns a initialized config
@@ -241,6 +243,14 @@ func (r *Config) isValid() error {
 				if _, err := url.Parse(r.StoreURL); err != nil {
 					return fmt.Errorf("the store url is invalid, error: %s", err)
 				}
+			}
+		}
+
+		// step: add custom http methods for check
+		if r.CustomHTTPMethods != nil {
+			for _, customHTTPMethod := range r.CustomHTTPMethods {
+				chi.RegisterMethod(customHTTPMethod)
+				allHTTPMethods = append(allHTTPMethods, customHTTPMethod)
 			}
 		}
 
