@@ -2279,7 +2279,6 @@ spec:
   type: ClusterIP
   ports:
     - name: mock
-      nodePort: 30010
       port: 4010
       targetPort: 4010
       protocol: TCP
@@ -2319,3 +2318,10 @@ spec:
             name: keycloak
             port:
               number: 8080
+      - path: /pets
+        pathType: Prefix
+        backend:
+          service:
+            name: mock
+            port:
+              number: 4010
