@@ -146,9 +146,11 @@ func (r *oauthProxy) requestIDMiddleware(header string) func(http.Handler) http.
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			if v := req.Header.Get(header); v == "" {
 				uuid, err := uuid.NewV1()
+
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
+
 				req.Header.Set(header, uuid.String())
 			}
 
@@ -163,7 +165,9 @@ func (r *oauthProxy) loggingMiddleware(next http.Handler) http.Handler {
 		start := time.Now()
 		resp := w.(middleware.WrapResponseWriter)
 		next.ServeHTTP(resp, req)
+
 		addr := req.RemoteAddr
+
 		if req.URL.Path == req.URL.RawPath || req.URL.RawPath == "" {
 			r.log.Info("client request",
 				zap.Duration("latency", time.Since(start)),
@@ -191,13 +195,20 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			clientIP := req.RemoteAddr
+
 			// grab the user identity from the request
 			user, err := r.getIdentity(req)
+
 			if err != nil {
-				r.log.Error("no session found in request, redirecting for authorization", zap.Error(err))
+				r.log.Error(
+					"no session found in request, redirecting for authorization",
+					zap.Error(err),
+				)
+
 				next.ServeHTTP(w, req.WithContext(r.redirectToAuthorization(w, req)))
 				return
 			}
+
 			// create the request scope
 			scope := req.Context().Value(contextScopeName).(*RequestScope)
 			scope.Identity = user
@@ -205,7 +216,11 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 
 			// step: skip if we are running skip-token-verification
 			if r.config.SkipTokenVerification {
-				r.log.Warn("skip token verification enabled, skipping verification - TESTING ONLY")
+				r.log.Warn(
+					"skip token verification enabled, " +
+						"skipping verification - TESTING ONLY",
+				)
+
 				if user.isExpired() {
 					r.log.Error(
 						"the session has expired and verification switch off",
@@ -226,6 +241,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 						SkipIssuerCheck:   r.config.SkipAccessTokenIssuerCheck,
 					},
 				)
+
 				_, err := verifier.Verify(context.Background(), user.rawToken)
 
 				if err != nil {
@@ -325,8 +341,8 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 								zap.String("sub", user.id),
 							)
 						}
-						next.ServeHTTP(w, req.WithContext(r.redirectToAuthorization(w, req)))
 
+						next.ServeHTTP(w, req.WithContext(r.redirectToAuthorization(w, req)))
 						return
 					}
 
@@ -374,6 +390,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 							return
 						}
 					}
+
 					// step: inject the refreshed access token
 					r.dropAccessTokenCookie(req.WithContext(ctx), w, accessToken, accessExpiresIn)
 
@@ -405,6 +422,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 								if err := r.DeleteRefreshToken(old); err != nil {
 									r.log.Error("failed to remove old token", zap.Error(err))
 								}
+
 								if err := r.StoreRefreshToken(new, encrypted, refreshExpiresIn); err != nil {
 									r.log.Error("failed to store refresh token", zap.Error(err))
 									return
@@ -444,11 +462,19 @@ func (r *oauthProxy) checkClaim(user *userContext, claimName string, match *rege
 	case []interface{}:
 		for _, v := range user.claims[claimName].([]interface{}) {
 			value, ok := v.(string)
+
 			if !ok {
-				r.log.Warn("Problem while asserting claim", append(errFields,
-					zap.String("issued", fmt.Sprintf("%v", user.claims[claimName])),
-					zap.String("required", match.String()),
-				)...)
+				r.log.Warn(
+					"Problem while asserting claim",
+					append(
+						errFields,
+						zap.String(
+							"issued",
+							fmt.Sprintf("%v", user.claims[claimName]),
+						),
+						zap.String("required", match.String()),
+					)...,
+				)
 
 				return false
 			}
@@ -457,24 +483,38 @@ func (r *oauthProxy) checkClaim(user *userContext, claimName string, match *rege
 				return true
 			}
 		}
-		r.log.Warn("claim requirement does not match any element claim group in token", append(errFields,
-			zap.String("issued", fmt.Sprintf("%v", user.claims[claimName])),
-			zap.String("required", match.String()),
-		)...)
+		r.log.Warn(
+			"claim requirement does not match any element claim group in token",
+			append(
+				errFields,
+				zap.String(
+					"issued",
+					fmt.Sprintf("%v", user.claims[claimName]),
+				),
+				zap.String("required", match.String()),
+			)...,
+		)
 
 		return false
 	case string:
 		if match.MatchString(user.claims[claimName].(string)) {
 			return true
 		}
-		r.log.Warn("claim requirement does not match claim in token", append(errFields,
-			zap.String("issued", user.claims[claimName].(string)),
-			zap.String("required", match.String()),
-		)...)
+
+		r.log.Warn(
+			"claim requirement does not match claim in token",
+			append(
+				errFields,
+				zap.String("issued", user.claims[claimName].(string)),
+				zap.String("required", match.String()),
+			)...,
+		)
 
 		return false
 	default:
-		r.log.Error("unable to extract the claim from token not string or array of strings")
+		r.log.Error(
+			"unable to extract the claim from token not string or array of strings",
+		)
 	}
 
 	r.log.Warn("unexpected error", errFields...)
@@ -484,6 +524,7 @@ func (r *oauthProxy) checkClaim(user *userContext, claimName string, match *rege
 // admissionMiddleware is responsible for checking the access token against the protected resource
 func (r *oauthProxy) admissionMiddleware(resource *Resource) func(http.Handler) http.Handler {
 	claimMatches := make(map[string]*regexp.Regexp)
+
 	for k, v := range r.config.MatchClaims {
 		claimMatches[k] = regexp.MustCompile(v)
 	}
@@ -492,10 +533,12 @@ func (r *oauthProxy) admissionMiddleware(resource *Resource) func(http.Handler) 
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			// we don't need to continue is a decision has been made
 			scope := req.Context().Value(contextScopeName).(*RequestScope)
+
 			if scope.AccessDenied {
 				next.ServeHTTP(w, req)
 				return
 			}
+
 			user := scope.Identity
 
 			// @step: we need to check the roles
@@ -577,6 +620,7 @@ func (r *oauthProxy) identityHeadersMiddleware(custom []string) func(http.Handle
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			scope := req.Context().Value(contextScopeName).(*RequestScope)
+
 			if scope.Identity != nil {
 				user := scope.Identity
 				req.Header.Set("X-Auth-Audience", strings.Join(user.audiences, ","))
@@ -616,6 +660,7 @@ func (r *oauthProxy) identityHeadersMiddleware(custom []string) func(http.Handle
 // securityMiddleware performs numerous security checks on the request
 func (r *oauthProxy) securityMiddleware(next http.Handler) http.Handler {
 	r.log.Info("enabling the security filter middleware")
+
 	secure := secure.New(secure.Options{
 		AllowedHosts:          r.config.Hostnames,
 		BrowserXssFilter:      r.config.EnableBrowserXSSFilter,
@@ -656,12 +701,14 @@ func (r *oauthProxy) methodCheckMiddleware(next http.Handler) http.Handler {
 func proxyDenyMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		sc := req.Context().Value(contextScopeName)
+
 		var scope *RequestScope
 		if sc == nil {
 			scope = &RequestScope{}
 		} else {
 			scope = sc.(*RequestScope)
 		}
+
 		scope.AccessDenied = true
 		// update the request context
 		ctx := context.WithValue(req.Context(), contextScopeName, scope)

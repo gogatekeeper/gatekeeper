@@ -41,9 +41,11 @@ type boltdbStore struct {
 func newBoltDBStore(location *url.URL) (storage, error) {
 	// step: drop the initial slash
 	path := strings.TrimPrefix(location.Path, "/")
+
 	db, err := bbolt.Open(path, 0600, &bbolt.Options{
 		Timeout: 10 * time.Second,
 	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -63,9 +65,11 @@ func newBoltDBStore(location *url.URL) (storage, error) {
 func (r *boltdbStore) Set(key, value string, expiration time.Duration) error {
 	return r.client.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte(dbName))
+
 		if bucket == nil {
 			return ErrNoBoltdbBucket
 		}
+
 		return bucket.Put([]byte(key), []byte(value))
 	})
 }
@@ -75,9 +79,11 @@ func (r *boltdbStore) Get(key string) (string, error) {
 	var value string
 	err := r.client.View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte(dbName))
+
 		if bucket == nil {
 			return ErrNoBoltdbBucket
 		}
+
 		value = string(bucket.Get([]byte(key)))
 		return nil
 	})
@@ -89,9 +95,11 @@ func (r *boltdbStore) Get(key string) (string, error) {
 func (r *boltdbStore) Delete(key string) error {
 	return r.client.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte(dbName))
+
 		if bucket == nil {
 			return ErrNoBoltdbBucket
 		}
+
 		return bucket.Delete([]byte(key))
 	})
 }

@@ -94,22 +94,28 @@ func getCommandLineOptions() []cli.Flag {
 	defaults := newDefaultConfig()
 	var flags []cli.Flag
 	count := reflect.TypeOf(Config{}).NumField()
+
 	for i := 0; i < count; i++ {
 		field := reflect.TypeOf(Config{}).Field(i)
 		usage, found := field.Tag.Lookup("usage")
+
 		if !found {
 			continue
 		}
+
 		envName := field.Tag.Get("env")
+
 		if envName != "" {
 			envName = envPrefix + envName
 		}
+
 		optName := field.Tag.Get("yaml")
 
 		switch t := field.Type; t.Kind() {
 		case reflect.Bool:
 			dv := reflect.ValueOf(defaults).Elem().FieldByName(field.Name).Bool()
 			msg := fmt.Sprintf("%s (default: %t)", usage, dv)
+
 			flags = append(flags, cli.BoolTFlag{
 				Name:   optName,
 				Usage:  msg,
@@ -117,6 +123,7 @@ func getCommandLineOptions() []cli.Flag {
 			})
 		case reflect.String:
 			defaultValue := reflect.ValueOf(defaults).Elem().FieldByName(field.Name).String()
+
 			flags = append(flags, cli.StringFlag{
 				Name:   optName,
 				Usage:  usage,
@@ -140,6 +147,7 @@ func getCommandLineOptions() []cli.Flag {
 			switch t.String() {
 			case durationType:
 				dv := reflect.ValueOf(defaults).Elem().FieldByName(field.Name).Int()
+
 				flags = append(flags, cli.DurationFlag{
 					Name:   optName,
 					Usage:  usage,
@@ -164,9 +172,11 @@ func parseCLIOptions(cx *cli.Context, config *Config) (err error) {
 	ignoredOptions := []string{"tag-data", "match-claims", "resources", "headers"}
 	// step: iterate the Config and grab command line options via reflection
 	count := reflect.TypeOf(config).Elem().NumField()
+
 	for i := 0; i < count; i++ {
 		field := reflect.TypeOf(config).Elem().Field(i)
 		name := field.Tag.Get("yaml")
+
 		if containedIn(name, ignoredOptions) {
 			continue
 		}
@@ -191,6 +201,7 @@ func parseCLIOptions(cx *cli.Context, config *Config) (err error) {
 			}
 		}
 	}
+
 	if cx.IsSet("tag") {
 		tags, err := decodeKeyPairs(cx.StringSlice("tag"))
 		if err != nil {
@@ -198,6 +209,7 @@ func parseCLIOptions(cx *cli.Context, config *Config) (err error) {
 		}
 		mergeMaps(config.Tags, tags)
 	}
+
 	if cx.IsSet("match-claims") {
 		claims, err := decodeKeyPairs(cx.StringSlice("match-claims"))
 		if err != nil {
@@ -205,6 +217,7 @@ func parseCLIOptions(cx *cli.Context, config *Config) (err error) {
 		}
 		mergeMaps(config.MatchClaims, claims)
 	}
+
 	if cx.IsSet("headers") {
 		headers, err := decodeKeyPairs(cx.StringSlice("headers"))
 		if err != nil {
@@ -212,6 +225,7 @@ func parseCLIOptions(cx *cli.Context, config *Config) (err error) {
 		}
 		mergeMaps(config.Headers, headers)
 	}
+
 	if cx.IsSet("resources") {
 		for _, x := range cx.StringSlice("resources") {
 			resource, err := newResource().parse(x)

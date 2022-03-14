@@ -49,20 +49,26 @@ func newSelfSignedCertificate(hostnames []string, expiry time.Duration, log *zap
 	if len(hostnames) == 0 {
 		return nil, fmt.Errorf("no hostnames specified")
 	}
+
 	if expiry < 5*time.Minute {
 		return nil, fmt.Errorf("expiration must be greater then 5 minutes")
 	}
 
 	// @step: generate a certificate pair
-	log.Info("generating a private key for self-signed certificate", zap.String("common_name", hostnames[0]))
+	log.Info(
+		"generating a private key for self-signed certificate",
+		zap.String("common_name", hostnames[0]),
+	)
 
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
+
 	if err != nil {
 		return nil, err
 	}
 
 	// @step: create an initial certificate
 	certificate, err := createCertificate(key, hostnames, expiry)
+
 	if err != nil {
 		return nil, err
 	}

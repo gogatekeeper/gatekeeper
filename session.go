@@ -29,10 +29,16 @@ import (
 func (r *oauthProxy) getIdentity(req *http.Request) (*userContext, error) {
 	var isBearer bool
 	// step: check for a bearer token or cookie with jwt token
-	access, isBearer, err := getTokenInRequest(req, r.config.CookieAccessName, r.config.SkipAuthorizationHeaderIdentity)
+	access, isBearer, err := getTokenInRequest(
+		req,
+		r.config.CookieAccessName,
+		r.config.SkipAuthorizationHeaderIdentity,
+	)
+
 	if err != nil {
 		return nil, err
 	}
+
 	if r.config.EnableEncryptedToken || r.config.ForceEncryptedCookie && !isBearer {
 		if access, err = decodeText(access, r.config.EncryptionKey); err != nil {
 			return nil, ErrDecryption
@@ -50,6 +56,7 @@ func (r *oauthProxy) getIdentity(req *http.Request) (*userContext, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	user.bearerToken = isBearer
 	user.rawToken = rawToken
 

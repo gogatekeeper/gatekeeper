@@ -33,19 +33,28 @@ func (r *Resource) parse(resource string) (*Resource, error) {
 	if resource == "" {
 		return nil, errors.New("the resource has no options")
 	}
+
 	for _, x := range strings.Split(resource, "|") {
 		kp := strings.Split(x, "=")
+
 		if len(kp) != 2 {
-			return nil, errors.New("invalid resource keypair, should be (uri|roles|methods|white-listed)=comma_values")
+			return nil,
+				errors.New(
+					"invalid resource keypair, should be " +
+						"(uri|roles|methods|white-listed)=comma_values",
+				)
 		}
+
 		switch kp[0] {
 		case "uri":
 			r.URL = kp[1]
+
 			if !strings.HasPrefix(r.URL, "/") {
 				return nil, errors.New("the resource uri should start with a '/'")
 			}
 		case "methods":
 			r.Methods = strings.Split(kp[1], ",")
+
 			if len(r.Methods) == 1 {
 				if strings.EqualFold(r.Methods[0], anyMethod) {
 					r.Methods = allHTTPMethods
@@ -53,9 +62,11 @@ func (r *Resource) parse(resource string) (*Resource, error) {
 			}
 		case "require-any-role":
 			v, err := strconv.ParseBool(kp[1])
+
 			if err != nil {
 				return nil, err
 			}
+
 			r.RequireAnyRole = v
 		case "roles":
 			r.Roles = strings.Split(kp[1], ",")
@@ -63,12 +74,18 @@ func (r *Resource) parse(resource string) (*Resource, error) {
 			r.Groups = strings.Split(kp[1], ",")
 		case "white-listed":
 			value, err := strconv.ParseBool(kp[1])
+
 			if err != nil {
-				return nil, errors.New("the value of whitelisted must be true|TRUE|T or it's false equivalent")
+				return nil, errors.New(
+					"the value of whitelisted must be " +
+						"true|TRUE|T or it's false equivalent",
+				)
 			}
+
 			r.WhiteListed = value
 		default:
-			return nil, errors.New("invalid identifier, should be roles, uri or methods")
+			return nil,
+				errors.New("invalid identifier, should be roles, uri or methods")
 		}
 	}
 
@@ -80,14 +97,21 @@ func (r *Resource) valid() error {
 	if r.Methods == nil {
 		r.Methods = make([]string, 0)
 	}
+
 	if r.Roles == nil {
 		r.Roles = make([]string, 0)
 	}
+
 	if r.URL == "" {
 		return errors.New("resource does not have url")
 	}
+
 	if strings.HasSuffix(r.URL, "/") && !r.WhiteListed {
-		return fmt.Errorf("you need a wildcard on the url resource to cover all request i.e. --resources=uri=%s*", r.URL)
+		return fmt.Errorf(
+			"you need a wildcard on the url resource "+
+				"to cover all request i.e. --resources=uri=%s*",
+			r.URL,
+		)
 	}
 
 	// step: add any of no methods

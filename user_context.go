@@ -73,6 +73,7 @@ func extractIdentity(token *jwt.JSONWebToken) (*userContext, error) {
 	// @step: extract the client roles from the access token
 	for name, list := range customClaims.ResourceAccess {
 		scopes := list.(map[string]interface{})
+
 		if roles, found := scopes[claimResourceRoles]; found {
 			for _, r := range roles.([]interface{}) {
 				roleList = append(roleList, fmt.Sprintf("%s:%s", name, r))
@@ -135,5 +136,10 @@ func (r *userContext) isCookie() bool {
 
 // String returns a string representation of the user context
 func (r *userContext) String() string {
-	return fmt.Sprintf("user: %s, expires: %s, roles: %s", r.preferredName, r.expiresAt.String(), strings.Join(r.roles, ","))
+	return fmt.Sprintf(
+		"user: %s, expires: %s, roles: %s",
+		r.preferredName,
+		r.expiresAt.String(),
+		strings.Join(r.roles, ","),
+	)
 }

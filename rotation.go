@@ -41,9 +41,11 @@ type certificationRotation struct {
 func newCertificateRotator(cert, key string, log *zap.Logger) (*certificationRotation, error) {
 	// step: attempt to load the certificate
 	certificate, err := tls.LoadX509KeyPair(cert, key)
+
 	if err != nil {
 		return nil, err
 	}
+
 	// @step: are we watching the files for changes?
 	return &certificationRotation{
 		certificate:     certificate,
@@ -55,9 +57,11 @@ func newCertificateRotator(cert, key string, log *zap.Logger) (*certificationRot
 
 // watch is responsible for adding a file notification and watch on the files for changes
 func (c *certificationRotation) watch() error {
-	c.log.Info("adding a file watch on the certificates, certificate",
+	c.log.Info(
+		"adding a file watch on the certificates, certificate",
 		zap.String("certificate", c.certificateFile),
-		zap.String("private_key", c.privateKeyFile))
+		zap.String("private_key", c.privateKeyFile),
+	)
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -72,6 +76,7 @@ func (c *certificationRotation) watch() error {
 
 	// step: watching for events
 	filewatchPaths := []string{c.certificateFile, c.privateKeyFile}
+
 	go func() {
 		c.log.Info("starting to watch changes to the tls certificate files")
 		for {
@@ -84,6 +89,7 @@ func (c *certificationRotation) watch() error {
 					}
 					// step: reload the certificate
 					certificate, err := tls.LoadX509KeyPair(c.certificateFile, c.privateKeyFile)
+
 					if err != nil {
 						c.log.Error("unable to load the updated certificate",
 							zap.String("filename", event.Name),

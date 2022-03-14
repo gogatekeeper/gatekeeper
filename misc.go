@@ -45,6 +45,7 @@ func filterCookies(req *http.Request, filter []string) error {
 				break
 			}
 		}
+
 		if !found {
 			req.AddCookie(x)
 		}
@@ -57,12 +58,14 @@ func filterCookies(req *http.Request, filter []string) error {
 func (r *oauthProxy) revokeProxy(w http.ResponseWriter, req *http.Request) context.Context {
 	var scope *RequestScope
 	sc := req.Context().Value(contextScopeName)
+
 	switch sc {
 	case nil:
 		scope = &RequestScope{AccessDenied: true}
 	default:
 		scope = sc.(*RequestScope)
 	}
+
 	scope.AccessDenied = true
 
 	return context.WithValue(req.Context(), contextScopeName, scope)
@@ -74,8 +77,13 @@ func (r *oauthProxy) accessForbidden(w http.ResponseWriter, req *http.Request) c
 	// are we using a custom http template for 403?
 	if r.config.hasCustomForbiddenPage() {
 		name := path.Base(r.config.ForbiddenPage)
+
 		if err := r.Render(w, name, r.config.Tags); err != nil {
-			r.log.Error("failed to render the template", zap.Error(err), zap.String("template", name))
+			r.log.Error(
+				"failed to render the template",
+				zap.Error(err),
+				zap.String("template", name),
+			)
 		}
 	}
 
@@ -88,8 +96,13 @@ func (r *oauthProxy) accessError(w http.ResponseWriter, req *http.Request) conte
 	// are we using a custom http template for 400?
 	if r.config.hasCustomErrorPage() {
 		name := path.Base(r.config.ErrorPage)
+
 		if err := r.Render(w, name, r.config.Tags); err != nil {
-			r.log.Error("failed to render the template", zap.Error(err), zap.String("template", name))
+			r.log.Error(
+				"failed to render the template",
+				zap.Error(err),
+				zap.String("template", name),
+			)
 		}
 	}
 
@@ -98,9 +111,12 @@ func (r *oauthProxy) accessError(w http.ResponseWriter, req *http.Request) conte
 
 // redirectToURL redirects the user and aborts the context
 func (r *oauthProxy) redirectToURL(url string, w http.ResponseWriter, req *http.Request, statusCode int) context.Context {
-	w.Header().Add("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
-	http.Redirect(w, req, url, statusCode)
+	w.Header().Add(
+		"Cache-Control",
+		"no-cache, no-store, must-revalidate, max-age=0",
+	)
 
+	http.Redirect(w, req, url, statusCode)
 	return r.revokeProxy(w, req)
 }
 
@@ -117,10 +133,15 @@ func (r *oauthProxy) redirectToAuthorization(w http.ResponseWriter, req *http.Re
 
 	// step: if verification is switched off, we can't authorization
 	if r.config.SkipTokenVerification {
-		r.log.Error("refusing to redirection to authorization endpoint, skip token verification switched on")
+		r.log.Error(
+			"refusing to redirection to authorization endpoint, " +
+				"skip token verification switched on",
+		)
+
 		w.WriteHeader(http.StatusForbidden)
 		return r.revokeProxy(w, req)
 	}
+
 	r.redirectToURL(r.config.WithOAuthURI(authorizationURL+authQuery), w, req, http.StatusSeeOther)
 
 	return r.revokeProxy(w, req)
@@ -141,10 +162,15 @@ func (r *oauthProxy) getAccessCookieExpiration(refresh string) time.Duration {
 
 	if ident, err := extractIdentity(webToken); err == nil {
 		delta := time.Until(ident.expiresAt)
+
 		if delta > 0 {
 			duration = delta
 		}
-		r.log.Debug("parsed refresh token with new duration", zap.Duration("new duration", delta))
+
+		r.log.Debug(
+			"parsed refresh token with new duration",
+			zap.Duration("new duration", delta),
+		)
 	} else {
 		r.log.Debug("refresh token is opaque and cannot be used to extend calculated duration")
 	}

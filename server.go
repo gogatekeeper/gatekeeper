@@ -124,8 +124,8 @@ func newProxy(config *Config) (*oauthProxy, error) {
 
 	if config.ClientID == "" && config.ClientSecret == "" {
 		log.Warn(
-			`client credentials are not set, depending on
-			provider (confidential|public) you might be unable to auth`,
+			"client credentials are not set, depending on " +
+				"provider (confidential|public) you might be unable to auth",
 		)
 	}
 
@@ -291,8 +291,8 @@ func (r *oauthProxy) createReverseProxy() error {
 		// @check if the server write-timeout is still set and throw a warning
 		if r.config.ServerWriteTimeout > 0 {
 			r.log.Warn(
-				`you should disable the server write timeout (
-					--server-write-timeout) when using pprof profiling`,
+				"you should disable the server write timeout ( " +
+					"--server-write-timeout) when using pprof profiling",
 			)
 		}
 
@@ -416,8 +416,8 @@ func (r *oauthProxy) createForwardingProxy() error {
 
 	if r.config.SkipUpstreamTLSVerify {
 		r.log.Warn(
-			`tls verification switched off. In forward signing mode it's
-			recommended you verify! (--skip-upstream-tls-verify=false)`,
+			"tls verification switched off. In forward signing mode it's " +
+				"recommended you verify! (--skip-upstream-tls-verify=false)",
 		)
 	}
 

@@ -36,13 +36,17 @@ const (
 func (r *oauthProxy) dropCookie(w http.ResponseWriter, host, name, value string, duration time.Duration) {
 	// step: default to the host header, else the config domain
 	domain := ""
+
 	if r.config.CookieDomain != "" {
 		domain = r.config.CookieDomain
 	}
+
 	path := r.config.BaseURI
+
 	if path == "" {
 		path = "/"
 	}
+
 	cookie := &http.Cookie{
 		Domain:   domain,
 		HttpOnly: r.config.HTTPOnlyCookie,
@@ -51,6 +55,7 @@ func (r *oauthProxy) dropCookie(w http.ResponseWriter, host, name, value string,
 		Secure:   r.config.SecureCookie,
 		Value:    value,
 	}
+
 	if !r.config.EnableSessionCookies && duration != 0 {
 		cookie.Expires = time.Now().Add(duration)
 	}
@@ -68,43 +73,59 @@ func (r *oauthProxy) dropCookie(w http.ResponseWriter, host, name, value string,
 // maxCookieChunkSize calculates max cookie chunk size, which can be used for cookie value
 func (r *oauthProxy) getMaxCookieChunkLength(req *http.Request, cookieName string) int {
 	maxCookieChunkLength := 4069 - len(cookieName)
+
 	if r.config.CookieDomain != "" {
 		maxCookieChunkLength -= len(r.config.CookieDomain)
 	} else {
 		maxCookieChunkLength -= len(strings.Split(req.Host, ":")[0])
 	}
+
 	if r.config.HTTPOnlyCookie {
 		maxCookieChunkLength -= len("HttpOnly; ")
 	}
+
 	if !r.config.EnableSessionCookies {
 		maxCookieChunkLength -= len("Expires=Mon, 02 Jan 2006 03:04:05 MST; ")
 	}
+
 	switch r.config.SameSiteCookie {
 	case SameSiteStrict:
 		maxCookieChunkLength -= len("SameSite=Strict ")
 	case SameSiteLax:
 		maxCookieChunkLength -= len("SameSite=Lax ")
 	}
+
 	if r.config.SecureCookie {
 		maxCookieChunkLength -= len("Secure")
 	}
+
 	return maxCookieChunkLength
 }
 
 // dropCookieWithChunks drops a cookie from the response, taking into account possible chunks
 func (r *oauthProxy) dropCookieWithChunks(req *http.Request, w http.ResponseWriter, name, value string, duration time.Duration) {
 	maxCookieChunkLength := r.getMaxCookieChunkLength(req, name)
+
 	if len(value) <= maxCookieChunkLength {
 		r.dropCookie(w, req.Host, name, value, duration)
 	} else {
 		// write divided cookies because payload is too long for single cookie
 		r.dropCookie(w, req.Host, name, value[0:maxCookieChunkLength], duration)
+
 		for i := maxCookieChunkLength; i < len(value); i += maxCookieChunkLength {
 			end := i + maxCookieChunkLength
+
 			if end > len(value) {
 				end = len(value)
 			}
-			r.dropCookie(w, req.Host, name+"-"+strconv.Itoa(i/maxCookieChunkLength), value[i:end], duration)
+
+			r.dropCookie(
+				w,
+				req.Host,
+				name+"-"+strconv.Itoa(i/maxCookieChunkLength),
+				value[i:end],
+				duration,
+			)
 		}
 	}
 }
@@ -122,12 +143,16 @@ func (r *oauthProxy) dropRefreshTokenCookie(req *http.Request, w http.ResponseWr
 // writeStateParameterCookie sets a state parameter cookie into the response
 func (r *oauthProxy) writeStateParameterCookie(req *http.Request, w http.ResponseWriter) string {
 	uuid, err := uuid.NewV4()
+
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+
 	requestURI := base64.StdEncoding.EncodeToString([]byte(req.URL.RequestURI()))
+
 	r.dropCookie(w, req.Host, r.config.CookieRequestURIName, requestURI, 0)
 	r.dropCookie(w, req.Host, r.config.CookieOAuthStateName, uuid.String(), 0)
+
 	return uuid.String()
 }
 
@@ -144,8 +169,15 @@ func (r *oauthProxy) clearRefreshTokenCookie(req *http.Request, w http.ResponseW
 	// clear divided cookies
 	for i := 1; i < 600; i++ {
 		var _, err = req.Cookie(r.config.CookieRefreshName + "-" + strconv.Itoa(i))
+
 		if err == nil {
-			r.dropCookie(w, req.Host, r.config.CookieRefreshName+"-"+strconv.Itoa(i), "", -10*time.Hour)
+			r.dropCookie(
+				w,
+				req.Host,
+				r.config.CookieRefreshName+"-"+strconv.Itoa(i),
+				"",
+				-10*time.Hour,
+			)
 		} else {
 			break
 		}
@@ -159,8 +191,15 @@ func (r *oauthProxy) clearAccessTokenCookie(req *http.Request, w http.ResponseWr
 	// clear divided cookies
 	for i := 1; i < len(req.Cookies()); i++ {
 		var _, err = req.Cookie(r.config.CookieAccessName + "-" + strconv.Itoa(i))
+
 		if err == nil {
-			r.dropCookie(w, req.Host, r.config.CookieAccessName+"-"+strconv.Itoa(i), "", -10*time.Hour)
+			r.dropCookie(
+				w,
+				req.Host,
+				r.config.CookieAccessName+"-"+strconv.Itoa(i),
+				"",
+				-10*time.Hour,
+			)
 		} else {
 			break
 		}

@@ -29,9 +29,11 @@ func createStorage(location string) (storage, error) {
 	var err error
 
 	u, err := url.Parse(location)
+
 	if err != nil {
 		return nil, err
 	}
+
 	switch u.Scheme {
 	case "redis":
 		store, err = newRedisStore(u)
@@ -58,6 +60,7 @@ func (r *oauthProxy) StoreRefreshToken(token string, value string, expiration ti
 func (r *oauthProxy) GetRefreshToken(token string) (string, error) {
 	// step: the key is the access token
 	v, err := r.store.Get(getHashKey(token))
+
 	if err != nil {
 		return v, err
 	}

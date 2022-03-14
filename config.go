@@ -156,8 +156,8 @@ func (r *Config) isMaxIdlleConnValid() error {
 
 	if r.MaxIdleConnsPerHost < 0 || r.MaxIdleConnsPerHost > r.MaxIdleConns {
 		return errors.New(
-			`maxi-idle-connections-per-host must be a
-			number > 0 and <= max-idle-connections`,
+			"maxi-idle-connections-per-host must be a " +
+				"number > 0 and <= max-idle-connections",
 		)
 	}
 	return nil
@@ -279,16 +279,16 @@ func (r *Config) isForwardingProxySettingsValid() error {
 			r.isForwardingGrantValid,
 			func() error {
 				if r.TLSCertificate != "" {
-					return errors.New(`you don't need to specify a
-														tls-certificate, use tls-ca-certificate instead`,
+					return errors.New("you don't need to specify a " +
+						"tls-certificate, use tls-ca-certificate instead",
 					)
 				}
 				return nil
 			},
 			func() error {
 				if r.TLSPrivateKey != "" {
-					return errors.New(`you don't need to specify the
-														tls-private-key, use tls-ca-key instead`,
+					return errors.New("you don't need to specify the " +
+						"tls-private-key, use tls-ca-key instead",
 					)
 				}
 				return nil
@@ -412,22 +412,22 @@ func (r *Config) isSecurityFilterValid() error {
 
 		if r.EnableBrowserXSSFilter {
 			return errors.New(
-				`the security filter must be switch on
-				for this feature: brower-xss-filter`,
+				"the security filter must be switch on " +
+					"for this feature: brower-xss-filter",
 			)
 		}
 
 		if r.EnableFrameDeny {
 			return errors.New(
-				`the security filter must be switch on
-				for this feature: frame-deny-filter`,
+				"the security filter must be switch on " +
+					"for this feature: frame-deny-filter",
 			)
 		}
 
 		if r.ContentSecurityPolicy != "" {
 			return errors.New(
-				`the security filter must be switch on
-				for this feature: content-security-policy`,
+				"the security filter must be switch on " +
+					"for this feature: content-security-policy",
 			)
 		}
 
@@ -458,8 +458,8 @@ func (r *Config) isTokenEncryptionValid() error {
 	if r.EnableRefreshTokens && (len(r.EncryptionKey) != 16 &&
 		len(r.EncryptionKey) != 32) {
 		return fmt.Errorf(
-			`the encryption key (%d) must be either 16 or 32
-			characters for AES-128/AES-256 selection`,
+			"the encryption key (%d) must be either 16 or 32 "+
+				"characters for AES-128/AES-256 selection",
 			len(r.EncryptionKey),
 		)
 	}

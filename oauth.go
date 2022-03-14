@@ -69,6 +69,7 @@ func getRefreshedToken(conf *oauth2.Config, proxyConfig *Config, t string) (jwt.
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
+
 		sslcli := &http.Client{Transport: tr}
 		ctx = context.WithValue(ctx, oauth2.HTTPClient, sslcli)
 	}
@@ -81,9 +82,19 @@ func getRefreshedToken(conf *oauth2.Config, proxyConfig *Config, t string) (jwt.
 
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid_grant") {
-			return jwt.JSONWebToken{}, "", "", time.Time{}, time.Duration(0), ErrRefreshTokenExpired
+			return jwt.JSONWebToken{},
+				"",
+				"",
+				time.Time{},
+				time.Duration(0),
+				ErrRefreshTokenExpired
 		}
-		return jwt.JSONWebToken{}, "", "", time.Time{}, time.Duration(0), err
+		return jwt.JSONWebToken{},
+			"",
+			"",
+			time.Time{},
+			time.Duration(0),
+			err
 	}
 
 	taken := time.Since(start).Seconds()
@@ -93,13 +104,23 @@ func getRefreshedToken(conf *oauth2.Config, proxyConfig *Config, t string) (jwt.
 	token, err := jwt.ParseSigned(tkn.AccessToken)
 
 	if err != nil {
-		return jwt.JSONWebToken{}, "", "", time.Time{}, time.Duration(0), err
+		return jwt.JSONWebToken{},
+			"",
+			"",
+			time.Time{},
+			time.Duration(0),
+			err
 	}
 
 	refreshToken, err := jwt.ParseSigned(tkn.RefreshToken)
 
 	if err != nil {
-		return jwt.JSONWebToken{}, "", "", time.Time{}, time.Duration(0), err
+		return jwt.JSONWebToken{},
+			"",
+			"",
+			time.Time{},
+			time.Duration(0),
+			err
 	}
 
 	stdClaims := &jwt.Claims{}
@@ -107,7 +128,12 @@ func getRefreshedToken(conf *oauth2.Config, proxyConfig *Config, t string) (jwt.
 	err = token.UnsafeClaimsWithoutVerification(stdClaims)
 
 	if err != nil {
-		return jwt.JSONWebToken{}, "", "", time.Time{}, time.Duration(0), err
+		return jwt.JSONWebToken{},
+			"",
+			"",
+			time.Time{},
+			time.Duration(0),
+			err
 	}
 
 	refreshStdClaims := &jwt.Claims{}
@@ -115,12 +141,22 @@ func getRefreshedToken(conf *oauth2.Config, proxyConfig *Config, t string) (jwt.
 	err = refreshToken.UnsafeClaimsWithoutVerification(refreshStdClaims)
 
 	if err != nil {
-		return jwt.JSONWebToken{}, "", "", time.Time{}, time.Duration(0), err
+		return jwt.JSONWebToken{},
+			"",
+			"",
+			time.Time{},
+			time.Duration(0),
+			err
 	}
 
 	refreshExpiresIn := time.Until(refreshStdClaims.Expiry.Time())
 
-	return *token, tkn.AccessToken, tkn.RefreshToken, stdClaims.Expiry.Time(), refreshExpiresIn, nil
+	return *token,
+		tkn.AccessToken,
+		tkn.RefreshToken,
+		stdClaims.Expiry.Time(),
+		refreshExpiresIn,
+		nil
 }
 
 // exchangeAuthenticationCode exchanges the authentication code with the oauth server for a access token
@@ -136,6 +172,7 @@ func getToken(config *oauth2.Config, grantType, code string, skipOpenIDProviderT
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
+
 		sslcli := &http.Client{Transport: tr}
 		ctx = context.WithValue(ctx, oauth2.HTTPClient, sslcli)
 	} else {
@@ -144,10 +181,13 @@ func getToken(config *oauth2.Config, grantType, code string, skipOpenIDProviderT
 
 	start := time.Now()
 	token, err := config.Exchange(ctx, code)
+
 	if err != nil {
 		return token, err
 	}
+
 	taken := time.Since(start).Seconds()
+
 	switch grantType {
 	case GrantTypeAuthCode:
 		oauthTokensMetric.WithLabelValues("exchange").Inc()
