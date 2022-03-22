@@ -4,7 +4,7 @@ ARG HOMEDIR=/opt/gatekeeper
 # Builder
 #
 
-FROM golang:1.16.4 AS build-env
+FROM golang:1.17.6 AS build-env
 ARG SOURCE=*
 ARG HOMEDIR
 
