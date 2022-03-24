@@ -37,7 +37,7 @@ const (
 
 // newOAuth2Config returns a oauth2 config
 func (r *oauthProxy) newOAuth2Config(redirectionURL string) *oauth2.Config {
-	defaultScope := []string{"openid", "email", "profile"}
+	defaultScope := []string{"openid"}
 
 	conf := &oauth2.Config{
 		ClientID:     r.config.ClientID,

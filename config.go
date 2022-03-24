@@ -60,6 +60,7 @@ func newDefaultConfig() *Config {
 		RequestIDHeader:               "X-Request-ID",
 		ResponseHeaders:               make(map[string]string),
 		SameSiteCookie:                SameSiteLax,
+		Scopes:                        []string{"email", "profile"},
 		SecureCookie:                  true,
 		ServerIdleTimeout:             120 * time.Second,
 		ServerReadTimeout:             10 * time.Second,
