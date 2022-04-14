@@ -101,6 +101,7 @@ func (r *Config) isValid() error {
 	validationRegistry := []func() error{
 		r.isListenValid,
 		r.isListenAdminSchemeValid,
+		r.isOpenIDProviderProxyValid,
 		r.isMaxIdlleConnValid,
 		r.isSameSiteValid,
 		r.isTLSFilesValid,
@@ -147,6 +148,18 @@ func (r *Config) isListenAdminSchemeValid() error {
 		r.ListenAdminScheme != unsecureScheme {
 		return errors.New("scheme for admin listener must be one of [http, https]")
 	}
+	return nil
+}
+
+func (r *Config) isOpenIDProviderProxyValid() error {
+	if r.OpenIDProviderProxy != "" {
+		_, err := url.ParseRequestURI(r.OpenIDProviderProxy)
+
+		if err != nil {
+			return errors.New("invalid proxy address for open IDP provider proxy")
+		}
+	}
+
 	return nil
 }
 

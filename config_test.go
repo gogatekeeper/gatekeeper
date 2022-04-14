@@ -290,6 +290,61 @@ func TestIsListenAdminSchemeValid(t *testing.T) {
 	}
 }
 
+func TestIsOpenIDProviderProxyValid(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidOpenIDProviderProxy",
+			Config: &Config{
+				OpenIDProviderProxy: "http://aklsdsdo",
+			},
+			Valid: true,
+		},
+		{
+			Name: "ValidOpenIDProviderProxyValidEmpty",
+			Config: &Config{
+				OpenIDProviderProxy: "",
+			},
+			Valid: true,
+		},
+		{
+			Name: "InValidOpenIDProviderProxyValidInvalidURI",
+			Config: &Config{
+				OpenIDProviderProxy: "asas",
+			},
+			Valid: false,
+		},
+		{
+			Name: "ValidSkipOpenIDProviderTLSVerify",
+			Config: &Config{
+				OpenIDProviderProxy:         "http://ssss",
+				SkipOpenIDProviderTLSVerify: true,
+			},
+			Valid: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		testCase := testCase
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isOpenIDProviderProxyValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}
+
 func TestIsMaxIdlleConnValid(t *testing.T) {
 	testCases := []struct {
 		Name   string

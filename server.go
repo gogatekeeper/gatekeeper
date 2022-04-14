@@ -36,10 +36,10 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"golang.org/x/crypto/acme/autocert"
-	"golang.org/x/oauth2"
 
 	httplog "log"
 
+	"github.com/Nerzal/gocloak/v11"
 	proxyproto "github.com/armon/go-proxyproto"
 	oidc3 "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/elazarl/goproxy"
@@ -55,7 +55,7 @@ type oauthProxy struct {
 	provider       *oidc3.Provider
 	config         *Config
 	endpoint       *url.URL
-	idpClient      *http.Client
+	idpClient      gocloak.GoCloak
 	listener       net.Listener
 	log            *zap.Logger
 	metricsHandler http.Handler
@@ -111,10 +111,22 @@ func newProxy(config *Config) (*oauthProxy, error) {
 		}
 	}
 
+	svc.log.Info(
+		"attempting to retrieve configuration discovery url",
+		zap.String("url", svc.config.DiscoveryURL),
+		zap.String("timeout", svc.config.OpenIDProviderTimeout.String()),
+	)
+
 	// initialize the openid client
 	if svc.provider, svc.idpClient, err = svc.newOpenIDProvider(); err != nil {
+		svc.log.Error(
+			"failed to get provider configuration from discovery",
+			zap.Error(err),
+		)
 		return nil, err
 	}
+
+	svc.log.Info("successfully retrieved openid configuration from the discovery")
 
 	if config.SkipTokenVerification {
 		log.Warn(
@@ -957,114 +969,42 @@ func (r *oauthProxy) createTemplates() error {
 
 // newOpenIDProvider initializes the openID configuration, note: the redirection url is deliberately left blank
 // in order to retrieve it from the host header on request
-func (r *oauthProxy) newOpenIDProvider() (*oidc3.Provider, *http.Client, error) {
-	var err error
-
+func (r *oauthProxy) newOpenIDProvider() (*oidc3.Provider, gocloak.GoCloak, error) {
 	// step: fix up the url if required, the underlining lib will add the .well-known/openid-configuration to the discovery url for us.
 	r.config.DiscoveryURL = strings.TrimSuffix(
 		r.config.DiscoveryURL,
 		"/.well-known/openid-configuration",
 	)
 
-	// step: create a idp http client
-	hc := &http.Client{
-		Transport: &http.Transport{
-			Proxy: func(_ *http.Request) (*url.URL, error) {
-				if r.config.OpenIDProviderProxy != "" {
-					idpProxyURL, erp := url.Parse(r.config.OpenIDProviderProxy)
-
-					if erp != nil {
-						r.log.Warn(
-							"invalid proxy address for open IDP provider proxy",
-							zap.Error(erp),
-						)
-						return nil, nil
-					}
-					return idpProxyURL, nil
-				}
-
-				return nil, nil
-			},
-			TLSClientConfig: &tls.Config{
-				//nolint:gas
-				InsecureSkipVerify: r.config.SkipOpenIDProviderTLSVerify,
-			},
+	client := gocloak.NewClient(r.config.DiscoveryURL)
+	restyClient := client.RestyClient()
+	restyClient.SetDebug(r.config.Verbose)
+	restyClient.SetTimeout(r.config.OpenIDProviderTimeout)
+	restyClient.SetTLSClientConfig(
+		&tls.Config{
+			InsecureSkipVerify: r.config.SkipOpenIDProviderTLSVerify,
 		},
-		Timeout: time.Second * 10,
+	)
+
+	if r.config.OpenIDProviderProxy != "" {
+		restyClient.SetProxy(r.config.OpenIDProviderProxy)
 	}
 
 	// see https://github.com/coreos/go-oidc/issues/214
 	// see https://github.com/coreos/go-oidc/pull/260
-	ctx, cancel := context.WithTimeout(
-		context.Background(),
-		r.config.OpenIDProviderTimeout,
-	)
+	ctx := oidc3.ClientContext(context.Background(), restyClient.GetClient())
+	provider, err := oidc3.NewProvider(ctx, r.config.DiscoveryURL)
 
-	tr := &http.Transport{
-		Proxy: func(_ *http.Request) (*url.URL, error) {
-			if r.config.OpenIDProviderProxy != "" {
-				idpProxyURL, erp := url.Parse(r.config.OpenIDProviderProxy)
-
-				if erp != nil {
-					r.log.Warn(
-						"invalid open IDP provider proxy for oidc3 provider",
-						zap.Error(erp),
-					)
-					return nil, nil
-				}
-				return idpProxyURL, nil
-			}
-
-			return nil, nil
-		},
-	}
-
-	if r.config.SkipOpenIDProviderTLSVerify {
-		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	}
-
-	sslcli := &http.Client{Transport: tr}
-	ctx = context.WithValue(ctx, oauth2.HTTPClient, sslcli)
-
-	defer cancel()
-	var provider *oidc3.Provider
-
-	// step: attempt to retrieve the provider configuration
-	completeCh := make(chan bool)
-	go func() {
-		for {
-			r.log.Info(
-				"attempting to retrieve configuration discovery url",
-				zap.String("url", r.config.DiscoveryURL),
-				zap.String("timeout", r.config.OpenIDProviderTimeout.String()),
+	if err != nil {
+		return nil,
+			nil,
+			fmt.Errorf(
+				"failed to retrieve the provider configuration from discovery url: %w",
+				err,
 			)
-
-			provider, err = oidc3.NewProvider(ctx, r.config.DiscoveryURL)
-
-			if err == nil {
-				break // break and complete
-			}
-
-			r.log.Warn(
-				"failed to get provider configuration from discovery",
-				zap.Error(err),
-			)
-
-			time.Sleep(time.Second * 3)
-		}
-
-		completeCh <- true
-	}()
-
-	// wait for timeout or successful retrieval
-	select {
-	case <-ctx.Done():
-		return nil, nil, errors.New("failed to retrieve the provider configuration from discovery url")
-	case <-completeCh:
-		r.log.Info("successfully retrieved openid configuration from the discovery")
 	}
 
-	return provider, hc, nil
+	return provider, client, nil
 }
 
 // Render implements the echo Render interface
