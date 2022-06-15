@@ -143,7 +143,7 @@ func newProxy(config *Config) (*oauthProxy, error) {
 
 	if config.EnableUma {
 		patDone := make(chan bool)
-		go svc.getPAT(patDone)
+		go svc.getPAT(patDone, *config)
 		<-patDone
 	}
 
@@ -1042,9 +1042,17 @@ func (r *oauthProxy) Render(w io.Writer, name string, data interface{}) error {
 	return r.templates.ExecuteTemplate(w, name, data)
 }
 
-func (r *oauthProxy) getPAT(done chan bool) {
+func (r *oauthProxy) getPAT(done chan bool, config Config) {
 	retry := 0
 	r.pat = &PAT{}
+	initialized := false
+	clientID := config.ClientID
+	clientSecret := config.ClientSecret
+	realm := config.Realm
+	timeout := config.OpenIDProviderTimeout
+	patRetryCount := config.PatRetryCount
+	patRetryInterval := config.PatRetryInterval
+	patRefreshInterval := config.PatRefreshInterval
 
 	for {
 		if retry > 0 {
@@ -1056,31 +1064,30 @@ func (r *oauthProxy) getPAT(done chan bool) {
 
 		ctx, cancel := context.WithTimeout(
 			context.Background(),
-			r.config.OpenIDProviderTimeout,
+			timeout,
 		)
-		clientID := r.config.ClientID
-		clientSecret := r.config.ClientSecret
 
 		token, err := r.idpClient.LoginClient(
 			ctx,
 			clientID,
 			clientSecret,
-			r.config.Realm,
+			realm,
 		)
 
 		if err != nil {
 			retry++
 			r.log.Error(
 				"problem getting PAT token",
+
 				zap.Error(err),
 			)
 
-			if retry >= r.config.PatRetryCount {
+			if retry >= patRetryCount {
 				cancel()
 				os.Exit(10)
 			}
 
-			time.Sleep(r.config.PatRetryInterval)
+			time.Sleep(patRetryInterval)
 			continue
 		}
 
@@ -1088,9 +1095,13 @@ func (r *oauthProxy) getPAT(done chan bool) {
 		r.pat.Token = token
 		r.pat.m.Unlock()
 
-		done <- true
+		if !initialized {
+			done <- true
+		}
+
+		initialized = true
 
 		retry = 0
-		time.Sleep(r.config.PatRefreshInterval)
+		time.Sleep(patRefreshInterval)
 	}
 }
