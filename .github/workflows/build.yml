@@ -42,7 +42,7 @@ jobs:
       # Run Go benchmarks
       - name: Benchmark
         run: |
-          go test -bench=. -benchmem
+          go test -run=^$ -bench=. -benchmem
       # Sends code coverage report to Coveralls
       - name: Coveralls
         env:
