@@ -31,6 +31,7 @@ import (
 	"path"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"go.uber.org/zap/zapcore"
@@ -51,6 +52,11 @@ import (
 	"go.uber.org/zap"
 )
 
+type PAT struct {
+	Token *gocloak.JWT
+	m     sync.Mutex
+}
+
 type oauthProxy struct {
 	provider       *oidc3.Provider
 	config         *Config
@@ -65,7 +71,7 @@ type oauthProxy struct {
 	store          storage
 	templates      *template.Template
 	upstream       reverseProxy
-	pat            *gocloak.JWT
+	pat            *PAT
 }
 
 func init() {
@@ -1038,6 +1044,7 @@ func (r *oauthProxy) Render(w io.Writer, name string, data interface{}) error {
 
 func (r *oauthProxy) getPAT(done chan bool) {
 	retry := 0
+	r.pat = &PAT{}
 
 	for {
 		if retry > 0 {
@@ -1077,7 +1084,9 @@ func (r *oauthProxy) getPAT(done chan bool) {
 			continue
 		}
 
-		r.pat = token
+		r.pat.m.Lock()
+		r.pat.Token = token
+		r.pat.m.Unlock()
 
 		done <- true
 

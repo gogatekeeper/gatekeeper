@@ -143,17 +143,13 @@ func (r *oauthProxy) redirectToAuthorization(w http.ResponseWriter, req *http.Re
 			MatchingURI: &matchingURI,
 		}
 
-		if r.pat == nil {
-			r.log.Info(
-				"pat token not yet retrieved from IDP",
-			)
-			w.WriteHeader(http.StatusUnauthorized)
-			return r.revokeProxy(w, req)
-		}
+		r.pat.m.Lock()
+		token := r.pat.Token.AccessToken
+		r.pat.m.Unlock()
 
 		resources, err := r.idpClient.GetResourcesClient(
 			ctx,
-			r.pat.AccessToken,
+			token,
 			r.config.Realm,
 			resourceParam,
 		)
@@ -193,7 +189,7 @@ func (r *oauthProxy) redirectToAuthorization(w http.ResponseWriter, req *http.Re
 
 		permTicket, err := r.idpClient.CreatePermissionTicket(
 			ctx,
-			r.pat.AccessToken,
+			token,
 			r.config.Realm,
 			permissions,
 		)
@@ -238,7 +234,12 @@ func (r *oauthProxy) redirectToAuthorization(w http.ResponseWriter, req *http.Re
 		return r.revokeProxy(w, req)
 	}
 
-	r.redirectToURL(r.config.WithOAuthURI(authorizationURL+authQuery), w, req, http.StatusSeeOther)
+	r.redirectToURL(
+		r.config.WithOAuthURI(authorizationURL+authQuery),
+		w,
+		req,
+		http.StatusSeeOther,
+	)
 
 	return r.revokeProxy(w, req)
 }

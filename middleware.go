@@ -483,18 +483,13 @@ func (r *oauthProxy) authorizationMiddleware() func(http.Handler) http.Handler {
 				MatchingURI: &matchingURI,
 			}
 
-			if r.pat == nil {
-				r.log.Info(
-					"pat token not yet retrieved from IDP",
-				)
-				w.WriteHeader(http.StatusUnauthorized)
-				next.ServeHTTP(w, req.WithContext(r.revokeProxy(w, req)))
-				return
-			}
+			r.pat.m.Lock()
+			token := r.pat.Token.AccessToken
+			r.pat.m.Unlock()
 
 			resources, err := r.idpClient.GetResourcesClient(
 				resctx,
-				r.pat.AccessToken,
+				token,
 				r.config.Realm,
 				resourceParam,
 			)
