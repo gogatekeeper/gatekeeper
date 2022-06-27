@@ -1806,14 +1806,6 @@ func TestGzipCompression(t *testing.T) {
 func TestEnableUma(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 
-	redisServer, err := miniredis.Run()
-
-	if err != nil {
-		t.Fatalf("Starting redis failed %s", err)
-	}
-
-	defer redisServer.Close()
-
 	requests := []struct {
 		Name              string
 		ProxySettings     func(c *Config)
@@ -1856,50 +1848,6 @@ func TestEnableUma(t *testing.T) {
 				c.PatRetryInterval = 2 * time.Second
 			},
 			ExecutionSettings: []fakeRequest{
-				{
-					URI:                "/test",
-					ExpectedProxy:      false,
-					HasToken:           true,
-					ExpectedCode:       http.StatusUnauthorized,
-					TokenAuthorization: &Permissions{},
-					ExpectedContent: func(body string, testNum int) {
-						assert.Equal(t, "", body)
-					},
-					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *Config, string){
-						"WWW-Authenticate": func(t *testing.T, c *Config, value string) {
-							assert.Contains(t, "ticket", value)
-						},
-					},
-				},
-			},
-		},
-		{
-			Name: "TestUmaTokenWithoutAuthzWithCache",
-			ProxySettings: func(c *Config) {
-				c.EnableUma = true
-				c.EnableDefaultDeny = true
-				c.ClientID = validUsername
-				c.ClientSecret = validPassword
-				c.PatRetryCount = 5
-				c.PatRetryInterval = 2 * time.Second
-				c.StoreURL = fmt.Sprintf("redis://%s", redisServer.Addr())
-			},
-			ExecutionSettings: []fakeRequest{
-				{
-					URI:                "/test",
-					ExpectedProxy:      false,
-					HasToken:           true,
-					ExpectedCode:       http.StatusUnauthorized,
-					TokenAuthorization: &Permissions{},
-					ExpectedContent: func(body string, testNum int) {
-						assert.Equal(t, "", body)
-					},
-					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *Config, string){
-						"WWW-Authenticate": func(t *testing.T, c *Config, value string) {
-							assert.Contains(t, "ticket", value)
-						},
-					},
-				},
 				{
 					URI:                "/test",
 					ExpectedProxy:      false,
@@ -2021,9 +1969,110 @@ func TestEnableUma(t *testing.T) {
 				},
 			},
 		},
+	}
+
+	for _, testCase := range requests {
+		testCase := testCase
+		c := *cfg
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				testCase.ProxySettings(&c)
+				p := newFakeProxy(&c, &fakeAuthConfig{})
+				p.RunTests(t, testCase.ExecutionSettings)
+			},
+		)
+	}
+}
+
+func TestEnableUmaWithCache(t *testing.T) {
+	cfg := newFakeKeycloakConfig()
+
+	requests := []struct {
+		Name                 string
+		PreRequestSettings   func(p *fakeProxy, reqs []fakeRequest) ([]fakeRequest, error)
+		ProxySettings        func(c *Config)
+		ExecutionSettings    []fakeRequest
+		ExpectedCacheEntries int
+		ExpectedCacheValues  AuthzDecision
+	}{
 		{
-			Name: "TestUmaOKWithCache",
+			Name: "TestUmaTokenWithoutAuthzWithDifferentTokens",
 			ProxySettings: func(c *Config) {
+				redisServer, err := miniredis.Run()
+
+				if err != nil {
+					t.Fatalf("Starting redis failed %s", err)
+				}
+
+				c.EnableUma = true
+				c.EnableDefaultDeny = true
+				c.ClientID = validUsername
+				c.ClientSecret = validPassword
+				c.PatRetryCount = 5
+				c.PatRetryInterval = 2 * time.Second
+				c.StoreURL = fmt.Sprintf("redis://%s", redisServer.Addr())
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           "/test",
+					ExpectedProxy: false,
+					HasToken:      true,
+					ExpectedCode:  http.StatusUnauthorized,
+					TokenAuthorization: &Permissions{
+						Permissions: []Permission{
+							{
+								Scopes:       []string{},
+								ResourceID:   "43322-0fd4-47f2-81fc-eead97a01c22",
+								ResourceName: "some",
+							},
+						},
+					},
+					ExpectedContent: func(body string, testNum int) {
+						assert.Equal(t, "", body)
+					},
+					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *Config, string){
+						"WWW-Authenticate": func(t *testing.T, c *Config, value string) {
+							assert.Contains(t, "ticket", value)
+						},
+					},
+				},
+				{
+					URI:           "/test",
+					ExpectedProxy: false,
+					HasToken:      true,
+					ExpectedCode:  http.StatusUnauthorized,
+					TokenAuthorization: &Permissions{
+						Permissions: []Permission{
+							{
+								Scopes:       []string{},
+								ResourceID:   "5422-0fd4-47f2-81fc-eead97a01c22",
+								ResourceName: "someother",
+							},
+						},
+					},
+					ExpectedContent: func(body string, testNum int) {
+						assert.Equal(t, "", body)
+					},
+					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *Config, string){
+						"WWW-Authenticate": func(t *testing.T, c *Config, value string) {
+							assert.Contains(t, "ticket", value)
+						},
+					},
+				},
+			},
+			ExpectedCacheEntries: 2,
+			ExpectedCacheValues:  DeniedAuthz,
+		},
+		{
+			Name: "TestUmaOKWithDifferentTokens",
+			ProxySettings: func(c *Config) {
+				redisServer, err := miniredis.Run()
+
+				if err != nil {
+					t.Fatalf("Starting redis failed %s", err)
+				}
+
 				c.EnableUma = true
 				c.EnableDefaultDeny = true
 				c.ClientID = validUsername
@@ -2062,7 +2111,7 @@ func TestEnableUma(t *testing.T) {
 							{
 								Scopes:       []string{"test"},
 								ResourceID:   "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",
-								ResourceName: "some",
+								ResourceName: "other",
 							},
 						},
 					},
@@ -2072,6 +2121,200 @@ func TestEnableUma(t *testing.T) {
 					},
 				},
 			},
+			ExpectedCacheEntries: 2,
+			ExpectedCacheValues:  AllowedAuthz,
+		},
+		{
+			Name: "TestUmaOKWithSameTokens",
+			PreRequestSettings: func(p *fakeProxy, reqs []fakeRequest) ([]fakeRequest, error) {
+				token := newTestToken(p.idp.getLocation())
+				token.claims.Authorization = Permissions{
+					Permissions: []Permission{
+						{
+							Scopes:       []string{"test"},
+							ResourceID:   "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",
+							ResourceName: "some",
+						},
+					},
+				}
+
+				raw, err := token.getToken()
+
+				if err != nil {
+					return nil, err
+				}
+
+				for i := range reqs {
+					reqs[i].RawToken = raw
+				}
+
+				return reqs, nil
+			},
+			ProxySettings: func(c *Config) {
+				redisServer, err := miniredis.Run()
+
+				if err != nil {
+					t.Fatalf("Starting redis failed %s", err)
+				}
+
+				c.EnableUma = true
+				c.EnableDefaultDeny = true
+				c.ClientID = validUsername
+				c.ClientSecret = validPassword
+				c.PatRetryCount = 5
+				c.PatRetryInterval = 2 * time.Second
+				c.StoreURL = fmt.Sprintf("redis://%s", redisServer.Addr())
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           "/test",
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					ExpectedContent: func(body string, testNum int) {
+						assert.Contains(t, body, "test")
+						assert.Contains(t, body, "method")
+					},
+				},
+				{
+					URI:           "/test",
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					ExpectedContent: func(body string, testNum int) {
+						assert.Contains(t, body, "test")
+						assert.Contains(t, body, "method")
+					},
+				},
+			},
+			ExpectedCacheEntries: 1,
+			ExpectedCacheValues:  AllowedAuthz,
+		},
+		{
+			Name: "TestUmaTokenWithoutAuthzWithSameTokens",
+			PreRequestSettings: func(p *fakeProxy, reqs []fakeRequest) ([]fakeRequest, error) {
+				token := newTestToken(p.idp.getLocation())
+
+				raw, err := token.getToken()
+
+				if err != nil {
+					return nil, err
+				}
+
+				for i := range reqs {
+					reqs[i].RawToken = raw
+				}
+
+				return reqs, nil
+			},
+			ProxySettings: func(c *Config) {
+				redisServer, err := miniredis.Run()
+
+				if err != nil {
+					t.Fatalf("Starting redis failed %s", err)
+				}
+
+				c.EnableUma = true
+				c.EnableDefaultDeny = true
+				c.ClientID = validUsername
+				c.ClientSecret = validPassword
+				c.PatRetryCount = 5
+				c.PatRetryInterval = 2 * time.Second
+				c.StoreURL = fmt.Sprintf("redis://%s", redisServer.Addr())
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:                "/test",
+					ExpectedProxy:      false,
+					ExpectedCode:       http.StatusUnauthorized,
+					TokenAuthorization: &Permissions{},
+					ExpectedContent: func(body string, testNum int) {
+						assert.Equal(t, "", body)
+					},
+					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *Config, string){
+						"WWW-Authenticate": func(t *testing.T, c *Config, value string) {
+							assert.Contains(t, "ticket", value)
+						},
+					},
+				},
+				{
+					URI:                "/test",
+					ExpectedProxy:      false,
+					ExpectedCode:       http.StatusUnauthorized,
+					TokenAuthorization: &Permissions{},
+					ExpectedContent: func(body string, testNum int) {
+						assert.Equal(t, "", body)
+					},
+					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *Config, string){
+						"WWW-Authenticate": func(t *testing.T, c *Config, value string) {
+							assert.Contains(t, "ticket", value)
+						},
+					},
+				},
+			},
+			ExpectedCacheEntries: 1,
+			ExpectedCacheValues:  DeniedAuthz,
+		},
+		{
+			Name: "TestUmaOneOKOneWithoutPermissionToken",
+			PreRequestSettings: func(p *fakeProxy, reqs []fakeRequest) ([]fakeRequest, error) {
+				token := newTestToken(p.idp.getLocation())
+				token.claims.Authorization = Permissions{
+					Permissions: []Permission{
+						{
+							Scopes:       []string{"test"},
+							ResourceID:   "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",
+							ResourceName: "some",
+						},
+					},
+				}
+
+				raw, err := token.getToken()
+
+				if err != nil {
+					return nil, err
+				}
+
+				for i := range reqs {
+					reqs[i].RawToken = raw
+				}
+
+				return reqs, nil
+			},
+			ProxySettings: func(c *Config) {
+				redisServer, err := miniredis.Run()
+
+				if err != nil {
+					t.Fatalf("Starting redis failed %s", err)
+				}
+
+				c.EnableUma = true
+				c.EnableDefaultDeny = true
+				c.ClientID = validUsername
+				c.ClientSecret = validPassword
+				c.PatRetryCount = 5
+				c.PatRetryInterval = 2 * time.Second
+				c.StoreURL = fmt.Sprintf("redis://%s", redisServer.Addr())
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           "/test",
+					ExpectedProxy: false,
+					HasToken:      true,
+					ExpectedCode:  http.StatusUnauthorized,
+					ExpectedContent: func(body string, testNum int) {
+						assert.Equal(t, "", body)
+					},
+				},
+				{
+					URI:           "/test",
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					ExpectedContent: func(body string, testNum int) {
+						assert.Contains(t, body, "test")
+						assert.Contains(t, body, "method")
+					},
+				},
+			},
+			ExpectedCacheEntries: 2,
 		},
 	}
 
@@ -2082,8 +2325,40 @@ func TestEnableUma(t *testing.T) {
 			testCase.Name,
 			func(t *testing.T) {
 				testCase.ProxySettings(&c)
-				p := newFakeProxy(&c, &fakeAuthConfig{})
-				p.RunTests(t, testCase.ExecutionSettings)
+				fProxy := newFakeProxy(&c, &fakeAuthConfig{})
+				exSettings := testCase.ExecutionSettings
+				var err error
+
+				if testCase.PreRequestSettings != nil {
+					exSettings, err = testCase.PreRequestSettings(fProxy, exSettings)
+					if err != nil {
+						t.Fatalf("problem setting up prerequest settings %s", err)
+					}
+				}
+
+				fProxy.RunTests(t, exSettings)
+
+				result := fProxy.proxy.store.(redisStore).client.Keys("*")
+				if len(result.Val()) != testCase.ExpectedCacheEntries {
+					t.Fatalf(
+						"expected number of entries %d, got %d",
+						testCase.ExpectedCacheEntries,
+						len(result.Val()),
+					)
+				}
+
+				if testCase.ExpectedCacheValues != UndefinedAuthz {
+					for _, val := range result.Val() {
+						result := fProxy.proxy.store.(redisStore).client.Get(val)
+						if result.Val() != testCase.ExpectedCacheValues.String() {
+							t.Fatalf(
+								"expecting cached authz %s, got %s",
+								testCase.ExpectedCacheValues.String(),
+								result.Val(),
+							)
+						}
+					}
+				}
 			},
 		)
 	}
