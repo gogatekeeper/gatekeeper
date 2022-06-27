@@ -1806,6 +1806,14 @@ func TestGzipCompression(t *testing.T) {
 func TestEnableUma(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 
+	redisServer, err := miniredis.Run()
+
+	if err != nil {
+		t.Fatalf("Starting redis failed %s", err)
+	}
+
+	defer redisServer.Close()
+
 	requests := []struct {
 		Name              string
 		ProxySettings     func(c *Config)
@@ -1848,6 +1856,50 @@ func TestEnableUma(t *testing.T) {
 				c.PatRetryInterval = 2 * time.Second
 			},
 			ExecutionSettings: []fakeRequest{
+				{
+					URI:                "/test",
+					ExpectedProxy:      false,
+					HasToken:           true,
+					ExpectedCode:       http.StatusUnauthorized,
+					TokenAuthorization: &Permissions{},
+					ExpectedContent: func(body string, testNum int) {
+						assert.Equal(t, "", body)
+					},
+					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *Config, string){
+						"WWW-Authenticate": func(t *testing.T, c *Config, value string) {
+							assert.Contains(t, "ticket", value)
+						},
+					},
+				},
+			},
+		},
+		{
+			Name: "TestUmaTokenWithoutAuthzWithCache",
+			ProxySettings: func(c *Config) {
+				c.EnableUma = true
+				c.EnableDefaultDeny = true
+				c.ClientID = validUsername
+				c.ClientSecret = validPassword
+				c.PatRetryCount = 5
+				c.PatRetryInterval = 2 * time.Second
+				c.StoreURL = fmt.Sprintf("redis://%s", redisServer.Addr())
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:                "/test",
+					ExpectedProxy:      false,
+					HasToken:           true,
+					ExpectedCode:       http.StatusUnauthorized,
+					TokenAuthorization: &Permissions{},
+					ExpectedContent: func(body string, testNum int) {
+						assert.Equal(t, "", body)
+					},
+					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *Config, string){
+						"WWW-Authenticate": func(t *testing.T, c *Config, value string) {
+							assert.Contains(t, "ticket", value)
+						},
+					},
+				},
 				{
 					URI:                "/test",
 					ExpectedProxy:      false,
@@ -1948,6 +2000,58 @@ func TestEnableUma(t *testing.T) {
 				c.PatRetryInterval = 2 * time.Second
 			},
 			ExecutionSettings: []fakeRequest{
+				{
+					URI:           "/test",
+					ExpectedProxy: true,
+					HasToken:      true,
+					ExpectedCode:  http.StatusOK,
+					TokenAuthorization: &Permissions{
+						Permissions: []Permission{
+							{
+								Scopes:       []string{"test"},
+								ResourceID:   "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",
+								ResourceName: "some",
+							},
+						},
+					},
+					ExpectedContent: func(body string, testNum int) {
+						assert.Contains(t, body, "test")
+						assert.Contains(t, body, "method")
+					},
+				},
+			},
+		},
+		{
+			Name: "TestUmaOKWithCache",
+			ProxySettings: func(c *Config) {
+				c.EnableUma = true
+				c.EnableDefaultDeny = true
+				c.ClientID = validUsername
+				c.ClientSecret = validPassword
+				c.PatRetryCount = 5
+				c.PatRetryInterval = 2 * time.Second
+				c.StoreURL = fmt.Sprintf("redis://%s", redisServer.Addr())
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           "/test",
+					ExpectedProxy: true,
+					HasToken:      true,
+					ExpectedCode:  http.StatusOK,
+					TokenAuthorization: &Permissions{
+						Permissions: []Permission{
+							{
+								Scopes:       []string{"test"},
+								ResourceID:   "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",
+								ResourceName: "some",
+							},
+						},
+					},
+					ExpectedContent: func(body string, testNum int) {
+						assert.Contains(t, body, "test")
+						assert.Contains(t, body, "method")
+					},
+				},
 				{
 					URI:           "/test",
 					ExpectedProxy: true,
