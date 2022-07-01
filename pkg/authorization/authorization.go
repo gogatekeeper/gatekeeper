@@ -56,7 +56,6 @@ func (p *KeycloakAuthorizationProvider) Authorize(
 	PAT string,
 	realm string,
 ) (AuthzDecision, error) {
-
 	if len(perms.Permissions) == 0 {
 		return DeniedAuthz, apperrors.ErrPermissionNotInToken
 	}
