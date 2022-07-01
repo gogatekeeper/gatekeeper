@@ -232,7 +232,7 @@ func TestGetAuthz(t *testing.T) {
 						t.Fatalf("error getting authz %s", err)
 					}
 
-					if dec != authorization.UndefinedAuthz {
+					if dec != authorization.DeniedAuthz {
 						t.Fatalf("expected undefined authz decision, got %s", dec)
 					}
 
