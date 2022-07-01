@@ -20,6 +20,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
@@ -33,15 +34,15 @@ func extractIdentity(token *jwt.JSONWebToken) (*userContext, error) {
 
 	// Extract custom claims
 	type custClaims struct {
-		Email          string                 `json:"email"`
-		PrefName       string                 `json:"preferred_username"`
-		RealmAccess    RealmRoles             `json:"realm_access"`
-		Groups         []string               `json:"groups"`
-		ResourceAccess map[string]interface{} `json:"resource_access"`
-		FamilyName     string                 `json:"family_name"`
-		GivenName      string                 `json:"given_name"`
-		Username       string                 `json:"username"`
-		Authorization  Permissions            `json:"authorization"`
+		Email          string                    `json:"email"`
+		PrefName       string                    `json:"preferred_username"`
+		RealmAccess    RealmRoles                `json:"realm_access"`
+		Groups         []string                  `json:"groups"`
+		ResourceAccess map[string]interface{}    `json:"resource_access"`
+		FamilyName     string                    `json:"family_name"`
+		GivenName      string                    `json:"given_name"`
+		Username       string                    `json:"username"`
+		Authorization  authorization.Permissions `json:"authorization"`
 	}
 
 	customClaims := custClaims{}

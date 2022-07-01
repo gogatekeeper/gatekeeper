@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 
 	"go.uber.org/zap"
@@ -99,7 +100,7 @@ func (r *oauthProxy) StoreAuthz(token string, url *url.URL, value authorization.
 // Get retrieves a authz decision from store
 func (r *oauthProxy) GetAuthz(token string, url *url.URL) (authorization.AuthzDecision, error) {
 	if len(token) == 0 {
-		return authorization.UndefinedAuthz, ErrZeroLengthToken
+		return authorization.DeniedAuthz, ErrZeroLengthToken
 	}
 
 	tokenHash := getHashKey(token)
@@ -109,23 +110,23 @@ func (r *oauthProxy) GetAuthz(token string, url *url.URL) (authorization.AuthzDe
 	exists, err := r.store.Exists(hash)
 
 	if err != nil {
-		return authorization.UndefinedAuthz, err
+		return authorization.DeniedAuthz, err
 	}
 
 	if !exists {
-		return authorization.UndefinedAuthz, ErrNoAuthzFound
+		return authorization.DeniedAuthz, apperrors.ErrNoAuthzFound
 	}
 
 	val, err := r.store.Get(hash)
 
 	if err != nil {
-		return authorization.UndefinedAuthz, err
+		return authorization.DeniedAuthz, err
 	}
 
 	decision, err := strconv.Atoi(val)
 
 	if err != nil {
-		return authorization.UndefinedAuthz, err
+		return authorization.DeniedAuthz, err
 	}
 
 	return authorization.AuthzDecision(decision), nil

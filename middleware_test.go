@@ -1853,7 +1853,7 @@ func TestEnableUma(t *testing.T) {
 					ExpectedProxy:      false,
 					HasToken:           true,
 					ExpectedCode:       http.StatusUnauthorized,
-					TokenAuthorization: &Permissions{},
+					TokenAuthorization: &authorization.Permissions{},
 					ExpectedContent: func(body string, testNum int) {
 						assert.Equal(t, "", body)
 					},
@@ -1881,8 +1881,8 @@ func TestEnableUma(t *testing.T) {
 					ExpectedProxy: false,
 					HasToken:      true,
 					ExpectedCode:  http.StatusUnauthorized,
-					TokenAuthorization: &Permissions{
-						Permissions: []Permission{
+					TokenAuthorization: &authorization.Permissions{
+						Permissions: []authorization.Permission{
 							{
 								Scopes:       []string{"test"},
 								ResourceID:   "",
@@ -1917,8 +1917,8 @@ func TestEnableUma(t *testing.T) {
 					ExpectedProxy: false,
 					HasToken:      true,
 					ExpectedCode:  http.StatusUnauthorized,
-					TokenAuthorization: &Permissions{
-						Permissions: []Permission{
+					TokenAuthorization: &authorization.Permissions{
+						Permissions: []authorization.Permission{
 							{
 								Scopes:       []string{},
 								ResourceID:   "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",
@@ -1953,8 +1953,8 @@ func TestEnableUma(t *testing.T) {
 					ExpectedProxy: true,
 					HasToken:      true,
 					ExpectedCode:  http.StatusOK,
-					TokenAuthorization: &Permissions{
-						Permissions: []Permission{
+					TokenAuthorization: &authorization.Permissions{
+						Permissions: []authorization.Permission{
 							{
 								Scopes:       []string{"test"},
 								ResourceID:   "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",
@@ -2020,8 +2020,8 @@ func TestEnableUmaWithCache(t *testing.T) {
 					ExpectedProxy: false,
 					HasToken:      true,
 					ExpectedCode:  http.StatusUnauthorized,
-					TokenAuthorization: &Permissions{
-						Permissions: []Permission{
+					TokenAuthorization: &authorization.Permissions{
+						Permissions: []authorization.Permission{
 							{
 								Scopes:       []string{},
 								ResourceID:   "43322-0fd4-47f2-81fc-eead97a01c22",
@@ -2043,8 +2043,8 @@ func TestEnableUmaWithCache(t *testing.T) {
 					ExpectedProxy: false,
 					HasToken:      true,
 					ExpectedCode:  http.StatusUnauthorized,
-					TokenAuthorization: &Permissions{
-						Permissions: []Permission{
+					TokenAuthorization: &authorization.Permissions{
+						Permissions: []authorization.Permission{
 							{
 								Scopes:       []string{},
 								ResourceID:   "5422-0fd4-47f2-81fc-eead97a01c22",
@@ -2088,8 +2088,8 @@ func TestEnableUmaWithCache(t *testing.T) {
 					ExpectedProxy: true,
 					HasToken:      true,
 					ExpectedCode:  http.StatusOK,
-					TokenAuthorization: &Permissions{
-						Permissions: []Permission{
+					TokenAuthorization: &authorization.Permissions{
+						Permissions: []authorization.Permission{
 							{
 								Scopes:       []string{"test"},
 								ResourceID:   "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",
@@ -2107,8 +2107,8 @@ func TestEnableUmaWithCache(t *testing.T) {
 					ExpectedProxy: true,
 					HasToken:      true,
 					ExpectedCode:  http.StatusOK,
-					TokenAuthorization: &Permissions{
-						Permissions: []Permission{
+					TokenAuthorization: &authorization.Permissions{
+						Permissions: []authorization.Permission{
 							{
 								Scopes:       []string{"test"},
 								ResourceID:   "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",
@@ -2129,8 +2129,8 @@ func TestEnableUmaWithCache(t *testing.T) {
 			Name: "TestUmaOKWithSameTokens",
 			PreRequestSettings: func(p *fakeProxy, reqs []fakeRequest) ([]fakeRequest, error) {
 				token := newTestToken(p.idp.getLocation())
-				token.claims.Authorization = Permissions{
-					Permissions: []Permission{
+				token.claims.Authorization = authorization.Permissions{
+					Permissions: []authorization.Permission{
 						{
 							Scopes:       []string{"test"},
 							ResourceID:   "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",
@@ -2226,7 +2226,7 @@ func TestEnableUmaWithCache(t *testing.T) {
 					URI:                "/test",
 					ExpectedProxy:      false,
 					ExpectedCode:       http.StatusUnauthorized,
-					TokenAuthorization: &Permissions{},
+					TokenAuthorization: &authorization.Permissions{},
 					ExpectedContent: func(body string, testNum int) {
 						assert.Equal(t, "", body)
 					},
@@ -2240,7 +2240,7 @@ func TestEnableUmaWithCache(t *testing.T) {
 					URI:                "/test",
 					ExpectedProxy:      false,
 					ExpectedCode:       http.StatusUnauthorized,
-					TokenAuthorization: &Permissions{},
+					TokenAuthorization: &authorization.Permissions{},
 					ExpectedContent: func(body string, testNum int) {
 						assert.Equal(t, "", body)
 					},
@@ -2258,8 +2258,8 @@ func TestEnableUmaWithCache(t *testing.T) {
 			Name: "TestUmaOneOKOneWithoutPermissionToken",
 			PreRequestSettings: func(p *fakeProxy, reqs []fakeRequest) ([]fakeRequest, error) {
 				token := newTestToken(p.idp.getLocation())
-				token.claims.Authorization = Permissions{
-					Permissions: []Permission{
+				token.claims.Authorization = authorization.Permissions{
+					Permissions: []authorization.Permission{
 						{
 							Scopes:       []string{"test"},
 							ResourceID:   "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",

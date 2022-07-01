@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -120,8 +121,6 @@ var (
 	ErrNoSessionStateFound = errors.New("no session state found")
 	// ErrZeroLengthToken token has zero length
 	ErrZeroLengthToken = errors.New("token has zero length")
-	// ErrNoAuthzFound means there is not authz or it expired
-	ErrNoAuthzFound = errors.New("no authz found")
 	// ErrInvalidSession the session is invalid
 	ErrInvalidSession = errors.New("invalid session identifier")
 	// ErrRefreshTokenExpired indicates the refresh token as expired
@@ -441,16 +440,6 @@ type reverseProxy interface {
 	ServeHTTP(rw http.ResponseWriter, req *http.Request)
 }
 
-type Permission struct {
-	Scopes       []string `json:"scopes"`
-	ResourceID   string   `json:"rsid"`
-	ResourceName string   `json:"rsname"`
-}
-
-type Permissions struct {
-	Permissions []Permission `json:"permissions"`
-}
-
 // userContext holds the information extracted the token
 type userContext struct {
 	// the id of the user
@@ -476,7 +465,7 @@ type userContext struct {
 	// claims
 	claims map[string]interface{}
 	// permissions
-	permissions Permissions
+	permissions authorization.Permissions
 }
 
 // tokenResponse

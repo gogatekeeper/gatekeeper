@@ -27,13 +27,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Nerzal/gocloak/v11"
 	uuid "github.com/gofrs/uuid"
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 
 	"github.com/PuerkitoBio/purell"
 	oidc3 "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/unrolled/secure"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -461,174 +461,49 @@ func (r *oauthProxy) authorizationMiddleware() func(http.Handler) http.Handler {
 			user := scope.Identity
 			noAuthz := false
 
+			var decision authorization.AuthzDecision
+			var err error
+
 			if r.useStore() {
-				decision, err := r.GetAuthz(user.rawToken, req.URL)
-				noAuthz = err == ErrNoAuthzFound
-
-				if err != nil && !noAuthz {
-					r.log.Error(
-						"problem getting authz decision from store",
-					)
-
-					next.ServeHTTP(w, req.WithContext(r.redirectToAuthorization(w, req)))
-					return
-				}
-
-				if decision == authorization.DeniedAuthz {
-					r.log.Info(
-						"authz denied from cache",
-					)
-
-					next.ServeHTTP(w, req.WithContext(r.redirectToAuthorization(w, req)))
-					return
-				}
+				decision, err = r.GetAuthz(user.rawToken, req.URL)
+				noAuthz = err == apperrors.ErrNoAuthzFound
 			}
 
 			if !r.useStore() || noAuthz {
-				if len(user.permissions.Permissions) == 0 {
-					r.log.Info(
-						"permissions not found in token, " +
-							"redirecting for authorization",
-					)
-
-					if noAuthz {
-						err := r.StoreAuthz(
-							user.rawToken,
-							req.URL,
-							authorization.DeniedAuthz,
-							time.Until(user.expiresAt),
-						)
-
-						if err != nil {
-							r.log.Error(
-								"problem setting authz decision to store",
-							)
-						}
-					}
-
-					next.ServeHTTP(w, req.WithContext(r.redirectToAuthorization(w, req)))
-					return
-				}
-
-				resctx, cancel := context.WithTimeout(
-					context.Background(),
-					r.config.OpenIDProviderTimeout,
-				)
-
-				defer cancel()
-
-				matchingURI := true
-
-				resourceParam := gocloak.GetResourceParams{
-					URI:         &req.URL.Path,
-					MatchingURI: &matchingURI,
-				}
-
 				r.pat.m.Lock()
 				token := r.pat.Token.AccessToken
 				r.pat.m.Unlock()
 
-				resources, err := r.idpClient.GetResourcesClient(
-					resctx,
+				provider := authorization.KeycloakAuthorizationProvider{}
+				decision, err = provider.Authorize(
+					user.permissions,
+					req,
+					r.idpClient,
+					r.config.OpenIDProviderTimeout,
 					token,
 					r.config.Realm,
-					resourceParam,
 				)
+			}
 
+			switch err {
+			case apperrors.ErrPermissionNotInToken:
+				r.log.Info(apperrors.ErrPermissionNotInToken.Error())
+			case apperrors.ErrResourceRetrieve:
+				r.log.Info(apperrors.ErrResourceRetrieve.Error())
+			case apperrors.ErrNoIDPResourceForPath:
+				r.log.Info(apperrors.ErrNoIDPResourceForPath.Error())
+			case apperrors.ErrResourceIDNotPresent:
+				r.log.Info(apperrors.ErrResourceIDNotPresent.Error())
+			case apperrors.ErrTokenScopeNotMatchResourceScope:
+				r.log.Info(apperrors.ErrTokenScopeNotMatchResourceScope.Error())
+			case apperrors.ErrNoAuthzFound:
+			default:
 				if err != nil {
 					r.log.Error(
-						"problem getting resource from IDP, " +
-							"redirecting for authorization",
+						"Undexpected error during authorization",
+						zap.Error(err),
 					)
-
-					next.ServeHTTP(w, req.WithContext(r.redirectToAuthorization(w, req)))
-					return
-				}
-
-				if len(resources) == 0 {
-					r.log.Info(
-						"seems there is no resource in IDP matching incoming URI path",
-					)
-
-					if noAuthz {
-						err := r.StoreAuthz(
-							user.rawToken,
-							req.URL,
-							authorization.DeniedAuthz,
-							time.Until(user.expiresAt),
-						)
-
-						if err != nil {
-							r.log.Error(
-								"problem setting authz decision to store",
-							)
-						}
-					}
-					w.WriteHeader(http.StatusUnauthorized)
 					next.ServeHTTP(w, req.WithContext(r.revokeProxy(w, req)))
-					return
-				}
-
-				resourceID := resources[0].ID
-
-				if *resourceID != user.permissions.Permissions[0].ResourceID {
-					r.log.Info(
-						"token resource id does not match IDP resource " +
-							"id for path, redirecting for authorization",
-					)
-
-					if noAuthz {
-						err := r.StoreAuthz(
-							user.rawToken,
-							req.URL,
-							authorization.DeniedAuthz,
-							time.Until(user.expiresAt),
-						)
-
-						if err != nil {
-							r.log.Error(
-								"problem setting authz decision to store",
-							)
-						}
-					}
-					next.ServeHTTP(w, req.WithContext(r.redirectToAuthorization(w, req)))
-					return
-				}
-
-				inter := make([]bool, 0)
-				permScopes := make(map[string]bool)
-
-				for _, scope := range *resources[0].ResourceScopes {
-					permScopes[*scope.Name] = true
-				}
-
-				for _, scope := range user.permissions.Permissions[0].Scopes {
-					if permScopes[scope] {
-						inter = append(inter, true)
-					}
-				}
-
-				if len(inter) == 0 {
-					r.log.Info(
-						"token scopes does not match with IDP " +
-							"resource scopes, redirecting for authorization",
-					)
-
-					if noAuthz {
-						err := r.StoreAuthz(
-							user.rawToken,
-							req.URL,
-							authorization.DeniedAuthz,
-							time.Until(user.expiresAt),
-						)
-
-						if err != nil {
-							r.log.Error(
-								"problem setting authz decision to store",
-							)
-						}
-					}
-					next.ServeHTTP(w, req.WithContext(r.redirectToAuthorization(w, req)))
 					return
 				}
 			}
@@ -637,16 +512,30 @@ func (r *oauthProxy) authorizationMiddleware() func(http.Handler) http.Handler {
 				err := r.StoreAuthz(
 					user.rawToken,
 					req.URL,
-					authorization.AllowedAuthz,
+					decision,
 					time.Until(user.expiresAt),
 				)
 
 				if err != nil {
 					r.log.Error(
 						"problem setting authz decision to store",
+						zap.Error(err),
 					)
 				}
 			}
+
+			if decision == authorization.DeniedAuthz {
+				if !noAuthz {
+					r.log.Debug(
+						"authz denied from cache",
+						zap.String("user", user.name),
+						zap.String("path", req.URL.Path),
+					)
+				}
+				next.ServeHTTP(w, req.WithContext(r.redirectToAuthorization(w, req)))
+				return
+			}
+
 			next.ServeHTTP(w, req)
 		})
 	}

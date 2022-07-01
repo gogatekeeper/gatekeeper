@@ -18,6 +18,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	"github.com/jochasinga/relay"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/websocket"
@@ -55,32 +56,32 @@ type RoleClaim struct {
 }
 
 type DefaultTestTokenClaims struct {
-	Aud               string               `json:"aud"`
-	Azp               string               `json:"azp"`
-	ClientSession     string               `json:"client_session"`
-	Email             string               `json:"email"`
-	FamilyName        string               `json:"family_name"`
-	GivenName         string               `json:"given_name"`
-	Username          string               `json:"username"`
-	Iat               int64                `json:"iat"`
-	Iss               string               `json:"iss"`
-	Jti               string               `json:"jti"`
-	Name              string               `json:"name"`
-	Nbf               int                  `json:"nbf"`
-	Exp               int64                `json:"exp"`
-	PreferredUsername string               `json:"preferred_username"`
-	SessionState      string               `json:"session_state"`
-	Sub               string               `json:"sub"`
-	Typ               string               `json:"typ"`
-	Groups            []string             `json:"groups"`
-	RealmAccess       RoleClaim            `json:"realm_access"`
-	ResourceAccess    map[string]RoleClaim `json:"resource_access"`
-	Item              string               `json:"item"`
-	Found             string               `json:"found"`
-	Item1             []string             `json:"item1"`
-	Item2             []string             `json:"item2"`
-	Item3             []string             `json:"item3"`
-	Authorization     Permissions          `json:"authorization"`
+	Aud               string                    `json:"aud"`
+	Azp               string                    `json:"azp"`
+	ClientSession     string                    `json:"client_session"`
+	Email             string                    `json:"email"`
+	FamilyName        string                    `json:"family_name"`
+	GivenName         string                    `json:"given_name"`
+	Username          string                    `json:"username"`
+	Iat               int64                     `json:"iat"`
+	Iss               string                    `json:"iss"`
+	Jti               string                    `json:"jti"`
+	Name              string                    `json:"name"`
+	Nbf               int                       `json:"nbf"`
+	Exp               int64                     `json:"exp"`
+	PreferredUsername string                    `json:"preferred_username"`
+	SessionState      string                    `json:"session_state"`
+	Sub               string                    `json:"sub"`
+	Typ               string                    `json:"typ"`
+	Groups            []string                  `json:"groups"`
+	RealmAccess       RoleClaim                 `json:"realm_access"`
+	ResourceAccess    map[string]RoleClaim      `json:"resource_access"`
+	Item              string                    `json:"item"`
+	Found             string                    `json:"found"`
+	Item1             []string                  `json:"item1"`
+	Item2             []string                  `json:"item2"`
+	Item3             []string                  `json:"item3"`
+	Authorization     authorization.Permissions `json:"authorization"`
 }
 
 var defTestTokenClaims = DefaultTestTokenClaims{
@@ -141,7 +142,7 @@ type fakeRequest struct {
 	SkipIssuerCheck               bool
 	RequestCA                     string
 	TokenClaims                   map[string]interface{}
-	TokenAuthorization            *Permissions
+	TokenAuthorization            *authorization.Permissions
 	URI                           string
 	URL                           string
 	Username                      string
@@ -1266,8 +1267,8 @@ func (r *fakeAuthServer) tokenHandler(w http.ResponseWriter, req *http.Request) 
 	refreshToken.setExpiration(refreshExpires)
 
 	if req.FormValue("grant_type") == GrantTypeUmaTicket {
-		token.claims.Authorization = Permissions{
-			Permissions: []Permission{
+		token.claims.Authorization = authorization.Permissions{
+			Permissions: []authorization.Permission{
 				{
 					Scopes:       []string{"test"},
 					ResourceID:   "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",
