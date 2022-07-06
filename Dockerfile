@@ -5,10 +5,9 @@ ARG HOMEDIR=/opt/gatekeeper
 #
 
 FROM golang:1.17.6 AS build-env
-ARG SOURCE=*
 ARG HOMEDIR
 
-ADD $SOURCE /src/
+ADD . /src/
 WORKDIR /src/
 
 RUN make static
