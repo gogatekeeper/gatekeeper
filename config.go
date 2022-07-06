@@ -561,6 +561,11 @@ func (r *Config) isEnableUmaValid() error {
 				"enable uma requires client credentials",
 			)
 		}
+		if !r.NoRedirects {
+			return errors.New(
+				"enable-uma requires no-redirects option",
+			)
+		}
 	}
 	return nil
 }

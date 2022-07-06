@@ -312,6 +312,10 @@ $ bin/gatekeeper \
   --tls-ca-key=ca-key.pem
 ```
 
+## Forwarding with UMA token
+
+When `--enable-uma` is set in forwarding mode, proxy signs request with RPT token
+
 ## HTTPS redirect
 
 The proxy supports an HTTP listener, so the only real requirement here
@@ -672,13 +676,13 @@ UNIX socket, `--upstream-url unix://path/to/the/file.sock`.
 
   - **/oauth/discovery** provides endpoint with basic urls gatekeeper provides
 
-## Authorization
+## External Authorization
 
-In version 1.5.0 we are introducing authorization `--enable-uma`. 
+In version 1.5.0 we are introducing external authorization `--enable-uma`, only applicable with no-redirects option for now. 
 As it is new feature please don't use it in production, we would like first to receive feedback/testing by community. 
-Right now we use authorization options provided by Keycloak which are specified in UMA (user managed access specification).
+Right now we use external authorization options provided by Keycloak which are specified in UMA (user managed access specification [UMA](https://www.riskinsight-wavestone.com/en/2018/09/demystifying-uma2/)).
 To use this feature you need to enable authorization for client in keycloak and have
-**for each resource associated at least one scope and of course proper permissions set**.
+**for each resource associated at least one scope and of course proper permissions set** [Example Guide](https://gruchalski.com/posts/2020-09-05-introduction-to-keycloak-authorization-services/).
 
 To access endpoint protected by gatekeeper with authorization enabled you have to get RPT token.
 You can do that by performing following steps:
