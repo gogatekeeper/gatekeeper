@@ -173,6 +173,13 @@ all roles specified must be present in the claims, this behavior can be
 altered by the `require-any-role` option, however, so as long as one
 role is present the permission is granted.
 
+## Default Deny
+
+`--enable-default-deny` - option blocks all requests without valid token on all basic HTTP methods,
+(DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, TRACE). **WARNING:** There are no additional requirements on
+the token, it isn't checked for some claims or roles, groups etc..., so if you would like to block all requests,
+even with valid token you should use direct resource specification e.g. as example in whitelisting section.
+
 ## OpenID Provider Communication
 
 By default the communication with the OpenID provider is direct. If you
@@ -678,7 +685,9 @@ UNIX socket, `--upstream-url unix://path/to/the/file.sock`.
 
 ## External Authorization
 
-In version 1.5.0 we are introducing external authorization `--enable-uma`, only applicable with no-redirects option for now. 
+In version 1.5.0 we are introducing external authorization `--enable-uma`, only applicable with `--no-redirects` option for now.
+You have to also either populate resources or use `--enable-default-deny` (see examples in previous sections). So you can mix both external authorization+static resource permissions, but
+we don't recommend it to not overcomplicate setup. First is always external authorization then static resource authorization.
 As it is new feature please don't use it in production, we would like first to receive feedback/testing by community. 
 Right now we use external authorization options provided by Keycloak which are specified in UMA (user managed access specification [UMA](https://www.riskinsight-wavestone.com/en/2018/09/demystifying-uma2/)).
 To use this feature you need to enable authorization for client in keycloak and have
