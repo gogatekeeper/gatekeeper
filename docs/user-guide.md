@@ -690,8 +690,15 @@ You have to also either populate resources or use `--enable-default-deny` (see e
 we don't recommend it to not overcomplicate setup. First is always external authorization then static resource authorization.
 As it is new feature please don't use it in production, we would like first to receive feedback/testing by community. 
 Right now we use external authorization options provided by Keycloak which are specified in UMA (user managed access specification [UMA](https://www.riskinsight-wavestone.com/en/2018/09/demystifying-uma2/)).
-To use this feature you need to enable authorization for client in keycloak and have
-**for each resource associated at least one scope and of course proper permissions set** [Example Guide](https://gruchalski.com/posts/2020-09-05-introduction-to-keycloak-authorization-services/).
+To use this feature you need to execute these actions in keycloak:
+
+1. enable authorization for client in keycloak
+2. in client authorization tab, you should have protected resource
+3. protected resource should have User-Managed Access enabled
+4. protected resource should have at least one authorization scope
+5. protected resource should have proper permissions set
+
+[Example Keycloak Authorization Guide](https://gruchalski.com/posts/2020-09-05-introduction-to-keycloak-authorization-services/).
 
 To access endpoint protected by gatekeeper with authorization enabled you have to get RPT token.
 You can do that by performing following steps:
