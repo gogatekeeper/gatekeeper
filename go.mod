@@ -20,7 +20,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/unrolled/secure v1.0.8
 	github.com/urfave/cli v1.22.1
-	go.etcd.io/bbolt v1.3.5
 	go.uber.org/zap v1.13.0
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
