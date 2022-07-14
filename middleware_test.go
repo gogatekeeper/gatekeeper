@@ -46,10 +46,12 @@ func TestMetricsMiddleware(t *testing.T) {
 	cfg.EncryptionKey = testEncryptionKey
 	requests := []fakeRequest{
 		{
-			URI:           fakeAuthAllURL,
-			HasLogin:      true,
-			Redirects:     true,
-			OnResponse:    delay,
+			URI:       fakeAuthAllURL,
+			HasLogin:  true,
+			Redirects: true,
+			OnResponse: func(int, *resty.Request, *resty.Response) {
+				<-time.After(time.Duration(int64(2500)) * time.Millisecond)
+			},
 			ExpectedProxy: true,
 			ExpectedCode:  http.StatusOK,
 		},
@@ -85,21 +87,11 @@ func TestMetricsMiddleware(t *testing.T) {
 		{
 			URI:                     cfg.WithOAuthURI(metricsURL),
 			ExpectedCode:            http.StatusOK,
-			ExpectedContentContains: "action=\"login\"",
-		},
-		{
-			URI:                     cfg.WithOAuthURI(metricsURL),
-			ExpectedCode:            http.StatusOK,
-			ExpectedContentContains: "action=\"logout\"",
-		},
-		{
-			URI:                     cfg.WithOAuthURI(metricsURL),
-			ExpectedCode:            http.StatusOK,
 			ExpectedContentContains: "action=\"renew\"",
 		},
 	}
 	p := newFakeProxy(cfg, &fakeAuthConfig{})
-	p.idp.setTokenExpiration(1000 * time.Millisecond)
+	p.idp.setTokenExpiration(2000 * time.Millisecond)
 	p.RunTests(t, requests)
 }
 
@@ -1267,10 +1259,12 @@ func TestAccessTokenEncryption(t *testing.T) {
 			},
 			ExecutionSettings: []fakeRequest{
 				{
-					URI:                           fakeAuthAllURL,
-					HasLogin:                      true,
-					Redirects:                     true,
-					OnResponse:                    delay,
+					URI:       fakeAuthAllURL,
+					HasLogin:  true,
+					Redirects: true,
+					OnResponse: func(int, *resty.Request, *resty.Response) {
+						<-time.After(time.Duration(int64(2500)) * time.Millisecond)
+					},
 					ExpectedProxy:                 true,
 					ExpectedCode:                  http.StatusOK,
 					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *Config, string) bool{cfg.CookieAccessName: checkAccessTokenEncryption},
@@ -1296,10 +1290,12 @@ func TestAccessTokenEncryption(t *testing.T) {
 			},
 			ExecutionSettings: []fakeRequest{
 				{
-					URI:                           fakeAuthAllURL,
-					HasLogin:                      true,
-					Redirects:                     true,
-					OnResponse:                    delay,
+					URI:       fakeAuthAllURL,
+					HasLogin:  true,
+					Redirects: true,
+					OnResponse: func(int, *resty.Request, *resty.Response) {
+						<-time.After(time.Duration(int64(2500)) * time.Millisecond)
+					},
 					ExpectedProxy:                 true,
 					ExpectedCode:                  http.StatusOK,
 					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *Config, string) bool{cfg.CookieAccessName: checkAccessTokenEncryption},
@@ -1326,10 +1322,12 @@ func TestAccessTokenEncryption(t *testing.T) {
 			},
 			ExecutionSettings: []fakeRequest{
 				{
-					URI:                           fakeAuthAllURL,
-					HasLogin:                      true,
-					Redirects:                     true,
-					OnResponse:                    delay,
+					URI:       fakeAuthAllURL,
+					HasLogin:  true,
+					Redirects: true,
+					OnResponse: func(int, *resty.Request, *resty.Response) {
+						<-time.After(time.Duration(int64(2500)) * time.Millisecond)
+					},
 					ExpectedProxy:                 true,
 					ExpectedCode:                  http.StatusOK,
 					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *Config, string) bool{cfg.CookieAccessName: checkAccessTokenEncryption},
@@ -1354,7 +1352,7 @@ func TestAccessTokenEncryption(t *testing.T) {
 			testCase.Name,
 			func(t *testing.T) {
 				testCase.ProxySettings(c)
-				p := newFakeProxy(c, &fakeAuthConfig{Expiration: 1000 * time.Millisecond})
+				p := newFakeProxy(c, &fakeAuthConfig{Expiration: 2000 * time.Millisecond})
 				p.RunTests(t, testCase.ExecutionSettings)
 			},
 		)

@@ -395,7 +395,7 @@ func TestCustomCookieNames(t *testing.T) {
 				c := newFakeKeycloakConfig()
 				testCase.ProxySettings(c)
 				p := newFakeProxy(c, &fakeAuthConfig{})
-				p.idp.setTokenExpiration(1000 * time.Millisecond)
+				p.idp.setTokenExpiration(2000 * time.Millisecond)
 				p.RunTests(t, testCase.ExecutionSettings)
 			},
 		)
