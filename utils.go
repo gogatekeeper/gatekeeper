@@ -20,7 +20,7 @@ import (
 	"crypto/cipher"
 	cryptorand "crypto/rand"
 	"crypto/rsa"
-	sha "crypto/sha256"
+	sha "crypto/sha512"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -482,7 +482,7 @@ func getWithin(expires time.Time, within float64) time.Duration {
 
 // getHashKey returns a hash of the encodes jwt token
 func getHashKey(token string) string {
-	hash := sha.Sum256([]byte(token))
+	hash := sha.Sum512([]byte(token))
 	return base64.RawStdEncoding.EncodeToString(hash[:])
 }
 
