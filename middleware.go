@@ -319,7 +319,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 
 					if err != nil {
 						switch err {
-						case ErrRefreshTokenExpired:
+						case apperrors.ErrRefreshTokenExpired:
 							r.log.Warn(
 								"refresh token has expired, cannot retrieve access token",
 								zap.String("client_ip", clientIP),

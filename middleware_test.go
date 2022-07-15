@@ -31,6 +31,7 @@ import (
 	"github.com/alicebob/miniredis/v2"
 	resty "github.com/go-resty/resty/v2"
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
+	"github.com/gogatekeeper/gatekeeper/pkg/storage"
 	"github.com/rs/cors"
 	"github.com/stretchr/testify/assert"
 
@@ -2334,7 +2335,7 @@ func TestEnableUmaWithCache(t *testing.T) {
 
 				fProxy.RunTests(t, exSettings)
 
-				result := fProxy.proxy.store.(redisStore).client.Keys("*")
+				result := fProxy.proxy.store.(storage.RedisStore).Client.Keys("*")
 				if len(result.Val()) != testCase.ExpectedCacheEntries {
 					t.Fatalf(
 						"expected number of entries %d, got %d",
@@ -2345,7 +2346,7 @@ func TestEnableUmaWithCache(t *testing.T) {
 
 				if testCase.ExpectedCacheValues != authorization.UndefinedAuthz {
 					for _, val := range result.Val() {
-						result := fProxy.proxy.store.(redisStore).client.Get(val)
+						result := fProxy.proxy.store.(storage.RedisStore).Client.Get(val)
 						if result.Val() != testCase.ExpectedCacheValues.String() {
 							t.Fatalf(
 								"expecting cached authz %s, got %s",

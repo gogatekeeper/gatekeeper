@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -165,7 +166,7 @@ func TestGetTokenInRequest(t *testing.T) {
 		{
 			Token:                           "",
 			AuthScheme:                      "",
-			Error:                           ErrSessionNotFound,
+			Error:                           apperrors.ErrSessionNotFound,
 			SkipAuthorizationHeaderIdentity: false,
 		},
 		{
@@ -183,13 +184,13 @@ func TestGetTokenInRequest(t *testing.T) {
 		{
 			Token:                           "",
 			AuthScheme:                      "",
-			Error:                           ErrSessionNotFound,
+			Error:                           apperrors.ErrSessionNotFound,
 			SkipAuthorizationHeaderIdentity: true,
 		},
 		{
 			Token:                           token,
 			AuthScheme:                      "Bearer",
-			Error:                           ErrSessionNotFound,
+			Error:                           apperrors.ErrSessionNotFound,
 			SkipAuthorizationHeaderIdentity: true,
 		},
 		{
@@ -201,13 +202,13 @@ func TestGetTokenInRequest(t *testing.T) {
 		{
 			Token:                           "QWxhZGRpbjpPcGVuU2VzYW1l",
 			AuthScheme:                      "Basic",
-			Error:                           ErrSessionNotFound,
+			Error:                           apperrors.ErrSessionNotFound,
 			SkipAuthorizationHeaderIdentity: false,
 		},
 		{
 			Token:                           token,
 			AuthScheme:                      "Test",
-			Error:                           ErrSessionNotFound,
+			Error:                           apperrors.ErrSessionNotFound,
 			SkipAuthorizationHeaderIdentity: false,
 		},
 	}

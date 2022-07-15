@@ -16,7 +16,6 @@ limitations under the License.
 package main
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -112,21 +111,6 @@ var (
 		},
 		[]string{"code", "method"},
 	)
-)
-
-var (
-	// ErrSessionNotFound no session found in the request
-	ErrSessionNotFound = errors.New("authentication session not found")
-	// ErrNoSessionStateFound means there was not persist state
-	ErrNoSessionStateFound = errors.New("no session state found")
-	// ErrZeroLengthToken token has zero length
-	ErrZeroLengthToken = errors.New("token has zero length")
-	// ErrInvalidSession the session is invalid
-	ErrInvalidSession = errors.New("invalid session identifier")
-	// ErrRefreshTokenExpired indicates the refresh token as expired
-	ErrRefreshTokenExpired = errors.New("the refresh token has expired")
-	// ErrDecryption indicates we can't decrypt the token
-	ErrDecryption = errors.New("failed to decrypt token")
 )
 
 // Resource represents a url resource to protect
@@ -420,21 +404,6 @@ type RequestScope struct {
 	// Preserve the original request path: KEYCLOAK-10864, KEYCLOAK-11276, KEYCLOAK-13315
 	// The exact path received in the request, if different than Path
 	RawPath string
-}
-
-// storage is used to hold the offline refresh token, assuming you don't want to use
-// the default practice of a encrypted cookie
-type storage interface {
-	// Set the token to the store
-	Set(string, string, time.Duration) error
-	// Get retrieves a token from the store
-	Get(string) (string, error)
-	// Exists checks if key exists in store
-	Exists(string) (bool, error)
-	// Delete removes a key from the store
-	Delete(string) error
-	// Close is used to close off any resources
-	Close() error
 }
 
 // reverseProxy is a wrapper

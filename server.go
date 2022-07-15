@@ -47,6 +47,7 @@ import (
 	"github.com/elazarl/goproxy"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gogatekeeper/gatekeeper/pkg/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
@@ -69,7 +70,7 @@ type oauthProxy struct {
 	router         http.Handler
 	adminRouter    http.Handler
 	server         *http.Server
-	store          storage
+	store          storage.Storage
 	templates      *template.Template
 	upstream       reverseProxy
 	pat            *PAT
@@ -122,7 +123,7 @@ func newProxy(config *Config) (*oauthProxy, error) {
 
 	// initialize the store if any
 	if config.StoreURL != "" {
-		if svc.store, err = createStorage(config.StoreURL); err != nil {
+		if svc.store, err = storage.CreateStorage(config.StoreURL); err != nil {
 			return nil, err
 		}
 	}

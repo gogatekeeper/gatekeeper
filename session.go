@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"go.uber.org/zap"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
@@ -41,7 +42,7 @@ func (r *oauthProxy) getIdentity(req *http.Request) (*userContext, error) {
 
 	if r.config.EnableEncryptedToken || r.config.ForceEncryptedCookie && !isBearer {
 		if access, err = decodeText(access, r.config.EncryptionKey); err != nil {
-			return nil, ErrDecryption
+			return nil, apperrors.ErrDecryption
 		}
 	}
 
@@ -88,7 +89,7 @@ func getTokenInRequest(req *http.Request, name string, skipAuthorizationHeaderId
 
 	if !skipAuthorizationHeaderIdentity {
 		token, err = getTokenInBearer(req)
-		if err != nil && err != ErrSessionNotFound {
+		if err != nil && err != apperrors.ErrSessionNotFound {
 			return "", false, err
 		}
 	}
@@ -108,16 +109,16 @@ func getTokenInRequest(req *http.Request, name string, skipAuthorizationHeaderId
 func getTokenInBearer(req *http.Request) (string, error) {
 	token := req.Header.Get(authorizationHeader)
 	if token == "" {
-		return "", ErrSessionNotFound
+		return "", apperrors.ErrSessionNotFound
 	}
 
 	items := strings.Split(token, " ")
 	if len(items) != 2 {
-		return "", ErrInvalidSession
+		return "", apperrors.ErrInvalidSession
 	}
 
 	if items[0] != authorizationType {
-		return "", ErrSessionNotFound
+		return "", apperrors.ErrSessionNotFound
 	}
 	return items[1], nil
 }
@@ -141,7 +142,7 @@ func getTokenInCookie(req *http.Request, name string) (string, error) {
 	}
 
 	if token.Len() == 0 {
-		return "", ErrSessionNotFound
+		return "", apperrors.ErrSessionNotFound
 	}
 
 	return token.String(), nil

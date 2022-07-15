@@ -44,6 +44,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/urfave/cli"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -214,7 +215,7 @@ func decodeText(state, key string) (string, error) {
 	encoded, err := decryptDataBlock(cipherText, []byte(key))
 
 	if err != nil {
-		return "", ErrInvalidSession
+		return "", apperrors.ErrInvalidSession
 	}
 
 	return string(encoded), nil

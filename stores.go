@@ -27,27 +27,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// createStorage creates the store client for use
-func createStorage(location string) (storage, error) {
-	var store storage
-	var err error
-
-	u, err := url.Parse(location)
-
-	if err != nil {
-		return nil, err
-	}
-
-	switch u.Scheme {
-	case "redis":
-		store, err = newRedisStore(u)
-	default:
-		return nil, fmt.Errorf("unsupport store: %s", u.Scheme)
-	}
-
-	return store, err
-}
-
 // useStore checks if we are using a store to hold the refresh tokens
 func (r *oauthProxy) useStore() bool {
 	return r.store != nil
@@ -67,7 +46,7 @@ func (r *oauthProxy) GetRefreshToken(token string) (string, error) {
 		return v, err
 	}
 	if v == "" {
-		return v, ErrNoSessionStateFound
+		return v, apperrors.ErrNoSessionStateFound
 	}
 
 	return v, nil
@@ -100,7 +79,7 @@ func (r *oauthProxy) StoreAuthz(token string, url *url.URL, value authorization.
 // Get retrieves a authz decision from store
 func (r *oauthProxy) GetAuthz(token string, url *url.URL) (authorization.AuthzDecision, error) {
 	if len(token) == 0 {
-		return authorization.DeniedAuthz, ErrZeroLengthToken
+		return authorization.DeniedAuthz, apperrors.ErrZeroLengthToken
 	}
 
 	tokenHash := getHashKey(token)

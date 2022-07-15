@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package storage
 
 import (
 	"net/url"
@@ -22,14 +22,14 @@ import (
 	redis "gopkg.in/redis.v4"
 )
 
-var _ storage = (*redisStore)(nil)
+var _ Storage = (*RedisStore)(nil)
 
-type redisStore struct {
-	client *redis.Client
+type RedisStore struct {
+	Client *redis.Client
 }
 
 // newRedisStore creates a new redis store
-func newRedisStore(location *url.URL) (storage, error) {
+func newRedisStore(location *url.URL) (Storage, error) {
 	// step: get any password
 	password := ""
 	if location.User != nil {
@@ -43,14 +43,14 @@ func newRedisStore(location *url.URL) (storage, error) {
 		Password: password,
 	})
 
-	return redisStore{
-		client: client,
+	return RedisStore{
+		Client: client,
 	}, nil
 }
 
 // Set adds a token to the store
-func (r redisStore) Set(key, value string, expiration time.Duration) error {
-	if err := r.client.Set(key, value, expiration); err.Err() != nil {
+func (r RedisStore) Set(key, value string, expiration time.Duration) error {
+	if err := r.Client.Set(key, value, expiration); err.Err() != nil {
 		return err.Err()
 	}
 
@@ -58,8 +58,8 @@ func (r redisStore) Set(key, value string, expiration time.Duration) error {
 }
 
 // Checks if key exists in store
-func (r redisStore) Exists(key string) (bool, error) {
-	result := r.client.Exists(key)
+func (r RedisStore) Exists(key string) (bool, error) {
+	result := r.Client.Exists(key)
 	if result.Err() != nil {
 		return false, result.Err()
 	}
@@ -68,8 +68,8 @@ func (r redisStore) Exists(key string) (bool, error) {
 }
 
 // Get retrieves a token from the store
-func (r redisStore) Get(key string) (string, error) {
-	result := r.client.Get(key)
+func (r RedisStore) Get(key string) (string, error) {
+	result := r.Client.Get(key)
 	if result.Err() != nil {
 		return "", result.Err()
 	}
@@ -78,14 +78,14 @@ func (r redisStore) Get(key string) (string, error) {
 }
 
 // Delete remove the key
-func (r redisStore) Delete(key string) error {
-	return r.client.Del(key).Err()
+func (r RedisStore) Delete(key string) error {
+	return r.Client.Del(key).Err()
 }
 
 // Close closes of any open resources
-func (r redisStore) Close() error {
-	if r.client != nil {
-		return r.client.Close()
+func (r RedisStore) Close() error {
+	if r.Client != nil {
+		return r.Client.Close()
 	}
 
 	return nil

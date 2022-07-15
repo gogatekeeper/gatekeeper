@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 
@@ -88,7 +89,7 @@ func getRefreshedToken(conf *oauth2.Config, proxyConfig *Config, t string) (jwt.
 				"",
 				time.Time{},
 				time.Duration(0),
-				ErrRefreshTokenExpired
+				apperrors.ErrRefreshTokenExpired
 		}
 		return jwt.JSONWebToken{},
 			"",
