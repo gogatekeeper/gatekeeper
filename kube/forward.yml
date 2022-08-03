@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: proxy
@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: proxy
-        image: quay.io/gogatekeeper/gatekeeper:1.1.0
+        image: quay.io/gogatekeeper/gatekeeper:1.6.0
         imagePullPolicy: Always
         args:
           - --config /etc/secrets/forwarding.yml
