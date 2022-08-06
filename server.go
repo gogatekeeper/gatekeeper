@@ -189,6 +189,7 @@ func createLogger(config *Config) (*zap.Logger, error) {
 	cfg := zap.NewProductionConfig()
 	cfg.DisableStacktrace = true
 	cfg.DisableCaller = true
+
 	// Use human-readable timestamps in the logs until KEYCLOAK-12100 is fixed
 	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
@@ -231,7 +232,7 @@ func (r *oauthProxy) useDefaultStack(engine chi.Router) {
 	}
 
 	// @step: enable the entrypoint middleware
-	engine.Use(entrypointMiddleware)
+	engine.Use(r.entrypointMiddleware)
 
 	if r.config.EnableLogging {
 		engine.Use(r.loggingMiddleware)

@@ -24,6 +24,7 @@ import (
 
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
 )
 
 var (
@@ -404,6 +405,7 @@ type RequestScope struct {
 	// Preserve the original request path: KEYCLOAK-10864, KEYCLOAK-11276, KEYCLOAK-13315
 	// The exact path received in the request, if different than Path
 	RawPath string
+	Logger  *zap.Logger
 }
 
 // reverseProxy is a wrapper
