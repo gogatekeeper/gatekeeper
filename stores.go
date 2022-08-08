@@ -64,7 +64,7 @@ func (r *oauthProxy) DeleteRefreshToken(token string) error {
 }
 
 // StoreAuthz
-// nolint:interfacer
+//nolint:interfacer
 func (r *oauthProxy) StoreAuthz(token string, url *url.URL, value authorization.AuthzDecision, expiration time.Duration) error {
 	if len(token) == 0 {
 		return fmt.Errorf("token of zero length")

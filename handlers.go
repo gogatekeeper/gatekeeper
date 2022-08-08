@@ -130,7 +130,7 @@ func (r *oauthProxy) oauthAuthorizationHandler(wrt http.ResponseWriter, req *htt
 }
 
 // oauthCallbackHandler is responsible for handling the response from oauth service
-// nolint:funlen,cyclop
+//nolint:funlen,cyclop
 func (r *oauthProxy) oauthCallbackHandler(writer http.ResponseWriter, req *http.Request) {
 	if r.config.SkipTokenVerification {
 		writer.WriteHeader(http.StatusNotAcceptable)

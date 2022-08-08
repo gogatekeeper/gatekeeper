@@ -273,7 +273,7 @@ func TestSkipOpenIDProviderTLSVerifyLoginHandler(t *testing.T) {
 	newFakeProxy(cfg, &fakeAuthConfig{EnableTLS: true}).RunTests(t, requests)
 }
 
-// nolint:funlen
+//nolint:funlen
 func TestTokenEncryptionLoginHandler(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	uri := cfg.WithOAuthURI(loginURL)

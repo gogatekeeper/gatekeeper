@@ -1980,7 +1980,7 @@ func TestEnableUma(t *testing.T) {
 	}
 }
 
-// nolint:funlen,cyclop
+//nolint:funlen,cyclop
 func TestEnableUmaWithCache(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 
