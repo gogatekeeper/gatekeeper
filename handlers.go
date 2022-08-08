@@ -86,6 +86,15 @@ func (r *oauthProxy) oauthAuthorizationHandler(wrt http.ResponseWriter, req *htt
 		return
 	}
 
+	scope, assertOk := req.Context().Value(contextScopeName).(*RequestScope)
+
+	if !assertOk {
+		r.log.Error(
+			"Assertion failed",
+		)
+		return
+	}
+
 	conf := r.newOAuth2Config(r.getRedirectionURL(wrt, req))
 	// step: set the access type of the session
 	accessType := oauth2.AccessTypeOnline
@@ -96,7 +105,7 @@ func (r *oauthProxy) oauthAuthorizationHandler(wrt http.ResponseWriter, req *htt
 
 	authURL := conf.AuthCodeURL(req.URL.Query().Get("state"), accessType)
 
-	r.log.Debug(
+	scope.Logger.Debug(
 		"incoming authorization request from client address",
 		zap.Any("access_type", accessType),
 		zap.String("auth_url", authURL),
@@ -128,6 +137,15 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
+	scope, assertOk := req.Context().Value(contextScopeName).(*RequestScope)
+
+	if !assertOk {
+		r.log.Error(
+			"Assertion failed",
+		)
+		return
+	}
+
 	// step: ensure we have a authorization code
 	code := req.URL.Query().Get("code")
 
@@ -145,7 +163,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 	)
 
 	if err != nil {
-		r.log.Error("unable to exchange code for access token", zap.Error(err))
+		scope.Logger.Error("unable to exchange code for access token", zap.Error(err))
 		r.accessForbidden(w, req)
 		return
 	}
@@ -157,7 +175,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 	rawIDToken, ok := resp.Extra("id_token").(string)
 
 	if !ok {
-		r.log.Error("unable to obtain id token", zap.Error(err))
+		scope.Logger.Error("unable to obtain id token", zap.Error(err))
 		r.accessForbidden(w, req)
 		return
 	}
@@ -178,7 +196,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 	idToken, err = verifier.Verify(ctx, rawIDToken)
 
 	if err != nil {
-		r.log.Error("unable to verify the id token", zap.Error(err))
+		scope.Logger.Error("unable to verify the id token", zap.Error(err))
 		r.accessForbidden(w, req)
 		return
 	}
@@ -186,7 +204,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 	token, err := jwt.ParseSigned(rawIDToken)
 
 	if err != nil {
-		r.log.Error("unable to parse id token", zap.Error(err))
+		scope.Logger.Error("unable to parse id token", zap.Error(err))
 		r.accessForbidden(w, req)
 		return
 	}
@@ -200,7 +218,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 	err = token.UnsafeClaimsWithoutVerification(stdClaims, &customClaims)
 
 	if err != nil {
-		r.log.Error("unable to parse id token for claims", zap.Error(err))
+		scope.Logger.Error("unable to parse id token for claims", zap.Error(err))
 		r.accessForbidden(w, req)
 		return
 	}
@@ -212,7 +230,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 		err = idToken.VerifyAccessToken(resp.AccessToken)
 
 		if err != nil {
-			r.log.Error("unable to verify access token", zap.Error(err))
+			scope.Logger.Error("unable to verify access token", zap.Error(err))
 			r.accessForbidden(w, req)
 			return
 		}
@@ -224,7 +242,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 		token = accToken
 		rawToken = resp.AccessToken
 	} else {
-		r.log.Warn(
+		scope.Logger.Warn(
 			"unable to parse the access token, using id token only",
 			zap.Error(err),
 		)
@@ -235,7 +253,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 	err = token.UnsafeClaimsWithoutVerification(stdClaims, &customClaims)
 
 	if err != nil {
-		r.log.Error("unable to parse access token for claims", zap.Error(err))
+		scope.Logger.Error("unable to parse access token for claims", zap.Error(err))
 		r.accessForbidden(w, req)
 		return
 	}
@@ -245,13 +263,13 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 	// step: are we encrypting the access token?
 	if r.config.EnableEncryptedToken || r.config.ForceEncryptedCookie {
 		if accessToken, err = encodeText(accessToken, r.config.EncryptionKey); err != nil {
-			r.log.Error("unable to encode the access token", zap.Error(err))
+			scope.Logger.Error("unable to encode the access token", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	}
 
-	r.log.Debug(
+	scope.Logger.Debug(
 		"issuing access token for user",
 		zap.String("access token", accessToken),
 		zap.String("email", customClaims.Email),
@@ -260,7 +278,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 		zap.String("duration", time.Until(stdClaims.Expiry.Time()).String()),
 	)
 
-	r.log.Info(
+	scope.Logger.Info(
 		"issuing access token for user",
 		zap.String("email", customClaims.Email),
 		zap.String("sub", stdClaims.Subject),
@@ -277,7 +295,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 		encrypted, err = encodeText(resp.RefreshToken, r.config.EncryptionKey)
 
 		if err != nil {
-			r.log.Error(
+			scope.Logger.Error(
 				"failed to encrypt the refresh token",
 				zap.Error(err),
 				zap.String("sub", stdClaims.Subject),
@@ -302,7 +320,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 		refreshToken, err := jwt.ParseSigned(resp.RefreshToken)
 
 		if err != nil {
-			r.log.Error(
+			scope.Logger.Error(
 				"failed to parse refresh token",
 				zap.Error(err),
 				zap.String("sub", stdClaims.Subject),
@@ -326,7 +344,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 		switch r.useStore() {
 		case true:
 			if err = r.StoreRefreshToken(rawToken, encrypted, expiration); err != nil {
-				r.log.Warn(
+				scope.Logger.Warn(
 					"failed to save the refresh token in the store",
 					zap.Error(err),
 					zap.String("sub", stdClaims.Subject),
@@ -354,7 +372,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 			unescapedValue, err := url.PathUnescape(encodedRequestURI.Value)
 
 			if err != nil {
-				r.log.Warn(
+				scope.Logger.Warn(
 					"app did send a corrupted redirectURI in cookie: invalid url escaping",
 					zap.Error(err),
 				)
@@ -366,7 +384,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 			decoded, err := base64.StdEncoding.DecodeString(unescapedValue)
 
 			if err != nil {
-				r.log.Warn(
+				scope.Logger.Warn(
 					"app did send a corrupted redirectURI in cookie: invalid base64url encoding",
 					zap.Error(err),
 					zap.String("encoded_value", unescapedValue))
@@ -376,12 +394,22 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 		}
 	}
 
-	r.log.Debug("redirecting to", zap.String("location", redirectURI))
+	scope.Logger.Debug("redirecting to", zap.String("location", redirectURI))
 	r.redirectToURL(redirectURI, w, req, http.StatusSeeOther)
 }
 
 // loginHandler provide's a generic endpoint for clients to perform a user_credentials login to the provider
 func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
+	scope, assertOk := req.Context().Value(contextScopeName).(*RequestScope)
+
+	if !assertOk {
+		r.log.Error(
+			"Assertion failed",
+		)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	errorMsg, code, err := func() (string, int, error) {
 		ctx, cancel := context.WithTimeout(
 			context.Background(),
@@ -467,21 +495,21 @@ func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
 		// step: are we encrypting the access token?
 		if r.config.EnableEncryptedToken || r.config.ForceEncryptedCookie {
 			if accessToken, err = encodeText(accessToken, r.config.EncryptionKey); err != nil {
-				r.log.Error("unable to encode the access token", zap.Error(err))
+				scope.Logger.Error("unable to encode the access token", zap.Error(err))
 				return "unable to encode the access token",
 					http.StatusInternalServerError,
 					err
 			}
 
 			if refreshToken, err = encodeText(refreshToken, r.config.EncryptionKey); err != nil {
-				r.log.Error("unable to encode the refresh token", zap.Error(err))
+				scope.Logger.Error("unable to encode the refresh token", zap.Error(err))
 				return "unable to encode the refresh token",
 					http.StatusInternalServerError,
 					err
 			}
 
 			if idToken, err = encodeText(idToken, r.config.EncryptionKey); err != nil {
-				r.log.Error("unable to encode the idToken token", zap.Error(err))
+				scope.Logger.Error("unable to encode the idToken token", zap.Error(err))
 				return "unable to encode the idToken token",
 					http.StatusInternalServerError,
 					err
@@ -494,7 +522,7 @@ func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
 			encrypted, err = encodeText(token.RefreshToken, r.config.EncryptionKey)
 
 			if err != nil {
-				r.log.Error("failed to encrypt the refresh token", zap.Error(err))
+				scope.Logger.Error("failed to encrypt the refresh token", zap.Error(err))
 				return "failed to encrypt the refresh token",
 					http.StatusInternalServerError,
 					err
@@ -514,7 +542,7 @@ func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
 			refreshToken, errRef := jwt.ParseSigned(token.RefreshToken)
 
 			if errRef != nil {
-				r.log.Error("failed to parse refresh token", zap.Error(errRef))
+				scope.Logger.Error("failed to parse refresh token", zap.Error(errRef))
 				return "failed to parse refresh token",
 					http.StatusInternalServerError,
 					errRef
@@ -533,7 +561,7 @@ func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
 			switch r.useStore() {
 			case true:
 				if err = r.StoreRefreshToken(token.AccessToken, encrypted, expiration); err != nil {
-					r.log.Warn(
+					scope.Logger.Warn(
 						"failed to save the refresh token in the store",
 						zap.Error(err),
 					)
@@ -583,7 +611,7 @@ func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
 	}()
 
 	if err != nil {
-		r.log.Error(errorMsg,
+		scope.Logger.Error(errorMsg,
 			zap.String("client_ip", req.RemoteAddr),
 			zap.Error(err))
 
@@ -615,6 +643,16 @@ func (r *oauthProxy) logoutHandler(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	scope, assertOk := req.Context().Value(contextScopeName).(*RequestScope)
+
+	if !assertOk {
+		r.log.Error(
+			"Assertion failed",
+		)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	// @step: drop the access token
 	user, err := r.getIdentity(req)
 
@@ -639,7 +677,7 @@ func (r *oauthProxy) logoutHandler(w http.ResponseWriter, req *http.Request) {
 	if r.useStore() {
 		go func() {
 			if err = r.DeleteRefreshToken(user.rawToken); err != nil {
-				r.log.Error(
+				scope.Logger.Error(
 					"unable to remove the refresh token from store",
 					zap.Error(err),
 				)
@@ -704,7 +742,7 @@ func (r *oauthProxy) logoutHandler(w http.ResponseWriter, req *http.Request) {
 		}
 
 		if err != nil {
-			r.log.Error("unable to retrieve the openid client", zap.Error(err))
+			scope.Logger.Error("unable to retrieve the openid client", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -723,7 +761,7 @@ func (r *oauthProxy) logoutHandler(w http.ResponseWriter, req *http.Request) {
 		)
 
 		if err != nil {
-			r.log.Error("unable to construct the revocation request", zap.Error(err))
+			scope.Logger.Error("unable to construct the revocation request", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -736,7 +774,7 @@ func (r *oauthProxy) logoutHandler(w http.ResponseWriter, req *http.Request) {
 		response, err := client.Do(request)
 
 		if err != nil {
-			r.log.Error("unable to post to revocation endpoint", zap.Error(err))
+			scope.Logger.Error("unable to post to revocation endpoint", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -749,14 +787,14 @@ func (r *oauthProxy) logoutHandler(w http.ResponseWriter, req *http.Request) {
 		// step: check the response
 		switch response.StatusCode {
 		case http.StatusOK:
-			r.log.Info(
+			scope.Logger.Info(
 				"successfully logged out of the endpoint",
 				zap.String("email", user.email),
 			)
 		default:
 			content, _ := ioutil.ReadAll(response.Body)
 
-			r.log.Error(
+			scope.Logger.Error(
 				"invalid response from revocation endpoint",
 				zap.Int("status", response.StatusCode),
 				zap.String("response", string(content)),
