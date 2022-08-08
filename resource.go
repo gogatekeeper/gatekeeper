@@ -29,6 +29,7 @@ func newResource() *Resource {
 }
 
 // parse decodes a resource definition
+//nolint:cyclop
 func (r *Resource) parse(resource string) (*Resource, error) {
 	if resource == "" {
 		return nil, errors.New("the resource has no options")

@@ -355,12 +355,14 @@ func tryUpdateConnection(req *http.Request, writer http.ResponseWriter, endpoint
 	defer server.Close()
 
 	// @check the the response writer implements the Hijack method
-	if _, ok := writer.(http.Hijacker); !ok {
-		return errors.New("writer does not implement http.Hijacker method")
+	hijacker, assertOk := writer.(http.Hijacker)
+
+	if !assertOk {
+		return fmt.Errorf("writer does not implement http.Hijacker method")
 	}
 
 	// @step: get the client connection object
-	client, _, err := writer.(http.Hijacker).Hijack()
+	client, _, err := hijacker.Hijack()
 
 	if err != nil {
 		return err

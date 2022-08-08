@@ -90,6 +90,7 @@ func newOauthProxyApp() *cli.App {
 
 // getCommandLineOptions builds the command line options by reflecting the Config struct and extracting
 // the tagged information
+//nolint:cyclop
 func getCommandLineOptions() []cli.Flag {
 	defaults := newDefaultConfig()
 	var flags []cli.Flag
@@ -167,7 +168,8 @@ func getCommandLineOptions() []cli.Flag {
 }
 
 // parseCLIOptions parses the command line options and constructs a config object
-func parseCLIOptions(cx *cli.Context, config *Config) (err error) {
+//nolint:cyclop
+func parseCLIOptions(cliCtx *cli.Context, config *Config) error {
 	// step: we can ignore these options in the Config struct
 	ignoredOptions := []string{"tag-data", "match-claims", "resources", "headers"}
 	// step: iterate the Config and grab command line options via reflection
@@ -181,53 +183,53 @@ func parseCLIOptions(cx *cli.Context, config *Config) (err error) {
 			continue
 		}
 
-		if cx.IsSet(name) {
+		if cliCtx.IsSet(name) {
 			switch field.Type.Kind() {
 			case reflect.Bool:
-				reflect.ValueOf(config).Elem().FieldByName(field.Name).SetBool(cx.Bool(name))
+				reflect.ValueOf(config).Elem().FieldByName(field.Name).SetBool(cliCtx.Bool(name))
 			case reflect.String:
-				reflect.ValueOf(config).Elem().FieldByName(field.Name).SetString(cx.String(name))
+				reflect.ValueOf(config).Elem().FieldByName(field.Name).SetString(cliCtx.String(name))
 			case reflect.Slice:
-				reflect.ValueOf(config).Elem().FieldByName(field.Name).Set(reflect.ValueOf(cx.StringSlice(name)))
+				reflect.ValueOf(config).Elem().FieldByName(field.Name).Set(reflect.ValueOf(cliCtx.StringSlice(name)))
 			case reflect.Int:
-				reflect.ValueOf(config).Elem().FieldByName(field.Name).Set(reflect.ValueOf(cx.Int(name)))
+				reflect.ValueOf(config).Elem().FieldByName(field.Name).Set(reflect.ValueOf(cliCtx.Int(name)))
 			case reflect.Int64:
 				switch field.Type.String() {
 				case durationType:
-					reflect.ValueOf(config).Elem().FieldByName(field.Name).SetInt(int64(cx.Duration(name)))
+					reflect.ValueOf(config).Elem().FieldByName(field.Name).SetInt(int64(cliCtx.Duration(name)))
 				default:
-					reflect.ValueOf(config).Elem().FieldByName(field.Name).SetInt(cx.Int64(name))
+					reflect.ValueOf(config).Elem().FieldByName(field.Name).SetInt(cliCtx.Int64(name))
 				}
 			}
 		}
 	}
 
-	if cx.IsSet("tag") {
-		tags, err := decodeKeyPairs(cx.StringSlice("tag"))
+	if cliCtx.IsSet("tag") {
+		tags, err := decodeKeyPairs(cliCtx.StringSlice("tag"))
 		if err != nil {
 			return err
 		}
 		mergeMaps(config.Tags, tags)
 	}
 
-	if cx.IsSet("match-claims") {
-		claims, err := decodeKeyPairs(cx.StringSlice("match-claims"))
+	if cliCtx.IsSet("match-claims") {
+		claims, err := decodeKeyPairs(cliCtx.StringSlice("match-claims"))
 		if err != nil {
 			return err
 		}
 		mergeMaps(config.MatchClaims, claims)
 	}
 
-	if cx.IsSet("headers") {
-		headers, err := decodeKeyPairs(cx.StringSlice("headers"))
+	if cliCtx.IsSet("headers") {
+		headers, err := decodeKeyPairs(cliCtx.StringSlice("headers"))
 		if err != nil {
 			return err
 		}
 		mergeMaps(config.Headers, headers)
 	}
 
-	if cx.IsSet("resources") {
-		for _, x := range cx.StringSlice("resources") {
+	if cliCtx.IsSet("resources") {
+		for _, x := range cliCtx.StringSlice("resources") {
 			resource, err := newResource().parse(x)
 			if err != nil {
 				return fmt.Errorf("invalid resource %s, %s", x, err)

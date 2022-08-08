@@ -256,8 +256,14 @@ func TestSkipOpenIDProviderTLSVerifyLoginHandler(t *testing.T) {
 
 	defer func() {
 		if r := recover(); r != nil {
+			failure, assertOk := r.(string)
+
+			if !assertOk {
+				t.Fatalf("assertion failed")
+			}
+
 			check := strings.Contains(
-				r.(string),
+				failure,
 				"failed to retrieve the provider configuration from discovery url",
 			)
 			assert.True(t, check)
@@ -668,8 +674,14 @@ func TestSkipOpenIDProviderTLSVerifyLogoutHandler(t *testing.T) {
 
 	defer func() {
 		if r := recover(); r != nil {
+			failure, assertOk := r.(string)
+
+			if !assertOk {
+				t.Fatalf("assertion failed")
+			}
+
 			check := strings.Contains(
-				r.(string),
+				failure,
 				"failed to retrieve the provider configuration from discovery url",
 			)
 			assert.True(t, check)

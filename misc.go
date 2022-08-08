@@ -64,7 +64,13 @@ func (r *oauthProxy) revokeProxy(w http.ResponseWriter, req *http.Request) conte
 	case nil:
 		scope = &RequestScope{AccessDenied: true}
 	default:
-		scope = ctxVal.(*RequestScope)
+		var assertOk bool
+		scope, assertOk = ctxVal.(*RequestScope)
+
+		if !assertOk {
+			r.log.Error("assertion failed")
+			scope = &RequestScope{AccessDenied: true}
+		}
 	}
 
 	scope.AccessDenied = true

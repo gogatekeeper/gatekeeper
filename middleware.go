@@ -103,7 +103,7 @@ func (r *oauthProxy) loggingMiddleware(next http.Handler) http.Handler {
 
 		if !assertOk {
 			r.log.Error(
-				"Assertion failed",
+				"assertion failed",
 			)
 			return
 		}
@@ -112,7 +112,7 @@ func (r *oauthProxy) loggingMiddleware(next http.Handler) http.Handler {
 
 		if !assertOk {
 			r.log.Error(
-				"Assertion failed",
+				"assertion failed",
 			)
 			return
 		}
@@ -150,7 +150,7 @@ func (r *oauthProxy) loggingMiddleware(next http.Handler) http.Handler {
 }
 
 // authenticationMiddleware is responsible for verifying the access token
-// nolint:funlen
+// nolint:funlen,cyclop
 func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
@@ -158,7 +158,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 
 			if !assertOk {
 				r.log.Error(
-					"Assertion failed",
+					"assertion failed",
 				)
 				return
 			}
@@ -385,12 +385,12 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 						}
 
 						if r.useStore() {
-							go func(old, new string, encrypted string) {
+							go func(old, newToken string, encrypted string) {
 								if err := r.DeleteRefreshToken(old); err != nil {
 									scope.Logger.Error("failed to remove old token", zap.Error(err))
 								}
 
-								if err := r.StoreRefreshToken(new, encrypted, refreshExpiresIn); err != nil {
+								if err := r.StoreRefreshToken(newToken, encrypted, refreshExpiresIn); err != nil {
 									scope.Logger.Error("failed to store refresh token", zap.Error(err))
 									return
 								}
@@ -412,7 +412,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 }
 
 // authorizationMiddleware is responsible for verifying permissions in access_token
-// nolint:funlen
+//nolint:cyclop
 func (r *oauthProxy) authorizationMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
@@ -420,7 +420,7 @@ func (r *oauthProxy) authorizationMiddleware() func(http.Handler) http.Handler {
 
 			if !assertOk {
 				r.log.Error(
-					"Assertion failed",
+					"assertion failed",
 				)
 				return
 			}
@@ -514,6 +514,7 @@ func (r *oauthProxy) authorizationMiddleware() func(http.Handler) http.Handler {
 }
 
 // checkClaim checks whether claim in userContext matches claimName, match. It can be String or Strings claim.
+//nolint:cyclop
 func (r *oauthProxy) checkClaim(user *userContext, claimName string, match *regexp.Regexp, resourceURL string) bool {
 	errFields := []zapcore.Field{
 		zap.String("claim", claimName),
@@ -529,7 +530,14 @@ func (r *oauthProxy) checkClaim(user *userContext, claimName string, match *rege
 
 	switch user.claims[claimName].(type) {
 	case []interface{}:
-		for _, v := range user.claims[claimName].([]interface{}) {
+		claims, assertOk := user.claims[claimName].([]interface{})
+
+		if !assertOk {
+			r.log.Error("assertion failed")
+			return false
+		}
+
+		for _, v := range claims {
 			value, ok := v.(string)
 
 			if !ok {
@@ -552,6 +560,7 @@ func (r *oauthProxy) checkClaim(user *userContext, claimName string, match *rege
 				return true
 			}
 		}
+
 		r.log.Warn(
 			"claim requirement does not match any element claim group in token",
 			append(
@@ -566,7 +575,14 @@ func (r *oauthProxy) checkClaim(user *userContext, claimName string, match *rege
 
 		return false
 	case string:
-		if match.MatchString(user.claims[claimName].(string)) {
+		claims, assertOk := user.claims[claimName].(string)
+
+		if !assertOk {
+			r.log.Error("assertion failed")
+			return false
+		}
+
+		if match.MatchString(claims) {
 			return true
 		}
 
@@ -574,7 +590,7 @@ func (r *oauthProxy) checkClaim(user *userContext, claimName string, match *rege
 			"claim requirement does not match claim in token",
 			append(
 				errFields,
-				zap.String("issued", user.claims[claimName].(string)),
+				zap.String("issued", claims),
 				zap.String("required", match.String()),
 			)...,
 		)
@@ -605,7 +621,7 @@ func (r *oauthProxy) admissionMiddleware(resource *Resource) func(http.Handler) 
 
 			if !assertOk {
 				r.log.Error(
-					"Assertion failed",
+					"assertion failed",
 				)
 				return
 			}
@@ -695,7 +711,14 @@ func (r *oauthProxy) identityHeadersMiddleware(custom []string) func(http.Handle
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
-			scope := req.Context().Value(contextScopeName).(*RequestScope)
+			scope, assertOk := req.Context().Value(contextScopeName).(*RequestScope)
+
+			if !assertOk {
+				r.log.Error(
+					"assertion failed",
+				)
+				return
+			}
 
 			if scope.Identity != nil {
 				user := scope.Identity
@@ -752,7 +775,7 @@ func (r *oauthProxy) securityMiddleware(next http.Handler) http.Handler {
 
 		if !assertOk {
 			r.log.Error(
-				"Assertion failed",
+				"assertion failed",
 			)
 			return
 		}
@@ -783,7 +806,7 @@ func (r *oauthProxy) methodCheckMiddleware(next http.Handler) http.Handler {
 }
 
 // proxyDenyMiddleware just block everything
-func proxyDenyMiddleware(next http.Handler) http.Handler {
+func (r *oauthProxy) proxyDenyMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
 		ctxVal := req.Context().Value(contextScopeName)
 
@@ -791,7 +814,14 @@ func proxyDenyMiddleware(next http.Handler) http.Handler {
 		if ctxVal == nil {
 			scope = &RequestScope{}
 		} else {
-			scope = ctxVal.(*RequestScope)
+			var assertOk bool
+			scope, assertOk = ctxVal.(*RequestScope)
+			if !assertOk {
+				r.log.Error(
+					"assertion failed",
+				)
+				return
+			}
 		}
 
 		scope.AccessDenied = true

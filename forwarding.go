@@ -25,6 +25,7 @@ import (
 )
 
 // proxyMiddleware is responsible for handles reverse proxy request to the upstream endpoint
+//nolint:cyclop
 func (r *oauthProxy) proxyMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
 		next.ServeHTTP(wrt, req)
@@ -33,7 +34,16 @@ func (r *oauthProxy) proxyMiddleware(next http.Handler) http.Handler {
 		ctxVal := req.Context().Value(contextScopeName)
 		var scope *RequestScope
 		if ctxVal != nil {
-			scope = ctxVal.(*RequestScope)
+			var assertOk bool
+			scope, assertOk = ctxVal.(*RequestScope)
+
+			if !assertOk {
+				r.log.Error(
+					"assertion failed",
+				)
+				return
+			}
+
 			if scope.AccessDenied {
 				return
 			}
@@ -89,7 +99,6 @@ func (r *oauthProxy) proxyMiddleware(next http.Handler) http.Handler {
 }
 
 // forwardProxyHandler is responsible for signing outbound requests
-// nolint:funlen
 func (r *oauthProxy) forwardProxyHandler() func(*http.Request, *http.Response) {
 	return func(req *http.Request, resp *http.Response) {
 		var token string

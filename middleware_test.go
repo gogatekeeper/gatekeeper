@@ -118,6 +118,7 @@ func TestOauthRequests(t *testing.T) {
 	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
 }
 
+//nolint:cyclop
 func TestAdminListener(t *testing.T) {
 	testCases := []struct {
 		Name              string
@@ -1979,7 +1980,7 @@ func TestEnableUma(t *testing.T) {
 	}
 }
 
-// nolint:funlen
+// nolint:funlen,cyclop
 func TestEnableUmaWithCache(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 
@@ -2333,7 +2334,14 @@ func TestEnableUmaWithCache(t *testing.T) {
 
 				fProxy.RunTests(t, exSettings)
 
-				result := fProxy.proxy.store.(storage.RedisStore).Client.Keys("*")
+				redisStoreInstance, assertOk := fProxy.proxy.store.(storage.RedisStore)
+
+				if !assertOk {
+					t.Fatalf("assertion failed")
+				}
+
+				result := redisStoreInstance.Client.Keys("*")
+
 				if len(result.Val()) != testCase.ExpectedCacheEntries {
 					t.Fatalf(
 						"expected number of entries %d, got %d",
@@ -2344,7 +2352,7 @@ func TestEnableUmaWithCache(t *testing.T) {
 
 				if testCase.ExpectedCacheValues != authorization.UndefinedAuthz {
 					for _, val := range result.Val() {
-						result := fProxy.proxy.store.(storage.RedisStore).Client.Get(val)
+						result := redisStoreInstance.Client.Get(val)
 						if result.Val() != testCase.ExpectedCacheValues.String() {
 							t.Fatalf(
 								"expecting cached authz %s, got %s",

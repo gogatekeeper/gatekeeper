@@ -203,6 +203,7 @@ func (r *Config) isSameSiteValid() error {
 	return nil
 }
 
+//nolint:cyclop
 func (r *Config) isTLSFilesValid() error {
 	if r.TLSCertificate != "" && r.TLSPrivateKey == "" {
 		return errors.New("you have not provided a private key")
@@ -237,6 +238,7 @@ func (r *Config) isTLSFilesValid() error {
 	return nil
 }
 
+//nolint:cyclop
 func (r *Config) isAdminTLSFilesValid() error {
 	if r.TLSAdminCertificate != "" && r.TLSAdminPrivateKey == "" {
 		return errors.New("you have not provided a private key for admin endpoint")

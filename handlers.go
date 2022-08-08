@@ -90,7 +90,7 @@ func (r *oauthProxy) oauthAuthorizationHandler(wrt http.ResponseWriter, req *htt
 
 	if !assertOk {
 		r.log.Error(
-			"Assertion failed",
+			"assertion failed",
 		)
 		return
 	}
@@ -130,10 +130,10 @@ func (r *oauthProxy) oauthAuthorizationHandler(wrt http.ResponseWriter, req *htt
 }
 
 // oauthCallbackHandler is responsible for handling the response from oauth service
-// nolint:funlen
-func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Request) {
+// nolint:funlen,cyclop
+func (r *oauthProxy) oauthCallbackHandler(writer http.ResponseWriter, req *http.Request) {
 	if r.config.SkipTokenVerification {
-		w.WriteHeader(http.StatusNotAcceptable)
+		writer.WriteHeader(http.StatusNotAcceptable)
 		return
 	}
 
@@ -141,7 +141,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 
 	if !assertOk {
 		r.log.Error(
-			"Assertion failed",
+			"assertion failed",
 		)
 		return
 	}
@@ -150,11 +150,11 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 	code := req.URL.Query().Get("code")
 
 	if code == "" {
-		r.accessError(w, req)
+		r.accessError(writer, req)
 		return
 	}
 
-	conf := r.newOAuth2Config(r.getRedirectionURL(w, req))
+	conf := r.newOAuth2Config(r.getRedirectionURL(writer, req))
 
 	resp, err := exchangeAuthenticationCode(
 		conf,
@@ -164,19 +164,19 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 
 	if err != nil {
 		scope.Logger.Error("unable to exchange code for access token", zap.Error(err))
-		r.accessForbidden(w, req)
+		r.accessForbidden(writer, req)
 		return
 	}
 
-	rawToken := ""
+	var rawToken string
 	// Flow: once we exchange the authorization code we parse the ID Token; we then check for an access token,
 	// if an access token is present and we can decode it, we use that as the session token, otherwise we default
 	// to the ID Token.
-	rawIDToken, ok := resp.Extra("id_token").(string)
+	rawIDToken, assertOk := resp.Extra("id_token").(string)
 
-	if !ok {
+	if !assertOk {
 		scope.Logger.Error("unable to obtain id token", zap.Error(err))
-		r.accessForbidden(w, req)
+		r.accessForbidden(writer, req)
 		return
 	}
 
@@ -197,7 +197,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 
 	if err != nil {
 		scope.Logger.Error("unable to verify the id token", zap.Error(err))
-		r.accessForbidden(w, req)
+		r.accessForbidden(writer, req)
 		return
 	}
 
@@ -205,7 +205,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 
 	if err != nil {
 		scope.Logger.Error("unable to parse id token", zap.Error(err))
-		r.accessForbidden(w, req)
+		r.accessForbidden(writer, req)
 		return
 	}
 
@@ -219,7 +219,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 
 	if err != nil {
 		scope.Logger.Error("unable to parse id token for claims", zap.Error(err))
-		r.accessForbidden(w, req)
+		r.accessForbidden(writer, req)
 		return
 	}
 
@@ -231,7 +231,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 
 		if err != nil {
 			scope.Logger.Error("unable to verify access token", zap.Error(err))
-			r.accessForbidden(w, req)
+			r.accessForbidden(writer, req)
 			return
 		}
 	}
@@ -254,7 +254,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 
 	if err != nil {
 		scope.Logger.Error("unable to parse access token for claims", zap.Error(err))
-		r.accessForbidden(w, req)
+		r.accessForbidden(writer, req)
 		return
 	}
 
@@ -264,7 +264,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 	if r.config.EnableEncryptedToken || r.config.ForceEncryptedCookie {
 		if accessToken, err = encodeText(accessToken, r.config.EncryptionKey); err != nil {
 			scope.Logger.Error("unable to encode the access token", zap.Error(err))
-			w.WriteHeader(http.StatusInternalServerError)
+			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	}
@@ -302,13 +302,13 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 				zap.String("email", customClaims.Email),
 			)
 
-			w.WriteHeader(http.StatusInternalServerError)
+			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		// drop in the access token - cookie expiration = access token
 		r.dropAccessTokenCookie(
 			req,
-			w,
+			writer,
 			accessToken,
 			r.getAccessCookieExpiration(resp.RefreshToken),
 		)
@@ -327,7 +327,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 				zap.String("email", customClaims.Email),
 			)
 
-			w.WriteHeader(http.StatusInternalServerError)
+			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -352,12 +352,12 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 				)
 			}
 		default:
-			r.dropRefreshTokenCookie(req, w, encrypted, expiration)
+			r.dropRefreshTokenCookie(req, writer, encrypted, expiration)
 		}
 	} else {
 		r.dropAccessTokenCookie(
 			req,
-			w,
+			writer,
 			accessToken,
 			time.Until(stdClaims.Expiry.Time()),
 		)
@@ -395,18 +395,19 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	scope.Logger.Debug("redirecting to", zap.String("location", redirectURI))
-	r.redirectToURL(redirectURI, w, req, http.StatusSeeOther)
+	r.redirectToURL(redirectURI, writer, req, http.StatusSeeOther)
 }
 
 // loginHandler provide's a generic endpoint for clients to perform a user_credentials login to the provider
-func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
+//nolint:funlen,cyclop // refactor
+func (r *oauthProxy) loginHandler(writer http.ResponseWriter, req *http.Request) {
 	scope, assertOk := req.Context().Value(contextScopeName).(*RequestScope)
 
 	if !assertOk {
 		r.log.Error(
-			"Assertion failed",
+			"assertion failed",
 		)
-		w.WriteHeader(http.StatusInternalServerError)
+		writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -441,7 +442,7 @@ func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
 				errors.New("no credentials")
 		}
 
-		conf := r.newOAuth2Config(r.getRedirectionURL(w, req))
+		conf := r.newOAuth2Config(r.getRedirectionURL(writer, req))
 
 		start := time.Now()
 		token, err := conf.PasswordCredentialsToken(ctx, username, password)
@@ -475,7 +476,7 @@ func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
 				err
 		}
 
-		w.Header().Set("Content-Type", "application/json")
+		writer.Header().Set("Content-Type", "application/json")
 		idToken, assertOk := token.Extra("id_token").(string)
 
 		if !assertOk {
@@ -493,6 +494,8 @@ func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
 		}
 
 		// step: are we encrypting the access token?
+		var plainIDToken string
+
 		if r.config.EnableEncryptedToken || r.config.ForceEncryptedCookie {
 			if accessToken, err = encodeText(accessToken, r.config.EncryptionKey); err != nil {
 				scope.Logger.Error("unable to encode the access token", zap.Error(err))
@@ -507,6 +510,8 @@ func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
 					http.StatusInternalServerError,
 					err
 			}
+
+			plainIDToken = idToken
 
 			if idToken, err = encodeText(idToken, r.config.EncryptionKey); err != nil {
 				scope.Logger.Error("unable to encode the idToken token", zap.Error(err))
@@ -531,7 +536,7 @@ func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
 			// drop in the access token - cookie expiration = access token
 			r.dropAccessTokenCookie(
 				req,
-				w,
+				writer,
 				accessToken,
 				r.getAccessCookieExpiration(token.RefreshToken),
 			)
@@ -567,12 +572,12 @@ func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
 					)
 				}
 			default:
-				r.dropRefreshTokenCookie(req, w, encrypted, expiration)
+				r.dropRefreshTokenCookie(req, writer, encrypted, expiration)
 			}
 		} else {
 			r.dropAccessTokenCookie(
 				req,
-				w,
+				writer,
 				accessToken,
 				time.Until(identity.expiresAt),
 			)
@@ -580,7 +585,19 @@ func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
 
 		// @metric a token has been issued
 		oauthTokensMetric.WithLabelValues("login").Inc()
-		scope, _ := token.Extra("scope").(string)
+		tokenScope := token.Extra("scope")
+		var tScope string
+
+		if tokenScope != nil {
+			tScope, assertOk = tokenScope.(string)
+
+			if !assertOk {
+				return "",
+					http.StatusInternalServerError,
+					fmt.Errorf("assertion failed")
+			}
+		}
+
 		var resp tokenResponse
 
 		if r.config.EnableEncryptedToken {
@@ -589,19 +606,19 @@ func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
 				AccessToken:  accessToken,
 				RefreshToken: refreshToken,
 				ExpiresIn:    expiresIn,
-				Scope:        scope,
+				Scope:        tScope,
 			}
 		} else {
 			resp = tokenResponse{
-				IDToken:      token.Extra("id_token").(string),
+				IDToken:      plainIDToken,
 				AccessToken:  token.AccessToken,
 				RefreshToken: token.RefreshToken,
 				ExpiresIn:    expiresIn,
-				Scope:        scope,
+				Scope:        tScope,
 			}
 		}
 
-		err = json.NewEncoder(w).Encode(resp)
+		err = json.NewEncoder(writer).Encode(resp)
 
 		if err != nil {
 			return "", http.StatusInternalServerError, err
@@ -615,7 +632,7 @@ func (r *oauthProxy) loginHandler(w http.ResponseWriter, req *http.Request) {
 			zap.String("client_ip", req.RemoteAddr),
 			zap.Error(err))
 
-		w.WriteHeader(code)
+		writer.WriteHeader(code)
 	}
 }
 
@@ -626,7 +643,8 @@ func emptyHandler(w http.ResponseWriter, req *http.Request) {}
 //  - if it's just a access token, the cookie is deleted
 //  - if the user has a refresh token, the token is invalidated by the provider
 //  - optionally, the user can be redirected by to a url
-func (r *oauthProxy) logoutHandler(w http.ResponseWriter, req *http.Request) {
+//nolint:cyclop
+func (r *oauthProxy) logoutHandler(writer http.ResponseWriter, req *http.Request) {
 	// @check if the redirection is there
 	var redirectURL string
 	for k := range req.URL.Query() {
@@ -647,9 +665,9 @@ func (r *oauthProxy) logoutHandler(w http.ResponseWriter, req *http.Request) {
 
 	if !assertOk {
 		r.log.Error(
-			"Assertion failed",
+			"assertion failed",
 		)
-		w.WriteHeader(http.StatusInternalServerError)
+		writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -657,7 +675,7 @@ func (r *oauthProxy) logoutHandler(w http.ResponseWriter, req *http.Request) {
 	user, err := r.getIdentity(req)
 
 	if err != nil {
-		r.accessError(w, req)
+		r.accessError(writer, req)
 		return
 	}
 
@@ -668,7 +686,7 @@ func (r *oauthProxy) logoutHandler(w http.ResponseWriter, req *http.Request) {
 	if refresh, _, err := r.retrieveRefreshToken(req, user); err == nil {
 		identityToken = refresh
 	}
-	r.clearAllCookies(req, w)
+	r.clearAllCookies(req, writer)
 
 	// @metric increment the logout counter
 	oauthTokensMetric.WithLabelValues("logout").Inc()
@@ -711,7 +729,7 @@ func (r *oauthProxy) logoutHandler(w http.ResponseWriter, req *http.Request) {
 				sendTo,
 				url.QueryEscape(redirectURL),
 			),
-			w,
+			writer,
 			req,
 			http.StatusSeeOther,
 		)
@@ -743,7 +761,7 @@ func (r *oauthProxy) logoutHandler(w http.ResponseWriter, req *http.Request) {
 
 		if err != nil {
 			scope.Logger.Error("unable to retrieve the openid client", zap.Error(err))
-			w.WriteHeader(http.StatusInternalServerError)
+			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -762,7 +780,7 @@ func (r *oauthProxy) logoutHandler(w http.ResponseWriter, req *http.Request) {
 
 		if err != nil {
 			scope.Logger.Error("unable to construct the revocation request", zap.Error(err))
-			w.WriteHeader(http.StatusInternalServerError)
+			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -775,7 +793,7 @@ func (r *oauthProxy) logoutHandler(w http.ResponseWriter, req *http.Request) {
 
 		if err != nil {
 			scope.Logger.Error("unable to post to revocation endpoint", zap.Error(err))
-			w.WriteHeader(http.StatusInternalServerError)
+			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -800,14 +818,14 @@ func (r *oauthProxy) logoutHandler(w http.ResponseWriter, req *http.Request) {
 				zap.String("response", string(content)),
 			)
 
-			w.WriteHeader(http.StatusInternalServerError)
+			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	}
 
 	// step: should we redirect the user
 	if redirectURL != "" {
-		r.redirectToURL(redirectURL, w, req, http.StatusSeeOther)
+		r.redirectToURL(redirectURL, writer, req, http.StatusSeeOther)
 	}
 }
 
@@ -872,7 +890,8 @@ func (r *oauthProxy) healthHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 // debugHandler is responsible for providing the pprof
-func (r *oauthProxy) debugHandler(w http.ResponseWriter, req *http.Request) {
+//nolint:cyclop
+func (r *oauthProxy) debugHandler(writer http.ResponseWriter, req *http.Request) {
 	const symbolProfile = "symbol"
 	name := chi.URLParam(req, "name")
 
@@ -886,24 +905,24 @@ func (r *oauthProxy) debugHandler(w http.ResponseWriter, req *http.Request) {
 		case "block":
 			fallthrough
 		case "threadcreate":
-			pprof.Handler(name).ServeHTTP(w, req)
+			pprof.Handler(name).ServeHTTP(writer, req)
 		case "cmdline":
-			pprof.Cmdline(w, req)
+			pprof.Cmdline(writer, req)
 		case "profile":
-			pprof.Profile(w, req)
+			pprof.Profile(writer, req)
 		case "trace":
-			pprof.Trace(w, req)
+			pprof.Trace(writer, req)
 		case symbolProfile:
-			pprof.Symbol(w, req)
+			pprof.Symbol(writer, req)
 		default:
-			w.WriteHeader(http.StatusNotFound)
+			writer.WriteHeader(http.StatusNotFound)
 		}
 	case http.MethodPost:
 		switch name {
 		case symbolProfile:
-			pprof.Symbol(w, req)
+			pprof.Symbol(writer, req)
 		default:
-			w.WriteHeader(http.StatusNotFound)
+			writer.WriteHeader(http.StatusNotFound)
 		}
 	}
 }
@@ -920,7 +939,10 @@ func (r *oauthProxy) proxyMetricsHandler(wrt http.ResponseWriter, req *http.Requ
 }
 
 // retrieveRefreshToken retrieves the refresh token from store or cookie
-func (r *oauthProxy) retrieveRefreshToken(req *http.Request, user *userContext) (token, encrypted string, err error) {
+func (r *oauthProxy) retrieveRefreshToken(req *http.Request, user *userContext) (string, string, error) {
+	var token string
+	var err error
+
 	switch r.useStore() {
 	case true:
 		token, err = r.GetRefreshToken(user.rawToken)
@@ -929,12 +951,12 @@ func (r *oauthProxy) retrieveRefreshToken(req *http.Request, user *userContext) 
 	}
 
 	if err != nil {
-		return
+		return token, "", err
 	}
 
-	encrypted = token // returns encrypted, avoids encoding twice
+	encrypted := token // returns encrypted, avoids encoding twice
 	token, err = decodeText(token, r.config.EncryptionKey)
-	return
+	return token, encrypted, err
 }
 
 func methodNotAllowHandlder(w http.ResponseWriter, req *http.Request) {

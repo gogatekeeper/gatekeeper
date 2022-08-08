@@ -89,6 +89,7 @@ func init() {
 const allPath = "/*"
 
 // newProxy create's a new proxy from configuration
+//nolint:cyclop
 func newProxy(config *Config) (*oauthProxy, error) {
 	// create the service logger
 	log, err := createLogger(config)
@@ -244,6 +245,7 @@ func (r *oauthProxy) useDefaultStack(engine chi.Router) {
 }
 
 // createReverseProxy creates a reverse proxy
+//nolint:cyclop
 func (r *oauthProxy) createReverseProxy() error {
 	r.log.Info(
 		"enabled reverse proxy mode, upstream url",
@@ -259,7 +261,7 @@ func (r *oauthProxy) createReverseProxy() error {
 
 	// @step: configure CORS middleware
 	if len(r.config.CorsOrigins) > 0 {
-		c := cors.New(cors.Options{
+		corsHandler := cors.New(cors.Options{
 			AllowedOrigins:   r.config.CorsOrigins,
 			AllowedMethods:   r.config.CorsMethods,
 			AllowedHeaders:   r.config.CorsHeaders,
@@ -269,7 +271,7 @@ func (r *oauthProxy) createReverseProxy() error {
 			Debug:            r.config.Verbose,
 		})
 
-		engine.Use(c.Handler)
+		engine.Use(corsHandler.Handler)
 	}
 
 	engine.Use(r.proxyMiddleware)
@@ -298,7 +300,7 @@ func (r *oauthProxy) createReverseProxy() error {
 	}
 
 	// step: add the routing for oauth
-	engine.With(proxyDenyMiddleware).Route(r.config.BaseURI+r.config.OAuthURI, func(eng chi.Router) {
+	engine.With(r.proxyDenyMiddleware).Route(r.config.BaseURI+r.config.OAuthURI, func(eng chi.Router) {
 		eng.MethodNotAllowed(methodNotAllowHandlder)
 		eng.HandleFunc(authorizationURL, r.oauthAuthorizationHandler)
 		eng.Get(callbackURL, r.oauthCallbackHandler)
@@ -334,7 +336,7 @@ func (r *oauthProxy) createReverseProxy() error {
 		}
 
 		if r.config.ListenAdmin == "" {
-			engine.With(proxyDenyMiddleware).Mount(debugURL, debugEngine)
+			engine.With(r.proxyDenyMiddleware).Mount(debugURL, debugEngine)
 		}
 	}
 
@@ -346,7 +348,7 @@ func (r *oauthProxy) createReverseProxy() error {
 		admin.MethodNotAllowed(emptyHandler)
 		admin.NotFound(emptyHandler)
 		admin.Use(middleware.Recoverer)
-		admin.Use(proxyDenyMiddleware)
+		admin.Use(r.proxyDenyMiddleware)
 		admin.Route("/", func(e chi.Router) {
 			e.Mount(r.config.OAuthURI, adminEngine)
 			if debugEngine != nil {
@@ -421,7 +423,7 @@ func (r *oauthProxy) createReverseProxy() error {
 		if res.URL == allPath && !res.WhiteListed && enableDefaultDenyStrict {
 			middlewares = []func(http.Handler) http.Handler{
 				r.denyMiddleware,
-				proxyDenyMiddleware,
+				r.proxyDenyMiddleware,
 			}
 		}
 
@@ -486,7 +488,12 @@ func (r *oauthProxy) createForwardingProxy() error {
 	forwardingHandler := r.forwardProxyHandler()
 
 	// set the http handler
-	proxy := r.upstream.(*goproxy.ProxyHttpServer)
+	proxy, assertOk := r.upstream.(*goproxy.ProxyHttpServer)
+
+	if !assertOk {
+		return fmt.Errorf("assertion failed")
+	}
+
 	r.router = proxy
 
 	// setup the tls configuration
@@ -514,7 +521,13 @@ func (r *oauthProxy) createForwardingProxy() error {
 	proxy.OnResponse().DoFunc(func(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
 		// @NOTES, somewhat annoying but goproxy hands back a nil response on proxy client errors
 		if resp != nil && r.config.EnableLogging {
-			start := ctx.UserData.(time.Time)
+			start, assertOk := ctx.UserData.(time.Time)
+
+			if !assertOk {
+				r.log.Error("assertion failed")
+				return nil
+			}
+
 			latency := time.Since(start)
 			latencyMetric.Observe(latency.Seconds())
 
@@ -540,6 +553,7 @@ func (r *oauthProxy) createForwardingProxy() error {
 }
 
 // Run starts the proxy service
+//nolint:cyclop
 func (r *oauthProxy) Run() error {
 	listener, err := r.createHTTPListener(makeListenerConfig(r.config))
 
@@ -727,6 +741,7 @@ func makeListenerConfig(config *Config) listenerConfig {
 var ErrHostNotConfigured = errors.New("acme/autocert: host not configured")
 
 // createHTTPListener is responsible for creating a listening socket
+//nolint:cyclop
 func (r *oauthProxy) createHTTPListener(config listenerConfig) (net.Listener, error) {
 	var listener net.Listener
 	var err error
@@ -773,7 +788,7 @@ func (r *oauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 		if config.useLetsEncryptTLS {
 			r.log.Info("enabling letsencrypt tls support")
 
-			m := autocert.Manager{
+			manager := autocert.Manager{
 				Prompt: autocert.AcceptTOS,
 				Cache:  autocert.DirCache(config.letsEncryptCacheDir),
 				HostPolicy: func(_ context.Context, host string) error {
@@ -799,7 +814,7 @@ func (r *oauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 				},
 			}
 
-			getCertificate = m.GetCertificate
+			getCertificate = manager.GetCertificate
 		}
 
 		if config.useSelfSignedTLS {
@@ -955,7 +970,13 @@ func (r *oauthProxy) createUpstreamProxy(upstream *url.URL) error {
 	r.upstream = proxy
 
 	// update the tls configuration of the reverse proxy
-	r.upstream.(*goproxy.ProxyHttpServer).Tr = &http.Transport{
+	upstreamProxy, assertOk := r.upstream.(*goproxy.ProxyHttpServer)
+
+	if !assertOk {
+		return fmt.Errorf("assertion failed")
+	}
+
+	upstreamProxy.Tr = &http.Transport{
 		Dial:                  dialer,
 		DisableKeepAlives:     !r.config.UpstreamKeepalives,
 		ExpectContinueTimeout: r.config.UpstreamExpectContinueTimeout,
@@ -1056,6 +1077,7 @@ func (r *oauthProxy) Render(w io.Writer, name string, data interface{}) error {
 	return r.templates.ExecuteTemplate(w, name, data)
 }
 
+//nolint:cyclop
 func (r *oauthProxy) getPAT(done chan bool) {
 	retry := 0
 	r.pat = &PAT{}

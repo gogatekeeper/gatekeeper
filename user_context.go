@@ -74,10 +74,20 @@ func extractIdentity(token *jwt.JSONWebToken) (*userContext, error) {
 
 	// @step: extract the client roles from the access token
 	for name, list := range customClaims.ResourceAccess {
-		scopes := list.(map[string]interface{})
+		scopes, assertOk := list.(map[string]interface{})
+
+		if !assertOk {
+			return nil, fmt.Errorf("assertion failed")
+		}
 
 		if roles, found := scopes[claimResourceRoles]; found {
-			for _, r := range roles.([]interface{}) {
+			rolesVal, assertOk := roles.([]interface{})
+
+			if !assertOk {
+				return nil, fmt.Errorf("assertion failed")
+			}
+
+			for _, r := range rolesVal {
 				roleList = append(roleList, fmt.Sprintf("%s:%s", name, r))
 			}
 		}

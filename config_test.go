@@ -474,6 +474,7 @@ func TestIsSameSiteValid(t *testing.T) {
 	}
 }
 
+//nolint:cyclop
 func TestIsTLSFilesValid(t *testing.T) {
 	testCases := []struct {
 		Name                       string
@@ -679,6 +680,7 @@ func TestIsTLSFilesValid(t *testing.T) {
 	}
 }
 
+//nolint:cyclop
 func TestIsAdminTLSFilesValid(t *testing.T) {
 	testCases := []struct {
 		Name                            string

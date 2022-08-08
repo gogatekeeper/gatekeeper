@@ -218,7 +218,7 @@ func (f *fakeProxy) getServiceURL() string {
 }
 
 // RunTests performs a series of requests against a fake proxy service
-// nolint:gocyclo,funlen
+//nolint:gocyclo,funlen,cyclop
 func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 	defer func() {
 		f.idp.Close()
@@ -801,14 +801,14 @@ func makeTestCodeFlowLogin(location string) (*http.Response, []*http.Cookie, err
 		}
 
 		// step: make the request
-		tr := &http.Transport{
+		transport := &http.Transport{
 			TLSClientConfig: &tls.Config{
 				//nolint:gas
 				InsecureSkipVerify: true,
 			},
 		}
 
-		resp, err = tr.RoundTrip(req)
+		resp, err = transport.RoundTrip(req)
 
 		if err != nil {
 			return nil, nil, err
@@ -861,8 +861,7 @@ func (f *fakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Reque
 		}).ServeHTTP(wrt, req)
 	} else {
 		wrt.Header().Set("Content-Type", "application/json")
-		wrt.WriteHeader(http.StatusOK)
-		content, _ := json.Marshal(&fakeUpstreamResponse{
+		content, err := json.Marshal(&fakeUpstreamResponse{
 			// r.RequestURI is what was received by the proxy.
 			// r.URL.String() is what is actually sent to the upstream service.
 			// KEYCLOAK-10864, KEYCLOAK-11276, KEYCLOAK-13315
@@ -871,6 +870,13 @@ func (f *fakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Reque
 			Address: req.RemoteAddr,
 			Headers: req.Header,
 		})
+
+		if err != nil {
+			wrt.WriteHeader(http.StatusInternalServerError)
+		} else {
+			wrt.WriteHeader(http.StatusOK)
+		}
+
 		_, _ = wrt.Write(content)
 	}
 }
@@ -1258,7 +1264,8 @@ func (r *fakeAuthServer) userInfoHandler(wrt http.ResponseWriter, req *http.Requ
 	})
 }
 
-func (r *fakeAuthServer) tokenHandler(w http.ResponseWriter, req *http.Request) {
+//nolint:cyclop
+func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Request) {
 	expires := time.Now().Add(r.expiration)
 	refreshExpires := time.Now().Add(2 * r.expiration)
 	token := newTestToken(r.getLocation())
@@ -1281,14 +1288,14 @@ func (r *fakeAuthServer) tokenHandler(w http.ResponseWriter, req *http.Request) 
 	// sign the token with the private key
 	jwtAccess, err := token.getToken()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	// sign the token with the private key
 	jwtRefresh, err := refreshToken.getToken()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -1298,12 +1305,12 @@ func (r *fakeAuthServer) tokenHandler(w http.ResponseWriter, req *http.Request) 
 		password := req.FormValue("password")
 
 		if username == "" || password == "" {
-			w.WriteHeader(http.StatusBadRequest)
+			writer.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
 		if username == validUsername && password == validPassword {
-			renderJSON(http.StatusOK, w, req, tokenResponse{
+			renderJSON(http.StatusOK, writer, req, tokenResponse{
 				IDToken:      jwtAccess,
 				AccessToken:  jwtAccess,
 				RefreshToken: jwtRefresh,
@@ -1312,7 +1319,7 @@ func (r *fakeAuthServer) tokenHandler(w http.ResponseWriter, req *http.Request) 
 			return
 		}
 
-		renderJSON(http.StatusUnauthorized, w, req, map[string]string{
+		renderJSON(http.StatusUnauthorized, writer, req, map[string]string{
 			"error":             "invalid_grant",
 			"error_description": "invalid user credentials",
 		})
@@ -1326,13 +1333,13 @@ func (r *fakeAuthServer) tokenHandler(w http.ResponseWriter, req *http.Request) 
 			clientSecret = p
 
 			if clientID == "" || clientSecret == "" || !ok {
-				w.WriteHeader(http.StatusBadRequest)
+				writer.WriteHeader(http.StatusBadRequest)
 				return
 			}
 		}
 
 		if clientID == validUsername && clientSecret == validPassword {
-			renderJSON(http.StatusOK, w, req, tokenResponse{
+			renderJSON(http.StatusOK, writer, req, tokenResponse{
 				IDToken:      jwtAccess,
 				AccessToken:  jwtAccess,
 				RefreshToken: jwtRefresh,
@@ -1341,7 +1348,7 @@ func (r *fakeAuthServer) tokenHandler(w http.ResponseWriter, req *http.Request) 
 			return
 		}
 
-		renderJSON(http.StatusUnauthorized, w, req, map[string]string{
+		renderJSON(http.StatusUnauthorized, writer, req, map[string]string{
 			"error":             "invalid_grant",
 			"error_description": "invalid client credentials",
 		})
@@ -1349,7 +1356,7 @@ func (r *fakeAuthServer) tokenHandler(w http.ResponseWriter, req *http.Request) 
 		oldRefreshToken, err := jwt.ParseSigned(req.FormValue("refresh_token"))
 
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -1358,7 +1365,7 @@ func (r *fakeAuthServer) tokenHandler(w http.ResponseWriter, req *http.Request) 
 		err = oldRefreshToken.UnsafeClaimsWithoutVerification(stdClaims)
 
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -1374,37 +1381,37 @@ func (r *fakeAuthServer) tokenHandler(w http.ResponseWriter, req *http.Request) 
 			respBody, err := json.Marshal(expRefresh)
 
 			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
+				writer.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
-			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write(respBody)
+			writer.WriteHeader(http.StatusBadRequest)
+			_, _ = writer.Write(respBody)
 
 			return
 		}
 
-		renderJSON(http.StatusOK, w, req, tokenResponse{
+		renderJSON(http.StatusOK, writer, req, tokenResponse{
 			IDToken:     jwtAccess,
 			AccessToken: jwtAccess,
 			ExpiresIn:   float64(expires.Second()),
 		})
 	case GrantTypeAuthCode:
-		renderJSON(http.StatusOK, w, req, tokenResponse{
+		renderJSON(http.StatusOK, writer, req, tokenResponse{
 			IDToken:      jwtAccess,
 			AccessToken:  jwtAccess,
 			RefreshToken: jwtRefresh,
 			ExpiresIn:    float64(expires.Second()),
 		})
 	case GrantTypeUmaTicket:
-		renderJSON(http.StatusOK, w, req, tokenResponse{
+		renderJSON(http.StatusOK, writer, req, tokenResponse{
 			IDToken:      jwtAccess,
 			AccessToken:  jwtAccess,
 			RefreshToken: jwtRefresh,
 			ExpiresIn:    float64(expires.Second()),
 		})
 	default:
-		w.WriteHeader(http.StatusBadRequest)
+		writer.WriteHeader(http.StatusBadRequest)
 	}
 }
 

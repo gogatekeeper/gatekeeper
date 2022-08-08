@@ -20,6 +20,9 @@ linters-settings:
 linters:
   enable-all: true
   disable:
+    - thelper
+    - ireturn
+    - maintidx
     - wrapcheck
     - gosec
     - gocritic
@@ -31,6 +34,8 @@ linters:
     - paralleltest
     - exhaustive
     - exhaustivestruct
+    - exhaustruct
+    - tagliatelle
     - maligned
     - unparam
     - lll

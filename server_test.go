@@ -57,8 +57,8 @@ func TestNewKeycloakProxy(t *testing.T) {
 }
 
 func TestReverseProxyHeaders(t *testing.T) {
-	p := newFakeProxy(nil, &fakeAuthConfig{})
-	token := newTestToken(p.idp.getLocation())
+	proxy := newFakeProxy(nil, &fakeAuthConfig{})
+	token := newTestToken(proxy.idp.getLocation())
 	token.addRealmRoles([]string{fakeAdminRole})
 	jwt, _ := token.getToken()
 	uri := "/auth_all/test"
@@ -84,7 +84,7 @@ func TestReverseProxyHeaders(t *testing.T) {
 			ExpectedContentContains: `"uri":"` + uri + `"`,
 		},
 	}
-	p.RunTests(t, requests)
+	proxy.RunTests(t, requests)
 }
 
 func TestAuthTokenHeader(t *testing.T) {
@@ -483,25 +483,31 @@ func TestSkipOpenIDProviderTLSVerifyForwardingProxy(t *testing.T) {
 			ExpectedContentContains: "Bearer ey",
 		},
 	}
-	p := newFakeProxy(cfg, &fakeAuthConfig{EnableTLS: true})
+	proxy := newFakeProxy(cfg, &fakeAuthConfig{EnableTLS: true})
 	<-time.After(time.Duration(100) * time.Millisecond)
-	p.RunTests(t, requests)
+	proxy.RunTests(t, requests)
 
 	cfg.SkipOpenIDProviderTLSVerify = false
 
 	defer func() {
 		if r := recover(); r != nil {
+			failure, assertOk := r.(string)
+
+			if !assertOk {
+				t.Fatalf("assertion failed")
+			}
+
 			check := strings.Contains(
-				r.(string),
+				failure,
 				"failed to retrieve the provider configuration from discovery url",
 			)
 			assert.True(t, check)
 		}
 	}()
 
-	p = newFakeProxy(cfg, &fakeAuthConfig{EnableTLS: true})
+	proxy = newFakeProxy(cfg, &fakeAuthConfig{EnableTLS: true})
 	<-time.After(time.Duration(100) * time.Millisecond)
-	p.RunTests(t, requests)
+	proxy.RunTests(t, requests)
 }
 
 func TestForbiddenTemplate(t *testing.T) {
@@ -610,8 +616,14 @@ func TestSkipOpenIDProviderTLSVerify(t *testing.T) {
 
 	defer func() {
 		if r := recover(); r != nil {
+			failure, assertOk := r.(string)
+
+			if !assertOk {
+				t.Fatalf("assertion failed")
+			}
+
 			check := strings.Contains(
-				r.(string),
+				failure,
 				"failed to retrieve the provider configuration from discovery url",
 			)
 			assert.True(t, check)
@@ -650,8 +662,14 @@ func TestOpenIDProviderProxy(t *testing.T) {
 
 	defer func() {
 		if r := recover(); r != nil {
+			failure, assertOk := r.(string)
+
+			if !assertOk {
+				t.Fatalf("assertion failed")
+			}
+
 			check := strings.Contains(
-				r.(string),
+				failure,
 				"failed to retrieve the provider configuration from discovery url",
 			)
 			assert.True(t, check)
@@ -682,8 +700,8 @@ func TestRequestIDHeader(t *testing.T) {
 func TestAuthTokenHeaderDisabled(t *testing.T) {
 	c := newFakeKeycloakConfig()
 	c.EnableTokenHeader = false
-	p := newFakeProxy(c, &fakeAuthConfig{})
-	token := newTestToken(p.idp.getLocation())
+	proxy := newFakeProxy(c, &fakeAuthConfig{})
+	token := newTestToken(proxy.idp.getLocation())
 	jwt, _ := token.getToken()
 
 	requests := []fakeRequest{
@@ -695,7 +713,7 @@ func TestAuthTokenHeaderDisabled(t *testing.T) {
 			ExpectedCode:           http.StatusOK,
 		},
 	}
-	p.RunTests(t, requests)
+	proxy.RunTests(t, requests)
 }
 
 func TestAudienceHeader(t *testing.T) {
@@ -1036,7 +1054,7 @@ func TestCustomResponseHeaders(t *testing.T) {
 	c.ResponseHeaders = map[string]string{
 		"CustomReponseHeader": "True",
 	}
-	p := newFakeProxy(c, &fakeAuthConfig{})
+	proxy := newFakeProxy(c, &fakeAuthConfig{})
 
 	requests := []fakeRequest{
 		{
@@ -1050,7 +1068,7 @@ func TestCustomResponseHeaders(t *testing.T) {
 			ExpectedCode:  http.StatusOK,
 		},
 	}
-	p.RunTests(t, requests)
+	proxy.RunTests(t, requests)
 }
 
 func TestSkipClientIDDisabled(t *testing.T) {
@@ -1058,13 +1076,13 @@ func TestSkipClientIDDisabled(t *testing.T) {
 	// client for which was access token released, but this is not according spec
 	// as access_token could be also other type not just JWT
 	c := newFakeKeycloakConfig()
-	p := newFakeProxy(c, &fakeAuthConfig{})
+	proxy := newFakeProxy(c, &fakeAuthConfig{})
 	// create two token, one with a bad client id
-	bad := newTestToken(p.idp.getLocation())
+	bad := newTestToken(proxy.idp.getLocation())
 	bad.claims.Aud = "bad_client_id"
 	badSigned, _ := bad.getToken()
 	// and the good
-	good := newTestToken(p.idp.getLocation())
+	good := newTestToken(proxy.idp.getLocation())
 	goodSigned, _ := good.getToken()
 	requests := []fakeRequest{
 		{
@@ -1096,18 +1114,18 @@ func TestSkipClientIDDisabled(t *testing.T) {
 			SkipClientIDCheck: true,
 		},
 	}
-	p.RunTests(t, requests)
+	proxy.RunTests(t, requests)
 }
 
 func TestSkipIssuer(t *testing.T) {
 	c := newFakeKeycloakConfig()
-	p := newFakeProxy(c, &fakeAuthConfig{})
+	proxy := newFakeProxy(c, &fakeAuthConfig{})
 	// create two token, one with a bad client id
-	bad := newTestToken(p.idp.getLocation())
+	bad := newTestToken(proxy.idp.getLocation())
 	bad.claims.Iss = "bad_issuer"
 	badSigned, _ := bad.getToken()
 	// and the good
-	good := newTestToken(p.idp.getLocation())
+	good := newTestToken(proxy.idp.getLocation())
 	goodSigned, _ := good.getToken()
 	requests := []fakeRequest{
 		{
@@ -1139,12 +1157,12 @@ func TestSkipIssuer(t *testing.T) {
 			SkipIssuerCheck: true,
 		},
 	}
-	p.RunTests(t, requests)
+	proxy.RunTests(t, requests)
 }
 
 func TestAuthTokenHeaderEnabled(t *testing.T) {
-	p := newFakeProxy(nil, &fakeAuthConfig{})
-	token := newTestToken(p.idp.getLocation())
+	proxy := newFakeProxy(nil, &fakeAuthConfig{})
+	token := newTestToken(proxy.idp.getLocation())
 	signed, _ := token.getToken()
 
 	requests := []fakeRequest{
@@ -1158,14 +1176,14 @@ func TestAuthTokenHeaderEnabled(t *testing.T) {
 			ExpectedCode:  http.StatusOK,
 		},
 	}
-	p.RunTests(t, requests)
+	proxy.RunTests(t, requests)
 }
 
 func TestDisableAuthorizationCookie(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.EnableAuthorizationCookies = false
-	p := newFakeProxy(cfg, &fakeAuthConfig{})
-	token := newTestToken(p.idp.getLocation())
+	proxy := newFakeProxy(cfg, &fakeAuthConfig{})
+	token := newTestToken(proxy.idp.getLocation())
 	signed, _ := token.getToken()
 
 	requests := []fakeRequest{
@@ -1181,9 +1199,10 @@ func TestDisableAuthorizationCookie(t *testing.T) {
 			ExpectedProxy:           true,
 		},
 	}
-	p.RunTests(t, requests)
+	proxy.RunTests(t, requests)
 }
 
+//nolint:cyclop
 func TestTLS(t *testing.T) {
 	testProxyAddr := "127.0.0.1:14302"
 	testCases := []struct {
@@ -1509,6 +1528,7 @@ func TestCustomHTTPMethod(t *testing.T) {
 	}
 }
 
+//nolint:cyclop
 func TestStoreAuthz(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	token := newTestToken("http://test")
@@ -1553,7 +1573,7 @@ func TestStoreAuthz(t *testing.T) {
 			testCase.Name,
 			func(t *testing.T) {
 				testCase.ProxySettings(&c)
-				p := newFakeProxy(&c, &fakeAuthConfig{})
+				fProxy := newFakeProxy(&c, &fakeAuthConfig{})
 
 				url, err := url.Parse("http://test.com/test")
 
@@ -1561,7 +1581,7 @@ func TestStoreAuthz(t *testing.T) {
 					t.Fatal("Problem parsing url")
 				}
 
-				err = p.proxy.StoreAuthz(jwt, url, authorization.AllowedAuthz, 1*time.Second)
+				err = fProxy.proxy.StoreAuthz(jwt, url, authorization.AllowedAuthz, 1*time.Second)
 
 				if err != nil && !testCase.ExpectedFailure {
 					t.Fatalf("error storing authz %v", err)
@@ -1569,7 +1589,7 @@ func TestStoreAuthz(t *testing.T) {
 
 				if !testCase.ExpectedFailure {
 					url.Path += "/append"
-					err = p.proxy.StoreAuthz(jwt, url, authorization.AllowedAuthz, 1*time.Second)
+					err = fProxy.proxy.StoreAuthz(jwt, url, authorization.AllowedAuthz, 1*time.Second)
 
 					if err != nil {
 						t.Fatalf("error storing authz %v", err)
@@ -1596,6 +1616,7 @@ func TestStoreAuthz(t *testing.T) {
 	}
 }
 
+//nolint:cyclop
 func TestGetAuthz(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	token := newTestToken("http://test")
@@ -1675,7 +1696,7 @@ func TestGetAuthz(t *testing.T) {
 			testCase.Name,
 			func(t *testing.T) {
 				testCase.ProxySettings(&cfg)
-				p := newFakeProxy(&cfg, &fakeAuthConfig{})
+				fProxy := newFakeProxy(&cfg, &fakeAuthConfig{})
 
 				url, err := url.Parse("http://test.com/test")
 
@@ -1684,14 +1705,14 @@ func TestGetAuthz(t *testing.T) {
 				}
 
 				if !testCase.ExpectedFailure {
-					err = p.proxy.StoreAuthz(testCase.JWT, url, authorization.AllowedAuthz, 1*time.Second)
+					err = fProxy.proxy.StoreAuthz(testCase.JWT, url, authorization.AllowedAuthz, 1*time.Second)
 
 					if err != nil {
 						t.Fatalf("error storing authz %s", err)
 					}
 				}
 
-				dec, err := p.proxy.GetAuthz(testCase.JWT, url)
+				dec, err := fProxy.proxy.GetAuthz(testCase.JWT, url)
 
 				if err != nil {
 					if !testCase.ExpectedFailure {
