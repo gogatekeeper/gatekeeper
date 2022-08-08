@@ -94,15 +94,15 @@ var (
 	)
 	oauthLatencyMetric = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: "proxy_oauth_request_latency_sec",
-			Help: "A summary of the request latancy for requests against the openid provider",
+			Name: "proxy_oauth_request_latency",
+			Help: "A summary of the request latancy for requests against the openid provider, in seconds",
 		},
 		[]string{"action"},
 	)
 	latencyMetric = prometheus.NewSummary(
 		prometheus.SummaryOpts{
-			Name: "proxy_request_duration_sec",
-			Help: "A summary of the http request latency for proxy requests",
+			Name: "proxy_request_duration",
+			Help: "A summary of the http request latency for proxy requests, in seconds",
 		},
 	)
 	statusMetric = prometheus.NewCounterVec(

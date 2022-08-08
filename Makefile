@@ -103,7 +103,7 @@ lint:
 	@which golangci-lint 2>/dev/null ; if [ $$? -eq 1 ]; then \
 		go get -u github.com/golangci/golangci-lint/cmd/golangci-lint; \
 	fi
-	@golint .
+	@golangci-lint run .
 
 gofmt:
 	@echo "--> Running gofmt check"

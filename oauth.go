@@ -28,7 +28,6 @@ import (
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
-//FIXME remove constants in the future which hopefully won't be necessary in the next releases
 const (
 	GrantTypeAuthCode     = "authorization_code"
 	GrantTypeUserCreds    = "password"

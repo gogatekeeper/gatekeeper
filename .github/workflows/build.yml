@@ -66,6 +66,6 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.33
+          version: v1.46
           args: "--out-${NO_FUTURE}format colored-line-number"
           github-token: "${{ secrets.GITHUB_TOKEN }}"

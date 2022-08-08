@@ -24,7 +24,10 @@ import (
 	"go.uber.org/zap"
 )
 
-// proxyMiddleware is responsible for handles reverse proxy request to the upstream endpoint
+/*
+	proxyMiddleware is responsible for handles reverse proxy
+	request to the upstream endpoint
+*/
 //nolint:cyclop
 func (r *oauthProxy) proxyMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {

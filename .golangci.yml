@@ -1,7 +1,7 @@
 linters-settings:
   govet:
     check-shadowing: true
-  golint:
+  revive:
     min-confidence: 0
   gocyclo:
     min-complexity: 64

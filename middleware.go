@@ -149,8 +149,10 @@ func (r *oauthProxy) loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// authenticationMiddleware is responsible for verifying the access token
-// nolint:funlen,cyclop
+/*
+	authenticationMiddleware is responsible for verifying the access token
+*/
+//nolint:funlen,cyclop
 func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
@@ -411,7 +413,9 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 	}
 }
 
-// authorizationMiddleware is responsible for verifying permissions in access_token
+/*
+	authorizationMiddleware is responsible for verifying permissions in access_token
+*/
 //nolint:cyclop
 func (r *oauthProxy) authorizationMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {

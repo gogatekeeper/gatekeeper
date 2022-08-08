@@ -129,8 +129,10 @@ func (r *oauthProxy) oauthAuthorizationHandler(wrt http.ResponseWriter, req *htt
 	r.redirectToURL(authURL, wrt, req, http.StatusSeeOther)
 }
 
-// oauthCallbackHandler is responsible for handling the response from oauth service
-// nolint:funlen,cyclop
+/*
+	oauthCallbackHandler is responsible for handling the response from oauth service
+*/
+//nolint:funlen,cyclop
 func (r *oauthProxy) oauthCallbackHandler(writer http.ResponseWriter, req *http.Request) {
 	if r.config.SkipTokenVerification {
 		writer.WriteHeader(http.StatusNotAcceptable)
@@ -398,7 +400,9 @@ func (r *oauthProxy) oauthCallbackHandler(writer http.ResponseWriter, req *http.
 	r.redirectToURL(redirectURI, writer, req, http.StatusSeeOther)
 }
 
-// loginHandler provide's a generic endpoint for clients to perform a user_credentials login to the provider
+/*
+	loginHandler provide's a generic endpoint for clients to perform a user_credentials login to the provider
+*/
 //nolint:funlen,cyclop // refactor
 func (r *oauthProxy) loginHandler(writer http.ResponseWriter, req *http.Request) {
 	scope, assertOk := req.Context().Value(contextScopeName).(*RequestScope)
@@ -639,10 +643,12 @@ func (r *oauthProxy) loginHandler(writer http.ResponseWriter, req *http.Request)
 // emptyHandler is responsible for doing nothing
 func emptyHandler(w http.ResponseWriter, req *http.Request) {}
 
-// logoutHandler performs a logout
-//  - if it's just a access token, the cookie is deleted
-//  - if the user has a refresh token, the token is invalidated by the provider
-//  - optionally, the user can be redirected by to a url
+/*
+	logoutHandler performs a logout
+	- if it's just a access token, the cookie is deleted
+	- if the user has a refresh token, the token is invalidated by the provider
+	- optionally, the user can be redirected by to a url
+*/
 //nolint:cyclop
 func (r *oauthProxy) logoutHandler(writer http.ResponseWriter, req *http.Request) {
 	// @check if the redirection is there

@@ -88,8 +88,10 @@ func newOauthProxyApp() *cli.App {
 	return app
 }
 
-// getCommandLineOptions builds the command line options by reflecting the Config struct and extracting
-// the tagged information
+/*
+	getCommandLineOptions builds the command line options by reflecting
+	the Config struct and extracting the tagged information
+*/
 //nolint:cyclop
 func getCommandLineOptions() []cli.Flag {
 	defaults := newDefaultConfig()
@@ -167,7 +169,10 @@ func getCommandLineOptions() []cli.Flag {
 	return flags
 }
 
-// parseCLIOptions parses the command line options and constructs a config object
+/*
+	parseCLIOptions parses the command line options
+	and constructs a config object
+*/
 //nolint:cyclop
 func parseCLIOptions(cliCtx *cli.Context, config *Config) error {
 	// step: we can ignore these options in the Config struct
