@@ -549,15 +549,15 @@ func TestToHeader(t *testing.T) {
 			Expected: "Perferredname",
 		},
 	}
-	for i, x := range cases {
+	for index, testCase := range cases {
 		assert.Equal(
 			t,
-			x.Expected,
-			ToHeader(x.Word),
+			testCase.Expected,
+			ToHeader(testCase.Word),
 			"case %d, expected: %s but got: %s",
-			i,
-			x.Expected,
-			ToHeader(x.Word),
+			index,
+			testCase.Expected,
+			ToHeader(testCase.Word),
 		)
 	}
 }
@@ -580,15 +580,15 @@ func TestCapitalize(t *testing.T) {
 			Expected: "Test this",
 		},
 	}
-	for i, x := range cases {
+	for index, testCase := range cases {
 		assert.Equal(
 			t,
-			x.Expected,
-			Capitalize(x.Word),
+			testCase.Expected,
+			Capitalize(testCase.Word),
 			"case %d, expected: %s but got: %s",
-			i,
-			x.Expected,
-			Capitalize(x.Word),
+			index,
+			testCase.Expected,
+			Capitalize(testCase.Word),
 		)
 	}
 }
@@ -614,13 +614,13 @@ func TestMergeMaps(t *testing.T) {
 			},
 		},
 	}
-	for i, x := range cases {
-		merged := MergeMaps(x.Dest, x.Source)
-		if !reflect.DeepEqual(x.Expected, merged) {
+	for index, testCase := range cases {
+		merged := MergeMaps(testCase.Dest, testCase.Source)
+		if !reflect.DeepEqual(testCase.Expected, merged) {
 			t.Errorf(
 				"case %d, expected: %v but got: %v",
-				i,
-				x.Expected,
+				index,
+				testCase.Expected,
 				merged,
 			)
 		}
