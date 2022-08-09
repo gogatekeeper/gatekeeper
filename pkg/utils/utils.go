@@ -13,9 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package utils
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	cryptorand "crypto/rand"
@@ -25,7 +26,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/base64"
-	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -36,8 +36,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -45,12 +45,12 @@ import (
 	"unicode/utf8"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/urfave/cli"
-	yaml "gopkg.in/yaml.v2"
 )
 
 var (
-	allHTTPMethods = []string{
+	AllHTTPMethods = []string{
 		http.MethodDelete,
 		http.MethodGet,
 		http.MethodHead,
@@ -67,7 +67,7 @@ var (
 )
 
 // createCertificate is responsible for creating a certificate
-func createCertificate(key *rsa.PrivateKey, hostnames []string, expire time.Duration) (tls.Certificate, error) {
+func CreateCertificate(key *rsa.PrivateKey, hostnames []string, expire time.Duration) (tls.Certificate, error) {
 	// @step: create a serial for the certificate
 	serial, err := cryptorand.Int(cryptorand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
 	if err != nil {
@@ -113,40 +113,22 @@ func createCertificate(key *rsa.PrivateKey, hostnames []string, expire time.Dura
 }
 
 // getRequestHostURL returns the hostname from the request
-func getRequestHostURL(req *http.Request) string {
-	scheme := unsecureScheme
+func GetRequestHostURL(req *http.Request) string {
+	scheme := constant.UnsecureScheme
 
 	if req.TLS != nil {
-		scheme = secureScheme
+		scheme = constant.SecureScheme
 	}
 
 	redirect := fmt.Sprintf("%s://%s",
-		defaultTo(req.Header.Get("X-Forwarded-Proto"), scheme),
-		defaultTo(req.Header.Get("X-Forwarded-Host"), req.Host))
+		DefaultTo(req.Header.Get("X-Forwarded-Proto"), scheme),
+		DefaultTo(req.Header.Get("X-Forwarded-Host"), req.Host))
 
 	return redirect
 }
 
-// readConfigFile reads and parses the configuration file
-func readConfigFile(filename string, config *Config) error {
-	content, err := ioutil.ReadFile(filename)
-
-	if err != nil {
-		return err
-	}
-	// step: attempt to un-marshal the data
-	switch ext := filepath.Ext(filename); ext {
-	case "json":
-		err = json.Unmarshal(content, config)
-	default:
-		err = yaml.Unmarshal(content, config)
-	}
-
-	return err
-}
-
 // encryptDataBlock encrypts the plaintext string with the key
-func encryptDataBlock(plaintext, key []byte) ([]byte, error) {
+func EncryptDataBlock(plaintext, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 
 	if err != nil {
@@ -169,7 +151,7 @@ func encryptDataBlock(plaintext, key []byte) ([]byte, error) {
 }
 
 // decryptDataBlock decrypts some cipher text
-func decryptDataBlock(cipherText, key []byte) ([]byte, error) {
+func DecryptDataBlock(cipherText, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 
 	if err != nil {
@@ -194,8 +176,8 @@ func decryptDataBlock(cipherText, key []byte) ([]byte, error) {
 }
 
 // encodeText encodes the session state information into a value for a cookie to consume
-func encodeText(plaintext string, key string) (string, error) {
-	cipherText, err := encryptDataBlock([]byte(plaintext), []byte(key))
+func EncodeText(plaintext string, key string) (string, error) {
+	cipherText, err := EncryptDataBlock([]byte(plaintext), []byte(key))
 
 	if err != nil {
 		return "", err
@@ -205,14 +187,14 @@ func encodeText(plaintext string, key string) (string, error) {
 }
 
 // decodeText decodes the session state cookie value
-func decodeText(state, key string) (string, error) {
+func DecodeText(state, key string) (string, error) {
 	cipherText, err := base64.RawStdEncoding.DecodeString(state)
 
 	if err != nil {
 		return "", err
 	}
 	// step: decrypt the cookie back in the expiration|token
-	encoded, err := decryptDataBlock(cipherText, []byte(key))
+	encoded, err := DecryptDataBlock(cipherText, []byte(key))
 
 	if err != nil {
 		return "", apperrors.ErrInvalidSession
@@ -222,7 +204,7 @@ func decodeText(state, key string) (string, error) {
 }
 
 // decodeKeyPairs converts a list of strings (key=pair) to a map
-func decodeKeyPairs(list []string) (map[string]string, error) {
+func DecodeKeyPairs(list []string) (map[string]string, error) {
 	keyPairs := make(map[string]string)
 
 	for _, pair := range list {
@@ -239,8 +221,8 @@ func decodeKeyPairs(list []string) (map[string]string, error) {
 }
 
 // isValidHTTPMethod ensure this is a valid http method type
-func isValidHTTPMethod(method string) bool {
-	for _, x := range allHTTPMethods {
+func IsValidHTTPMethod(method string) bool {
+	for _, x := range AllHTTPMethods {
 		if method == x {
 			return true
 		}
@@ -250,7 +232,7 @@ func isValidHTTPMethod(method string) bool {
 }
 
 // defaultTo returns the value of the default
-func defaultTo(v, d string) string {
+func DefaultTo(v, d string) string {
 	if v != "" {
 		return v
 	}
@@ -259,7 +241,7 @@ func defaultTo(v, d string) string {
 }
 
 // fileExists check if a file exists
-func fileExists(filename string) bool {
+func FileExists(filename string) bool {
 	if _, err := os.Stat(filename); err != nil {
 		if os.IsNotExist(err) {
 			return false
@@ -270,7 +252,7 @@ func fileExists(filename string) bool {
 }
 
 // hasAccess checks we have all or any of the needed items in the list
-func hasAccess(need, have []string, all bool) bool {
+func HasAccess(need, have []string, all bool) bool {
 	if len(need) == 0 {
 		return true
 	}
@@ -278,7 +260,7 @@ func hasAccess(need, have []string, all bool) bool {
 	var matched int
 
 	for _, x := range need {
-		found := containedIn(x, have)
+		found := ContainedIn(x, have)
 
 		switch found {
 		case true:
@@ -297,7 +279,7 @@ func hasAccess(need, have []string, all bool) bool {
 }
 
 // containedIn checks if a value in a list of a strings
-func containedIn(value string, list []string) bool {
+func ContainedIn(value string, list []string) bool {
 	for _, x := range list {
 		if x == value {
 			return true
@@ -308,7 +290,7 @@ func containedIn(value string, list []string) bool {
 }
 
 // containsSubString checks if substring exists
-func containsSubString(value string, list []string) bool {
+func ContainsSubString(value string, list []string) bool {
 	for _, x := range list {
 		if strings.Contains(value, x) {
 			return true
@@ -319,9 +301,9 @@ func containsSubString(value string, list []string) bool {
 }
 
 // tryDialEndpoint dials the upstream endpoint via plain HTTP
-func tryDialEndpoint(location *url.URL) (net.Conn, error) {
-	switch dialAddress := dialAddress(location); location.Scheme {
-	case unsecureScheme:
+func TryDialEndpoint(location *url.URL) (net.Conn, error) {
+	switch dialAddress := DialAddress(location); location.Scheme {
+	case constant.UnsecureScheme:
 		return net.Dial("tcp", dialAddress)
 	default:
 		return tls.Dial("tcp", dialAddress, &tls.Config{
@@ -333,20 +315,20 @@ func tryDialEndpoint(location *url.URL) (net.Conn, error) {
 }
 
 // isUpgradedConnection checks to see if the request is requesting
-func isUpgradedConnection(req *http.Request) bool {
-	return req.Header.Get(headerUpgrade) != ""
+func IsUpgradedConnection(req *http.Request) bool {
+	return req.Header.Get(constant.HeaderUpgrade) != ""
 }
 
 // transferBytes transfers bytes between the sink and source
-func transferBytes(src io.Reader, dest io.Writer, wg *sync.WaitGroup) (int64, error) {
+func TransferBytes(src io.Reader, dest io.Writer, wg *sync.WaitGroup) (int64, error) {
 	defer wg.Done()
 	return io.Copy(dest, src)
 }
 
 // tryUpdateConnection attempt to upgrade the connection to a http pdy stream
-func tryUpdateConnection(req *http.Request, writer http.ResponseWriter, endpoint *url.URL) error {
+func TryUpdateConnection(req *http.Request, writer http.ResponseWriter, endpoint *url.URL) error {
 	// step: dial the endpoint
-	server, err := tryDialEndpoint(endpoint)
+	server, err := TryDialEndpoint(endpoint)
 
 	if err != nil {
 		return err
@@ -378,20 +360,20 @@ func tryUpdateConnection(req *http.Request, writer http.ResponseWriter, endpoint
 	// @step: copy the data between client and upstream endpoint
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go func() { _, _ = transferBytes(server, client, &wg) }()
-	go func() { _, _ = transferBytes(client, server, &wg) }()
+	go func() { _, _ = TransferBytes(server, client, &wg) }()
+	go func() { _, _ = TransferBytes(client, server, &wg) }()
 	wg.Wait()
 
 	return nil
 }
 
 // dialAddress extracts the dial address from the url
-func dialAddress(location *url.URL) string {
+func DialAddress(location *url.URL) string {
 	items := strings.Split(location.Host, ":")
 
 	if len(items) != 2 {
 		switch location.Scheme {
-		case unsecureScheme:
+		case constant.UnsecureScheme:
 			return location.Host + ":80"
 		default:
 			return location.Host + ":443"
@@ -402,7 +384,7 @@ func dialAddress(location *url.URL) string {
 }
 
 // findCookie looks for a cookie in a list of cookies
-func findCookie(name string, cookies []*http.Cookie) *http.Cookie {
+func FindCookie(name string, cookies []*http.Cookie) *http.Cookie {
 	for _, cookie := range cookies {
 		if cookie.Name == name {
 			return cookie
@@ -413,20 +395,20 @@ func findCookie(name string, cookies []*http.Cookie) *http.Cookie {
 }
 
 // toHeader is a helper method to play nice in the headers
-func toHeader(v string) string {
+func ToHeader(v string) string {
 	symbols := symbolsFilter.Split(v, -1)
 	list := make([]string, 0, len(symbols))
 
 	// step: filter out any symbols and convert to dashes
 	for _, x := range symbols {
-		list = append(list, capitalize(x))
+		list = append(list, Capitalize(x))
 	}
 
 	return strings.Join(list, "-")
 }
 
 // capitalize capitalizes the first letter of a word
-func capitalize(word string) string {
+func Capitalize(word string) string {
 	if word == "" {
 		return ""
 	}
@@ -436,7 +418,7 @@ func capitalize(word string) string {
 }
 
 // mergeMaps simples copies the keys from source to destination
-func mergeMaps(dest, source map[string]string) map[string]string {
+func MergeMaps(dest, source map[string]string) map[string]string {
 	for k, v := range source {
 		dest[k] = v
 	}
@@ -445,7 +427,7 @@ func mergeMaps(dest, source map[string]string) map[string]string {
 }
 
 // loadCA loads the certificate authority
-func loadCA(cert, key string) (*tls.Certificate, error) {
+func LoadCA(cert, key string) (*tls.Certificate, error) {
 	caCert, err := ioutil.ReadFile(cert)
 
 	if err != nil {
@@ -471,7 +453,7 @@ func loadCA(cert, key string) (*tls.Certificate, error) {
 
 // getWithin calculates a duration of x percent of the time period, i.e. something
 // expires in 1 hours, get me a duration within 80%
-func getWithin(expires time.Time, within float64) time.Duration {
+func GetWithin(expires time.Time, within float64) time.Duration {
 	left := expires.UTC().Sub(time.Now().UTC()).Seconds()
 
 	if left <= 0 {
@@ -484,27 +466,104 @@ func getWithin(expires time.Time, within float64) time.Duration {
 }
 
 // getHashKey returns a hash of the encodes jwt token
-func getHashKey(token string) string {
+func GetHashKey(token string) string {
 	hash := sha.Sum512([]byte(token))
 	return base64.RawStdEncoding.EncodeToString(hash[:])
 }
 
 // printError display the command line usage and error
-func printError(message string, args ...interface{}) *cli.ExitError {
+func PrintError(message string, args ...interface{}) *cli.ExitError {
 	return cli.NewExitError(fmt.Sprintf("[error] "+message, args...), 1)
 }
 
 // realIP retrieves the client ip address from a http request
-func realIP(req *http.Request) string {
+func RealIP(req *http.Request) string {
 	rAddr := req.RemoteAddr
 
-	if ip := req.Header.Get(headerXForwardedFor); ip != "" {
+	if ip := req.Header.Get(constant.HeaderXForwardedFor); ip != "" {
 		rAddr = strings.Split(ip, ", ")[0]
-	} else if ip := req.Header.Get(headerXRealIP); ip != "" {
+	} else if ip := req.Header.Get(constant.HeaderXRealIP); ip != "" {
 		rAddr = ip
 	} else {
 		rAddr, _, _ = net.SplitHostPort(rAddr)
 	}
 
 	return rAddr
+}
+
+// getRefreshTokenFromCookie returns the refresh token from the cookie if any
+func GetRefreshTokenFromCookie(req *http.Request, cookieName string) (string, error) {
+	token, err := GetTokenInCookie(req, cookieName)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+// getTokenInRequest returns the access token from the http request
+func GetTokenInRequest(req *http.Request, name string, skipAuthorizationHeaderIdentity bool) (string, bool, error) {
+	bearer := true
+	token := ""
+	var err error
+
+	if !skipAuthorizationHeaderIdentity {
+		token, err = GetTokenInBearer(req)
+		if err != nil && err != apperrors.ErrSessionNotFound {
+			return "", false, err
+		}
+	}
+
+	// step: check for a token in the authorization header
+	if err != nil || (err == nil && skipAuthorizationHeaderIdentity) {
+		if token, err = GetTokenInCookie(req, name); err != nil {
+			return token, false, err
+		}
+		bearer = false
+	}
+
+	return token, bearer, nil
+}
+
+// getTokenInBearer retrieves a access token from the authorization header
+func GetTokenInBearer(req *http.Request) (string, error) {
+	token := req.Header.Get(constant.AuthorizationHeader)
+	if token == "" {
+		return "", apperrors.ErrSessionNotFound
+	}
+
+	items := strings.Split(token, " ")
+	if len(items) != 2 {
+		return "", apperrors.ErrInvalidSession
+	}
+
+	if items[0] != constant.AuthorizationType {
+		return "", apperrors.ErrSessionNotFound
+	}
+	return items[1], nil
+}
+
+// getTokenInCookie retrieves the access token from the request cookies
+func GetTokenInCookie(req *http.Request, name string) (string, error) {
+	var token bytes.Buffer
+
+	if cookie := FindCookie(name, req.Cookies()); cookie != nil {
+		token.WriteString(cookie.Value)
+	}
+
+	// add also divided cookies
+	for i := 1; i < 600; i++ {
+		cookie := FindCookie(name+"-"+strconv.Itoa(i), req.Cookies())
+		if cookie == nil {
+			break
+		} else {
+			token.WriteString(cookie.Value)
+		}
+	}
+
+	if token.Len() == 0 {
+		return "", apperrors.ErrSessionNotFound
+	}
+
+	return token.String(), nil
 }

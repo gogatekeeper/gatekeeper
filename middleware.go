@@ -25,6 +25,8 @@ import (
 
 	uuid "github.com/gofrs/uuid"
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 
 	"github.com/PuerkitoBio/purell"
 	oidc3 "github.com/coreos/go-oidc/v3/oidc"
@@ -64,7 +66,7 @@ func (r *oauthProxy) entrypointMiddleware(next http.Handler) http.Handler {
 		start := time.Now()
 		// All the processing, including forwarding the request upstream and getting the response,
 		// happens here in this chain.
-		next.ServeHTTP(resp, req.WithContext(context.WithValue(req.Context(), contextScopeName, scope)))
+		next.ServeHTTP(resp, req.WithContext(context.WithValue(req.Context(), constant.ContextScopeName, scope)))
 
 		// @metric record the time taken then response code
 		latencyMetric.Observe(time.Since(start).Seconds())
@@ -108,7 +110,7 @@ func (r *oauthProxy) loggingMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		scope, assertOk := req.Context().Value(contextScopeName).(*RequestScope)
+		scope, assertOk := req.Context().Value(constant.ContextScopeName).(*RequestScope)
 
 		if !assertOk {
 			r.log.Error(
@@ -156,7 +158,7 @@ func (r *oauthProxy) loggingMiddleware(next http.Handler) http.Handler {
 func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
-			scope, assertOk := req.Context().Value(contextScopeName).(*RequestScope)
+			scope, assertOk := req.Context().Value(constant.ContextScopeName).(*RequestScope)
 
 			if !assertOk {
 				r.log.Error(
@@ -181,7 +183,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 			}
 
 			scope.Identity = user
-			ctx := context.WithValue(req.Context(), contextScopeName, scope)
+			ctx := context.WithValue(req.Context(), constant.ContextScopeName, scope)
 
 			// step: skip if we are running skip-token-verification
 			if r.config.SkipTokenVerification {
@@ -348,7 +350,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 					accessToken := newRawAccToken
 
 					if r.config.EnableEncryptedToken || r.config.ForceEncryptedCookie {
-						if accessToken, err = encodeText(accessToken, r.config.EncryptionKey); err != nil {
+						if accessToken, err = utils.EncodeText(accessToken, r.config.EncryptionKey); err != nil {
 							scope.Logger.Error(
 								"unable to encode the access token", zap.Error(err),
 								zap.String("email", user.email),
@@ -372,7 +374,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 							zap.String("sub", user.id),
 						)
 
-						encryptedRefreshToken, err := encodeText(newRefreshToken, r.config.EncryptionKey)
+						encryptedRefreshToken, err := utils.EncodeText(newRefreshToken, r.config.EncryptionKey)
 
 						if err != nil {
 							scope.Logger.Error(
@@ -404,7 +406,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 
 					// update the with the new access token and inject into the context
 					user.rawToken = newRawAccToken
-					ctx = context.WithValue(req.Context(), contextScopeName, scope)
+					ctx = context.WithValue(req.Context(), constant.ContextScopeName, scope)
 				}
 			}
 
@@ -420,7 +422,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 func (r *oauthProxy) authorizationMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
-			scope, assertOk := req.Context().Value(contextScopeName).(*RequestScope)
+			scope, assertOk := req.Context().Value(constant.ContextScopeName).(*RequestScope)
 
 			if !assertOk {
 				r.log.Error(
@@ -621,7 +623,7 @@ func (r *oauthProxy) admissionMiddleware(resource *Resource) func(http.Handler) 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
 			// we don't need to continue is a decision has been made
-			scope, assertOk := req.Context().Value(contextScopeName).(*RequestScope)
+			scope, assertOk := req.Context().Value(constant.ContextScopeName).(*RequestScope)
 
 			if !assertOk {
 				r.log.Error(
@@ -638,7 +640,7 @@ func (r *oauthProxy) admissionMiddleware(resource *Resource) func(http.Handler) 
 			user := scope.Identity
 
 			// @step: we need to check the roles
-			if !hasAccess(resource.Roles, user.roles, !resource.RequireAnyRole) {
+			if !utils.HasAccess(resource.Roles, user.roles, !resource.RequireAnyRole) {
 				scope.Logger.Warn("access denied, invalid roles",
 					zap.String("access", "denied"),
 					zap.String("email", user.email),
@@ -650,7 +652,7 @@ func (r *oauthProxy) admissionMiddleware(resource *Resource) func(http.Handler) 
 			}
 
 			// @step: check if we have any groups, the groups are there
-			if !hasAccess(resource.Groups, user.groups, false) {
+			if !utils.HasAccess(resource.Groups, user.groups, false) {
 				scope.Logger.Warn("access denied, invalid groups",
 					zap.String("access", "denied"),
 					zap.String("email", user.email),
@@ -705,9 +707,9 @@ func (r *oauthProxy) identityHeadersMiddleware(custom []string) func(http.Handle
 		val = xslices[0]
 
 		if len(xslices) > minSliceLength {
-			customClaims[val] = toHeader(xslices[1])
+			customClaims[val] = utils.ToHeader(xslices[1])
 		} else {
-			customClaims[val] = fmt.Sprintf("X-Auth-%s", toHeader(val))
+			customClaims[val] = fmt.Sprintf("X-Auth-%s", utils.ToHeader(val))
 		}
 	}
 
@@ -715,7 +717,7 @@ func (r *oauthProxy) identityHeadersMiddleware(custom []string) func(http.Handle
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
-			scope, assertOk := req.Context().Value(contextScopeName).(*RequestScope)
+			scope, assertOk := req.Context().Value(constant.ContextScopeName).(*RequestScope)
 
 			if !assertOk {
 				r.log.Error(
@@ -775,7 +777,7 @@ func (r *oauthProxy) securityMiddleware(next http.Handler) http.Handler {
 	})
 
 	return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
-		scope, assertOk := req.Context().Value(contextScopeName).(*RequestScope)
+		scope, assertOk := req.Context().Value(constant.ContextScopeName).(*RequestScope)
 
 		if !assertOk {
 			r.log.Error(
@@ -799,7 +801,7 @@ func (r *oauthProxy) methodCheckMiddleware(next http.Handler) http.Handler {
 	r.log.Info("enabling the method check middleware")
 
 	return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
-		if !isValidHTTPMethod(req.Method) {
+		if !utils.IsValidHTTPMethod(req.Method) {
 			r.log.Warn("method not implemented ", zap.String("method", req.Method))
 			wrt.WriteHeader(http.StatusNotImplemented)
 			return
@@ -812,7 +814,7 @@ func (r *oauthProxy) methodCheckMiddleware(next http.Handler) http.Handler {
 // proxyDenyMiddleware just block everything
 func (r *oauthProxy) proxyDenyMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
-		ctxVal := req.Context().Value(contextScopeName)
+		ctxVal := req.Context().Value(constant.ContextScopeName)
 
 		var scope *RequestScope
 		if ctxVal == nil {
@@ -830,7 +832,7 @@ func (r *oauthProxy) proxyDenyMiddleware(next http.Handler) http.Handler {
 
 		scope.AccessDenied = true
 		// update the request context
-		ctx := context.WithValue(req.Context(), contextScopeName, scope)
+		ctx := context.WithValue(req.Context(), constant.ContextScopeName, scope)
 
 		next.ServeHTTP(wrt, req.WithContext(ctx))
 	})

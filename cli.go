@@ -23,22 +23,22 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/urfave/cli"
 )
-
-const durationType = "time.Duration"
 
 // newOauthProxyApp creates a new cli application and runs it
 func newOauthProxyApp() *cli.App {
 	config := newDefaultConfig()
 	app := cli.NewApp()
-	app.Name = prog
-	app.Usage = description
+	app.Name = constant.Prog
+	app.Usage = constant.Description
 	app.Version = getVersion()
-	app.Author = author
-	app.Email = email
+	app.Author = constant.Author
+	app.Email = constant.Email
 	app.Flags = getCommandLineOptions()
-	app.UsageText = "gatekeeper [options]"
+	app.UsageText = fmt.Sprintf("%s [options]", constant.Prog)
 
 	// step: the standard usage message isn't that helpful
 	app.OnUsageError = func(context *cli.Context, err error, isSubcommand bool) error {
@@ -51,30 +51,34 @@ func newOauthProxyApp() *cli.App {
 		configFile := cliCx.String("config")
 		// step: do we have a configuration file?
 		if configFile != "" {
-			if err := readConfigFile(configFile, config); err != nil {
-				return printError("unable to read the configuration file: %s, error: %s", configFile, err.Error())
+			if err := ReadConfigFile(configFile, config); err != nil {
+				return utils.PrintError(
+					"unable to read the configuration file: %s, error: %s",
+					configFile,
+					err.Error(),
+				)
 			}
 		}
 
 		// step: parse the command line options
 		if err := parseCLIOptions(cliCx, config); err != nil {
-			return printError(err.Error())
+			return utils.PrintError(err.Error())
 		}
 
 		// step: validate the configuration
 		if err := config.isValid(); err != nil {
-			return printError(err.Error())
+			return utils.PrintError(err.Error())
 		}
 
 		// step: create the proxy
 		proxy, err := newProxy(config)
 		if err != nil {
-			return printError(err.Error())
+			return utils.PrintError(err.Error())
 		}
 
 		// step: start the service
 		if err := proxy.Run(); err != nil {
-			return printError(err.Error())
+			return utils.PrintError(err.Error())
 		}
 
 		// step: setup the termination signals
@@ -109,7 +113,7 @@ func getCommandLineOptions() []cli.Flag {
 		envName := field.Tag.Get("env")
 
 		if envName != "" {
-			envName = envPrefix + envName
+			envName = constant.EnvPrefix + envName
 		}
 
 		optName := field.Tag.Get("yaml")
@@ -148,7 +152,7 @@ func getCommandLineOptions() []cli.Flag {
 			})
 		case reflect.Int64:
 			switch fType.String() {
-			case durationType:
+			case constant.DurationType:
 				dv := reflect.ValueOf(defaults).Elem().FieldByName(field.Name).Int()
 
 				flags = append(flags, cli.DurationFlag{
@@ -184,7 +188,7 @@ func parseCLIOptions(cliCtx *cli.Context, config *Config) error {
 		field := reflect.TypeOf(config).Elem().Field(i)
 		name := field.Tag.Get("yaml")
 
-		if containedIn(name, ignoredOptions) {
+		if utils.ContainedIn(name, ignoredOptions) {
 			continue
 		}
 
@@ -200,7 +204,7 @@ func parseCLIOptions(cliCtx *cli.Context, config *Config) error {
 				reflect.ValueOf(config).Elem().FieldByName(field.Name).Set(reflect.ValueOf(cliCtx.Int(name)))
 			case reflect.Int64:
 				switch field.Type.String() {
-				case durationType:
+				case constant.DurationType:
 					reflect.ValueOf(config).Elem().FieldByName(field.Name).SetInt(int64(cliCtx.Duration(name)))
 				default:
 					reflect.ValueOf(config).Elem().FieldByName(field.Name).SetInt(cliCtx.Int64(name))
@@ -210,27 +214,27 @@ func parseCLIOptions(cliCtx *cli.Context, config *Config) error {
 	}
 
 	if cliCtx.IsSet("tag") {
-		tags, err := decodeKeyPairs(cliCtx.StringSlice("tag"))
+		tags, err := utils.DecodeKeyPairs(cliCtx.StringSlice("tag"))
 		if err != nil {
 			return err
 		}
-		mergeMaps(config.Tags, tags)
+		utils.MergeMaps(config.Tags, tags)
 	}
 
 	if cliCtx.IsSet("match-claims") {
-		claims, err := decodeKeyPairs(cliCtx.StringSlice("match-claims"))
+		claims, err := utils.DecodeKeyPairs(cliCtx.StringSlice("match-claims"))
 		if err != nil {
 			return err
 		}
-		mergeMaps(config.MatchClaims, claims)
+		utils.MergeMaps(config.MatchClaims, claims)
 	}
 
 	if cliCtx.IsSet("headers") {
-		headers, err := decodeKeyPairs(cliCtx.StringSlice("headers"))
+		headers, err := utils.DecodeKeyPairs(cliCtx.StringSlice("headers"))
 		if err != nil {
 			return err
 		}
-		mergeMaps(config.Headers, headers)
+		utils.MergeMaps(config.Headers, headers)
 	}
 
 	if cliCtx.IsSet("resources") {

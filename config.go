@@ -16,15 +16,22 @@ limitations under the License.
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // newDefaultConfig returns a initialized config
@@ -37,10 +44,10 @@ func newDefaultConfig() *Config {
 
 	return &Config{
 		AccessTokenDuration:           time.Duration(720) * time.Hour,
-		CookieAccessName:              accessCookie,
-		CookieRefreshName:             refreshCookie,
-		CookieOAuthStateName:          requestStateCookie,
-		CookieRequestURIName:          requestURICookie,
+		CookieAccessName:              constant.AccessCookie,
+		CookieRefreshName:             constant.RefreshCookie,
+		CookieOAuthStateName:          constant.RequestStateCookie,
+		CookieRequestURIName:          constant.RequestURICookie,
 		EnableAuthorizationCookies:    true,
 		EnableAuthorizationHeader:     true,
 		EnableDefaultDeny:             true,
@@ -59,7 +66,7 @@ func newDefaultConfig() *Config {
 		SelfSignedTLSHostnames:        hostnames,
 		RequestIDHeader:               "X-Request-ID",
 		ResponseHeaders:               make(map[string]string),
-		SameSiteCookie:                SameSiteLax,
+		SameSiteCookie:                constant.SameSiteLax,
 		Scopes:                        []string{"email", "profile"},
 		SecureCookie:                  true,
 		ServerIdleTimeout:             120 * time.Second,
@@ -80,6 +87,38 @@ func newDefaultConfig() *Config {
 		PatRetryCount:                 5,
 		PatRetryInterval:              10 * time.Second,
 	}
+}
+
+// readConfigFile reads and parses the configuration file
+func ReadConfigFile(filename string, config *Config) error {
+	content, err := ioutil.ReadFile(filename)
+
+	if err != nil {
+		return err
+	}
+	// step: attempt to un-marshal the data
+	switch ext := filepath.Ext(filename); ext {
+	case "json":
+		err = json.Unmarshal(content, config)
+	default:
+		err = yaml.Unmarshal(content, config)
+	}
+
+	return err
+}
+
+func writeFakeConfigFile(t *testing.T, content string) *os.File {
+	file, err := ioutil.TempFile("", "node_label_file")
+	if err != nil {
+		t.Fatalf("unexpected error creating node_label_file: %v", err)
+	}
+	file.Close()
+
+	if err := ioutil.WriteFile(file.Name(), []byte(content), 0600); err != nil {
+		t.Fatalf("unexpected error writing node label file: %v", err)
+	}
+
+	return file
 }
 
 // WithOAuthURI returns the oauth uri
@@ -113,7 +152,7 @@ func (r *Config) isValid() error {
 	}
 
 	if r.ListenAdminScheme == "" {
-		r.ListenAdminScheme = secureScheme
+		r.ListenAdminScheme = constant.SecureScheme
 	}
 
 	validationRegistry := []func() error{
@@ -162,8 +201,8 @@ func (r *Config) isListenValid() error {
 }
 
 func (r *Config) isListenAdminSchemeValid() error {
-	if r.ListenAdminScheme != secureScheme &&
-		r.ListenAdminScheme != unsecureScheme {
+	if r.ListenAdminScheme != constant.SecureScheme &&
+		r.ListenAdminScheme != constant.UnsecureScheme {
 		return errors.New("scheme for admin listener must be one of [http, https]")
 	}
 	return nil
@@ -196,8 +235,8 @@ func (r *Config) isMaxIdlleConnValid() error {
 }
 
 func (r *Config) isSameSiteValid() error {
-	if r.SameSiteCookie != "" && r.SameSiteCookie != SameSiteStrict &&
-		r.SameSiteCookie != SameSiteLax && r.SameSiteCookie != SameSiteNone {
+	if r.SameSiteCookie != "" && r.SameSiteCookie != constant.SameSiteStrict &&
+		r.SameSiteCookie != constant.SameSiteLax && r.SameSiteCookie != constant.SameSiteNone {
 		return errors.New("same-site-cookie must be one of Strict|Lax|None")
 	}
 	return nil
@@ -213,22 +252,22 @@ func (r *Config) isTLSFilesValid() error {
 		return errors.New("you have not provided a certificate file")
 	}
 
-	if r.TLSCertificate != "" && !fileExists(r.TLSCertificate) {
+	if r.TLSCertificate != "" && !utils.FileExists(r.TLSCertificate) {
 		return fmt.Errorf("the tls certificate %s does not exist", r.TLSCertificate)
 	}
 
-	if r.TLSPrivateKey != "" && !fileExists(r.TLSPrivateKey) {
+	if r.TLSPrivateKey != "" && !utils.FileExists(r.TLSPrivateKey) {
 		return fmt.Errorf("the tls private key %s does not exist", r.TLSPrivateKey)
 	}
 
-	if r.TLSCaCertificate != "" && !fileExists(r.TLSCaCertificate) {
+	if r.TLSCaCertificate != "" && !utils.FileExists(r.TLSCaCertificate) {
 		return fmt.Errorf(
 			"the tls ca certificate file %s does not exist",
 			r.TLSCaCertificate,
 		)
 	}
 
-	if r.TLSClientCertificate != "" && !fileExists(r.TLSClientCertificate) {
+	if r.TLSClientCertificate != "" && !utils.FileExists(r.TLSClientCertificate) {
 		return fmt.Errorf(
 			"the tls client certificate %s does not exist",
 			r.TLSClientCertificate,
@@ -250,28 +289,28 @@ func (r *Config) isAdminTLSFilesValid() error {
 		)
 	}
 
-	if r.TLSAdminCertificate != "" && !fileExists(r.TLSAdminCertificate) {
+	if r.TLSAdminCertificate != "" && !utils.FileExists(r.TLSAdminCertificate) {
 		return fmt.Errorf(
 			"the tls certificate %s does not exist for admin endpoint",
 			r.TLSAdminCertificate,
 		)
 	}
 
-	if r.TLSAdminPrivateKey != "" && !fileExists(r.TLSAdminPrivateKey) {
+	if r.TLSAdminPrivateKey != "" && !utils.FileExists(r.TLSAdminPrivateKey) {
 		return fmt.Errorf(
 			"the tls private key %s does not exist for admin endpoint",
 			r.TLSAdminPrivateKey,
 		)
 	}
 
-	if r.TLSAdminCaCertificate != "" && !fileExists(r.TLSAdminCaCertificate) {
+	if r.TLSAdminCaCertificate != "" && !utils.FileExists(r.TLSAdminCaCertificate) {
 		return fmt.Errorf(
 			"the tls ca certificate file %s does not exist for admin endpoint",
 			r.TLSAdminCaCertificate,
 		)
 	}
 
-	if r.TLSAdminClientCertificate != "" && !fileExists(r.TLSAdminClientCertificate) {
+	if r.TLSAdminClientCertificate != "" && !utils.FileExists(r.TLSAdminClientCertificate) {
 		return fmt.Errorf(
 			"the tls client certificate %s does not exist for admin endpoint",
 			r.TLSAdminClientCertificate,
@@ -530,7 +569,7 @@ func (r *Config) isResourceValid() error {
 	if r.CustomHTTPMethods != nil {
 		for _, customHTTPMethod := range r.CustomHTTPMethods {
 			chi.RegisterMethod(customHTTPMethod)
-			allHTTPMethods = append(allHTTPMethods, customHTTPMethod)
+			utils.AllHTTPMethods = append(utils.AllHTTPMethods, customHTTPMethod)
 		}
 	}
 

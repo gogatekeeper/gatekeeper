@@ -31,7 +31,9 @@ import (
 	"github.com/alicebob/miniredis/v2"
 	resty "github.com/go-resty/resty/v2"
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/storage"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/rs/cors"
 	"github.com/stretchr/testify/assert"
 
@@ -63,7 +65,7 @@ func TestMetricsMiddleware(t *testing.T) {
 			ExpectedCode:  http.StatusOK,
 		},
 		{
-			URI: cfg.WithOAuthURI(metricsURL),
+			URI: cfg.WithOAuthURI(constant.MetricsURL),
 			Headers: map[string]string{
 				"X-Forwarded-For": "10.0.0.1",
 			},
@@ -71,22 +73,22 @@ func TestMetricsMiddleware(t *testing.T) {
 		},
 		// Some request must run before this one to generate request status numbers
 		{
-			URI:                     cfg.WithOAuthURI(metricsURL),
+			URI:                     cfg.WithOAuthURI(constant.MetricsURL),
 			ExpectedCode:            http.StatusOK,
 			ExpectedContentContains: "proxy_request_status_total",
 		},
 		{
-			URI:                     cfg.WithOAuthURI(metricsURL),
+			URI:                     cfg.WithOAuthURI(constant.MetricsURL),
 			ExpectedCode:            http.StatusOK,
 			ExpectedContentContains: "action=\"issued\"",
 		},
 		{
-			URI:                     cfg.WithOAuthURI(metricsURL),
+			URI:                     cfg.WithOAuthURI(constant.MetricsURL),
 			ExpectedCode:            http.StatusOK,
 			ExpectedContentContains: "action=\"exchange\"",
 		},
 		{
-			URI:                     cfg.WithOAuthURI(metricsURL),
+			URI:                     cfg.WithOAuthURI(constant.MetricsURL),
 			ExpectedCode:            http.StatusOK,
 			ExpectedContentContains: "action=\"renew\"",
 		},
@@ -179,7 +181,7 @@ func TestAdminListener(t *testing.T) {
 			ProxySettings: func(conf *Config) {
 				conf.EnableMetrics = true
 				conf.ListenAdmin = "127.0.0.1:12301"
-				conf.ListenAdminScheme = secureScheme
+				conf.ListenAdminScheme = constant.SecureScheme
 				conf.TLSAdminCertificate = fmt.Sprintf(os.TempDir()+"/gateadmin_crt_%d", rand.Intn(10000))
 				conf.TLSAdminPrivateKey = fmt.Sprintf(os.TempDir()+"/gateadmin_priv_%d", rand.Intn(10000))
 				conf.TLSAdminCaCertificate = fmt.Sprintf(os.TempDir()+"/gateadmin_ca_%d", rand.Intn(10000))
@@ -205,7 +207,7 @@ func TestAdminListener(t *testing.T) {
 			ProxySettings: func(conf *Config) {
 				conf.EnableMetrics = true
 				conf.ListenAdmin = "127.0.0.1:12302"
-				conf.ListenAdminScheme = secureScheme
+				conf.ListenAdminScheme = constant.SecureScheme
 				conf.TLSCertificate = fmt.Sprintf(os.TempDir()+"/gateadmin_crt_%d", rand.Intn(10000))
 				conf.TLSPrivateKey = fmt.Sprintf(os.TempDir()+"/gateadmin_priv_%d", rand.Intn(10000))
 				conf.TLSCaCertificate = fmt.Sprintf(os.TempDir()+"/gateadmin_ca_%d", rand.Intn(10000))
@@ -369,22 +371,22 @@ func TestPreserveURLEncoding(t *testing.T) {
 	cfg.Resources = []*Resource{
 		{
 			URL:     "/api/v2/*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{"dev"},
 		},
 		{
 			URL:     "/api/v1/auth*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{"admin"},
 		},
 		{
 			URL:         "/api/v1/*",
-			Methods:     allHTTPMethods,
+			Methods:     utils.AllHTTPMethods,
 			WhiteListed: true,
 		},
 		{
 			URL:     "/*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{"user"},
 		},
 	}
@@ -462,22 +464,22 @@ func TestStrangeRoutingError(t *testing.T) {
 	cfg.Resources = []*Resource{
 		{
 			URL:     "/api/v1/events/123456789",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{"user"},
 		},
 		{
 			URL:     "/api/v1/events/404",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{"monitoring"},
 		},
 		{
 			URL:     "/api/v1/audit/*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{"auditor", "dev"},
 		},
 		{
 			URL:     "/*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{"dev"},
 		},
 	}
@@ -536,7 +538,7 @@ func TestNoProxyingRequests(t *testing.T) {
 	cfg.Resources = []*Resource{
 		{
 			URL:     "/*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 		},
 	}
 	requests := []fakeRequest{
@@ -571,7 +573,7 @@ func TestStrangeAdminRequests(t *testing.T) {
 	cfg.Resources = []*Resource{
 		{
 			URL:     "/admin*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{fakeAdminRole},
 		},
 	}
@@ -639,13 +641,13 @@ func TestWhiteListedRequests(t *testing.T) {
 	cfg.Resources = []*Resource{
 		{
 			URL:     "/*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{fakeTestRole},
 		},
 		{
 			URL:         "/whitelist*",
 			WhiteListed: true,
-			Methods:     allHTTPMethods,
+			Methods:     utils.AllHTTPMethods,
 		},
 	}
 	requests := []fakeRequest{
@@ -685,7 +687,7 @@ func TestRequireAnyRoles(t *testing.T) {
 	cfg.Resources = []*Resource{
 		{
 			URL:            "/require_any_role/*",
-			Methods:        allHTTPMethods,
+			Methods:        utils.AllHTTPMethods,
 			RequireAnyRole: true,
 			Roles:          []string{"admin", "guest"},
 		},
@@ -717,23 +719,23 @@ func TestGroupPermissionsMiddleware(t *testing.T) {
 	cfg.Resources = []*Resource{
 		{
 			URL:     "/with_role_and_group*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Groups:  []string{"admin"},
 			Roles:   []string{"admin"},
 		},
 		{
 			URL:     "/with_group*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Groups:  []string{"admin"},
 		},
 		{
 			URL:     "/with_many_groups*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Groups:  []string{"admin", "user", "tester"},
 		},
 		{
 			URL:     "/*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{"user"},
 		},
 	}
@@ -829,7 +831,7 @@ func TestRolePermissionsMiddleware(t *testing.T) {
 	cfg.Resources = []*Resource{
 		{
 			URL:     "/admin*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{fakeAdminRole},
 		},
 		{
@@ -844,12 +846,12 @@ func TestRolePermissionsMiddleware(t *testing.T) {
 		},
 		{
 			URL:     "/section/*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{fakeAdminRole},
 		},
 		{
 			URL:     "/section/one",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{"one"},
 		},
 		{
@@ -859,7 +861,7 @@ func TestRolePermissionsMiddleware(t *testing.T) {
 		},
 		{
 			URL:     "/*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{fakeTestRole},
 		},
 	}
@@ -1201,7 +1203,7 @@ func delay(no int, req *resty.Request, resp *resty.Response) {
 }
 
 func checkAccessTokenEncryption(t *testing.T, cfg *Config, value string) bool {
-	rawToken, err := decodeText(value, cfg.EncryptionKey)
+	rawToken, err := utils.DecodeText(value, cfg.EncryptionKey)
 
 	if err != nil {
 		return false
@@ -1223,7 +1225,7 @@ func checkAccessTokenEncryption(t *testing.T, cfg *Config, value string) bool {
 }
 
 func checkRefreshTokenEncryption(t *testing.T, cfg *Config, value string) bool {
-	rawToken, err := decodeText(value, cfg.EncryptionKey)
+	rawToken, err := utils.DecodeText(value, cfg.EncryptionKey)
 
 	if err != nil {
 		return false
@@ -1422,7 +1424,7 @@ func TestAdmissionHandlerRoles(t *testing.T) {
 	cfg.Resources = []*Resource{
 		{
 			URL:     "/admin",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{"admin"},
 		},
 		{
@@ -1432,12 +1434,12 @@ func TestAdmissionHandlerRoles(t *testing.T) {
 		},
 		{
 			URL:     "/either",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{"admin", "test"},
 		},
 		{
 			URL:     "/",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 		},
 	}
 	requests := []fakeRequest{
@@ -1533,7 +1535,7 @@ func TestCustomHeaders(t *testing.T) {
 	}
 	for _, c := range requests {
 		cfg := newFakeKeycloakConfig()
-		cfg.Resources = []*Resource{{URL: "/admin*", Methods: allHTTPMethods}}
+		cfg.Resources = []*Resource{{URL: "/admin*", Methods: utils.AllHTTPMethods}}
 		cfg.Headers = c.Headers
 		newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, []fakeRequest{c.Request})
 	}
@@ -1673,7 +1675,7 @@ func TestRolesAdmissionHandlerClaims(t *testing.T) {
 	}
 	for _, c := range requests {
 		cfg := newFakeKeycloakConfig()
-		cfg.Resources = []*Resource{{URL: "/admin*", Methods: allHTTPMethods}}
+		cfg.Resources = []*Resource{{URL: "/admin*", Methods: utils.AllHTTPMethods}}
 		cfg.MatchClaims = c.Matches
 		newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, []fakeRequest{c.Request})
 	}
@@ -1785,7 +1787,7 @@ func TestGzipCompression(t *testing.T) {
 	for _, testCase := range requests {
 		testCase := testCase
 		cfg := *cfg
-		cfg.Resources = []*Resource{{URL: "/admin*", Methods: allHTTPMethods}}
+		cfg.Resources = []*Resource{{URL: "/admin*", Methods: utils.AllHTTPMethods}}
 
 		t.Run(
 			testCase.Name,

@@ -34,6 +34,8 @@ import (
 	"github.com/alicebob/miniredis/v2"
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
@@ -516,7 +518,7 @@ func TestForbiddenTemplate(t *testing.T) {
 	cfg.Resources = []*Resource{
 		{
 			URL:     "/*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{fakeAdminRole},
 		},
 	}
@@ -740,7 +742,7 @@ func TestDefaultDenial(t *testing.T) {
 	config.Resources = []*Resource{
 		{
 			URL:         "/public/*",
-			Methods:     allHTTPMethods,
+			Methods:     utils.AllHTTPMethods,
 			WhiteListed: true,
 		},
 	}
@@ -812,7 +814,7 @@ func TestDefaultDenialStrict(t *testing.T) {
 	config.Resources = []*Resource{
 		{
 			URL:         "/public/*",
-			Methods:     allHTTPMethods,
+			Methods:     utils.AllHTTPMethods,
 			WhiteListed: true,
 		},
 		{
@@ -900,13 +902,13 @@ func TestAuthorizationTemplate(t *testing.T) {
 	cfg.Resources = []*Resource{
 		{
 			URL:     "/*",
-			Methods: allHTTPMethods,
+			Methods: utils.AllHTTPMethods,
 			Roles:   []string{fakeAdminRole},
 		},
 	}
 	requests := []fakeRequest{
 		{
-			URI:                     cfg.WithOAuthURI(authorizationURL),
+			URI:                     cfg.WithOAuthURI(constant.AuthorizationURL),
 			Redirects:               true,
 			ExpectedCode:            http.StatusOK,
 			ExpectedContentContains: "Sign In",
@@ -1361,7 +1363,7 @@ func TestCustomHTTPMethod(t *testing.T) {
 				c.Resources = []*Resource{
 					{
 						URL:         "/public/*",
-						Methods:     allHTTPMethods,
+						Methods:     utils.AllHTTPMethods,
 						WhiteListed: true,
 					},
 				}
@@ -1383,7 +1385,7 @@ func TestCustomHTTPMethod(t *testing.T) {
 				c.Resources = []*Resource{
 					{
 						URL:         "/public/*",
-						Methods:     allHTTPMethods,
+						Methods:     utils.AllHTTPMethods,
 						WhiteListed: true,
 					},
 				}

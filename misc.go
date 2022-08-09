@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/Nerzal/gocloak/v11"
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"go.uber.org/zap"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
@@ -58,7 +59,7 @@ func filterCookies(req *http.Request, filter []string) error {
 // revokeProxy is responsible to stopping the middleware from proxying the request
 func (r *oauthProxy) revokeProxy(w http.ResponseWriter, req *http.Request) context.Context {
 	var scope *RequestScope
-	ctxVal := req.Context().Value(contextScopeName)
+	ctxVal := req.Context().Value(constant.ContextScopeName)
 
 	switch ctxVal {
 	case nil:
@@ -75,7 +76,7 @@ func (r *oauthProxy) revokeProxy(w http.ResponseWriter, req *http.Request) conte
 
 	scope.AccessDenied = true
 
-	return context.WithValue(req.Context(), contextScopeName, scope)
+	return context.WithValue(req.Context(), constant.ContextScopeName, scope)
 }
 
 // accessForbidden redirects the user to the forbidden page
@@ -250,7 +251,7 @@ func (r *oauthProxy) redirectToAuthorization(wrt http.ResponseWriter, req *http.
 	}
 
 	r.redirectToURL(
-		r.config.WithOAuthURI(authorizationURL+authQuery),
+		r.config.WithOAuthURI(constant.AuthorizationURL+authQuery),
 		wrt,
 		req,
 		http.StatusSeeOther,

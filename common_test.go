@@ -19,6 +19,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/jochasinga/relay"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/websocket"
@@ -546,7 +547,7 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 
 		if len(reqCfg.ExpectedCookies) > 0 {
 			for cookName, expVal := range reqCfg.ExpectedCookies {
-				cookie := findCookie(cookName, resp.Cookies())
+				cookie := utils.FindCookie(cookName, resp.Cookies())
 
 				if !assert.NotNil(
 					t,
@@ -574,7 +575,7 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 
 		if len(reqCfg.ExpectedCookiesValidator) > 0 {
 			for cookName, cookValidator := range reqCfg.ExpectedCookiesValidator {
-				cookie := findCookie(cookName, resp.Cookies())
+				cookie := utils.FindCookie(cookName, resp.Cookies())
 
 				if !assert.NotNil(
 					t,
@@ -765,13 +766,13 @@ func newFakeKeycloakConfig() *Config {
 			},
 			{
 				URL:     fakeAuthAllURL,
-				Methods: allHTTPMethods,
+				Methods: utils.AllHTTPMethods,
 				Roles:   []string{},
 			},
 			{
 				URL:         fakeTestWhitelistedURL,
 				WhiteListed: true,
-				Methods:     allHTTPMethods,
+				Methods:     utils.AllHTTPMethods,
 				Roles:       []string{},
 			},
 		},

@@ -22,9 +22,13 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 func TestGetIndentity(t *testing.T) {
@@ -216,7 +220,7 @@ func TestGetTokenInRequest(t *testing.T) {
 		req := newFakeHTTPRequest(http.MethodGet, "/")
 		if testCase.Token != "" {
 			if testCase.AuthScheme != "" {
-				req.Header.Set(authorizationHeader, testCase.AuthScheme+" "+testCase.Token)
+				req.Header.Set(constant.AuthorizationHeader, testCase.AuthScheme+" "+testCase.Token)
 			} else {
 				req.AddCookie(&http.Cookie{
 					Name:   defaultName,
@@ -226,7 +230,7 @@ func TestGetTokenInRequest(t *testing.T) {
 				})
 			}
 		}
-		access, bearer, err := getTokenInRequest(req, defaultName, testCase.SkipAuthorizationHeaderIdentity)
+		access, bearer, err := utils.GetTokenInRequest(req, defaultName, testCase.SkipAuthorizationHeaderIdentity)
 		switch testCase.Error {
 		case nil:
 			assert.NoError(t, err, "case %d should not have thrown an error", idx)
@@ -238,47 +242,62 @@ func TestGetTokenInRequest(t *testing.T) {
 	}
 }
 
-func TestGetRefreshTokenFromCookie(t *testing.T) {
-	proxy, _, _ := newTestProxyService(nil)
-	cases := []struct {
-		Cookies  *http.Cookie
-		Expected string
-		Ok       bool
-	}{
-		{
-			Cookies: &http.Cookie{},
-		},
-		{
-			Cookies: &http.Cookie{
-				Name:   "not_a_session_cookie",
-				Path:   "/",
-				Domain: "127.0.0.1",
-			},
-		},
-		{
-			Cookies: &http.Cookie{
-				Name:   "kc-state",
-				Path:   "/",
-				Domain: "127.0.0.1",
-				Value:  "refresh_token",
-			},
-			Expected: "refresh_token",
-			Ok:       true,
-		},
+func TestIsExpired(t *testing.T) {
+	user := &userContext{
+		expiresAt: time.Now(),
 	}
+	time.Sleep(1 * time.Millisecond)
+	if !user.isExpired() {
+		t.Error("we should have been false")
+	}
+}
 
-	for _, testCase := range cases {
-		req := newFakeHTTPRequest(http.MethodGet, "/")
-		req.AddCookie(testCase.Cookies)
-		token, err := proxy.getRefreshTokenFromCookie(req)
-		switch testCase.Ok {
-		case true:
-			assert.NoError(t, err)
-			assert.NotEmpty(t, token)
-			assert.Equal(t, testCase.Expected, token)
-		default:
-			assert.Error(t, err)
-			assert.Empty(t, token)
-		}
-	}
+func TestGetUserContext(t *testing.T) {
+	realmRoles := []string{"realm:realm"}
+	clientRoles := []string{"client:client"}
+	token := newTestToken("test")
+	token.addRealmRoles(realmRoles)
+	token.addClientRoles("client", []string{"client"})
+	jwtToken, err := token.getToken()
+	assert.NoError(t, err)
+	webToken, err := jwt.ParseSigned(jwtToken)
+	assert.NoError(t, err)
+	context, err := extractIdentity(webToken)
+	assert.NoError(t, err)
+	assert.NotNil(t, context)
+	assert.Equal(t, "1e11e539-8256-4b3b-bda8-cc0d56cddb48", context.id)
+	assert.Equal(t, "gambol99@gmail.com", context.email)
+	assert.Equal(t, "rjayawardene", context.preferredName)
+	assert.Equal(t, append(realmRoles, clientRoles...), context.roles)
+}
+
+func TestGetUserRealmRoleContext(t *testing.T) {
+	roles := []string{"dsp-dev-vpn", "vpn-user", "dsp-prod-vpn", "openvpn:dev-vpn"}
+	token := newTestToken("test")
+	token.addRealmRoles(roles)
+	jwtToken, err := token.getToken()
+	assert.NoError(t, err)
+	webToken, err := jwt.ParseSigned(jwtToken)
+	assert.NoError(t, err)
+	context, err := extractIdentity(webToken)
+	assert.NoError(t, err)
+	assert.NotNil(t, context)
+	assert.Equal(t, "1e11e539-8256-4b3b-bda8-cc0d56cddb48", context.id)
+	assert.Equal(t, "gambol99@gmail.com", context.email)
+	assert.Equal(t, "rjayawardene", context.preferredName)
+	// we have "defaultclient:default" in default test claims
+	roles = append(roles, "defaultclient:default")
+	assert.Equal(t, roles, context.roles)
+}
+
+func TestUserContextString(t *testing.T) {
+	token := newTestToken("test")
+	jwtToken, err := token.getToken()
+	assert.NoError(t, err)
+	webToken, err := jwt.ParseSigned(jwtToken)
+	assert.NoError(t, err)
+	context, err := extractIdentity(webToken)
+	assert.NoError(t, err)
+	assert.NotNil(t, context)
+	assert.NotEmpty(t, context.String())
 }

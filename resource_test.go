@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -50,15 +51,15 @@ func TestResourceParseOk(t *testing.T) {
 	}{
 		{
 			Option:   "uri=/admin",
-			Resource: &Resource{URL: "/admin", Methods: allHTTPMethods},
+			Resource: &Resource{URL: "/admin", Methods: utils.AllHTTPMethods},
 		},
 		{
 			Option:   "uri=/",
-			Resource: &Resource{URL: "/", Methods: allHTTPMethods},
+			Resource: &Resource{URL: "/", Methods: utils.AllHTTPMethods},
 		},
 		{
 			Option:   "uri=/admin/sso|roles=test,test1",
-			Resource: &Resource{URL: "/admin/sso", Roles: []string{"test", "test1"}, Methods: allHTTPMethods},
+			Resource: &Resource{URL: "/admin/sso", Roles: []string{"test", "test1"}, Methods: utils.AllHTTPMethods},
 		},
 		{
 			Option:   "uri=/admin/sso|roles=test,test1|methods=GET,POST",
@@ -66,27 +67,27 @@ func TestResourceParseOk(t *testing.T) {
 		},
 		{
 			Option:   "uri=/allow_me|white-listed=true",
-			Resource: &Resource{URL: "/allow_me", WhiteListed: true, Methods: allHTTPMethods},
+			Resource: &Resource{URL: "/allow_me", WhiteListed: true, Methods: utils.AllHTTPMethods},
 		},
 		{
 			Option:   "uri=/*|methods=any",
-			Resource: &Resource{URL: "/*", Methods: allHTTPMethods},
+			Resource: &Resource{URL: "/*", Methods: utils.AllHTTPMethods},
 		},
 		{
 			Option:   "uri=/*|methods=any",
-			Resource: &Resource{URL: "/*", Methods: allHTTPMethods},
+			Resource: &Resource{URL: "/*", Methods: utils.AllHTTPMethods},
 		},
 		{
 			Option:   "uri=/*|groups=admin,test",
-			Resource: &Resource{URL: "/*", Methods: allHTTPMethods, Groups: []string{"admin", "test"}},
+			Resource: &Resource{URL: "/*", Methods: utils.AllHTTPMethods, Groups: []string{"admin", "test"}},
 		},
 		{
 			Option:   "uri=/*|groups=admin",
-			Resource: &Resource{URL: "/*", Methods: allHTTPMethods, Groups: []string{"admin"}},
+			Resource: &Resource{URL: "/*", Methods: utils.AllHTTPMethods, Groups: []string{"admin"}},
 		},
 		{
 			Option:   "uri=/*|require-any-role=true",
-			Resource: &Resource{URL: "/*", Methods: allHTTPMethods, RequireAnyRole: true},
+			Resource: &Resource{URL: "/*", Methods: utils.AllHTTPMethods, RequireAnyRole: true},
 		},
 	}
 	for i, testCase := range testCases {
@@ -111,10 +112,10 @@ func TestIsValid(t *testing.T) {
 			Ok:       true,
 		},
 		{
-			Resource: &Resource{URL: "/", Methods: allHTTPMethods},
+			Resource: &Resource{URL: "/", Methods: utils.AllHTTPMethods},
 		},
 		{
-			Resource: &Resource{URL: "/admin/", Methods: allHTTPMethods},
+			Resource: &Resource{URL: "/admin/", Methods: utils.AllHTTPMethods},
 		},
 		{
 			Resource: &Resource{},
@@ -141,7 +142,7 @@ func TestIsValid(t *testing.T) {
 	for idx, testCase := range testCases {
 		for _, customHTTPMethod := range testCase.CustomHTTPMethods {
 			chi.RegisterMethod(customHTTPMethod)
-			allHTTPMethods = append(allHTTPMethods, customHTTPMethod)
+			utils.AllHTTPMethods = append(utils.AllHTTPMethods, customHTTPMethod)
 		}
 
 		err := testCase.Resource.valid()

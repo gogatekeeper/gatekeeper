@@ -34,50 +34,6 @@ var (
 	version  = ""
 )
 
-type contextKey int8
-
-const (
-	prog        = "gatekeeper"
-	author      = "go-gatekeeper"
-	email       = ""
-	description = "is a proxy using the keycloak service for auth and authorization"
-
-	authorizationHeader = "Authorization"
-	authorizationType   = "Bearer"
-	envPrefix           = "PROXY_"
-	headerUpgrade       = "Upgrade"
-	versionHeader       = "X-Auth-Proxy-Version"
-
-	authorizationURL = "/authorize"
-	callbackURL      = "/callback"
-	expiredURL       = "/expired"
-	healthURL        = "/health"
-	loginURL         = "/login"
-	logoutURL        = "/logout"
-	metricsURL       = "/metrics"
-	tokenURL         = "/token"
-	debugURL         = "/debug/pprof"
-	discoveryURL     = "/discovery"
-
-	claimResourceRoles = "roles"
-
-	accessCookie       = "kc-access"
-	refreshCookie      = "kc-state"
-	requestURICookie   = "request_uri"
-	requestStateCookie = "OAuth_Token_Request_State"
-	unsecureScheme     = "http"
-	secureScheme       = "https"
-	anyMethod          = "ANY"
-
-	_ contextKey = iota
-	contextScopeName
-)
-
-const (
-	headerXForwardedFor = "X-Forwarded-For"
-	headerXRealIP       = "X-Real-IP"
-)
-
 var (
 	certificateRotationMetric = prometheus.NewCounter(
 		prometheus.CounterOpts{

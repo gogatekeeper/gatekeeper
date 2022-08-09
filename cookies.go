@@ -23,13 +23,7 @@ import (
 	"time"
 
 	uuid "github.com/gofrs/uuid"
-)
-
-// SameSite cookie config options
-const (
-	SameSiteStrict = "Strict"
-	SameSiteLax    = "Lax"
-	SameSiteNone   = "None"
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 )
 
 // dropCookie drops a cookie into the response
@@ -61,9 +55,9 @@ func (r *oauthProxy) dropCookie(wrt http.ResponseWriter, host, name, value strin
 	}
 
 	switch r.config.SameSiteCookie {
-	case SameSiteStrict:
+	case constant.SameSiteStrict:
 		cookie.SameSite = http.SameSiteStrictMode
-	case SameSiteLax:
+	case constant.SameSiteLax:
 		cookie.SameSite = http.SameSiteLaxMode
 	}
 
@@ -89,9 +83,9 @@ func (r *oauthProxy) getMaxCookieChunkLength(req *http.Request, cookieName strin
 	}
 
 	switch r.config.SameSiteCookie {
-	case SameSiteStrict:
+	case constant.SameSiteStrict:
 		maxCookieChunkLength -= len("SameSite=Strict ")
-	case SameSiteLax:
+	case constant.SameSiteLax:
 		maxCookieChunkLength -= len("SameSite=Lax ")
 	}
 

@@ -24,6 +24,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,7 +36,7 @@ func TestCookieDomainHostHeader(t *testing.T) {
 
 	var cookie *http.Cookie
 	for _, c := range resp.Cookies() {
-		if c.Name == accessCookie {
+		if c.Name == constant.AccessCookie {
 			cookie = c
 		}
 	}
@@ -58,7 +59,7 @@ func TestCookieBasePath(t *testing.T) {
 
 	var cookie *http.Cookie
 	for _, c := range resp.Cookies() {
-		if c.Name == accessCookie {
+		if c.Name == constant.AccessCookie {
 			cookie = c
 		}
 	}
@@ -79,7 +80,7 @@ func TestCookieWithoutBasePath(t *testing.T) {
 
 	var cookie *http.Cookie
 	for _, c := range resp.Cookies() {
-		if c.Name == accessCookie {
+		if c.Name == constant.AccessCookie {
 			cookie = c
 		}
 	}
@@ -98,7 +99,7 @@ func TestCookieDomain(t *testing.T) {
 
 	var cookie *http.Cookie
 	for _, c := range resp.Cookies() {
-		if c.Name == accessCookie {
+		if c.Name == constant.AccessCookie {
 			cookie = c
 		}
 	}
@@ -152,7 +153,7 @@ func TestDropRefreshCookie(t *testing.T) {
 	p.dropRefreshTokenCookie(req, resp, "test", 0)
 
 	assert.Equal(t, resp.Header().Get("Set-Cookie"),
-		refreshCookie+"=test; Path=/",
+		constant.RefreshCookie+"=test; Path=/",
 		"we have not set the cookie, headers: %v", resp.Header())
 }
 
@@ -182,7 +183,7 @@ func TestSameSiteCookie(t *testing.T) {
 
 	req = newFakeHTTPRequest("GET", "/admin")
 	resp = httptest.NewRecorder()
-	proxy.config.SameSiteCookie = SameSiteStrict
+	proxy.config.SameSiteCookie = constant.SameSiteStrict
 	proxy.dropCookie(resp, req.Host, "test-cookie", "test-value", 0)
 
 	assert.Equal(t, resp.Header().Get("Set-Cookie"),
@@ -191,7 +192,7 @@ func TestSameSiteCookie(t *testing.T) {
 
 	req = newFakeHTTPRequest("GET", "/admin")
 	resp = httptest.NewRecorder()
-	proxy.config.SameSiteCookie = SameSiteLax
+	proxy.config.SameSiteCookie = constant.SameSiteLax
 	proxy.dropCookie(resp, req.Host, "test-cookie", "test-value", 0)
 
 	assert.Equal(t, resp.Header().Get("Set-Cookie"),
@@ -200,7 +201,7 @@ func TestSameSiteCookie(t *testing.T) {
 
 	req = newFakeHTTPRequest("GET", "/admin")
 	resp = httptest.NewRecorder()
-	proxy.config.SameSiteCookie = SameSiteNone
+	proxy.config.SameSiteCookie = constant.SameSiteNone
 	proxy.dropCookie(resp, req.Host, "test-cookie", "test-value", 0)
 
 	assert.Equal(t, resp.Header().Get("Set-Cookie"),
@@ -236,7 +237,7 @@ func TestClearAccessTokenCookie(t *testing.T) {
 	resp := httptest.NewRecorder()
 	proxy.clearAccessTokenCookie(req, resp)
 	assert.Contains(t, resp.Header().Get("Set-Cookie"),
-		accessCookie+"=; Path=/; Expires=",
+		constant.AccessCookie+"=; Path=/; Expires=",
 		"we have not cleared the, headers: %v", resp.Header())
 }
 
@@ -246,7 +247,7 @@ func TestClearRefreshAccessTokenCookie(t *testing.T) {
 	resp := httptest.NewRecorder()
 	p.clearRefreshTokenCookie(req, resp)
 	assert.Contains(t, resp.Header().Get("Set-Cookie"),
-		refreshCookie+"=; Path=/; Expires=",
+		constant.RefreshCookie+"=; Path=/; Expires=",
 		"we have not cleared the, headers: %v", resp.Header())
 }
 
@@ -256,7 +257,7 @@ func TestClearAllCookies(t *testing.T) {
 	resp := httptest.NewRecorder()
 	p.clearAllCookies(req, resp)
 	assert.Contains(t, resp.Header().Get("Set-Cookie"),
-		accessCookie+"=; Path=/; Expires=",
+		constant.AccessCookie+"=; Path=/; Expires=",
 		"we have not cleared the, headers: %v", resp.Header())
 }
 

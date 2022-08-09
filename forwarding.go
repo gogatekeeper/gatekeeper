@@ -21,6 +21,8 @@ import (
 	"net/http"
 
 	"github.com/Nerzal/gocloak/v11"
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"go.uber.org/zap"
 )
 
@@ -34,7 +36,7 @@ func (r *oauthProxy) proxyMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(wrt, req)
 
 		// @step: retrieve the request scope
-		ctxVal := req.Context().Value(contextScopeName)
+		ctxVal := req.Context().Value(constant.ContextScopeName)
 		var scope *RequestScope
 		if ctxVal != nil {
 			var assertOk bool
@@ -53,9 +55,9 @@ func (r *oauthProxy) proxyMiddleware(next http.Handler) http.Handler {
 		}
 
 		// @step: add the proxy forwarding headers
-		req.Header.Set("X-Real-IP", realIP(req))
-		if xff := req.Header.Get(headerXForwardedFor); xff == "" {
-			req.Header.Set("X-Forwarded-For", realIP(req))
+		req.Header.Set("X-Real-IP", utils.RealIP(req))
+		if xff := req.Header.Get(constant.HeaderXForwardedFor); xff == "" {
+			req.Header.Set("X-Forwarded-For", utils.RealIP(req))
 		} else {
 			req.Header.Set("X-Forwarded-For", xff)
 		}
@@ -87,9 +89,9 @@ func (r *oauthProxy) proxyMiddleware(next http.Handler) http.Handler {
 			req.Host = r.endpoint.Host
 		}
 
-		if isUpgradedConnection(req) {
+		if utils.IsUpgradedConnection(req) {
 			r.log.Debug("upgrading the connnection", zap.String("client_ip", req.RemoteAddr))
-			if err := tryUpdateConnection(req, wrt, r.endpoint); err != nil {
+			if err := utils.TryUpdateConnection(req, wrt, r.endpoint); err != nil {
 				r.log.Error("failed to upgrade connection", zap.Error(err))
 				wrt.WriteHeader(http.StatusInternalServerError)
 				return
@@ -215,9 +217,9 @@ func (r *oauthProxy) forwardProxyHandler() func(*http.Request, *http.Response) {
 		hostname := req.Host
 		req.URL.Host = hostname
 		// is the host being signed?
-		if len(r.config.ForwardingDomains) == 0 || containsSubString(hostname, r.config.ForwardingDomains) {
+		if len(r.config.ForwardingDomains) == 0 || utils.ContainsSubString(hostname, r.config.ForwardingDomains) {
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-			req.Header.Set("X-Forwarded-Agent", prog)
+			req.Header.Set("X-Forwarded-Agent", constant.Prog)
 		}
 	}
 }

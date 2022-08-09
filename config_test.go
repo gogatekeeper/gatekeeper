@@ -26,11 +26,57 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 )
 
 func TestNewDefaultConfig(t *testing.T) {
 	if config := newDefaultConfig(); config == nil {
 		t.Error("we should have received a config")
+	}
+}
+
+func TestReadConfiguration(t *testing.T) {
+	testCases := []struct {
+		Content string
+		Ok      bool
+	}{
+		{
+			Content: `
+discovery_url: https://keyclock.domain.com/
+client-id: <client_id>
+secret: <secret>
+`,
+		},
+		{
+			Content: `
+discovery_url: https://keyclock.domain.com
+client-id: <client_id>
+secret: <secret>
+upstream-url: http://127.0.0.1:8080
+redirection_url: http://127.0.0.1:3000
+`,
+			Ok: true,
+		},
+	}
+
+	for idx, test := range testCases {
+		// step: write the fake config file
+		file := writeFakeConfigFile(t, test.Content)
+
+		config := new(Config)
+		err := ReadConfigFile(file.Name(), config)
+
+		if test.Ok && err != nil {
+			os.Remove(file.Name())
+			t.Errorf(
+				"test case %d should not have failed, config: %v, error: %s",
+				idx,
+				config,
+				err,
+			)
+		}
+		os.Remove(file.Name())
 	}
 }
 
@@ -257,14 +303,14 @@ func TestIsListenAdminSchemeValid(t *testing.T) {
 		{
 			Name: "HTTPValidListenAdminScheme",
 			Config: &Config{
-				ListenAdminScheme: unsecureScheme,
+				ListenAdminScheme: constant.UnsecureScheme,
 			},
 			Valid: true,
 		},
 		{
 			Name: "HTTPSValidListenAdminScheme",
 			Config: &Config{
-				ListenAdminScheme: secureScheme,
+				ListenAdminScheme: constant.SecureScheme,
 			},
 			Valid: true,
 		},
@@ -429,21 +475,21 @@ func TestIsSameSiteValid(t *testing.T) {
 		{
 			Name: "StrictValidSameSiteCookie",
 			Config: &Config{
-				SameSiteCookie: SameSiteStrict,
+				SameSiteCookie: constant.SameSiteStrict,
 			},
 			Valid: true,
 		},
 		{
 			Name: "LaxValidSameSiteCookie",
 			Config: &Config{
-				SameSiteCookie: SameSiteLax,
+				SameSiteCookie: constant.SameSiteLax,
 			},
 			Valid: true,
 		},
 		{
 			Name: "NoneValidSameSiteCookie",
 			Config: &Config{
-				SameSiteCookie: SameSiteNone,
+				SameSiteCookie: constant.SameSiteNone,
 			},
 			Valid: true,
 		},

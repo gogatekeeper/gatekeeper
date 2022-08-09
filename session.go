@@ -16,12 +16,15 @@ limitations under the License.
 package main
 
 import (
-	"bytes"
+	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
+	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"go.uber.org/zap"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
@@ -30,7 +33,7 @@ import (
 func (r *oauthProxy) getIdentity(req *http.Request) (*userContext, error) {
 	var isBearer bool
 	// step: check for a bearer token or cookie with jwt token
-	access, isBearer, err := getTokenInRequest(
+	access, isBearer, err := utils.GetTokenInRequest(
 		req,
 		r.config.CookieAccessName,
 		r.config.SkipAuthorizationHeaderIdentity,
@@ -41,7 +44,7 @@ func (r *oauthProxy) getIdentity(req *http.Request) (*userContext, error) {
 	}
 
 	if r.config.EnableEncryptedToken || r.config.ForceEncryptedCookie && !isBearer {
-		if access, err = decodeText(access, r.config.EncryptionKey); err != nil {
+		if access, err = utils.DecodeText(access, r.config.EncryptionKey); err != nil {
 			return nil, apperrors.ErrDecryption
 		}
 	}
@@ -71,79 +74,100 @@ func (r *oauthProxy) getIdentity(req *http.Request) (*userContext, error) {
 	return user, nil
 }
 
-// getRefreshTokenFromCookie returns the refresh token from the cookie if any
-func (r *oauthProxy) getRefreshTokenFromCookie(req *http.Request) (string, error) {
-	token, err := getTokenInCookie(req, r.config.CookieRefreshName)
+// extractIdentity parse the jwt token and extracts the various elements is order to construct
+func extractIdentity(token *jwt.JSONWebToken) (*userContext, error) {
+	stdClaims := &jwt.Claims{}
+
+	type RealmRoles struct {
+		Roles []string `json:"roles"`
+	}
+
+	// Extract custom claims
+	type custClaims struct {
+		Email          string                    `json:"email"`
+		PrefName       string                    `json:"preferred_username"`
+		RealmAccess    RealmRoles                `json:"realm_access"`
+		Groups         []string                  `json:"groups"`
+		ResourceAccess map[string]interface{}    `json:"resource_access"`
+		FamilyName     string                    `json:"family_name"`
+		GivenName      string                    `json:"given_name"`
+		Username       string                    `json:"username"`
+		Authorization  authorization.Permissions `json:"authorization"`
+	}
+
+	customClaims := custClaims{}
+
+	err := token.UnsafeClaimsWithoutVerification(stdClaims, &customClaims)
+
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return token, nil
-}
+	jsonMap := make(map[string]interface{})
+	err = token.UnsafeClaimsWithoutVerification(&jsonMap)
 
-// getTokenInRequest returns the access token from the http request
-func getTokenInRequest(req *http.Request, name string, skipAuthorizationHeaderIdentity bool) (string, bool, error) {
-	bearer := true
-	token := ""
-	var err error
+	if err != nil {
+		return nil, err
+	}
 
-	if !skipAuthorizationHeaderIdentity {
-		token, err = getTokenInBearer(req)
-		if err != nil && err != apperrors.ErrSessionNotFound {
-			return "", false, err
+	// @step: ensure we have and can extract the preferred name of the user, if not, we set to the ID
+	preferredName := customClaims.PrefName
+	if preferredName == "" {
+		preferredName = customClaims.Email
+	}
+
+	audiences := stdClaims.Audience
+
+	// @step: extract the realm roles
+	roleList := make([]string, 0)
+	roleList = append(roleList, customClaims.RealmAccess.Roles...)
+
+	// @step: extract the client roles from the access token
+	for name, list := range customClaims.ResourceAccess {
+		scopes, assertOk := list.(map[string]interface{})
+
+		if !assertOk {
+			return nil, fmt.Errorf("assertion failed")
+		}
+
+		if roles, found := scopes[constant.ClaimResourceRoles]; found {
+			rolesVal, assertOk := roles.([]interface{})
+
+			if !assertOk {
+				return nil, fmt.Errorf("assertion failed")
+			}
+
+			for _, r := range rolesVal {
+				roleList = append(roleList, fmt.Sprintf("%s:%s", name, r))
+			}
 		}
 	}
 
-	// step: check for a token in the authorization header
-	if err != nil || (err == nil && skipAuthorizationHeaderIdentity) {
-		if token, err = getTokenInCookie(req, name); err != nil {
-			return token, false, err
-		}
-		bearer = false
-	}
-
-	return token, bearer, nil
+	return &userContext{
+		audiences:     audiences,
+		email:         customClaims.Email,
+		expiresAt:     stdClaims.Expiry.Time(),
+		groups:        customClaims.Groups,
+		id:            stdClaims.Subject,
+		name:          preferredName,
+		preferredName: preferredName,
+		roles:         roleList,
+		claims:        jsonMap,
+		permissions:   customClaims.Authorization,
+	}, nil
 }
 
-// getTokenInBearer retrieves a access token from the authorization header
-func getTokenInBearer(req *http.Request) (string, error) {
-	token := req.Header.Get(authorizationHeader)
-	if token == "" {
-		return "", apperrors.ErrSessionNotFound
-	}
-
-	items := strings.Split(token, " ")
-	if len(items) != 2 {
-		return "", apperrors.ErrInvalidSession
-	}
-
-	if items[0] != authorizationType {
-		return "", apperrors.ErrSessionNotFound
-	}
-	return items[1], nil
+// isExpired checks if the token has expired
+func (r *userContext) isExpired() bool {
+	return r.expiresAt.Before(time.Now())
 }
 
-// getTokenInCookie retrieves the access token from the request cookies
-func getTokenInCookie(req *http.Request, name string) (string, error) {
-	var token bytes.Buffer
-
-	if cookie := findCookie(name, req.Cookies()); cookie != nil {
-		token.WriteString(cookie.Value)
-	}
-
-	// add also divided cookies
-	for i := 1; i < 600; i++ {
-		cookie := findCookie(name+"-"+strconv.Itoa(i), req.Cookies())
-		if cookie == nil {
-			break
-		} else {
-			token.WriteString(cookie.Value)
-		}
-	}
-
-	if token.Len() == 0 {
-		return "", apperrors.ErrSessionNotFound
-	}
-
-	return token.String(), nil
+// String returns a string representation of the user context
+func (r *userContext) String() string {
+	return fmt.Sprintf(
+		"user: %s, expires: %s, roles: %s",
+		r.preferredName,
+		r.expiresAt.String(),
+		strings.Join(r.roles, ","),
+	)
 }

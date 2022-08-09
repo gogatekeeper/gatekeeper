@@ -25,6 +25,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"go.uber.org/zap"
 )
 
@@ -67,7 +68,7 @@ func newSelfSignedCertificate(hostnames []string, expiry time.Duration, log *zap
 	}
 
 	// @step: create an initial certificate
-	certificate, err := createCertificate(key, hostnames, expiry)
+	certificate, err := utils.CreateCertificate(key, hostnames, expiry)
 
 	if err != nil {
 		return nil, err
@@ -113,7 +114,7 @@ func (c *selfSignedCertificate) rotate(ctx context.Context) error {
 			time.Sleep(time.Until(expires))
 
 			// @step: create a new certificate for us
-			cert, _ := createCertificate(c.privateKey, c.hostnames, c.expiration)
+			cert, _ := utils.CreateCertificate(c.privateKey, c.hostnames, c.expiration)
 			c.log.Info("updating the certificate for server")
 
 			// @step: update the current certificate

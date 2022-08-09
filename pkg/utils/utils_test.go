@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package utils
 
 import (
 	"bytes"
@@ -31,6 +31,7 @@ import (
 	"time"
 
 	uuid "github.com/gofrs/uuid"
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -75,7 +76,7 @@ func TestDecodeKeyPairs(t *testing.T) {
 	}
 
 	for idx, testCase := range testCases {
-		keyPair, err := decodeKeyPairs(testCase.List)
+		keyPair, err := DecodeKeyPairs(testCase.List)
 		if err != nil && testCase.Ok {
 			t.Errorf("test case %d should not have failed", idx)
 			continue
@@ -142,7 +143,7 @@ func TestGetRequestHostURL(t *testing.T) {
 			}
 		}
 
-		url := getRequestHostURL(request)
+		url := GetRequestHostURL(request)
 		assert.Equal(t, testCases[idx].Expected, url, "case %d, expected: %s, got: %s", idx, testCases[idx].Expected, url)
 	}
 }
@@ -175,7 +176,7 @@ func TestDefaultTo(t *testing.T) {
 		},
 	}
 	for _, testCases := range testCases {
-		assert.Equal(t, testCases.Expected, defaultTo(testCases.Value, testCases.Default))
+		assert.Equal(t, testCases.Expected, DefaultTo(testCases.Value, testCases.Default))
 	}
 }
 
@@ -201,7 +202,7 @@ func TestEncryptDataBlock(t *testing.T) {
 	}
 
 	for i, test := range testCase {
-		_, err := encryptDataBlock(bytes.NewBufferString(test.Text).Bytes(), bytes.NewBufferString(test.Key).Bytes())
+		_, err := EncryptDataBlock(bytes.NewBufferString(test.Text).Bytes(), bytes.NewBufferString(test.Key).Bytes())
 		if err != nil && test.Ok {
 			t.Errorf("test case: %d should not have failed, %s", i, err)
 		}
@@ -209,7 +210,7 @@ func TestEncryptDataBlock(t *testing.T) {
 }
 
 func TestEncodeText(t *testing.T) {
-	session, err := encodeText("12245325632323263762", "1gjrlcjQ8RyKANngp9607txr5fF5fhf1")
+	session, err := EncodeText("12245325632323263762", "1gjrlcjQ8RyKANngp9607txr5fF5fhf1")
 	assert.NotEmpty(t, session)
 	assert.NoError(t, err)
 }
@@ -239,7 +240,7 @@ func TestEncryptedText(t *testing.T) {
 
 func BenchmarkEncryptDataBlock(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		_, _ = encryptDataBlock(fakePlainText, fakeKey)
+		_, _ = EncryptDataBlock(fakePlainText, fakeKey)
 	}
 }
 
@@ -247,7 +248,7 @@ func BenchmarkEncodeText(b *testing.B) {
 	text := string(fakePlainText)
 	key := string(fakeKey)
 	for n := 0; n < b.N; n++ {
-		_, _ = encodeText(text, key)
+		_, _ = EncodeText(text, key)
 	}
 }
 
@@ -255,7 +256,7 @@ func BenchmarkDecodeText(b *testing.B) {
 	t := string(fakeCipherText)
 	k := string(fakeKey)
 	for n := 0; n < b.N; n++ {
-		if _, err := decodeText(t, k); err != nil {
+		if _, err := DecodeText(t, k); err != nil {
 			b.FailNow()
 		}
 	}
@@ -265,11 +266,11 @@ func TestDecodeText(t *testing.T) {
 	fakeKey := "HYLNt2JSzD7Lpz0djTRudmlOpbwx1oHB"
 	fakeText := "12245325632323263762"
 
-	encrypted, err := encodeText(fakeText, fakeKey)
+	encrypted, err := EncodeText(fakeText, fakeKey)
 	require.NoError(t, err)
 	assert.NotEmpty(t, encrypted)
 
-	decoded, _ := decodeText(encrypted, fakeKey)
+	decoded, _ := DecodeText(encrypted, fakeKey)
 	assert.NotNil(t, decoded, "the session should not have been nil")
 	assert.Equal(t, decoded, fakeText, "the decoded text is not the same")
 }
@@ -278,8 +279,8 @@ func TestFindCookie(t *testing.T) {
 	cookies := []*http.Cookie{
 		{Name: "cookie_there"},
 	}
-	assert.NotNil(t, findCookie("cookie_there", cookies))
-	assert.Nil(t, findCookie("not_there", cookies))
+	assert.NotNil(t, FindCookie("cookie_there", cookies))
+	assert.Nil(t, FindCookie("not_there", cookies))
 }
 
 func TestDecryptDataBlock(t *testing.T) {
@@ -301,12 +302,18 @@ func TestDecryptDataBlock(t *testing.T) {
 	}
 
 	for idx, test := range testCase {
-		cipher, err := encryptDataBlock(bytes.NewBufferString(test.Text).Bytes(), bytes.NewBufferString(test.Key).Bytes())
+		cipher, err := EncryptDataBlock(
+			bytes.NewBufferString(test.Text).Bytes(),
+			bytes.NewBufferString(test.Key).Bytes(),
+		)
 		if err != nil && test.Ok {
 			t.Errorf("test case: %d should not have failed, %s", idx, err)
 		}
 
-		plain, err := decryptDataBlock(cipher, bytes.NewBufferString(test.Key).Bytes())
+		plain, err := DecryptDataBlock(
+			cipher,
+			bytes.NewBufferString(test.Key).Bytes(),
+		)
 		if err != nil {
 			t.Errorf("test case: %d should not have failed, %s", idx, err)
 		}
@@ -366,7 +373,7 @@ func TestHasAccessOK(t *testing.T) {
 	for idx, testCase := range testCases {
 		assert.True(
 			t,
-			hasAccess(testCase.Need, testCase.Have, testCase.Required),
+			HasAccess(testCase.Need, testCase.Have, testCase.Required),
 			"case: %d should be true, have: %v, need: %v, require: %t ",
 			idx,
 			testCase.Have,
@@ -411,7 +418,7 @@ func TestHasAccessBad(t *testing.T) {
 	for idx, testCase := range testCases {
 		assert.False(
 			t,
-			hasAccess(testCase.Need, testCase.Have, testCase.Required),
+			HasAccess(testCase.Need, testCase.Have, testCase.Required),
 			"case: %d should be false, have: %v, need: %v, require: %t ",
 			idx,
 			testCase.Have,
@@ -422,42 +429,42 @@ func TestHasAccessBad(t *testing.T) {
 }
 
 func TestContainedIn(t *testing.T) {
-	assert.False(t, containedIn("1", []string{"2", "3", "4"}))
-	assert.True(t, containedIn("1", []string{"1", "2", "3", "4"}))
+	assert.False(t, ContainedIn("1", []string{"2", "3", "4"}))
+	assert.True(t, ContainedIn("1", []string{"1", "2", "3", "4"}))
 }
 
 func TestContainsSubString(t *testing.T) {
-	assert.False(t, containsSubString("bar.com", []string{"foo.bar.com"}))
-	assert.True(t, containsSubString("www.foo.bar.com", []string{"foo.bar.com"}))
-	assert.True(t, containsSubString("foo.bar.com", []string{"bar.com"}))
-	assert.True(t, containsSubString("star.domain.com", []string{"domain.com", "domain1.com"}))
-	assert.True(t, containsSubString("star.domain1.com", []string{"domain.com", "domain1.com"}))
-	assert.True(t, containsSubString("test.test.svc.cluster.local", []string{"svc.cluster.local"}))
+	assert.False(t, ContainsSubString("bar.com", []string{"foo.bar.com"}))
+	assert.True(t, ContainsSubString("www.foo.bar.com", []string{"foo.bar.com"}))
+	assert.True(t, ContainsSubString("foo.bar.com", []string{"bar.com"}))
+	assert.True(t, ContainsSubString("star.domain.com", []string{"domain.com", "domain1.com"}))
+	assert.True(t, ContainsSubString("star.domain1.com", []string{"domain.com", "domain1.com"}))
+	assert.True(t, ContainsSubString("test.test.svc.cluster.local", []string{"svc.cluster.local"}))
 
-	assert.False(t, containsSubString("star.domain1.com", []string{"domain.com", "sub.domain1.com"}))
-	assert.False(t, containsSubString("svc.cluster.local", []string{"nginx.pr1.svc.cluster.local"}))
-	assert.False(t, containsSubString("cluster.local", []string{"nginx.pr1.svc.cluster.local"}))
-	assert.False(t, containsSubString("pr1", []string{"nginx.pr1.svc.cluster.local"}))
+	assert.False(t, ContainsSubString("star.domain1.com", []string{"domain.com", "sub.domain1.com"}))
+	assert.False(t, ContainsSubString("svc.cluster.local", []string{"nginx.pr1.svc.cluster.local"}))
+	assert.False(t, ContainsSubString("cluster.local", []string{"nginx.pr1.svc.cluster.local"}))
+	assert.False(t, ContainsSubString("pr1", []string{"nginx.pr1.svc.cluster.local"}))
 }
 
 func BenchmarkContainsSubString(t *testing.B) {
 	for n := 0; n < t.N; n++ {
-		containsSubString("svc.cluster.local", []string{"nginx.pr1.svc.cluster.local"})
+		ContainsSubString("svc.cluster.local", []string{"nginx.pr1.svc.cluster.local"})
 	}
 }
 
 func TestDialAddress(t *testing.T) {
-	assert.Equal(t, dialAddress(getFakeURL("http://127.0.0.1")), "127.0.0.1:80")
-	assert.Equal(t, dialAddress(getFakeURL("https://127.0.0.1")), "127.0.0.1:443")
-	assert.Equal(t, dialAddress(getFakeURL("http://127.0.0.1:8080")), "127.0.0.1:8080")
+	assert.Equal(t, DialAddress(getFakeURL("http://127.0.0.1")), "127.0.0.1:80")
+	assert.Equal(t, DialAddress(getFakeURL("https://127.0.0.1")), "127.0.0.1:443")
+	assert.Equal(t, DialAddress(getFakeURL("http://127.0.0.1:8080")), "127.0.0.1:8080")
 }
 
 func TestIsUpgradedConnection(t *testing.T) {
 	header := http.Header{}
-	header.Add(headerUpgrade, "")
-	assert.False(t, isUpgradedConnection(&http.Request{Header: header}))
-	header.Set(headerUpgrade, "set")
-	assert.True(t, isUpgradedConnection(&http.Request{Header: header}))
+	header.Add(constant.HeaderUpgrade, "")
+	assert.False(t, IsUpgradedConnection(&http.Request{Header: header}))
+	header.Set(constant.HeaderUpgrade, "set")
+	assert.True(t, IsUpgradedConnection(&http.Request{Header: header}))
 }
 
 func TestIdValidHTTPMethod(t *testing.T) {
@@ -472,21 +479,27 @@ func TestIdValidHTTPMethod(t *testing.T) {
 		{Method: "PATCH", Ok: true},
 	}
 	for _, testCase := range testCases {
-		assert.Equal(t, testCase.Ok, isValidHTTPMethod(testCase.Method))
+		assert.Equal(t, testCase.Ok, IsValidHTTPMethod(testCase.Method))
 	}
 }
 
 func TestFileExists(t *testing.T) {
-	if fileExists("no_such_file_exsit_32323232") {
+	if FileExists("no_such_file_exsit_32323232") {
 		t.Error("we should have received false")
 	}
-	tmpfile, err := ioutil.TempFile(os.TempDir()+"", fmt.Sprintf("test_file_%d", os.Getpid()))
+
+	tmpfile, err := ioutil.TempFile(
+		os.TempDir()+"",
+		fmt.Sprintf("test_file_%d", os.Getpid()),
+	)
+
 	if err != nil {
 		t.Fatalf("failed to create the temporary file, %s", err)
 	}
+
 	defer os.Remove(tmpfile.Name())
 
-	if !fileExists(tmpfile.Name()) {
+	if !FileExists(tmpfile.Name()) {
 		t.Error("we should have received a true")
 	}
 }
@@ -512,7 +525,7 @@ func TestGetWithin(t *testing.T) {
 		assert.InDelta(
 			t,
 			testCase.Expected,
-			getWithin(testCase.Expires, testCase.Percent),
+			GetWithin(testCase.Expires, testCase.Percent),
 			1000000001,
 		)
 	}
@@ -537,8 +550,15 @@ func TestToHeader(t *testing.T) {
 		},
 	}
 	for i, x := range cases {
-		assert.Equal(t, x.Expected, toHeader(x.Word), "case %d, expected: %s but got: %s",
-			i, x.Expected, toHeader(x.Word))
+		assert.Equal(
+			t,
+			x.Expected,
+			ToHeader(x.Word),
+			"case %d, expected: %s but got: %s",
+			i,
+			x.Expected,
+			ToHeader(x.Word),
+		)
 	}
 }
 
@@ -561,8 +581,15 @@ func TestCapitalize(t *testing.T) {
 		},
 	}
 	for i, x := range cases {
-		assert.Equal(t, x.Expected, capitalize(x.Word), "case %d, expected: %s but got: %s", i, x.Expected,
-			capitalize(x.Word))
+		assert.Equal(
+			t,
+			x.Expected,
+			Capitalize(x.Word),
+			"case %d, expected: %s but got: %s",
+			i,
+			x.Expected,
+			Capitalize(x.Word),
+		)
 	}
 }
 
@@ -588,48 +615,15 @@ func TestMergeMaps(t *testing.T) {
 		},
 	}
 	for i, x := range cases {
-		merged := mergeMaps(x.Dest, x.Source)
+		merged := MergeMaps(x.Dest, x.Source)
 		if !reflect.DeepEqual(x.Expected, merged) {
-			t.Errorf("case %d, expected: %v but got: %v", i, x.Expected, merged)
+			t.Errorf(
+				"case %d, expected: %v but got: %v",
+				i,
+				x.Expected,
+				merged,
+			)
 		}
-	}
-}
-
-func TestReadConfiguration(t *testing.T) {
-	testCases := []struct {
-		Content string
-		Ok      bool
-	}{
-		{
-			Content: `
-discovery_url: https://keyclock.domain.com/
-client-id: <client_id>
-secret: <secret>
-`,
-		},
-		{
-			Content: `
-discovery_url: https://keyclock.domain.com
-client-id: <client_id>
-secret: <secret>
-upstream-url: http://127.0.0.1:8080
-redirection_url: http://127.0.0.1:3000
-`,
-			Ok: true,
-		},
-	}
-
-	for idx, test := range testCases {
-		// step: write the fake config file
-		file := writeFakeConfigFile(t, test.Content)
-
-		config := new(Config)
-		err := readConfigFile(file.Name(), config)
-		if test.Ok && err != nil {
-			os.Remove(file.Name())
-			t.Errorf("test case %d should not have failed, config: %v, error: %s", idx, config, err)
-		}
-		os.Remove(file.Name())
 	}
 }
 
@@ -638,16 +632,55 @@ func getFakeURL(location string) *url.URL {
 	return u
 }
 
-func writeFakeConfigFile(t *testing.T, content string) *os.File {
-	file, err := ioutil.TempFile("", "node_label_file")
-	if err != nil {
-		t.Fatalf("unexpected error creating node_label_file: %v", err)
+func TestGetRefreshTokenFromCookie(t *testing.T) {
+	cases := []struct {
+		Cookies  *http.Cookie
+		Expected string
+		Ok       bool
+	}{
+		{
+			Cookies: &http.Cookie{},
+		},
+		{
+			Cookies: &http.Cookie{
+				Name:   "not_a_session_cookie",
+				Path:   "/",
+				Domain: "127.0.0.1",
+			},
+		},
+		{
+			Cookies: &http.Cookie{
+				Name:   "kc-state",
+				Path:   "/",
+				Domain: "127.0.0.1",
+				Value:  "refresh_token",
+			},
+			Expected: "refresh_token",
+			Ok:       true,
+		},
 	}
-	file.Close()
 
-	if err := ioutil.WriteFile(file.Name(), []byte(content), 0600); err != nil {
-		t.Fatalf("unexpected error writing node label file: %v", err)
+	for _, testCase := range cases {
+		req := &http.Request{
+			Method: http.MethodGet,
+			Header: make(map[string][]string),
+			Host:   "127.0.0.1",
+			URL: &url.URL{
+				Scheme: "http",
+				Host:   "127.0.0.1",
+				Path:   "/",
+			},
+		}
+		req.AddCookie(testCase.Cookies)
+		token, err := GetRefreshTokenFromCookie(req, constant.RefreshCookie)
+		switch testCase.Ok {
+		case true:
+			assert.NoError(t, err)
+			assert.NotEmpty(t, token)
+			assert.Equal(t, testCase.Expected, token)
+		default:
+			assert.Error(t, err)
+			assert.Empty(t, token)
+		}
 	}
-
-	return file
 }

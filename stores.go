@@ -23,6 +23,7 @@ import (
 
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 
 	"go.uber.org/zap"
 )
@@ -34,13 +35,13 @@ func (r *oauthProxy) useStore() bool {
 
 // StoreRefreshToken the token to the store
 func (r *oauthProxy) StoreRefreshToken(token string, value string, expiration time.Duration) error {
-	return r.store.Set(getHashKey(token), value, expiration)
+	return r.store.Set(utils.GetHashKey(token), value, expiration)
 }
 
 // Get retrieves a token from the store, the key we are using here is the access token
 func (r *oauthProxy) GetRefreshToken(token string) (string, error) {
 	// step: the key is the access token
-	val, err := r.store.Get(getHashKey(token))
+	val, err := r.store.Get(utils.GetHashKey(token))
 
 	if err != nil {
 		return val, err
@@ -54,7 +55,7 @@ func (r *oauthProxy) GetRefreshToken(token string) (string, error) {
 
 // DeleteRefreshToken removes a key from the store
 func (r *oauthProxy) DeleteRefreshToken(token string) error {
-	if err := r.store.Delete(getHashKey(token)); err != nil {
+	if err := r.store.Delete(utils.GetHashKey(token)); err != nil {
 		r.log.Error("unable to delete token", zap.Error(err))
 
 		return err
@@ -70,8 +71,8 @@ func (r *oauthProxy) StoreAuthz(token string, url *url.URL, value authorization.
 		return fmt.Errorf("token of zero length")
 	}
 
-	tokenHash := getHashKey(token)
-	pathHash := getHashKey(url.Path)
+	tokenHash := utils.GetHashKey(token)
+	pathHash := utils.GetHashKey(url.Path)
 	hash := fmt.Sprintf("%s%s", pathHash, tokenHash)
 	return r.store.Set(hash, value.String(), expiration)
 }
@@ -82,8 +83,8 @@ func (r *oauthProxy) GetAuthz(token string, url *url.URL) (authorization.AuthzDe
 		return authorization.DeniedAuthz, apperrors.ErrZeroLengthToken
 	}
 
-	tokenHash := getHashKey(token)
-	pathHash := getHashKey(url.Path)
+	tokenHash := utils.GetHashKey(token)
+	pathHash := utils.GetHashKey(url.Path)
 	hash := fmt.Sprintf("%s%s", pathHash, tokenHash)
 
 	exists, err := r.store.Exists(hash)

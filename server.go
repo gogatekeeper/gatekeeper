@@ -47,7 +47,9 @@ import (
 	"github.com/elazarl/goproxy"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/storage"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
@@ -106,8 +108,8 @@ func newProxy(config *Config) (*oauthProxy, error) {
 
 	log.Info(
 		"starting the service",
-		zap.String("prog", prog),
-		zap.String("author", author),
+		zap.String("prog", constant.Prog),
+		zap.String("author", constant.Author),
 		zap.String("version", version),
 	)
 
@@ -286,29 +288,29 @@ func (r *oauthProxy) createReverseProxy() error {
 
 	r.log.Info(
 		"enabled health service",
-		zap.String("path", path.Clean(r.config.WithOAuthURI(healthURL))),
+		zap.String("path", path.Clean(r.config.WithOAuthURI(constant.HealthURL))),
 	)
 
-	adminEngine.Get(healthURL, r.healthHandler)
+	adminEngine.Get(constant.HealthURL, r.healthHandler)
 
 	if r.config.EnableMetrics {
 		r.log.Info(
 			"enabled the service metrics middleware",
-			zap.String("path", path.Clean(r.config.WithOAuthURI(metricsURL))),
+			zap.String("path", path.Clean(r.config.WithOAuthURI(constant.MetricsURL))),
 		)
-		adminEngine.Get(metricsURL, r.proxyMetricsHandler)
+		adminEngine.Get(constant.MetricsURL, r.proxyMetricsHandler)
 	}
 
 	// step: add the routing for oauth
 	engine.With(r.proxyDenyMiddleware).Route(r.config.BaseURI+r.config.OAuthURI, func(eng chi.Router) {
 		eng.MethodNotAllowed(methodNotAllowHandlder)
-		eng.HandleFunc(authorizationURL, r.oauthAuthorizationHandler)
-		eng.Get(callbackURL, r.oauthCallbackHandler)
-		eng.Get(expiredURL, r.expirationHandler)
-		eng.With(r.authenticationMiddleware()).Get(logoutURL, r.logoutHandler)
-		eng.With(r.authenticationMiddleware()).Get(tokenURL, r.tokenHandler)
-		eng.Post(loginURL, r.loginHandler)
-		eng.Get(discoveryURL, r.discoveryHandler)
+		eng.HandleFunc(constant.AuthorizationURL, r.oauthAuthorizationHandler)
+		eng.Get(constant.CallbackURL, r.oauthCallbackHandler)
+		eng.Get(constant.ExpiredURL, r.expirationHandler)
+		eng.With(r.authenticationMiddleware()).Get(constant.LogoutURL, r.logoutHandler)
+		eng.With(r.authenticationMiddleware()).Get(constant.TokenURL, r.tokenHandler)
+		eng.Post(constant.LoginURL, r.loginHandler)
+		eng.Get(constant.DiscoveryURL, r.discoveryHandler)
 
 		if r.config.ListenAdmin == "" {
 			eng.Mount("/", adminEngine)
@@ -321,7 +323,7 @@ func (r *oauthProxy) createReverseProxy() error {
 	var debugEngine chi.Router
 
 	if r.config.EnableProfiling {
-		r.log.Warn("enabling the debug profiling on " + debugURL)
+		r.log.Warn("enabling the debug profiling on " + constant.DebugURL)
 
 		debugEngine = chi.NewRouter()
 		debugEngine.Get("/{name}", r.debugHandler)
@@ -336,7 +338,7 @@ func (r *oauthProxy) createReverseProxy() error {
 		}
 
 		if r.config.ListenAdmin == "" {
-			engine.With(r.proxyDenyMiddleware).Mount(debugURL, debugEngine)
+			engine.With(r.proxyDenyMiddleware).Mount(constant.DebugURL, debugEngine)
 		}
 	}
 
@@ -352,7 +354,7 @@ func (r *oauthProxy) createReverseProxy() error {
 		admin.Route("/", func(e chi.Router) {
 			e.Mount(r.config.OAuthURI, adminEngine)
 			if debugEngine != nil {
-				e.Mount(debugURL, debugEngine)
+				e.Mount(constant.DebugURL, debugEngine)
 			}
 		})
 
@@ -372,7 +374,7 @@ func (r *oauthProxy) createReverseProxy() error {
 	if r.config.CustomHTTPMethods != nil {
 		for _, customHTTPMethod := range r.config.CustomHTTPMethods {
 			chi.RegisterMethod(customHTTPMethod)
-			allHTTPMethods = append(allHTTPMethods, customHTTPMethod)
+			utils.AllHTTPMethods = append(utils.AllHTTPMethods, customHTTPMethod)
 		}
 	}
 
@@ -404,7 +406,7 @@ func (r *oauthProxy) createReverseProxy() error {
 
 		r.config.Resources = append(
 			r.config.Resources,
-			&Resource{URL: allPath, Methods: allHTTPMethods},
+			&Resource{URL: allPath, Methods: utils.AllHTTPMethods},
 		)
 	}
 
@@ -498,7 +500,7 @@ func (r *oauthProxy) createForwardingProxy() error {
 
 	// setup the tls configuration
 	if r.config.TLSCaCertificate != "" && r.config.TLSCaPrivateKey != "" {
-		cAuthority, err := loadCA(r.config.TLSCaCertificate, r.config.TLSCaPrivateKey)
+		cAuthority, err := utils.LoadCA(r.config.TLSCaCertificate, r.config.TLSCaPrivateKey)
 
 		if err != nil {
 			return fmt.Errorf("unable to load certificate authority, error: %s", err)
@@ -630,7 +632,7 @@ func (r *oauthProxy) Run() error {
 			err           error
 		)
 
-		if r.config.ListenAdminScheme == unsecureScheme {
+		if r.config.ListenAdminScheme == constant.UnsecureScheme {
 			// run the admin endpoint (metrics, health) with http
 			adminListener, err = r.createHTTPListener(listenerConfig{
 				listen:        r.config.ListenAdmin,
@@ -750,7 +752,7 @@ func (r *oauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 	if strings.HasPrefix(config.listen, "unix://") {
 		socket := config.listen[7:]
 
-		if exists := fileExists(socket); exists {
+		if exists := utils.FileExists(socket); exists {
 			if err = os.Remove(socket); err != nil {
 				return nil, err
 			}
@@ -911,7 +913,7 @@ func (r *oauthProxy) createUpstreamProxy(upstream *url.URL) error {
 
 		upstream.Path = ""
 		upstream.Host = "domain-sock"
-		upstream.Scheme = unsecureScheme
+		upstream.Scheme = constant.UnsecureScheme
 	}
 	// create the upstream tls configure
 	//nolint:gas
@@ -1186,7 +1188,7 @@ func (r *oauthProxy) getPAT(done chan bool) {
 		retry = 0
 		expiration := stdClaims.Expiry.Time()
 
-		refreshIn := getWithin(expiration, 0.85)
+		refreshIn := utils.GetWithin(expiration, 0.85)
 
 		r.log.Info(
 			"waiting for expiration of access token",

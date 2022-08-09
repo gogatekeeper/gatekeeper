@@ -20,11 +20,14 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 )
 
 func newResource() *Resource {
 	return &Resource{
-		Methods: allHTTPMethods,
+		Methods: utils.AllHTTPMethods,
 	}
 }
 
@@ -59,8 +62,8 @@ func (r *Resource) parse(resource string) (*Resource, error) {
 			r.Methods = strings.Split(keyPair[1], ",")
 
 			if len(r.Methods) == 1 {
-				if strings.EqualFold(r.Methods[0], anyMethod) {
-					r.Methods = allHTTPMethods
+				if strings.EqualFold(r.Methods[0], constant.AnyMethod) {
+					r.Methods = utils.AllHTTPMethods
 				}
 			}
 		case "require-any-role":
@@ -119,11 +122,11 @@ func (r *Resource) valid() error {
 
 	// step: add any of no methods
 	if len(r.Methods) == 0 {
-		r.Methods = allHTTPMethods
+		r.Methods = utils.AllHTTPMethods
 	}
 	// step: check the method is valid
 	for _, m := range r.Methods {
-		if !isValidHTTPMethod(m) {
+		if !utils.IsValidHTTPMethod(m) {
 			return fmt.Errorf("invalid method %s", m)
 		}
 	}
@@ -143,7 +146,7 @@ func (r Resource) String() string {
 	}
 
 	roles := "authentication only"
-	methods := anyMethod
+	methods := constant.AnyMethod
 
 	if len(r.Roles) > 0 {
 		roles = strings.Join(r.Roles, ",")
