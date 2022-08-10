@@ -242,7 +242,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:1.6.0
+  image: quay.io/gogatekeeper/gatekeeper:1.6.1
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -269,7 +269,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:1.6.0
+  image: quay.io/gogatekeeper/gatekeeper:1.6.1
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -739,6 +739,15 @@ along with our token to get RPT token, we will store it in RPT variable.
     ```
     curl -H "Authorization: Bearer $RPT" http://example.com/protectedendpoint
     ```
+
+## Request tracing
+
+Usually when there are multiple http services involved in serving user requests
+you need to use X-REQUEST-ID or some other header to track request flow through
+services. To make this possible with gatekeeper you can enable header logging
+by enabling `--enable-logs` and `--verbose` options. Also you can use `request-id-header`
+and `enable-request-id` options, which will generate unique uuid and will inject in
+header supplied in `request-id-header` option.
 
 ## Metrics
 
