@@ -648,7 +648,7 @@ func (r *Config) updateDiscoveryURI() error {
 func (r *Config) updateRealm() error {
 	path := strings.Split(r.DiscoveryURI.Path, "/")
 
-	if len(path) != 4 {
+	if len(path) != 3 {
 		return fmt.Errorf("missing realm in discovery url?")
 	}
 
