@@ -19,24 +19,31 @@ limitations under the License.
 package main
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
-	resty "github.com/go-resty/resty/v2"
+	"github.com/go-resty/resty/v2"
+	"github.com/rs/cors"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/encryption"
 	"github.com/gogatekeeper/gatekeeper/pkg/storage"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
-	"github.com/rs/cors"
-	"github.com/stretchr/testify/assert"
 
 	"gopkg.in/square/go-jose.v2/jwt"
 )
@@ -2599,5 +2606,83 @@ func TestEnableUmaWithCache(t *testing.T) {
 				}
 			},
 		)
+	}
+}
+
+func TestLogRealIP(t *testing.T) {
+	testCases := []struct {
+		Headers    map[string]string
+		ExpectedIP string
+	}{
+		{
+			Headers:    map[string]string{},
+			ExpectedIP: "127.0.0.1",
+		},
+		{
+			Headers:    map[string]string{"X-Forwarded-For": "192.168.1.1"},
+			ExpectedIP: "192.168.1.1",
+		},
+		{
+			Headers:    map[string]string{"X-Forwarded-For": "192.168.1.1, 192.168.1.2"},
+			ExpectedIP: "192.168.1.1",
+		},
+		{
+			Headers:    map[string]string{"X-Real-Ip": "10.0.0.1"},
+			ExpectedIP: "10.0.0.1",
+		},
+		{
+			Headers:    map[string]string{"X-Forwarded-For": "192.168.1.1", "X-Real-Ip": "10.0.0.1"},
+			ExpectedIP: "192.168.1.1",
+		},
+	}
+
+	cfg := newFakeKeycloakConfig()
+	cfg.EnableLogging = true
+
+	var buffer bytes.Buffer
+	writer := bufio.NewWriter(&buffer)
+	encoder := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+	testLog := zap.New(zapcore.NewCore(encoder, zapcore.AddSync(writer), zapcore.InfoLevel))
+
+	for _, testCase := range testCases {
+		req := fakeRequest{
+			URI:           "/",
+			HasToken:      true,
+			Headers:       testCase.Headers,
+			ExpectedProxy: true,
+			ExpectedCode:  http.StatusOK,
+		}
+
+		auth := newFakeAuthServer(&fakeAuthConfig{})
+		cfg.DiscoveryURL = auth.getLocation()
+		_ = cfg.update()
+
+		proxy, _ := newProxy(cfg)
+		proxy.upstream = &fakeUpstreamService{}
+		proxy.log = testLog
+		_ = proxy.Run()
+
+		cfg.RedirectionURL = fmt.Sprintf("http://%s", proxy.listener.Addr().String())
+		fp := &fakeProxy{cfg, auth, proxy, make(map[string]*http.Cookie)}
+		fp.RunTests(t, []fakeRequest{req})
+
+		_ = writer.Flush()
+		rows := buffer.String()
+		buffer.Reset()
+
+		logRow := struct {
+			ClientIP string `json:"client_ip"`
+		}{}
+
+		var rowFound bool
+		for _, row := range strings.Split(rows, "\n") {
+			if err := json.Unmarshal([]byte(row), &logRow); err == nil && len(logRow.ClientIP) > 0 {
+				rowFound = true
+				break
+			}
+		}
+
+		assert.True(t, rowFound)
+		assert.Equal(t, testCase.ExpectedIP, logRow.ClientIP)
 	}
 }

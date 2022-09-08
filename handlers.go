@@ -107,12 +107,14 @@ func (r *oauthProxy) oauthAuthorizationHandler(wrt http.ResponseWriter, req *htt
 	}
 
 	authURL := conf.AuthCodeURL(req.URL.Query().Get("state"), accessType)
+	clientIP := utils.RealIP(req)
 
 	scope.Logger.Debug(
 		"incoming authorization request from client address",
 		zap.Any("access_type", accessType),
 		zap.String("auth_url", authURL),
-		zap.String("client_ip", req.RemoteAddr),
+		zap.String("client_ip", clientIP),
+		zap.String("remote_addr", req.RemoteAddr),
 	)
 
 	// step: if we have a custom sign in page, lets display that
@@ -635,8 +637,10 @@ func (r *oauthProxy) loginHandler(writer http.ResponseWriter, req *http.Request)
 	}()
 
 	if err != nil {
+		clientIP := utils.RealIP(req)
 		scope.Logger.Error(errorMsg,
-			zap.String("client_ip", req.RemoteAddr),
+			zap.String("client_ip", clientIP),
+			zap.String("remote_addr", req.RemoteAddr),
 			zap.Error(err))
 
 		writer.WriteHeader(code)

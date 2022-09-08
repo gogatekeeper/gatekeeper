@@ -129,7 +129,7 @@ func (r *oauthProxy) loggingMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(resp, req)
 
-		addr := req.RemoteAddr
+		addr := utils.RealIP(req)
 
 		if req.URL.Path == req.URL.RawPath || req.URL.RawPath == "" {
 			scope.Logger.Info("client request",
@@ -137,6 +137,7 @@ func (r *oauthProxy) loggingMiddleware(next http.Handler) http.Handler {
 				zap.Int("status", resp.Status()),
 				zap.Int("bytes", resp.BytesWritten()),
 				zap.String("client_ip", addr),
+				zap.String("remote_addr", req.RemoteAddr),
 				zap.String("method", req.Method),
 				zap.String("path", req.URL.Path))
 		} else {
@@ -145,6 +146,7 @@ func (r *oauthProxy) loggingMiddleware(next http.Handler) http.Handler {
 				zap.Int("status", resp.Status()),
 				zap.Int("bytes", resp.BytesWritten()),
 				zap.String("client_ip", addr),
+				zap.String("remote_addr", req.RemoteAddr),
 				zap.String("method", req.Method),
 				zap.String("path", req.URL.Path),
 				zap.String("raw path", req.URL.RawPath))
@@ -168,7 +170,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 				return
 			}
 
-			clientIP := req.RemoteAddr
+			clientIP := utils.RealIP(req)
 
 			// grab the user identity from the request
 			user, err := r.getIdentity(req)
@@ -197,6 +199,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 					scope.Logger.Error(
 						"the session has expired and verification switch off",
 						zap.String("client_ip", clientIP),
+						zap.String("remote_addr", req.RemoteAddr),
 						zap.String("username", user.name),
 						zap.String("sub", user.id),
 						zap.String("expired_on", user.expiresAt.String()),
@@ -224,6 +227,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 						scope.Logger.Error(
 							"access token failed verification",
 							zap.String("client_ip", clientIP),
+							zap.String("remote_addr", req.RemoteAddr),
 							zap.Error(err),
 						)
 
@@ -236,6 +240,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 						scope.Logger.Error(
 							"session expired and access token refreshing is disabled",
 							zap.String("client_ip", clientIP),
+							zap.String("remote_addr", req.RemoteAddr),
 							zap.String("email", user.name),
 							zap.String("sub", user.id),
 							zap.String("expired_on", user.expiresAt.String()),
@@ -248,6 +253,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 					scope.Logger.Info(
 						"accces token for user has expired, attemping to refresh the token",
 						zap.String("client_ip", clientIP),
+						zap.String("remote_addr", req.RemoteAddr),
 						zap.String("email", user.email),
 						zap.String("sub", user.id),
 					)
@@ -258,6 +264,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 						scope.Logger.Error(
 							"unable to find a refresh token for user",
 							zap.String("client_ip", clientIP),
+							zap.String("remote_addr", req.RemoteAddr),
 							zap.String("email", user.email),
 							zap.String("sub", user.id),
 							zap.Error(err),
@@ -293,6 +300,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 							scope.Logger.Warn(
 								"refresh token has expired, cannot retrieve access token",
 								zap.String("client_ip", clientIP),
+								zap.String("remote_addr", req.RemoteAddr),
 								zap.String("email", user.email),
 								zap.String("sub", user.id),
 							)
@@ -341,6 +349,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 					scope.Logger.Info(
 						"injecting the refreshed access token cookie",
 						zap.String("client_ip", clientIP),
+						zap.String("remote_addr", req.RemoteAddr),
 						zap.String("cookie_name", r.config.CookieAccessName),
 						zap.String("email", user.email),
 						zap.String("sub", user.id),
