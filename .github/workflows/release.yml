@@ -42,7 +42,7 @@ jobs:
           KUBECONFIG=~/.k3d/kubeconfig-testcluster.yaml kubectl apply -f ./e2e/k8s/manifest.yml
           go test -v --tags=e2e
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: latest
           args: release --rm-dist
