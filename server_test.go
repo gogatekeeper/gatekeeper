@@ -770,6 +770,15 @@ func TestDefaultDenial(t *testing.T) {
 				assert.Equal(t, "", body)
 			},
 		},
+		{
+			Method:       "get",
+			URI:          "/not_permited",
+			Redirects:    true,
+			ExpectedCode: http.StatusNotImplemented,
+			ExpectedContent: func(body string, testNum int) {
+				assert.Equal(t, "", body)
+			},
+		},
 		// any "crap" methods should not be valid
 		{
 			Method:       "whAS9023",

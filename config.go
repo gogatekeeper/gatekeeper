@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	yaml "gopkg.in/yaml.v2"
@@ -588,6 +589,15 @@ func (r *Config) isResourceValid() error {
 	for _, resource := range r.Resources {
 		if err := resource.Valid(); err != nil {
 			return err
+		}
+
+		if resource.URL == allPath && (r.EnableDefaultDeny || r.EnableDefaultDenyStrict) {
+			switch resource.WhiteListed {
+			case true:
+				return apperrors.ErrDefaultDenyWhitelistConflict
+			default:
+				return apperrors.ErrDefaultDenyUserDefinedConflict
+			}
 		}
 	}
 

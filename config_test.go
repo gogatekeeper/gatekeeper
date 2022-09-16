@@ -1826,6 +1826,45 @@ func TestIsResourceValid(t *testing.T) {
 			},
 			Valid: false,
 		},
+		{
+			Name: "InValidResourceDefaultDenyWhitelistConflict",
+			Config: &Config{
+				EnableDefaultDeny: true,
+				Resources: []*authorization.Resource{
+					{
+						URL:     fakeAdminRoleURL,
+						Methods: []string{"GET"},
+						Roles:   []string{fakeAdminRole},
+					},
+					{
+						URL:         allPath,
+						WhiteListed: true,
+						Methods:     []string{"GET"},
+						Roles:       []string{fakeAdminRole, fakeTestRole},
+					},
+				},
+			},
+			Valid: false,
+		},
+		{
+			Name: "InValidResourceDefaultDenyUserDefinedConflict",
+			Config: &Config{
+				EnableDefaultDeny: true,
+				Resources: []*authorization.Resource{
+					{
+						URL:     fakeAdminRoleURL,
+						Methods: []string{"GET"},
+						Roles:   []string{fakeAdminRole},
+					},
+					{
+						URL:     allPath,
+						Methods: []string{"GET"},
+						Roles:   []string{fakeAdminRole, fakeTestRole},
+					},
+				},
+			},
+			Valid: false,
+		},
 	}
 
 	for _, testCase := range testCases {

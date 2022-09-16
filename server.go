@@ -394,16 +394,6 @@ func (r *oauthProxy) createReverseProxy() error {
 				zap.String("change", res.URL),
 				zap.String("amended", strings.TrimRight(res.URL, "/")))
 		}
-
-		if res.URL == allPath && (r.config.EnableDefaultDeny || r.config.EnableDefaultDenyStrict) {
-			switch res.WhiteListed {
-			case true:
-				return errors.New("you've asked for a default denial but whitelisted everything")
-			default:
-				enableDefaultDeny = false
-				enableDefaultDenyStrict = false
-			}
-		}
 	}
 
 	if enableDefaultDeny || enableDefaultDenyStrict {
