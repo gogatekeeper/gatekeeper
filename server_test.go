@@ -902,7 +902,7 @@ func TestDefaultDenialStrict(t *testing.T) {
 			},
 		},
 		{
-			Method:        "POST",
+			Method:        http.MethodPost,
 			URI:           "/private",
 			HasToken:      true,
 			ProxyRequest:  true,
