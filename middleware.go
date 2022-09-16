@@ -555,6 +555,7 @@ func (r *oauthProxy) authorizationMiddleware() func(http.Handler) http.Handler {
 }
 
 // checkClaim checks whether claim in userContext matches claimName, match. It can be String or Strings claim.
+//
 //nolint:cyclop
 func (r *oauthProxy) checkClaim(user *userContext, claimName string, match *regexp.Regexp, resourceURL string) bool {
 	errFields := []zapcore.Field{
@@ -648,6 +649,7 @@ func (r *oauthProxy) checkClaim(user *userContext, claimName string, match *rege
 }
 
 // admissionMiddleware is responsible for checking the access token against the protected resource
+//
 //nolint:cyclop
 func (r *oauthProxy) admissionMiddleware(resource *authorization.Resource) func(http.Handler) http.Handler {
 	claimMatches := make(map[string]*regexp.Regexp)

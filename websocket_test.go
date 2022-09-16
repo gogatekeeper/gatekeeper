@@ -29,7 +29,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-//TestWebSocket is used to validate that the proxy reverse proxy WebSocket connections.
+// TestWebSocket is used to validate that the proxy reverse proxy WebSocket connections.
 func TestWebSocket(t *testing.T) {
 	// Setup an upstream service.
 	upstream := &fakeUpstreamService{}

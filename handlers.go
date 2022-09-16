@@ -905,6 +905,7 @@ func (r *oauthProxy) healthHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 // debugHandler is responsible for providing the pprof
+//
 //nolint:cyclop
 func (r *oauthProxy) debugHandler(writer http.ResponseWriter, req *http.Request) {
 	const symbolProfile = "symbol"

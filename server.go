@@ -93,6 +93,7 @@ func init() {
 const allPath = "/*"
 
 // newProxy create's a new proxy from configuration
+//
 //nolint:cyclop
 func newProxy(config *Config) (*oauthProxy, error) {
 	// create the service logger
@@ -249,6 +250,7 @@ func (r *oauthProxy) useDefaultStack(engine chi.Router) {
 }
 
 // createReverseProxy creates a reverse proxy
+//
 //nolint:cyclop
 func (r *oauthProxy) createReverseProxy() error {
 	r.log.Info(
@@ -550,6 +552,7 @@ func (r *oauthProxy) createForwardingProxy() error {
 }
 
 // Run starts the proxy service
+//
 //nolint:cyclop
 func (r *oauthProxy) Run() error {
 	listener, err := r.createHTTPListener(makeListenerConfig(r.config))
@@ -738,6 +741,7 @@ func makeListenerConfig(config *Config) listenerConfig {
 var ErrHostNotConfigured = errors.New("acme/autocert: host not configured")
 
 // createHTTPListener is responsible for creating a listening socket
+//
 //nolint:cyclop
 func (r *oauthProxy) createHTTPListener(config listenerConfig) (net.Listener, error) {
 	var listener net.Listener
