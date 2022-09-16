@@ -67,5 +67,5 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.49
-          args: "--out-${NO_FUTURE}format colored-line-number"
+          args: "--out-${NO_FUTURE}format colored-line-number --timeout=2m"
           github-token: "${{ secrets.GITHUB_TOKEN }}"
