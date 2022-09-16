@@ -83,7 +83,7 @@ func (p *OpaAuthorizationProvider) Authorize() (AuthzDecision, error) {
 	}
 
 	httpReq, err := http.NewRequest(
-		"POST",
+		http.MethodPost,
 		p.authzURL.String(),
 		bytes.NewReader(opaReqBody),
 	)
