@@ -17,7 +17,7 @@ You can view all settings also in this table [Settings](settings.md)
 
 ## Requirements
 
-  - Go 1.16 or higher
+  - Go 1.18 or higher
   - Make
 
 ## Configuration options

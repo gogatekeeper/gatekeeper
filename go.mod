@@ -105,4 +105,4 @@ require (
 	oras.land/oras-go v1.2.0 // indirect
 )
 
-go 1.17
+go 1.18

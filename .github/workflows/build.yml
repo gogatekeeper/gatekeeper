@@ -10,7 +10,7 @@ jobs:
     # Test the latest release of Go
     strategy:
       matrix:
-        go: [ '1.17' ]
+        go: [ '1.18' ]
     steps:
       # Setup the workflow to use the specific version of Go
       - name: Set up Go 1.x
@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: [ '1.17' ]
+        go: [ '1.18' ]
     steps:
       - uses: actions/setup-go@v3
         with:
