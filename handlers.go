@@ -163,6 +163,7 @@ func (r *oauthProxy) oauthCallbackHandler(writer http.ResponseWriter, req *http.
 
 	conf := r.newOAuth2Config(r.getRedirectionURL(writer, req))
 
+	//nolint:contextcheck
 	resp, err := exchangeAuthenticationCode(
 		conf,
 		code,
@@ -200,6 +201,7 @@ func (r *oauthProxy) oauthCallbackHandler(writer http.ResponseWriter, req *http.
 
 	defer cancel()
 
+	//nolint:contextcheck
 	idToken, err = verifier.Verify(ctx, rawIDToken)
 
 	if err != nil {
@@ -906,6 +908,7 @@ func (r *oauthProxy) healthHandler(w http.ResponseWriter, req *http.Request) {
 //nolint:cyclop
 func (r *oauthProxy) debugHandler(writer http.ResponseWriter, req *http.Request) {
 	const symbolProfile = "symbol"
+	//nolint:contextcheck
 	name := chi.URLParam(req, "name")
 
 	switch req.Method {

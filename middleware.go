@@ -181,6 +181,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 					zap.Error(err),
 				)
 
+				//nolint:contextcheck
 				next.ServeHTTP(wrt, req.WithContext(r.redirectToAuthorization(wrt, req)))
 				return
 			}
@@ -205,6 +206,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 						zap.String("expired_on", user.expiresAt.String()),
 					)
 
+					//nolint:contextcheck
 					next.ServeHTTP(wrt, req.WithContext(r.redirectToAuthorization(wrt, req)))
 					return
 				}
@@ -217,6 +219,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 					},
 				)
 
+				//nolint:contextcheck
 				_, err := verifier.Verify(context.Background(), user.rawToken)
 
 				if err != nil {
@@ -231,6 +234,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 							zap.Error(err),
 						)
 
+						//nolint:contextcheck
 						next.ServeHTTP(wrt, req.WithContext(r.accessForbidden(wrt, req)))
 						return
 					}
@@ -246,6 +250,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 							zap.String("expired_on", user.expiresAt.String()),
 						)
 
+						//nolint:contextcheck
 						next.ServeHTTP(wrt, req.WithContext(r.redirectToAuthorization(wrt, req)))
 						return
 					}
@@ -270,6 +275,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 							zap.Error(err),
 						)
 
+						//nolint:contextcheck
 						next.ServeHTTP(wrt, req.WithContext(r.redirectToAuthorization(wrt, req)))
 						return
 					}
@@ -292,6 +298,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 						zap.String("sub", user.id),
 					)
 
+					//nolint:contextcheck
 					_, newRawAccToken, newRefreshToken, accessExpiresAt, refreshExpiresIn, err := getRefreshedToken(conf, r.config, refresh)
 
 					if err != nil {
@@ -322,6 +329,7 @@ func (r *oauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 							)
 						}
 
+						//nolint:contextcheck
 						next.ServeHTTP(wrt, req.WithContext(r.redirectToAuthorization(wrt, req)))
 						return
 					}
@@ -501,6 +509,8 @@ func (r *oauthProxy) authorizationMiddleware() func(http.Handler) http.Handler {
 						"Undexpected error during authorization",
 						zap.Error(err),
 					)
+
+					//nolint:contextcheck
 					next.ServeHTTP(
 						wrt,
 						req.WithContext(r.redirectToAuthorization(wrt, req)),
@@ -533,6 +543,8 @@ func (r *oauthProxy) authorizationMiddleware() func(http.Handler) http.Handler {
 						zap.String("path", req.URL.Path),
 					)
 				}
+
+				//nolint:contextcheck
 				next.ServeHTTP(wrt, req.WithContext(r.redirectToAuthorization(wrt, req)))
 				return
 			}
@@ -671,6 +683,7 @@ func (r *oauthProxy) admissionMiddleware(resource *authorization.Resource) func(
 					zap.String("resource", resource.URL),
 					zap.String("roles", resource.GetRoles()))
 
+				//nolint:contextcheck
 				next.ServeHTTP(wrt, req.WithContext(r.accessForbidden(wrt, req)))
 				return
 			}
@@ -691,6 +704,7 @@ func (r *oauthProxy) admissionMiddleware(resource *authorization.Resource) func(
 							zap.String("resource", resource.URL),
 							zap.String("headers", resource.GetHeaders()))
 
+						//nolint:contextcheck
 						next.ServeHTTP(wrt, req.WithContext(r.accessForbidden(wrt, req)))
 						return
 					}
@@ -713,6 +727,7 @@ func (r *oauthProxy) admissionMiddleware(resource *authorization.Resource) func(
 						zap.String("resource", resource.URL),
 						zap.String("headers", resource.GetHeaders()))
 
+					//nolint:contextcheck
 					next.ServeHTTP(wrt, req.WithContext(r.accessForbidden(wrt, req)))
 					return
 				}
@@ -726,6 +741,7 @@ func (r *oauthProxy) admissionMiddleware(resource *authorization.Resource) func(
 					zap.String("resource", resource.URL),
 					zap.String("groups", strings.Join(resource.Groups, ",")))
 
+				//nolint:contextcheck
 				next.ServeHTTP(wrt, req.WithContext(r.accessForbidden(wrt, req)))
 				return
 			}
@@ -733,6 +749,7 @@ func (r *oauthProxy) admissionMiddleware(resource *authorization.Resource) func(
 			// step: if we have any claim matching, lets validate the tokens has the claims
 			for claimName, match := range claimMatches {
 				if !r.checkClaim(user, claimName, match, resource.URL) {
+					//nolint:contextcheck
 					next.ServeHTTP(wrt, req.WithContext(r.accessForbidden(wrt, req)))
 					return
 				}
@@ -855,6 +872,7 @@ func (r *oauthProxy) securityMiddleware(next http.Handler) http.Handler {
 
 		if err := secure.Process(wrt, req); err != nil {
 			scope.Logger.Warn("failed security middleware", zap.Error(err))
+			//nolint:contextcheck
 			next.ServeHTTP(wrt, req.WithContext(r.accessForbidden(wrt, req)))
 			return
 		}
@@ -914,6 +932,7 @@ func (r *oauthProxy) denyMiddleware(next http.Handler) http.Handler {
 			wrt.WriteHeader(http.StatusUnauthorized)
 			next.ServeHTTP(wrt, req)
 		} else {
+			//nolint:contextcheck
 			next.ServeHTTP(
 				wrt,
 				req.WithContext(r.redirectToAuthorization(wrt, req)),
