@@ -80,7 +80,7 @@ func TestExternalOpa(t *testing.T) {
 				}
 
 				httpReq, err := http.NewRequest(
-					"POST",
+					http.MethodPost,
 					"dummy",
 					bytes.NewReader(reqBody),
 				)
