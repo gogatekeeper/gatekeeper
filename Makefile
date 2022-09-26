@@ -139,7 +139,7 @@ spelling:
 	@echo "--> Checking the spelling"
 	@which misspell 2>/dev/null ; if [ $$? -eq 1 ]; then \
 		cd ..; \
-		go install github.com/client9/misspell/cmd/misspell; \
+		go install github.com/client9/misspell/cmd/misspell@latest; \
 		cd -; \
 	fi
 	@misspell -error *.go
