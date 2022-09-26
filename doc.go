@@ -28,7 +28,7 @@ import (
 )
 
 var (
-	release  = "1.7.0"
+	release  = "1.8.0"
 	gitsha   = "no gitsha provided"
 	compiled = "0"
 	version  = ""

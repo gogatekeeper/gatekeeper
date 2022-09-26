@@ -28,6 +28,8 @@ options. Here is a list of options.
 ``` yaml
 # is the URL for retrieve the OpenID configuration
 discovery-url: <DISCOVERY URL>
+# Indicates we should deny by default all requests and explicitly specify what is permitted, default true
+enable-default-deny: true
 # the client id for the 'client' application
 client-id: <CLIENT_ID>
 # the secret associated to the 'client' application
@@ -107,7 +109,7 @@ client-id: <CLIENT_ID>
 client-secret: <CLIENT_SECRET> # require for access_type: confidential
 # Note the redirection-url is optional, it will default to the X-Forwarded-Proto / X-Forwarded-Host r the URL scheme and host not found
 discovery-url: https://keycloak.example.com/auth/realms/<REALM_NAME>
-# Indicates we should deny by default all requests and explicitly specify what is permitted
+# Indicates we should deny by default all requests and explicitly specify what is permitted, default true
 enable-default-deny: true
 encryption-key: AgXa7xRcoClDEU0ZDSH4X0XhL5Qy2Z2j
 listen: :3000
@@ -187,10 +189,10 @@ at login/logout and you must make cookies available to js (less secure, altough 
 
 `--enable-default-deny` - option blocks all requests without valid token on all basic HTTP methods,
 (DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, TRACE). **WARNING:** There are no additional requirements on
-the token, it isn't checked for some claims or roles, groups etc...
+the token, it isn't checked for some claims or roles, groups etc...(this is by default true)
 
 `--enable-default-deny-strict` (recommended) - option blocks all requests (including valid token) unless
-specific path with requirements specified in resources
+specific path with requirements specified in resources (this option is by default false)
 
 ## OpenID Provider Communication
 
@@ -252,7 +254,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:1.7.0
+  image: quay.io/gogatekeeper/gatekeeper:1.8.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -279,7 +281,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:1.7.0
+  image: quay.io/gogatekeeper/gatekeeper:1.8.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -742,6 +744,53 @@ UNIX socket, `--upstream-url unix://path/to/the/file.sock`.
   - **/oauth/discovery** provides endpoint with basic urls gatekeeper provides
 
 ## External Authorization
+
+### Open Policy Agent (OPA) authorization
+
+In version 1.8.8 we are introducing external authorization with OPA (applicable to auth code flow `--no-redirects=false` as well as for `--no-redirects=true`).
+Gatekeeper sends request with this structure to OPA for authorization:
+
+```json
+{
+  "input": {
+    "body": "{\"name\": \"test\"}" // body is sent as string so you will have to unmarshal it in case of json/yaml in OPA
+    "headers": {
+      "X-SOME": ["some value", "other value"],
+    },
+	  "host": "some.com",
+	  "protocol": "HTTP/1.1",
+	  "path": "/test",
+	  "remote_addr": "192.168.1.90",
+	  "method": "POST",
+	  "user_agent": "Firefox",
+  }
+}
+```
+
+Example gatekeeper configuration:
+
+```yaml
+  enable-opa: true
+	enable-default-deny: true
+	opa-timeout: "60s"
+  opa-authz-uri: "http://127.0.0.1/v1/data/authz/allow"
+```
+
+Example OPA policy, with upper gatekeeper configuration and request would result allowing request to upstream:
+
+```
+  package authz
+
+  default allow := false
+
+  body := json.unmarshal(input.body)
+  allow {
+    body.name = "test"
+    body.method = "POST"
+  }
+```
+
+### Keycloak authorization (UMA)
 
 In version 1.5.0 we are introducing external authorization `--enable-uma`, only applicable with `--no-redirects` option for now.
 You have to also either populate resources or use `--enable-default-deny` (see examples in previous sections). So you can mix both external authorization+static resource permissions, but
