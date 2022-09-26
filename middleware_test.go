@@ -2053,7 +2053,7 @@ func TestEnableUma(t *testing.T) {
 		ExecutionSettings []fakeRequest
 	}{
 		{
-			Name: "TestUmaNoToken",
+			Name: "TestUmaNoTokenNoRedirects",
 			ProxySettings: func(conf *Config) {
 				conf.EnableUma = true
 				conf.EnableDefaultDeny = true
@@ -2066,7 +2066,7 @@ func TestEnableUma(t *testing.T) {
 				{
 					URI:           "/test",
 					ExpectedProxy: false,
-					ExpectedCode:  http.StatusForbidden,
+					ExpectedCode:  http.StatusUnauthorized,
 					ExpectedContent: func(body string, testNum int) {
 						assert.Equal(t, "", body)
 					},
