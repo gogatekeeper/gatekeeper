@@ -180,9 +180,9 @@ type Config struct {
 	EnableCompression bool `json:"enable-compression" yaml:"enable-compression" usage:"enable gzip compression for response" env:"ENABLE_COMPRESSION"`
 
 	EnableUma   bool          `json:"enable-uma" yaml:"enable-uma" usage:"enable uma authorization, please don't use it in production, we would like to receive feedback" env:"ENABLE_UMA"`
-	EnableOpa   bool          `json:"enable-opa" yaml:"enable-opa" usage:"enable authorization with external Open policy agent" env:"ENABLE_UMA"`
-	OpaTimeout  time.Duration `json:"opa-timeout" yaml:"opa-timeout" usage:"timeout for connection to OPA"`
-	OpaAuthzURI string        `json:"opa-authz-uri" yaml:"opa-authz-uri" usage:"OPA endpoint address with path"`
+	EnableOpa   bool          `json:"enable-opa" yaml:"enable-opa" usage:"enable authorization with external Open policy agent" env:"ENABLE_OPA"`
+	OpaTimeout  time.Duration `json:"opa-timeout" yaml:"opa-timeout" usage:"timeout for connection to OPA" env:"OPA_TIMEOUT"`
+	OpaAuthzURI string        `json:"opa-authz-uri" yaml:"opa-authz-uri" usage:"OPA endpoint address with path" env:"OPA_AUTHZ_URI"`
 
 	PatRetryCount    int           `json:"pat-retry-count" yaml:"pat-retry-count" usage:"number of retries to get PAT" env:"PAT_RETRY_COUNT"`
 	PatRetryInterval time.Duration `json:"pat-retry-interval" yaml:"pat-retry-interval" usage:"interval between retries to get PAT" env:"PAT_RETRY_INTERVAL"`

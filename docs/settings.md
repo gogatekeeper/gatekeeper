@@ -54,6 +54,11 @@
 |    --localhost-metrics                     | enforces the metrics page can only been requested from 127.0.0.1 | false | PROXY_LOCALHOST_METRICS
 |    --enable-compression                    | enable gzip compression for response | false | PROXY_ENABLE_COMPRESSION
 |    --enable-uma                            | enable UMA authorization, please don't use in production as it is new feature, we would like to receive feedback first             | false | PROXY_ENABLE_UMA
+|	 --enable-opa                            | enable authorization with external Open policy agent  | false | PROXY_ENABLE_OPA
+|	 --opa-timeout                           | timeout for connection to OPA                         |   10s | PROXY_OPA_TIMEOUT
+|	 --opa-authz-uri                         | OPA endpoint address with path                        |       | PROXY_OPA_AUTHZ_URI
+|    --pat-retry-count                       | number of retries to get PAT                          |    5  | PROXY_PAT_RETRY_COUNT
+|    --pat-retry-interval                    | interval between retries to get PAT                   |    2s | PROXY_PAT_RETRY_INTERVAL
 |    --access-token-duration value           | fallback cookie duration for the access token when using refresh tokens | 720h0m0s | PROXY_ACCESS_TOKEN_DURATION
 |    --cookie-domain value                   | domain the access cookie is available to, defaults host header | | PROXY_COOKIE_DOMAIN
 |    --cookie-access-name value              | name of the cookie use to hold the access token | kc-access | PROXY_COOKIE_ACCESS_NAME
