@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"strconv"
 
 	"net/http"
 	"net/http/pprof"
@@ -107,6 +108,7 @@ func (r *oauthProxy) oauthAuthorizationHandler(wrt http.ResponseWriter, req *htt
 	}
 
 	authURL := conf.AuthCodeURL(req.URL.Query().Get("state"), accessType)
+	authURL += "&timestamp=" + strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)
 	clientIP := utils.RealIP(req)
 
 	scope.Logger.Debug(
