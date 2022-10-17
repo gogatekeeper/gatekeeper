@@ -2077,6 +2077,50 @@ func TestUpdateRealm(t *testing.T) {
 			},
 			Valid: false,
 		},
+		{
+			Name: "OKWithRelativePath",
+			Config: &Config{
+				DiscoveryURI: &url.URL{
+					Scheme: "http",
+					Host:   "127.0.0.1",
+					Path:   "/auth/realms/test",
+				},
+			},
+			Valid: true,
+		},
+		{
+			Name: "InValidDiscoveryURLWithRelativePath",
+			Config: &Config{
+				DiscoveryURI: &url.URL{
+					Scheme: "http",
+					Host:   "127.0.0.1",
+					Path:   "/auth/realms",
+				},
+			},
+			Valid: false,
+		},
+		{
+			Name: "OKWithoutRealmsPrefix",
+			Config: &Config{
+				DiscoveryURI: &url.URL{
+					Scheme: "http",
+					Host:   "127.0.0.1",
+					Path:   "/test",
+				},
+			},
+			Valid: true,
+		},
+		{
+			Name: "OKWithoutRealmsPrefixMultipleResourcesPath",
+			Config: &Config{
+				DiscoveryURI: &url.URL{
+					Scheme: "http",
+					Host:   "127.0.0.1",
+					Path:   "/auth/test",
+				},
+			},
+			Valid: true,
+		},
 	}
 
 	for _, testCase := range testCases {

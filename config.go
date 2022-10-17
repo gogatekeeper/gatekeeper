@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -32,7 +31,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 // newDefaultConfig returns a initialized config
@@ -91,9 +90,9 @@ func newDefaultConfig() *Config {
 	}
 }
 
-// readConfigFile reads and parses the configuration file
+// ReadConfigFile reads and parses the configuration file
 func ReadConfigFile(filename string, config *Config) error {
-	content, err := ioutil.ReadFile(filename)
+	content, err := os.ReadFile(filename)
 
 	if err != nil {
 		return err
@@ -110,13 +109,13 @@ func ReadConfigFile(filename string, config *Config) error {
 }
 
 func writeFakeConfigFile(t *testing.T, content string) *os.File {
-	file, err := ioutil.TempFile("", "node_label_file")
+	file, err := os.CreateTemp("", "node_label_file")
 	if err != nil {
 		t.Fatalf("unexpected error creating node_label_file: %v", err)
 	}
 	file.Close()
 
-	if err := ioutil.WriteFile(file.Name(), []byte(content), 0600); err != nil {
+	if err := os.WriteFile(file.Name(), []byte(content), 0600); err != nil {
 		t.Fatalf("unexpected error writing node label file: %v", err)
 	}
 
@@ -682,13 +681,32 @@ func (r *Config) updateDiscoveryURI() error {
 }
 
 func (r *Config) updateRealm() error {
-	path := strings.Split(r.DiscoveryURI.Path, "/")
+	realmPrefix := "/realms"
+	path := r.DiscoveryURI.Path
 
-	if len(path) != 3 {
-		return fmt.Errorf("missing realm in discovery url?")
+	var realm string
+
+	// if the path contains the "/realms" prefix, assume as the realm the next resource path
+	if strings.Contains(path, realmPrefix) {
+		pos := strings.LastIndex(path, realmPrefix)
+		if pos != -1 {
+			adjustedPos := pos + len(realmPrefix)
+			if adjustedPos >= len(path) {
+				realm = ""
+			} else {
+				realm = path[adjustedPos:]
+			}
+		}
+		// if the path does not contain the "/realms" prefix, assume as the realm the last resource path
+	} else {
+		path := strings.Split(r.DiscoveryURI.Path, "/")
+		realm = path[len(path)-1]
 	}
 
-	realm := path[len(path)-1]
+	if realm == "" {
+		return fmt.Errorf("the discovery url seems to be missing the realm: %s", r.DiscoveryURI.Path)
+	}
+
 	r.Realm = realm
 	return nil
 }
