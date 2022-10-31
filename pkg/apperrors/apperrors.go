@@ -20,4 +20,5 @@ var (
 	ErrDecryption                      = errors.New("failed to decrypt token")
 	ErrDefaultDenyWhitelistConflict    = errors.New("you've asked for a default denial but whitelisted everything")
 	ErrDefaultDenyUserDefinedConflict  = errors.New("you've enabled default deny and at the same time defined own rules for /*")
+	ErrBadDiscoveryURIFormat           = errors.New("bad discovery url format")
 )

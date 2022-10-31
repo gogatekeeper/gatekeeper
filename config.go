@@ -135,7 +135,7 @@ func (r *Config) WithOAuthURI(uri string) string {
 func (r *Config) update() error {
 	updateRegistry := []func() error{
 		r.updateDiscoveryURI,
-		r.updateRealm,
+		r.extractDiscoveryURIComponents,
 	}
 
 	for _, updateFunc := range updateRegistry {
@@ -681,14 +681,24 @@ func (r *Config) updateDiscoveryURI() error {
 	return nil
 }
 
-func (r *Config) updateRealm() error {
-	path := strings.Split(r.DiscoveryURI.Path, "/")
+func (r *Config) extractDiscoveryURIComponents() error {
+	reg := regexp.MustCompile(
+		`(?P<legacy>(/auth){0,1})/realms/(?P<realm>[^/]+)(/{0,1}).*`,
+	)
 
-	if len(path) != 3 {
-		return fmt.Errorf("missing realm in discovery url?")
+	matches := reg.FindStringSubmatch(r.DiscoveryURI.Path)
+
+	if len(matches) == 0 {
+		return apperrors.ErrBadDiscoveryURIFormat
 	}
 
-	realm := path[len(path)-1]
-	r.Realm = realm
+	legacyIndex := reg.SubexpIndex("legacy")
+	realmIndex := reg.SubexpIndex("realm")
+
+	if matches[legacyIndex] != "" {
+		r.IsDiscoverURILegacy = true
+	}
+
+	r.Realm = matches[realmIndex]
 	return nil
 }

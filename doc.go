@@ -323,9 +323,10 @@ type Config struct {
 	// DisableAllLogging indicates no logging at all
 	DisableAllLogging bool `json:"disable-all-logging" yaml:"disable-all-logging" usage:"disables all logging to stdout and stderr" env:"DISABLE_ALL_LOGGING"`
 	// this is non-configurable field, derived from discoveryurl at initialization
-	Realm        string
-	DiscoveryURI *url.URL
-	OpaAuthzURL  *url.URL
+	Realm               string
+	DiscoveryURI        *url.URL
+	OpaAuthzURL         *url.URL
+	IsDiscoverURILegacy bool
 }
 
 // getVersion returns the proxy version

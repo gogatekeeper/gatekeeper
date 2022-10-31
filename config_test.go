@@ -2049,11 +2049,13 @@ func TestUpdateDiscoveryURI(t *testing.T) {
 	}
 }
 
-func TestUpdateRealm(t *testing.T) {
+func TestExtractDiscoveryURIComponents(t *testing.T) {
 	testCases := []struct {
-		Name   string
-		Config *Config
-		Valid  bool
+		Name             string
+		Config           *Config
+		ExpectedRealm    string
+		ExpectedIsLegacy bool
+		Valid            bool
 	}{
 		{
 			Name: "OK",
@@ -2064,7 +2066,48 @@ func TestUpdateRealm(t *testing.T) {
 					Path:   "/realms/test",
 				},
 			},
-			Valid: true,
+			ExpectedRealm:    "test",
+			ExpectedIsLegacy: false,
+			Valid:            true,
+		},
+		{
+			Name: "OK",
+			Config: &Config{
+				DiscoveryURI: &url.URL{
+					Scheme: "http",
+					Host:   "127.0.0.1",
+					Path:   "/realms/test",
+				},
+			},
+			ExpectedRealm:    "test",
+			ExpectedIsLegacy: false,
+			Valid:            true,
+		},
+		{
+			Name: "OK complex URI",
+			Config: &Config{
+				DiscoveryURI: &url.URL{
+					Scheme: "http",
+					Host:   "127.0.0.1",
+					Path:   "/realms/custom-124_toto/.well-known/openid-configuration",
+				},
+			},
+			ExpectedRealm:    "custom-124_toto",
+			ExpectedIsLegacy: false,
+			Valid:            true,
+		},
+		{
+			Name: "OK Legacy well known",
+			Config: &Config{
+				DiscoveryURI: &url.URL{
+					Scheme: "http",
+					Host:   "127.0.0.1",
+					Path:   "/auth/realms/test/.well-known/openid-configuration",
+				},
+			},
+			ExpectedRealm:    "test",
+			ExpectedIsLegacy: true,
+			Valid:            true,
 		},
 		{
 			Name: "InValidDiscoveryURL",
@@ -2084,13 +2127,31 @@ func TestUpdateRealm(t *testing.T) {
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
-				err := testCase.Config.updateRealm()
+				err := testCase.Config.extractDiscoveryURIComponents()
 				if err != nil && testCase.Valid {
 					t.Fatalf("Expected test not to fail")
 				}
 
 				if err == nil && !testCase.Valid {
 					t.Fatalf("Expected test to fail")
+				}
+
+				if err == nil && testCase.Valid {
+					if testCase.Config.Realm != testCase.ExpectedRealm {
+						t.Fatalf(
+							"Realm does not match, expected: %s, got: %s",
+							testCase.ExpectedRealm,
+							testCase.Config.Realm,
+						)
+					}
+
+					if testCase.Config.IsDiscoverURILegacy != testCase.ExpectedIsLegacy {
+						t.Fatalf(
+							"IsDiscoverURILegacy does not match, expected: %t, got: %t",
+							testCase.ExpectedIsLegacy,
+							testCase.Config.IsDiscoverURILegacy,
+						)
+					}
 				}
 			},
 		)
