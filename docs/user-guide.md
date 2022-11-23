@@ -569,7 +569,7 @@ gatekeeper configuration
       - --listen=0.0.0.0:4180
       - --discovery-url=https://keycloak-dns-name/realms/censored
       - --enable-default-deny=true # this option will ensure protection of all paths /*, according our traefik config, traefik will send it to /
-      - --match-headers=headers=x-some-header:somevalue,x-other-header:othervalue
+      - --resources=headers=x-some-header:somevalue,x-other-header:othervalue
 ```
 
 ## Custom pages
