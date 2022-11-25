@@ -254,7 +254,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:1.8.1
+  image: quay.io/gogatekeeper/gatekeeper:2.0.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -281,7 +281,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:1.8.1
+  image: quay.io/gogatekeeper/gatekeeper:2.0.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -662,7 +662,17 @@ the store.
 
 ## Logout endpoint
 
-A **/oauth/logout?redirect=url** is provided as a helper to log users
+There are 3 possibilities how to logout:
+
+1. Calling **/oauth/logout** with token and `redirection-url` parameter set in gatekeeper config.
+This is gatekeeper own mechanism, which revokes token and redirects to provided url.
+
+2. There is also option `--enable-logout-redirect` which uses keycloak logout mechanism
+and this logout url <https://keycloak.example.com/auth/realms/REALM_NAME/protocol/openid-connect/logout>.
+Please note that from 2.0.0 release due to changes in keycloak 17+ there is no possibility to do
+automatic logout without confirmation.
+
+3. A **/oauth/logout?redirect=url** is provided as a helper to log users
 out. In addition to dropping any session cookies, we also attempt to
 revoke access via revocation URL (config **revocation-url** or
 **--revocation-url**) with the provider. For Keycloak, the URL for this
@@ -670,9 +680,6 @@ would be
 <https://keycloak.example.com/realms/REALM_NAME/protocol/openid-connect/logout>.
 If the URL is not specified we will attempt to grab the URL from the
 OpenID discovery response.
-
-There is also option `--enable-logout-redirect` which uses keycloak logout mechanism
-and this logout url <https://keycloak.example.com/auth/realms/REALM_NAME/protocol/openid-connect/logout>.
 
 ## Cross-origin resource sharing (CORS)
 

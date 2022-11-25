@@ -21,7 +21,7 @@ spec:
           secretName: tls
       containers:
         - name: proxy
-          image: quay.io/gogatekeeper/gatekeeper:1.8.1
+          image: quay.io/gogatekeeper/gatekeeper:2.0.0
           imagePullPolicy: Always
           args:
             - --client-id=broker
