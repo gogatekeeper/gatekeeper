@@ -944,7 +944,7 @@ func TestNoProxy(t *testing.T) {
 		ExecutionSettings []fakeRequest
 	}{
 		{
-			Name: "TestEmptyXForwarded",
+			Name: "TestNoProxyWithNoRedirectsWhiteListed",
 			ProxySettings: func(c *Config) {
 				c.EnableDefaultDenyStrict = true
 				c.NoRedirects = true
@@ -965,6 +965,96 @@ func TestNoProxy(t *testing.T) {
 				{
 					URI:           "/public/allowed",
 					ExpectedProxy: false,
+					ExpectedCode:  http.StatusOK,
+					ExpectedContent: func(body string, testNum int) {
+						assert.Equal(t, body, "")
+					},
+				},
+			},
+		},
+		{
+			Name: "TestNoProxyWithNoRedirectsPrivateUnauthenticated",
+			ProxySettings: func(c *Config) {
+				c.EnableDefaultDenyStrict = true
+				c.NoRedirects = true
+				c.NoProxy = true
+				c.Resources = []*authorization.Resource{
+					{
+						URL:         "/public/*",
+						Methods:     utils.AllHTTPMethods,
+						WhiteListed: true,
+					},
+					{
+						URL:     "/private",
+						Methods: []string{"GET"},
+					},
+				}
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           "/private",
+					ExpectedProxy: false,
+					ExpectedCode:  http.StatusUnauthorized,
+					ExpectedContent: func(body string, testNum int) {
+						assert.Equal(t, body, "")
+					},
+				},
+			},
+		},
+		{
+			Name: "TestNoProxyWithRedirectsPrivateUnauthenticated",
+			ProxySettings: func(c *Config) {
+				c.EnableDefaultDeny = true
+				c.NoRedirects = false
+				c.NoProxy = true
+				c.Resources = []*authorization.Resource{
+					{
+						URL:         "/public/*",
+						Methods:     utils.AllHTTPMethods,
+						WhiteListed: true,
+					},
+					{
+						URL:     "/private",
+						Methods: []string{"GET"},
+					},
+				}
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           "/private",
+					ExpectedProxy: false,
+					Redirects:     true,
+					ExpectedCode:  http.StatusSeeOther,
+					ExpectedContent: func(body string, testNum int) {
+						assert.Equal(t, body, "")
+					},
+				},
+			},
+		},
+		{
+			Name: "TestNoProxyWithRedirectsPrivateAuthenticated",
+			ProxySettings: func(c *Config) {
+				c.EnableDefaultDeny = true
+				c.NoRedirects = false
+				c.NoProxy = true
+				c.Resources = []*authorization.Resource{
+					{
+						URL:         "/public/*",
+						Methods:     utils.AllHTTPMethods,
+						WhiteListed: true,
+					},
+					{
+						URL:     "/private",
+						Methods: []string{"GET"},
+					},
+				}
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           "/private",
+					ExpectedProxy: false,
+					HasLogin:      true,
+					Redirects:     true,
 					ExpectedCode:  http.StatusOK,
 					ExpectedContent: func(body string, testNum int) {
 						assert.Equal(t, body, "")
