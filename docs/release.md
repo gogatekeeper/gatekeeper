@@ -12,7 +12,7 @@ The release process was automated to release builds based on the Git tag when a 
 ### Steps
 
 1. Visit https://github.com/gogatekeeper/gatekeeper/releases/new
-2. Choose a new tag version based on [Semantic Versioning 2.1.0](https://semver.org/) and pick the target branch.
+2. Choose a new tag version based on [Semantic Versioning 2.1.1](https://semver.org/) and pick the target branch.
 3. Choose the release title and add a proper description
 4. Publish the release
 

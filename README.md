@@ -20,7 +20,7 @@ Please remember to provide a good summary, description as well as steps to repro
 
 To run Gatekeeper, please refer to our [building and working with the code base](docs/building.md) guide. Alternatively, you can use the Docker image by running:
 
-    docker run -it --rm quay.io/gogatekeeper/gatekeeper:2.1.0 \
+    docker run -it --rm quay.io/gogatekeeper/gatekeeper:2.1.1 \
       --listen 127.0.0.1:8080 \
       --upstream-url http://127.0.0.1:80 \
       --discovery-url https://keycloak.example.com/realms/<REALM_NAME> \
@@ -35,16 +35,16 @@ Beside links to archives of binaries we provide also checksum file containing ch
 for archives. You can download file gatekeeper-checksum.txt, it contains sha512 checksums e.g.:
 
 ```
-324b34ece86b6214f835ba9fd79e185864a9005f514458796c22c053de63f428235d2d2a04864065a49c090ad81d2daeb45546544fdd9531a8dea1a43145b8f0  gatekeeper_2.1.0_windows_amd64.zip
-38759e75a94d130758cd26958bd9a66b261be8d58a6c7a0fc04845157649aaf628d22a115c95285b405f8e4d6afa8bd78ca8677d1304faf06db93a0cbbc831a6  gatekeeper_2.1.0_linux_amd64.tar.gz
-f5322e41b3d78017191246bdd54f99e9b3dd8d5ff9d224e7e81b678a952c1d5aae125ea4c251928969b0a0ea0dc59724308c918993c8227f384f61896f58cbd0  gatekeeper_2.1.0_macOS_amd64.tar.gz
+324b34ece86b6214f835ba9fd79e185864a9005f514458796c22c053de63f428235d2d2a04864065a49c090ad81d2daeb45546544fdd9531a8dea1a43145b8f0  gatekeeper_2.1.1_windows_amd64.zip
+38759e75a94d130758cd26958bd9a66b261be8d58a6c7a0fc04845157649aaf628d22a115c95285b405f8e4d6afa8bd78ca8677d1304faf06db93a0cbbc831a6  gatekeeper_2.1.1_linux_amd64.tar.gz
+f5322e41b3d78017191246bdd54f99e9b3dd8d5ff9d224e7e81b678a952c1d5aae125ea4c251928969b0a0ea0dc59724308c918993c8227f384f61896f58cbd0  gatekeeper_2.1.1_macOS_amd64.tar.gz
 ```
 
 After you download archive of binary you can calculate it's checksum by using e.g. sha512sum Linux utility:
 
 ```
-sha512sum /my/path/gatekeeper_2.1.0_linux_amd64.tar.gz
-38759e75a94d130758cd26958bd9a66b261be8d58a6c7a0fc04845157649aaf628d22a115c95285b405f8e4d6afa8bd78ca8677d1304faf06db93a0cbbc831a6  gatekeeper_2.1.0_linux_amd64.tar.g
+sha512sum /my/path/gatekeeper_2.1.1_linux_amd64.tar.gz
+38759e75a94d130758cd26958bd9a66b261be8d58a6c7a0fc04845157649aaf628d22a115c95285b405f8e4d6afa8bd78ca8677d1304faf06db93a0cbbc831a6  gatekeeper_2.1.1_linux_amd64.tar.g
 ```
 
 As you can see output of command is checksum, you can compare it with the one in gatekeeper-checksum.txt.
