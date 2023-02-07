@@ -1,7 +1,4 @@
-
-
-![gogatekeeper](docs/static/logo/logo.svg){:height="36px" width="36px"}
-# Gatekeeper
+# Gatekeeper ![gogatekeeper](docs/static/logo/gate-readme.png) 
 
 This repository is a work in progress and contains the source code for the Gatekeeper. You should be able to see what's being planned at our [milestones page](https://github.com/gogatekeeper/gatekeeper/milestones).
 
