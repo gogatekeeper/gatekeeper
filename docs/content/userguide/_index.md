@@ -18,7 +18,7 @@ install Gatekeeper Proxy):
     $ bin/gatekeeper help
 ```
 
-You can view all settings also in this table [Settings](settings.md)
+You can view all settings also in this table [Settings](configuration/)
 
 ## Requirements
 
