@@ -45,3 +45,4 @@ _testmain.go
 *.prof
 __debug_bin
 .env
+godeps/*
