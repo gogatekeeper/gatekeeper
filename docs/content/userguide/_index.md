@@ -187,11 +187,10 @@ role is present the permission is granted.
 ## Authentication flows
 
 You can use gatekeeper to protect APIs, frontend server applications, frontend client applications.
-Frontend server-side applications can be protected by Authorization Code Flow, during which several redirection
+Frontend server-side applications can be protected by Authorization Code Flow (also with PKCE), during which several redirection
 steps take place. For protecting APIs you can use Client Credentials Grant to avoid redirections steps
 involved in authorization code flow you have to use `--no-redirects=true`. For frontend applications
-there is PKCE flow which is currently not implemented in gatekeeper, instead you can use Authorization
-Code Flow with encrypted refresh token cookies enabled, in this case however you have to handle redirections
+you can use Authorization Code Flow (also with PKCE) with encrypted refresh token cookies enabled, in this case however you have to handle redirections
 at login/logout and you must make cookies available to js (less secure, altough at least they are encrypted).
 
 ## Default Deny
