@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - main  # Set a branch that will trigger a deployment
-  
+  pullrequest:
+
 permissions: write-all
 jobs:
   deploy:

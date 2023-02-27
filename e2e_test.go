@@ -72,7 +72,7 @@ func TestE2E(t *testing.T) {
 	portNum := fmt.Sprintf("%d", rand.Intn(max-min+1)+min)
 
 	os.Setenv("PROXY_DISCOVERY_URL", "http://localhost:8081/realms/"+testRealm)
-	os.Setenv("PROXY_OPENID_PROVIDER_TIMEOUT", "60s")
+	os.Setenv("PROXY_OPENID_PROVIDER_TIMEOUT", "120s")
 	os.Setenv("PROXY_LISTEN", "0.0.0.0:"+portNum)
 	os.Setenv("PROXY_CLIENT_ID", testClient)
 	os.Setenv("PROXY_CLIENT_SECRET", testClientSecret)
