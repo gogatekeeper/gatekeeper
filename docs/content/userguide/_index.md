@@ -263,7 +263,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:2.1.1
+  image: quay.io/gogatekeeper/gatekeeper:2.2.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -290,7 +290,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:2.1.1
+  image: quay.io/gogatekeeper/gatekeeper:2.2.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -724,7 +724,7 @@ token stored in cookie user will retrieve new access token and still will have a
 
 2. There is also option `--enable-logout-redirect` which uses keycloak logout mechanism
 and this logout url <https://keycloak.example.com/auth/realms/REALM_NAME/protocol/openid-connect/logout>.
-Please note that from 2.1.1 release due to changes in keycloak 17+ there is no possibility to do
+Please note that from 2.2.0 release due to changes in keycloak 17+ there is no possibility to do
 automatic logout without confirmation.
 
 3. A **/oauth/logout?redirect=url** is provided as a helper to log users
