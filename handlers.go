@@ -769,7 +769,7 @@ func (r *oauthProxy) logoutHandler(writer http.ResponseWriter, req *http.Request
 		return
 	}
 
-	// step: can either use the id token or the refresh token
+	// step: can either use the access token or the refresh token
 	identityToken := user.rawToken
 
 	//nolint:vetshadow

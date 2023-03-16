@@ -712,28 +712,31 @@ the store.
 
 ## Logout endpoint
 
-There are 3 possibilities how to logout:
+There are 2 possibilities how to logout:
 
-1. Calling **/oauth/logout** with token and `redirection-url` parameter set in gatekeeper config.
-This is gatekeeper own mechanism, which revokes token and redirects to provided url. 
-**IMPORTANT:** You will want to use `--enable-refresh-tokens=true` for this logout mechanism, this ensures
-that all access-tokens related to this refresh token will be invalidated, in case this option is not
-enabled it will only revoke current access-token, that means that after next request and use of refresh
-token stored in cookie user will retrieve new access token and still will have access.
+1. Using gatekeeper own mechanism `--enable-logout-redirect=false`
+   In this case calling **/oauth/logout** will use revocation endpoint which might be set by option `--revocation-url`
+   or if not set it will be retrieved from keycloak OpenID discovery response <https://keycloak.example.com/realms/REALM_NAME/protocol/openid-connect/revoke>.
+   By default it will try to retrieve token from authorization header or access token cookie and then token from refresh token cookie, if latter present
+   it will be used for revocation, if not first will be used. If access token is passed to revocation endpoint
+   it will only revoke that access token, so on next request with refresh token user will get new access token.
+   If refresh token is passed to revocation endpoint it will revoke refresh token and all access tokens.
+   Thus it is recommended to pass refresh tokens, this means for `--no-redirects=false` (code flow) you should
+   enable refresh tokens `--enable-refresh-tokens=true` so that refresh cookie will be passed to endpoint. 
+   For `--no-redirects=true` you have to pass refresh token in authorization header.
 
-2. There is also option `--enable-logout-redirect` which uses keycloak logout mechanism
-and this logout url <https://keycloak.example.com/auth/realms/REALM_NAME/protocol/openid-connect/logout>.
-Please note that from 2.2.0 release due to changes in keycloak 17+ there is no possibility to do
-automatic logout without confirmation.
+   Post Logout Redirection - redirection url will be gathered from this places from highest priority to lowest:
 
-3. A **/oauth/logout?redirect=url** is provided as a helper to log users
-out. In addition to dropping any session cookies, we also attempt to
-revoke access via revocation URL (config **revocation-url** or
-**--revocation-url**) with the provider. For Keycloak, the URL for this
-would be
-<https://keycloak.example.com/realms/REALM_NAME/protocol/openid-connect/logout>.
-If the URL is not specified we will attempt to grab the URL from the
-OpenID discovery response.
+   - --post-logout-redirect-uri option - recommended
+   - **/oauth/logout?redirect=url** - from `redirect` url query parameter, not recommended, kept only for convenience
+   - --redirection-url option
+
+2. Using keycloak mechanism, valid only for keycloak 18+ `--enable-logout-redirect=true`
+   Uses keycloak logout endpoint <https://keycloak.example.com/realms/REALM_NAME/protocol/openid-connect/logout>.
+   
+   Post Logout Redirection - you can specify url in `--post-logout-redirect-uri` option, this logout mechanism uses
+   id token for logging out, in case of code flow this is gathered automatically from id token cookie. In case of
+   `--no-redirects=true` you have to pass id token in authorization header.
 
 ## Cross-origin resource sharing (CORS)
 

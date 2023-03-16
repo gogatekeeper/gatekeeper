@@ -14,6 +14,7 @@ weight: 2
 |    --client-id value                       | client id used to authenticate to the oauth service | | PROXY_CLIENT_ID
 |    --client-secret value                   | client secret used to authenticate to the oauth service | | PROXY_CLIENT_SECRET
 |    --redirection-url value                 | redirection url for the oauth callback url, defaults to host header if absent | | PROXY_REDIRECTION_URL
+|    --post-logout-redirect-uri value        | url to which client is redirected after successful logout | | PROXY_POST_LOGOUT_REDIRECT_URI
 |    --revocation-url value                  | url for the revocation endpoint to revoke refresh token | | PROXY_REVOCATION_URL
 |    --skip-openid-provider-tls-verify       | skip the verification of any TLS communication with the openid provider | false | PROXY_SKIP_OPENID_PROVIDER_TLSVERIFY
 |    --openid-provider-proxy value           | proxy for communication with the openid provider | | PROXY_OPENID_PROVIDER_PROXY

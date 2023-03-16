@@ -150,4 +150,20 @@ func TestE2E(t *testing.T) {
 	if status != 200 {
 		t.Fatalf("Bad response code %d", status)
 	}
+
+	client = resty.New()
+	request = client.R()
+	request.SetAuthToken(respToken.AccessToken)
+
+	resp, err = request.Execute("GET", "http://localhost:"+portNum+"/oauth/logout")
+
+	if err != nil {
+		t.Fatalf("Failed to connect to proxy instance, aborting!")
+	}
+
+	status = resp.StatusCode()
+	t.Log(string(resp.Body()))
+	if status != 200 {
+		t.Fatalf("Bad response code %d", status)
+	}
 }
