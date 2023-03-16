@@ -16,7 +16,7 @@ builds:
     - CGO_ENABLED=0
   # Adds some metadata to the build like version, commit reference and the date of the build
   ldflags:
-    - -s -w -X "main.build={{.Version}}" -X "main.gitsha={{ .FullCommit }}" -X "main.compiled={{ .Timestamp }}"
+    - -s -w -X "main.release={{.Version}}" -X "main.gitsha={{ .FullCommit }}" -X "main.compiled={{ .Timestamp }}"
 
 - id: linux
   goos: [linux]
@@ -32,7 +32,7 @@ builds:
     - CGO_ENABLED=0
   # Adds some metadata to the build like version, commit reference and the date of the build
   ldflags:
-    - -s -w -X "main.build={{.Version}}" -X "main.gitsha={{ .FullCommit }}" -X "main.compiled={{ .Timestamp }}"
+    - -s -w -X "main.release={{.Version}}" -X "main.gitsha={{ .FullCommit }}" -X "main.compiled={{ .Timestamp }}"
 
 - id: windows
   goos: [windows]
@@ -42,7 +42,7 @@ builds:
     - CGO_ENABLED=0
   # Adds some metadata to the build like version, commit reference and the date of the build
   ldflags:
-    - -s -w -X "main.build={{.Version}}" -X "main.gitsha={{ .FullCommit }}" -X "main.compiled={{ .Timestamp }}"
+    - -s -w -X "main.release={{.Version}}" -X "main.gitsha={{ .FullCommit }}" -X "main.compiled={{ .Timestamp }}"
 
 signs:
   - artifacts: checksum
