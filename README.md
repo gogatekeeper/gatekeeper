@@ -136,10 +136,6 @@ cat /tmp/gpg | gpg --import
 gpg --verify gatekeeper-checksum.txt.sig
 ```
 
-### Writing Tests
-
-To write tests refer to the [writing tests](docs/tests-development.md) guide.
-
 ## Contributing
 
 Before contributing to Gatekeeper please read our [contributing guidelines](CONTRIBUTING.md).
