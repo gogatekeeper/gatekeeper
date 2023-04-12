@@ -6,6 +6,27 @@ on:
     types: [published]
 
 jobs:
+  SBOM-upload:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - name: Generate SBOM
+        # generation command documentation: https://github.com/microsoft/sbom-tool#sbom-generation
+        run: |
+          curl -Lo $RUNNER_TEMP/sbom-tool https://github.com/microsoft/sbom-tool/releases/latest/download/sbom-tool-linux-x64
+          chmod +x $RUNNER_TEMP/sbom-tool
+          $RUNNER_TEMP/sbom-tool generate -b . -bc . -pn $ -pv 1.0.0 -ps "Pavol Ipoth" -nsb https://github.com/gogatekeeper -V Verbose
+      - uses: actions/upload-artifact@v3
+        with:
+          name: sbom
+          path: _manifest/spdx_2.2
+      - name: SBOM upload
+        uses: advanced-security/spdx-dependency-submission-action@v0.0.1
+        with:
+          filePath: "_manifest/spdx_2.2/"
   goreleaser:
     runs-on: ubuntu-latest
     steps:
@@ -13,7 +34,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.18.6'
+          go-version: "1.18.6"
       # Checkout the repository
       - name: Checkout
         uses: actions/checkout@v2
