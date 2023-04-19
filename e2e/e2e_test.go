@@ -16,6 +16,7 @@ import (
 
 	"github.com/cenkalti/backoff"
 	resty "github.com/go-resty/resty/v2"
+	"github.com/gogatekeeper/gatekeeper/pkg/proxy"
 	"github.com/gogatekeeper/gatekeeper/pkg/testsuite"
 	"golang.org/x/oauth2/clientcredentials"
 )
