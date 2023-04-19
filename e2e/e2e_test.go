@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package main
+package e2e_test
 
 import (
 	"context"
@@ -83,7 +83,7 @@ func TestE2E(t *testing.T) {
 	os.Setenv("PROXY_SKIP_ACCESS_TOKEN_ISSUER_CHECK", "true")
 
 	go func() {
-		app := NewOauthProxyApp()
+		app := proxy.NewOauthProxyApp()
 		os.Args = []string{os.Args[0]}
 		err := app.Run(os.Args)
 
