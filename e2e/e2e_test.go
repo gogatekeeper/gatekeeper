@@ -83,7 +83,7 @@ func TestE2E(t *testing.T) {
 	os.Setenv("PROXY_SKIP_ACCESS_TOKEN_ISSUER_CHECK", "true")
 
 	go func() {
-		app := newOauthProxyApp()
+		app := NewOauthProxyApp()
 		os.Args = []string{os.Args[0]}
 		err := app.Run(os.Args)
 

@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package proxy
 
 import (
 	"fmt"
@@ -26,18 +26,17 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	"github.com/gogatekeeper/gatekeeper/pkg/config"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
-	"github.com/gogatekeeper/gatekeeper/pkg/proxy"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/urfave/cli"
 )
 
 // newOauthProxyApp creates a new cli application and runs it
-func newOauthProxyApp() *cli.App {
+func NewOauthProxyApp() *cli.App {
 	defaultConfig := config.NewDefaultConfig()
 	app := cli.NewApp()
 	app.Name = constant.Prog
 	app.Usage = constant.Description
-	app.Version = proxy.GetVersion()
+	app.Version = GetVersion()
 	app.Author = constant.Author
 	app.Email = constant.Email
 	app.Flags = getCommandLineOptions()
@@ -74,7 +73,7 @@ func newOauthProxyApp() *cli.App {
 		}
 
 		// step: create the proxy
-		proxy, err := proxy.NewProxy(defaultConfig)
+		proxy, err := NewProxy(defaultConfig)
 		if err != nil {
 			return utils.PrintError(err.Error())
 		}

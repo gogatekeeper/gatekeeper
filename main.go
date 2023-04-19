@@ -17,9 +17,11 @@ package main
 
 import (
 	"os"
+
+	"github.com/gogatekeeper/gatekeeper/pkg/proxy"
 )
 
 func main() {
-	app := newOauthProxyApp()
+	app := proxy.NewOauthProxyApp()
 	_ = app.Run(os.Args)
 }
