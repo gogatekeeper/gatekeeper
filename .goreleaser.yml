@@ -8,49 +8,58 @@ before:
   hooks:
     - go mod tidy
 builds:
-- id: macos
-  goos: [darwin]
-  goarch: [amd64]
-  # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
-  env:
-    - CGO_ENABLED=0
-  # Adds some metadata to the build like version, commit reference and the date of the build
-  ldflags:
-    - -s -w -X "main.release={{.Version}}" -X "main.gitsha={{ .FullCommit }}" -X "main.compiled={{ .Timestamp }}"
+  - id: macos
+    goos: [darwin]
+    goarch: [amd64]
+    # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
+    env:
+      - CGO_ENABLED=0
+    # Adds some metadata to the build like version, commit reference and the date of the build
+    ldflags:
+      - -s -w -X "proxy.release={{.Version}}" -X "proxy.gitsha={{ .FullCommit }}" -X "proxy.compiled={{ .Timestamp }}"
 
-- id: linux
-  goos: [linux]
-  goarch:
-    - amd64
-    - arm
-    - arm64
-  goarm:
-    - 6
-    - 7
-  # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
-  env:
-    - CGO_ENABLED=0
-  # Adds some metadata to the build like version, commit reference and the date of the build
-  ldflags:
-    - -s -w -X "main.release={{.Version}}" -X "main.gitsha={{ .FullCommit }}" -X "main.compiled={{ .Timestamp }}"
+  - id: linux
+    goos: [linux]
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - 6
+      - 7
+    # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
+    env:
+      - CGO_ENABLED=0
+    # Adds some metadata to the build like version, commit reference and the date of the build
+    ldflags:
+      - -s -w -X "proxy.release={{.Version}}" -X "proxy.gitsha={{ .FullCommit }}" -X "proxy.compiled={{ .Timestamp }}"
 
-- id: windows
-  goos: [windows]
-  goarch: [amd64]
-  # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
-  env:
-    - CGO_ENABLED=0
-  # Adds some metadata to the build like version, commit reference and the date of the build
-  ldflags:
-    - -s -w -X "main.release={{.Version}}" -X "main.gitsha={{ .FullCommit }}" -X "main.compiled={{ .Timestamp }}"
+  - id: windows
+    goos: [windows]
+    goarch: [amd64]
+    # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
+    env:
+      - CGO_ENABLED=0
+    # Adds some metadata to the build like version, commit reference and the date of the build
+    ldflags:
+      - -s -w -X "proxy.release={{.Version}}" -X "proxy.gitsha={{ .FullCommit }}" -X "proxy.compiled={{ .Timestamp }}"
 
 signs:
   - artifacts: checksum
-    args: ["--batch", "-u", "{{ .Env.GPG_FINGERPRINT }}", "--output", "${signature}", "--detach-sign", "${artifact}"]
+    args:
+      [
+        "--batch",
+        "-u",
+        "{{ .Env.GPG_FINGERPRINT }}",
+        "--output",
+        "${signature}",
+        "--detach-sign",
+        "${artifact}",
+      ]
 
 # Generate the checksum for each file
 checksum:
-  name_template: '{{ .ProjectName }}-checksum.txt'
+  name_template: "{{ .ProjectName }}-checksum.txt"
   algorithm: sha512
 # Generate the changelog to be included into the release notes
 changelog:
