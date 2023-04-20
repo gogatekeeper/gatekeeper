@@ -403,6 +403,7 @@ func writeFakeConfigFile(t *testing.T, content string) *os.File {
 
 // WithOAuthURI returns the oauth uri
 func (r *Config) WithOAuthURI(uri string) string {
+	uri = strings.TrimPrefix(uri, "/")
 	if r.BaseURI != "" {
 		return fmt.Sprintf("%s/%s/%s", r.BaseURI, r.OAuthURI, uri)
 	}

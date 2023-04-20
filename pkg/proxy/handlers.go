@@ -87,7 +87,7 @@ func (r *OauthProxy) getRedirectionURL(wrt http.ResponseWriter, req *http.Reques
 		return ""
 	}
 
-	return fmt.Sprintf("%s%s", redirect, r.Config.WithOAuthURI("callback"))
+	return fmt.Sprintf("%s%s", redirect, r.Config.WithOAuthURI(constant.CallbackURL))
 }
 
 // oauthAuthorizationHandler is responsible for performing the redirection to oauth provider
@@ -1078,10 +1078,10 @@ func methodNotAllowHandlder(w http.ResponseWriter, req *http.Request) {
 // discoveryHandler provides endpoint info
 func (r *OauthProxy) discoveryHandler(wrt http.ResponseWriter, req *http.Request) {
 	resp := &DiscoveryResponse{
-		ExpiredURL: r.Config.WithOAuthURI(strings.TrimPrefix(constant.ExpiredURL, "/")),
-		LogoutURL:  r.Config.WithOAuthURI(strings.TrimPrefix(constant.LogoutURL, "/")),
-		TokenURL:   r.Config.WithOAuthURI(strings.TrimPrefix(constant.TokenURL, "/")),
-		LoginURL:   r.Config.WithOAuthURI(strings.TrimPrefix(constant.LoginURL, "/")),
+		ExpiredURL: r.Config.WithOAuthURI(constant.ExpiredURL),
+		LogoutURL:  r.Config.WithOAuthURI(constant.LogoutURL),
+		TokenURL:   r.Config.WithOAuthURI(constant.TokenURL),
+		LoginURL:   r.Config.WithOAuthURI(constant.LoginURL),
 	}
 
 	respBody, err := json.Marshal(resp)
