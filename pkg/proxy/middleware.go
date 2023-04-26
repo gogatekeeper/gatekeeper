@@ -794,6 +794,8 @@ func (r *OauthProxy) responseHeaderMiddleware(headers map[string]string) func(ht
 }
 
 // identityHeadersMiddleware is responsible for adding the authentication headers to upstream
+//
+//nolint:cyclop
 func (r *OauthProxy) identityHeadersMiddleware(custom []string) func(http.Handler) http.Handler {
 	customClaims := make(map[string]string)
 
