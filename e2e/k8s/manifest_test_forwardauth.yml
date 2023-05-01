@@ -2626,7 +2626,7 @@ spec:
             - -c
             - "while true;do sleep 10;done"
         - name: proxy
-          image: quay.io/gogatekeeper/gatekeeper:2.3.0
+          image: quay.io/gogatekeeper/gatekeeper:2.3.1
           imagePullPolicy: Never
           args:
             - --client-id=test-client
