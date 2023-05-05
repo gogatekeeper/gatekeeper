@@ -39,9 +39,7 @@ require (
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
-	github.com/aws/aws-sdk-go v1.44.257 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/bytecodealliance/wasmtime-go v0.36.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
@@ -63,7 +61,6 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
@@ -97,7 +94,6 @@ require (
 	go.uber.org/atomic v1.5.0 // indirect
 	go.uber.org/multierr v1.3.0 // indirect
 	go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee // indirect
-	golang.org/x/image v0.7.0 // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
