@@ -61,22 +61,6 @@ func TestE2E(t *testing.T) {
 		}
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-
-	conf := &clientcredentials.Config{
-		ClientID:     testClient,
-		ClientSecret: testClientSecret,
-		Scopes:       []string{"email", "openid"},
-		TokenURL:     "http://localhost:8081/realms/" + testRealm + "/protocol/openid-connect/token",
-	}
-
-	respToken, err := conf.Token(ctx)
-
-	if err != nil {
-		t.Fatalf("Failed to acquire access token for client")
-	}
-
 	retry := 0
 
 	operation := func() error {
@@ -102,6 +86,22 @@ func TestE2E(t *testing.T) {
 	if err != nil {
 		fmt.Print("Failed to connect to proxy instance, aborting!")
 		os.Exit(1)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	conf := &clientcredentials.Config{
+		ClientID:     testClient,
+		ClientSecret: testClientSecret,
+		Scopes:       []string{"email", "openid"},
+		TokenURL:     "http://localhost:8081/realms/" + testRealm + "/protocol/openid-connect/token",
+	}
+
+	respToken, err := conf.Token(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to acquire access token for client")
 	}
 
 	client := resty.New()
