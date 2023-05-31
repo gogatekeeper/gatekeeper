@@ -41,7 +41,7 @@ import (
 
 	"github.com/Nerzal/gocloak/v12"
 	proxyproto "github.com/armon/go-proxyproto"
-	"github.com/cenkalti/backoff"
+	backoff "github.com/cenkalti/backoff/v4"
 	oidc3 "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/elazarl/goproxy"
 	"github.com/go-chi/chi/v5"

@@ -5,7 +5,7 @@ require (
 	github.com/PuerkitoBio/purell v1.1.2-0.20201208131035-5a810c9252c4
 	github.com/alicebob/miniredis/v2 v2.14.5
 	github.com/armon/go-proxyproto v0.0.0-20200108142055-f0b8253b1507
-	github.com/cenkalti/backoff v2.2.1+incompatible
+	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/coreos/go-oidc/v3 v3.1.0
 	github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e
 	github.com/fsnotify/fsnotify v1.6.0
