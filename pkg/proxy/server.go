@@ -1040,8 +1040,14 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 	restyClient := client.RestyClient()
 	restyClient.SetDebug(r.Config.Verbose)
 	restyClient.SetRetryCount(r.Config.OpenIDProviderRetryCount)
-	restyClient.AddRetryCondition(resty.RetryConditionFunc(func(r *resty.Response, _ error) bool {
-		return r.StatusCode() > http.StatusSeeOther
+	restyClient.AddRetryCondition(resty.RetryConditionFunc(func(r *resty.Response, err error) bool {
+		if err != nil {
+			return true
+		}
+		if r.StatusCode() > http.StatusSeeOther {
+			return true
+		}
+		return false
 	}))
 	restyClient.SetTimeout(r.Config.OpenIDProviderTimeout)
 	restyClient.SetTLSClientConfig(
