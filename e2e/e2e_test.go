@@ -81,7 +81,7 @@ func TestE2E(t *testing.T) {
 
 	backOff := backoff.NewExponentialBackOff()
 	backOff.MaxElapsedTime = time.Second * 300
-	err = backoff.Retry(operation, backOff)
+	err := backoff.Retry(operation, backOff)
 
 	if err != nil {
 		fmt.Print("Failed to connect to proxy instance, aborting!")
