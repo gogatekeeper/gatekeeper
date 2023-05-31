@@ -41,11 +41,11 @@ import (
 
 	"github.com/Nerzal/gocloak/v12"
 	proxyproto "github.com/armon/go-proxyproto"
+	"github.com/cenkalti/backoff"
 	oidc3 "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/elazarl/goproxy"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-resty/resty/v2"
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	"github.com/gogatekeeper/gatekeeper/pkg/config"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
@@ -1039,16 +1039,6 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 
 	restyClient := client.RestyClient()
 	restyClient.SetDebug(r.Config.Verbose)
-	restyClient.SetRetryCount(r.Config.OpenIDProviderRetryCount)
-	restyClient.AddRetryCondition(resty.RetryConditionFunc(func(r *resty.Response, err error) bool {
-		if err != nil {
-			return true
-		}
-		if r.StatusCode() > http.StatusSeeOther {
-			return true
-		}
-		return false
-	}))
 	restyClient.SetTimeout(r.Config.OpenIDProviderTimeout)
 	restyClient.SetTLSClientConfig(
 		&tls.Config{
@@ -1063,7 +1053,30 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 	// see https://github.com/coreos/go-oidc/issues/214
 	// see https://github.com/coreos/go-oidc/pull/260
 	ctx := oidc3.ClientContext(context.Background(), restyClient.GetClient())
-	provider, err := oidc3.NewProvider(ctx, r.Config.DiscoveryURL)
+	var provider *oidc3.Provider
+	var err error
+
+	operation := func() error {
+		provider, err = oidc3.NewProvider(ctx, r.Config.DiscoveryURL)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	notify := func(err error, delay time.Duration) {
+		r.Log.Warn(
+			"problem retrieving oidc config",
+			zap.Error(err),
+			zap.Duration("retry after", delay),
+		)
+	}
+
+	bo := backoff.WithMaxRetries(
+		&backoff.ExponentialBackOff{},
+		r.Config.OpenIDProviderRetryCount,
+	)
+	err = backoff.RetryNotify(operation, bo, notify)
 
 	if err != nil {
 		return nil,

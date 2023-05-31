@@ -76,7 +76,7 @@ type Config struct {
 	// OpenIDProviderTimeout is the timeout used to pulling the openid configuration from the provider
 	OpenIDProviderTimeout time.Duration `json:"openid-provider-timeout" yaml:"openid-provider-timeout" usage:"timeout for openid configuration on .well-known/openid-configuration" env:"OPENID_PROVIDER_TIMEOUT"`
 	// OpenIDProviderRetryCount
-	OpenIDProviderRetryCount int `json:"openid-provider-retry-count" yaml:"openid-provider-retry-count" usage:"number of retries for retrieving openid configuration" env:"OPENID_PROVIDER_RETRY_COUNT"`
+	OpenIDProviderRetryCount uint64 `json:"openid-provider-retry-count" yaml:"openid-provider-retry-count" usage:"number of retries for retrieving openid configuration" env:"OPENID_PROVIDER_RETRY_COUNT"`
 	// BaseURI is prepended to all the generated URIs
 	BaseURI string `json:"base-uri" yaml:"base-uri" usage:"common prefix for all URIs" env:"BASE_URI"`
 	// OAuthURI is the uri for the oauth endpoints for the proxy
