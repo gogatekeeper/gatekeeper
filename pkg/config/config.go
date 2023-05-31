@@ -43,6 +43,8 @@ const (
 	GrantTypeUmaTicket    = "urn:ietf:params:oauth:grant-type:uma-ticket"
 )
 
+type OpenIDProviderRetryCount int
+
 // Config is the configuration for the proxy
 type Config struct {
 	// ConfigFile is the binding interface
@@ -73,6 +75,8 @@ type Config struct {
 	OpenIDProviderProxy string `json:"openid-provider-proxy" yaml:"openid-provider-proxy" usage:"proxy for communication with the openid provider" env:"OPENID_PROVIDER_PROXY"`
 	// OpenIDProviderTimeout is the timeout used to pulling the openid configuration from the provider
 	OpenIDProviderTimeout time.Duration `json:"openid-provider-timeout" yaml:"openid-provider-timeout" usage:"timeout for openid configuration on .well-known/openid-configuration" env:"OPENID_PROVIDER_TIMEOUT"`
+	// OpenIDProviderRetryCount
+	OpenIDProviderRetryCount int `json:"openid-provider-retry-count" yaml:"openid-provider-retry-count" usage:"number of retries for retrieving openid configuration" env:"OPENID_PROVIDER_RETRY_COUNT"`
 	// BaseURI is prepended to all the generated URIs
 	BaseURI string `json:"base-uri" yaml:"base-uri" usage:"common prefix for all URIs" env:"BASE_URI"`
 	// OAuthURI is the uri for the oauth endpoints for the proxy
@@ -339,6 +343,7 @@ func NewDefaultConfig() *Config {
 		MaxIdleConnsPerHost:           50,
 		OAuthURI:                      "/oauth",
 		OpenIDProviderTimeout:         30 * time.Second,
+		OpenIDProviderRetryCount:      3,
 		PreserveHost:                  false,
 		SelfSignedTLSExpiration:       3 * time.Hour,
 		SelfSignedTLSHostnames:        hostnames,
