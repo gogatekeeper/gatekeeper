@@ -1073,7 +1073,7 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 	}
 
 	bo := backoff.WithMaxRetries(
-		&backoff.ExponentialBackOff{},
+		backoff.NewExponentialBackOff(),
 		uint64(r.Config.OpenIDProviderRetryCount),
 	)
 	err = backoff.RetryNotify(operation, bo, notify)
