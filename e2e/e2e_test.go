@@ -48,7 +48,7 @@ func TestE2E(t *testing.T) {
 	os.Setenv("PROXY_NO_REDIRECTS", "true")
 	os.Setenv("PROXY_SKIP_ACCESS_TOKEN_CLIENT_ID_CHECK", "true")
 	os.Setenv("PROXY_SKIP_ACCESS_TOKEN_ISSUER_CHECK", "true")
-	os.Setenv("PROXY_OPENID_PROVIDER_RETRY_COUNT", "10")
+	os.Setenv("PROXY_OPENID_PROVIDER_RETRY_COUNT", "30")
 
 	go func() {
 		app := proxy.NewOauthProxyApp()
