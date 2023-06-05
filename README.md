@@ -19,7 +19,7 @@ Please remember to provide a good summary, description as well as steps to repro
 
 ## Getting started
 
-To run Gatekeeper, please refer to our [building and working with the code base](docs/building.md) guide. Alternatively, you can use the Docker image by running:
+To run Gatekeeper, you can build it using `static` target in Makefile (`make static`) or you can use the Docker image by running:
 
     docker run -it --rm quay.io/gogatekeeper/gatekeeper:2.4.0 \
       --listen 127.0.0.1:8080 \
