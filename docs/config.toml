@@ -5,6 +5,12 @@ title = "Gatekeeper"
 theme = "hugo-theme-learn"
 
 [markup]
+  [markup.asciidocExt]
+    backend = 'html5'
+    extensions = []
+    failureLevel = 'fatal'
+    noHeaderOrFooter = true
+    preserveTOC = true
   [markup.goldmark]
     [markup.goldmark.extensions]
       definitionList = true
