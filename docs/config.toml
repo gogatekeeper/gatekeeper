@@ -22,6 +22,10 @@ theme = "hugo-theme-learn"
       hardWraps = false
       unsafe = false
       xhtml = false
+  [markup.tableOfContents]
+    endLevel = 4
+    ordered = false
+    startLevel = 2
 
 # For search functionality
 [outputs]
