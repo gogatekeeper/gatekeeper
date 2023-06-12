@@ -18,8 +18,6 @@ install Gatekeeper Proxy):
     $ bin/gatekeeper help
 ```
 
-:toc:
-
 You can view all settings also in this table [Settings](https://gogatekeeper.github.io/gatekeeper/configuration/)
 
 ## Requirements
