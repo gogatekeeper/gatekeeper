@@ -18,6 +18,8 @@ install Gatekeeper Proxy):
     $ bin/gatekeeper help
 ```
 
+:toc:
+
 You can view all settings also in this table [Settings](https://gogatekeeper.github.io/gatekeeper/configuration/)
 
 ## Requirements
@@ -237,6 +239,78 @@ There are two parameters which you can use to set up cookie names for access tok
 ```
 --cookie-access-name=myAccessTokenCookie
 --cookie-refresh-name=myRefreshTokenCookie
+```
+
+## TCP proxy with HTTP CONNECT
+
+You can protect your TCP services with gogatekeeper by adding `CONNECT` HTTP method to list of `custom-http-methods`. On client side you will need to pass of course token in `Authorization` header (righ now there are few clients which could make HTTP connect with `Bearer` token and then forward tcp, e.g. gost proxy - but only in static way, some IDE provide HTTP CONNECT functionality for db connectors but only with `Basic` authentication, we would like to add this functionality to gatekeeper in future). This setup will authenticate connection at start and will create tunnel to your backend service. Please use with care and ensure that it allows connection only to intended services, otherwise it can be missused for various attacks.
+
+This example allows users with valid token to connect to backend postgres service:
+
+```
+  "--discovery-url=http://127.0.0.1:8081/realms/test/.well-known/openid-configuration",
+  "--client-id=test-client",
+  "--client-secret=6447d0c0-d510-42a7-b654-6e3a16b2d7e2",
+  "--upstream-url=http://127.0.0.1:5432",
+  "--listen=0.0.0.0:5000",
+  "--no-redirects=true",
+  "--enable-authorization-header=true",
+  "--custom-http-methods=CONNECT",
+  "--enable-default-deny=true",
+  "--enable-logging=true",
+  "--enable-compression=true",
+  "--enable-json-logging=true",
+  "--verbose=true",
+  "--skip-token-verification=false",
+  "--upstream-keepalive-timeout=30s",
+  "--scopes=openid",
+  "--skip-access-token-clientid-check=true"
+```
+
+Configuration for gost proxy, to forward your tcp client connection with HTTP CONNECT, please be aware that you need to input there your token (there is only example token in this config):
+
+```
+cat > config.yaml <<EOF
+services:
+- name: service-0
+  addr: ":8000"
+  handler:
+    type: tcp
+    chain: chain-0
+  listener:
+    type: tcp
+chains:
+- name: chain-0
+  hops:
+  - name: hop-0
+    nodes:
+    - name: localhost
+      addr: :5000
+      connector:
+        type: http
+        metadata:
+          header:
+            Authorization: "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJndWZUNUxaOWROWE5QSHV1d2U3T3AwWnI3b0VqdjhqVzdzbF8xUU1jaUkwIn0.eyJleHAiOjE2ODY1NzI1MDEsImlhdCI6MTY4NjU3MjIwMSwianRpIjoiY2UyZmRkMjAtNTc1YS00ZjIyLThkYTktOWQxYjM0ZTE3YjE3IiwiaXNzIjoiaHR0cDov
+LzEyNy4wLjAuMTo4MDgxL3JlYWxtcy90ZXN0IiwiYXVkIjoiYWNjb3VudCIsInN1YiI6ImE2NzgyMzg4LTNjOTMtNDA4Ny1iNDk5LTI5MmViYTU2ZDYwNiIsInR5cCI6IkJlYXJlciIsImF6cCI6InRlc3QtY2xpZW50Iiwic2Vzc2lvbl9zdGF0ZSI6ImRhODlmMDU4LTAyOGItNGJlNS05ZmQ4LTg5MjBmOTRkZTEwNiIsImFsbG93ZWQtb3JpZ2lucyI6WyIqIl0
+sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIiwidXNlciJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6Im9wZW5pZCBlbWFpbCBwcm9maWxlIiwic2lkIjoiZGE4OWYwNTgtMDI4Yi00YmU1LT
+lmZDgtODkyMGY5NGRlMTA2IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJUZXN0IFRlc3QiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJteXVzZXIiLCJnaXZlbl9uYW1lIjoiVGVzdCIsImZhbWlseV9uYW1lIjoiVGVzdCIsImVtYWlsIjoic29tZWJvZHlAc29tZXdoZXJlLmNvbSJ9.D-qDEDBumfIsVRJY6ONaXAY6fZWKZhrTG9-qtaSxYZIq7TLfApKh
+ZCdLTkNzZPDSuL7FugJ7AGnwnmbRos9hOV25UgqAZ9biO2eo04olwXXsn7q0cboVqQXMlFc4kNCWQJov9JqhG_f21T25gdQH7eMlSu1QvnKvvTRQNEHpG9fvL86D16GETPnVExRoH81fe0zHMQPk7u_eZcOlNxg5HDFacNSUpnpgoH37Fhzt0FHj5mN_nfknty5KLCO6Zs_kmdvlgVkPzceZqp2Chmq4rmlp9OPMslTEwBlRn1qTRZPpJXCxoLuMMNMeVvrXXKvFXuI
+uQ7vZFOE8xNVogm7cxQ"
+      dialer:
+        type: tcp
+EOF
+```
+
+start gost proxy:
+
+```
+gost -C config.yaml
+```
+
+Connect with psql client:
+
+```
+psql -U postgres -h localhost -p 8000
 ```
 
 ## Websocket proxy
