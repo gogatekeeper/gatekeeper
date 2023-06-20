@@ -996,7 +996,7 @@ along with our token to get RPT token, we will store it in RPT variable.
 Usually when there are multiple http services involved in serving user requests
 you need to use X-REQUEST-ID or some other header to track request flow through
 services. To make this possible with gatekeeper you can enable header logging
-by enabling `--enable-logs` and `--verbose` options. Also you can use `request-id-header`
+by enabling `--enable-logging` and `--verbose` options. Also you can use `request-id-header`
 and `enable-request-id` options, which will generate unique uuid and will inject in
 header supplied in `request-id-header` option.
 
