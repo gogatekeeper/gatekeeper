@@ -102,8 +102,8 @@ weight: 2
 |    --no-proxy value                        | do not proxy requests to upstream, useful for forward-auth usage (with nginx, traefik) | | PROXY_NO_PROXY
 |    --no-redirects                          | do not have back redirects when no authentication is present, 401 them | false | PROXY_NO_REDIRECTS
 |    --skip-token-verification               | TESTING ONLY; bypass token verification, only expiration and roles enforced | false | PROXY_SKIP_TOKEN_VERIFICATION
-|    --skip-access-token-issuer-check        | according RFC issuer should not be checked on access token, this will be default true in future | false | PROXY_SKIP_ACCESS_TOKEN_ISSUER_CHECK
-|    --skip-access-token-clientid-check      | according RFC client id should not be checked on access token, this will be default true in future | false | PROXY_SKIP_ACCESS_TOKEN_CLIENT_ID_CHECK
+|    --skip-access-token-issuer-check        | according RFC issuer should not be checked on access token, this will be default true in future | true | PROXY_SKIP_ACCESS_TOKEN_ISSUER_CHECK
+|    --skip-access-token-clientid-check      | according RFC client id should not be checked on access token, this will be default true in future | true | PROXY_SKIP_ACCESS_TOKEN_CLIENT_ID_CHECK
 | --skip-authorization-header-identity | skip authorization header identity, means that we won't be extracting token from authorization header, only from cookie or fail if even no cookie present (e.g. if authorization header is used only by application behind gatekeeper)"` | false | PROXY_SKIP_AUTHORIZATION_HEADER_IDENTITY
 |    --upstream-keepalives                    | enables or disables the keepalive connections for upstream endpoint | true | PROXY_UPSTREAM_KEEPALIVES
 |    --upstream-timeout value                 | maximum amount of time a dial will wait for a connect to complete | 10s | PROXY_UPSTREAM_TIMEOUT

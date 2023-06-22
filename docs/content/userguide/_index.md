@@ -1024,7 +1024,7 @@ users won’t be able to obtain an access token.
 
 ## Known Issues
 
-There is a known issue with the Keycloak server 4.6.0.Final in which
+There WAS a known issue with the Keycloak server 4.6.0.Final in which
 Gatekeeper Proxy is unable to find the *client\_id* in the *aud* claim. This
 is due to the fact the *client\_id* is not in the audience anymore. The
 workaround is to add the "Audience" protocol mapper to the client with
@@ -1032,4 +1032,6 @@ the audience pointed to the *client\_id*. For more information, see
 [KEYCLOAK-8954](https://issues.redhat.com/browse/KEYCLOAK-8954).
 
 you can now use `--skip-access-token-clientid-check` and
-`--skip-access-token-issuer-check` to overcome this limitations.
+`--skip-access-token-issuer-check` to overcome this limitations. 
+These are now set by default to `true` so you should not by default see any these issues,
+but in case you would like to enable this checks you still have opportunity.

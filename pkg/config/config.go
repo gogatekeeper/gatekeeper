@@ -359,6 +359,8 @@ func NewDefaultConfig() *Config {
 		ServerWriteTimeout:            10 * time.Second,
 		SkipOpenIDProviderTLSVerify:   false,
 		SkipUpstreamTLSVerify:         true,
+		SkipAccessTokenIssuerCheck:    true,
+		SkipAccessTokenClientIDCheck:  true,
 		Tags:                          make(map[string]string),
 		TLSMinVersion:                 "tlsv1.3",
 		UpstreamExpectContinueTimeout: 10 * time.Second,
