@@ -6,18 +6,15 @@ package e2e_test
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"testing"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	backoff "github.com/cenkalti/backoff/v4"
 	resty "github.com/go-resty/resty/v2"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy"
 	"github.com/gogatekeeper/gatekeeper/pkg/testsuite"
@@ -52,7 +49,6 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 	go func() {
 		app := proxy.NewOauthProxyApp()
 		os.Args = []string{os.Args[0]}
-		err := app.Run(os.Args)
 		Expect(app.Run(os.Args)).To(Succeed())
 	}()
 
