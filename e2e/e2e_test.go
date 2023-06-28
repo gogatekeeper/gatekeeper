@@ -57,7 +57,6 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 		g.Expect(http.Get("http://localhost:" + portNum)).Should(Succeed())
 	}, timeout, interval).Should(Succeed())
 
-
 	It("should login with service account and logout successfully", func(ctx context.Context) {
 		conf := &clientcredentials.Config{
 			ClientID:     testClient,
@@ -65,16 +64,15 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 			Scopes:       []string{"email", "openid"},
 			TokenURL:     "http://localhost:8081/realms/" + testRealm + "/protocol/openid-connect/token",
 		}
-	
+
 		respToken, err := conf.Token(ctx)
 		Expect(err).NotTo(HaveOccurred())
 
-		request := resty.New().SetRedirectPolicy(resty.NoRedirectPolicy())
-		.R().SetAuthToken(respToken.AccessToken)
+		request := resty.New().SetRedirectPolicy(resty.NoRedirectPolicy()).R().SetAuthToken(respToken.AccessToken)
 		resp, err := request.Execute("GET", "http://localhost:"+portNum)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(resp.StatusCode()).To(Equal(200))
-	
+
 		request = resty.New().R().SetAuthToken(respToken.AccessToken)
 		resp, err = request.Execute("GET", "http://localhost:"+portNum+"/oauth/logout")
 		Expect(err).NotTo(HaveOccurred())
