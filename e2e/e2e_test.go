@@ -13,7 +13,6 @@ import (
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 
 	resty "github.com/go-resty/resty/v2"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy"
@@ -26,6 +25,7 @@ const (
 	testClient       = "test-client"
 	testClientSecret = "6447d0c0-d510-42a7-b654-6e3a16b2d7e2"
 	timeout          = time.Second * 300
+	interval         = time.Millisecond * 50
 )
 
 var _ = Describe("NoRedirects Simple login/logout", func() {
