@@ -25,14 +25,10 @@ const (
 	testRealm        = "test"
 	testClient       = "test-client"
 	testClientSecret = "6447d0c0-d510-42a7-b654-6e3a16b2d7e2"
+	timeout          = time.Second * 300
 )
 
-func TestMain(m *testing.M) {
-	code := m.Run()
-	os.Exit(code)
-}
-
-func TestE2E(t *testing.T) {
+var _ = Describe("NoRedirects Simple login/logout", func() {
 	server := httptest.NewServer(&testsuite.FakeUpstreamService{})
 	rand.Seed(time.Now().UnixNano())
 	min := 1024
@@ -54,85 +50,34 @@ func TestE2E(t *testing.T) {
 		app := proxy.NewOauthProxyApp()
 		os.Args = []string{os.Args[0]}
 		err := app.Run(os.Args)
-
-		if err != nil {
-			log.Fatalf("Error during e2e test %s", err)
-			os.Exit(1)
-		}
+		Expect(app.Run(os.Args).To(Succeed())
 	}()
 
-	retry := 0
+	Eventually(func(g Gomega) {
+		g.Expect(http.Get("http://localhost:" + portNum)).Should(Succeed())
+	}, timeout, interval).Should(Succeed())
 
-	operation := func() error {
-		var err error
 
-		if retry > 0 {
-			fmt.Printf("Retrying connection to proxy instance %d", retry)
+	It("should login with service account and logout successfully", func(ctx context.Context) {
+		conf := &clientcredentials.Config{
+			ClientID:     testClient,
+			ClientSecret: testClientSecret,
+			Scopes:       []string{"email", "openid"},
+			TokenURL:     "http://localhost:8081/realms/" + testRealm + "/protocol/openid-connect/token",
 		}
+	
+		respToken, err := conf.Token(ctx)
+		Expect(err).NotTo(HaveOccurred())
 
-		_, err = http.Get("http://localhost:" + portNum)
-
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	backOff := backoff.NewExponentialBackOff()
-	backOff.MaxElapsedTime = time.Second * 300
-	err := backoff.Retry(operation, backOff)
-
-	if err != nil {
-		fmt.Print("Failed to connect to proxy instance, aborting!")
-		os.Exit(1)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-
-	conf := &clientcredentials.Config{
-		ClientID:     testClient,
-		ClientSecret: testClientSecret,
-		Scopes:       []string{"email", "openid"},
-		TokenURL:     "http://localhost:8081/realms/" + testRealm + "/protocol/openid-connect/token",
-	}
-
-	respToken, err := conf.Token(ctx)
-
-	if err != nil {
-		t.Fatalf("Failed to acquire access token for client")
-	}
-
-	client := resty.New()
-	request := client.SetRedirectPolicy(resty.NoRedirectPolicy()).R()
-	request.SetAuthToken(respToken.AccessToken)
-
-	resp, err := request.Execute("GET", "http://localhost:"+portNum)
-
-	if err != nil {
-		t.Fatalf("Failed to connect to proxy instance, aborting!")
-	}
-
-	status := resp.StatusCode()
-
-	if status != 200 {
-		t.Fatalf("Bad response code %d", status)
-	}
-
-	client = resty.New()
-	request = client.R()
-	request.SetAuthToken(respToken.AccessToken)
-
-	resp, err = request.Execute("GET", "http://localhost:"+portNum+"/oauth/logout")
-
-	if err != nil {
-		t.Fatalf("Failed to connect to proxy instance, aborting!")
-	}
-
-	status = resp.StatusCode()
-	t.Log(string(resp.Body()))
-	if status != 200 {
-		t.Fatalf("Bad response code %d", status)
-	}
-}
+		request := resty.New().SetRedirectPolicy(resty.NoRedirectPolicy())
+		.R().SetAuthToken(respToken.AccessToken)
+		resp, err := request.Execute("GET", "http://localhost:"+portNum)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resp.StatusCode()).To(Equal(200))
+	
+		request = resty.New().R().SetAuthToken(respToken.AccessToken)
+		resp, err = request.Execute("GET", "http://localhost:"+portNum+"/oauth/logout")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resp.StatusCode()).To(Equal(200))
+	})
+})
