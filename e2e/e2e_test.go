@@ -50,7 +50,7 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 		app := proxy.NewOauthProxyApp()
 		os.Args = []string{os.Args[0]}
 		err := app.Run(os.Args)
-		Expect(app.Run(os.Args).To(Succeed())
+		Expect(app.Run(os.Args)).To(Succeed())
 	}()
 
 	Eventually(func(g Gomega) {
