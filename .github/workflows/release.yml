@@ -44,7 +44,7 @@ jobs:
       # Run tests prior to release
       - name: Test
         run: |
-          go test -v -race $(go list ./... | grep -v e2e) -coverprofile=profile.cov ./...
+          go test -v -race $(go list ./... | grep -v e2e) ./...
       # Publish the binaries
       - name: Import GPG key
         id: import_gpg
