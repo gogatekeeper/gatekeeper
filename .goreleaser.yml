@@ -75,12 +75,13 @@ archives:
   - id: nix
     builds: [macos, linux]
     # Generate the compresed files based on the following templates
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ .Arm }}"
+    name_template: >-
+      {{ .ProjectName }}_
+      {{ .Version }}_
+      {{- if eq .Os "darwin" }}macOS{{- else }}{{ .Os }}{{ end }}_
+      {{ .Arch }}{{ .Arm }}
     # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
     wrap_in_directory: true
-    # Replacement for the Platform name. Instead of have -darwin, replace by macOS
-    replacements:
-      darwin: macOS
     format: tar.gz
   - id: windows
     builds: [windows]
