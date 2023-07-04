@@ -341,7 +341,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:2.5.0
+  image: quay.io/gogatekeeper/gatekeeper:2.6.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -368,7 +368,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:2.5.0
+  image: quay.io/gogatekeeper/gatekeeper:2.6.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -532,6 +532,21 @@ or the configuration file:
     headers:
       name: value
 
+## OpenID provider headers
+
+In some cases you might need to send headers to your OpenId provider discovery endpoint (e.g. you have your endpoint protected by basic auth).
+For this use cases there is `--openid-provider-headers` option:
+
+```yaml
+openid-provider-headers:
+  - X-SEND: "MYVALUE"
+  - X-OTHER-SEND: "NEXT VALUE"
+```
+
+```bash
+  --openid-provider-headers="myheader1=value1" \
+  --openid-provider-headers="myheader2=value2"
+```
 ## Encryption key
 
 In order to remain stateless and not have to rely on a central cache to
