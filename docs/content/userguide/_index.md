@@ -44,6 +44,11 @@ listen: :3000
 listen-admin: :4000
 # whether to enable refresh tokens
 enable-refresh-tokens: true
+# you can set up custom templates for forbidden/error/sign-in pages, gatekeeper
+# also provides these already builtin (but they are not set by default)
+forbidden-page: templates/forbidden.html.tmpl
+error-page: templates/error.html.tmpl
+sign-in-page: sign_in.html.tmpl
 # the location of a certificate you wish the proxy to use for TLS support
 tls-cert:
 # the location of a private key for TLS
@@ -341,7 +346,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:2.6.2
+  image: quay.io/gogatekeeper/gatekeeper:2.7.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -368,7 +373,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:2.6.2
+  image: quay.io/gogatekeeper/gatekeeper:2.7.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -953,58 +958,104 @@ Example OPA policy, with upper gatekeeper configuration and request would result
 
 ### Keycloak authorization (UMA)
 
-In version 1.5.0 we are introducing external authorization `--enable-uma`, only applicable with `--no-redirects` option for now.
+Gatekeeper has ability of external authorization with keycloak using `--enable-uma` option for browser flows and also api flows.
 You have to also either populate resources or use `--enable-default-deny` (see examples in previous sections). So you can mix both external authorization+static resource permissions, but
 we don't recommend it to not overcomplicate setup. First is always external authorization then static resource authorization.
 As it is new feature please don't use it in production, we would like first to receive feedback/testing by community. 
-Right now we use external authorization options provided by Keycloak which are specified in UMA (user managed access specification [UMA](https://www.riskinsight-wavestone.com/en/2018/09/demystifying-uma2/)).
-To use this feature you need to execute these actions in keycloak:
+Right now we use external authorization options provided by Keycloak which are specified in UMA (user managed access specification [UMA](https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html)).
+To use this feature you **MUST** execute these actions in **keycloak**:
 
-1. enable authorization for client in keycloak
-2. in client authorization tab, you should have protected resource
-3. protected resource should have User-Managed Access enabled
-4. protected resource should have at least one authorization scope
-5. protected resource should have proper permissions set
+1. enable authorization for client in keycloak (client which you will use in gatekeeper)
+2. in client authorization tab, you MUST have at least one protected resource
+3. protected resource MUST have User-Managed Access enabled
+4. protected resource MUST have at least one authorization scope
+5. protected resource MUST have proper permissions set
 
 [Example Keycloak Authorization Guide](https://gruchalski.com/posts/2020-09-05-introduction-to-keycloak-authorization-services/).
 
-To access endpoint protected by gatekeeper with authorization enabled you have to get RPT token.
-You can do that by performing following steps:
+#### Example Browser Flow:
 
-1. Request token as you would do normally (e.g. in our case using password grant), we will store it in TOKEN variable:
+```bash
+  --discovery-url=<DISCOVERY_URL>
+  --openid-provider-timeout=120s
+  --listen=0.0.0.0:3000
+  --client-id=<CLIENT_ID>
+  --client-secret=<CLIENT_SECRET>
+  --upstream-url=<UPSTREAM_URL>
+  # code flow/browser flow
+  --no-redirects=false
+  # you have to set this or resources=/* to have enable-uma working
+  --enable-default-deny=true
+  # we are enabling UMA
+  --enable-uma=true
+  # we are also enabling using method scope, this is optional,
+  # it will check resource in keycloak not just for accessed URL
+  # but also for method scope e.g. method:GET, it will return
+  # UMA token in cookie only for that URL+method scope,
+  # if you don't turn it on it will check just for URL 
+  # and will return UMA token in cookie
+  # with all scopes
+  --enable-uma-method-scope=true
+  # UMA token is stored in cookie, you can setup custom name
+  # by default cookie name is uma_token
+  --cookie-uma-name=<CUSTOM_COOKIE_NAME>
+  --skip-access-token-clientid-check=true
+  --skip-access-token-issuer-check=true
+  --openid-provider-retry-count=30
+```
 
-    ```
-    curl -X POST -d "username=test&password=test&client_id=test&client_secret=test&gran_type=password" http://examplekeycloak.com/realms/example/admin/protocol/openid-connect/token
-    ```
+**NOTE**: You can have only one resource with same URL+method scope combination or URL (in case you don't have method scope enabled), if you have
+more your access will be forbidden
 
-2. accessing endpoint protected by gatekeeper which will return 401 with this response and UMA ticket, we will store it in TICKET variable:
+#### Example API Flow:
 
-    accessing protected endpoint
+we are recommending to use UMA forward signing for these purpose on client app side, otherwise you will have to get RPT token for client side manually.
+On client app side, forward signing setup (you app should have http proxy options set to this forward-signing proxy):
 
-    ```
-    curl http://example.com/protectedendpoint
-    ```
+```bash
+  --discovery-url=<DISCOVERY_URL>
+  --openid-provider-timeout=120s
+  --listen=0.0.0.0:3000
+  --client-id=<CLIENT_ID>
+  --client-secret=<CLIENT_SECRET>
+  --enable-uma=true
+  --enable-uma-method-scope=true
+  --enable-forwarding=true
+  # you can use client credentials grant or direct access grant
+  # see Forward-signing proxy section
+  --forwarding-grant-type=client_credentials
+  --skip-access-token-clientid-check=true
+  --skip-access-token-issuer-check=true
+  --openid-provider-retry-count=30
+```
 
-    will return
+On server side, UMA in no-redirects mode:
 
-    ```
-    WWW-Authenticate: realm="example", as_uri="http://examplekeycloak.com", ticket="eseiose.slidsds....."
-    ```
-
-3. Value in WWW-Authenticate header is UMA ticket. We will use this ticket (in case of keycloak it is also jwt token),
-along with our token to get RPT token, we will store it in RPT variable.
-
-    ```
-    curl -X POST -d "ticket=$TICKET" -H "Authorization: Bearer $TOKEN" http://examplekeycloak.com/realms/example/admin/protocol/openid-connect/token
-    ```
-
-    This will return RPT token which we can use to access endpoint protected by gatekeeper authorization.
-
-4. access protected endpoint
-
-    ```
-    curl -H "Authorization: Bearer $RPT" http://example.com/protectedendpoint
-    ```
+```bash
+  --discovery-url=<DISCOVERY_URL>
+  --openid-provider-timeout=120s
+  --listen=0.0.0.0:3000
+  --client-id=<CLIENT_ID>
+  --client-secret=<CLIENT_SECRET>
+  --upstream-url=<UPSTREAM_URL>
+  # api flow
+  --no-redirects=true
+  # you have to set this or resources=/* to have enable-uma working
+  --enable-default-deny=true
+  # we are enabling UMA
+  --enable-uma=true
+  # we are also enabling using method scope, this is optional,
+  # it will check resource in keycloak not just for accessed URL
+  # but also for method scope e.g. method:GET, it will return
+  # UMA token in cookie only for that URL+method scope,
+  # if you don't turn it on it will check just for URL 
+  # and will return UMA token in cookie
+  # with all scopes
+  --enable-uma-method-scope=true
+  --skip-access-token-clientid-check=true
+  --skip-access-token-issuer-check=true
+  --openid-provider-retry-count=30
+```
 
 ## Request tracing
 
