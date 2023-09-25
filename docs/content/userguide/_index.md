@@ -685,7 +685,7 @@ gatekeeper configuration
 traefik forward-auth configuration when you WANT to redirect user to authentication 
 server by gatekeeper (useful for e.g. frontend application authentication). Please be
 aware that in this mode you need to forward headers X-Forwarded-Host, X-Forwarded-Uri, X-Forwarded-Proto, from
-front proxy to gatekeeper. You can find more complete example [here](/e2e/k8s/manifest_test_forwardauth.yml). 
+front proxy to gatekeeper. You can find more complete example [here](https://github.com/gogatekeeper/gatekeeper/blob/master/e2e/k8s/manifest_test_forwardauth.yml). 
 *IMPORTANT*: Please ensure that you are receiving headers only from trusted proxy
 and gatekeeper is not exposed directly to internet, otherwise attacker might misuse this!
 
