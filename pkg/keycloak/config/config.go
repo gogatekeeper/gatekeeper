@@ -156,12 +156,12 @@ type Config struct {
 	// EnableCompression enables gzip compression for response
 	EnableCompression bool `env:"ENABLE_COMPRESSION" json:"enable-compression" usage:"enable gzip compression for response" yaml:"enable-compression"`
 	// EnablePKCE, only S256 code challenge method is supported
-	EnablePKCE            bool          `env:"ENABLE_PKCE"              json:"enable-pkce"              usage:"enable pkce for auth code flow, only S256 code challenge supported"                                   yaml:"enable-pkce"`
+	EnablePKCE            bool          `env:"ENABLE_PKCE"              json:"enable-pkce"              usage:"enable pkce for auth code flow, only S256 code challenge supported"                                  yaml:"enable-pkce"`
 	EnableIDPSessionCheck bool          `env:"ENABLE_IDP_SESSION_CHECK" json:"enable_idp_session_check" usage:"during token validation it also checks if user session is still present, useful for multiapp logout" yaml:"enable-idp-session-check"`
-	EnableUma             bool          `env:"ENABLE_UMA"               json:"enable-uma"               usage:"enable uma authorization, please don't use it in production, we would like to receive feedback"       yaml:"enable-uma"`
-	EnableOpa             bool          `env:"ENABLE_OPA"               json:"enable-opa"               usage:"enable authorization with external Open policy agent"                                                 yaml:"enable-opa"`
-	OpaTimeout            time.Duration `env:"OPA_TIMEOUT"              json:"opa-timeout"              usage:"timeout for connection to OPA"                                                                        yaml:"opa-timeout"`
-	OpaAuthzURI           string        `env:"OPA_AUTHZ_URI"            json:"opa-authz-uri"            usage:"OPA endpoint address with path"                                                                       yaml:"opa-authz-uri"`
+	EnableUma             bool          `env:"ENABLE_UMA"               json:"enable-uma"               usage:"enable uma authorization, please don't use it in production, we would like to receive feedback"      yaml:"enable-uma"`
+	EnableOpa             bool          `env:"ENABLE_OPA"               json:"enable-opa"               usage:"enable authorization with external Open policy agent"                                                yaml:"enable-opa"`
+	OpaTimeout            time.Duration `env:"OPA_TIMEOUT"              json:"opa-timeout"              usage:"timeout for connection to OPA"                                                                       yaml:"opa-timeout"`
+	OpaAuthzURI           string        `env:"OPA_AUTHZ_URI"            json:"opa-authz-uri"            usage:"OPA endpoint address with path"                                                                      yaml:"opa-authz-uri"`
 
 	PatRetryCount    int           `env:"PAT_RETRY_COUNT"    json:"pat-retry-count"    usage:"number of retries to get PAT"        yaml:"pat-retry-count"`
 	PatRetryInterval time.Duration `env:"PAT_RETRY_INTERVAL" json:"pat-retry-interval" usage:"interval between retries to get PAT" yaml:"pat-retry-interval"`
