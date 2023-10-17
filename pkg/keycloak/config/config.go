@@ -31,6 +31,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/config/core"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
+	redis "github.com/redis/go-redis/v9"
 	"gopkg.in/yaml.v2"
 )
 
@@ -237,7 +238,7 @@ type Config struct {
 	Hostnames []string `json:"hostnames" usage:"list of hostnames the service will respond to" yaml:"hostnames"`
 
 	// Store is a url for a store resource, used to hold the refresh tokens
-	StoreURL string `env:"STORE_URL" json:"store-url" usage:"url for the storage subsystem, e.g redis://127.0.0.1:6379, file:///etc/tokens.file" yaml:"store-url"`
+	StoreURL string `env:"STORE_URL" json:"store-url" usage:"url for the storage subsystem, e.g redis://user:secret@localhost:6379/0?protocol=3, only supported is redis usig redis uri spec" yaml:"store-url"`
 	// EncryptionKey is the encryption key used to encrypt the refresh token
 	EncryptionKey string `env:"ENCRYPTION_KEY" json:"encryption-key" usage:"encryption key used to encryption the session state" yaml:"encryption-key"`
 
@@ -830,7 +831,7 @@ func (r *Config) isSecureCookieValid() error {
 
 func (r *Config) isStoreURLValid() error {
 	if r.StoreURL != "" {
-		if _, err := url.ParseRequestURI(r.StoreURL); err != nil {
+		if _, err := redis.ParseURL(r.StoreURL); err != nil {
 			return fmt.Errorf("the store url is invalid, error: %s", err)
 		}
 	}

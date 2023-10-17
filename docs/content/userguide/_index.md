@@ -802,10 +802,8 @@ refresh the access token for you. The tokens themselves are kept either
 as an encrypted (`--encryption-key=KEY`) cookie **(cookie name:
 kc-state).** or a store **(still requires encryption key)**.
 
-At present the only store options supported are
-[Redis](https://github.com/antirez/redis) and
-
-To enable a local Redis store use `redis://[USER:PASSWORD@]HOST:PORT`.
+To enable a local Redis store use `redis://user:secret@localhost:6379/0?protocol=3`.
+See [redis-uri](https://github.com/redis/redis-specifications/blob/master/uri/redis.txt) specification 
 In both cases, the refresh token is encrypted before being placed into
 the store.
 

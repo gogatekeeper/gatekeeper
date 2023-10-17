@@ -100,7 +100,7 @@ weight: 2
 |    --cors-credentials                      | credentials access control header (Access-Control-Allow-Credentials) | false | PROXY_CORS_CREDENTIALS
 |    --cors-max-age value                    | max age applied to cors headers (Access-Control-Max-Age) | 0s | PROXY_CORS_MAX_AGE
 |    --hostnames value                       | list of hostnames the service will respond to | |
-|    --store-url value                       | url for the storage subsystem, e.g redis://127.0.0.1:6379, file:///etc/tokens.file | | PROXY_STORE_URL
+|    --store-url value                       | url for the storage subsystem, e.g redis://user:secret@localhost:6379/0?protocol=3, only supported is redis usig redis uri spec | | PROXY_STORE_URL
 |    --encryption-key value                  | encryption key used to encryption the session state | | PROXY_ENCRYPTION_KEY
 |    --no-proxy value                        | do not proxy requests to upstream, useful for forward-auth usage (with nginx, traefik) | | PROXY_NO_PROXY
 |    --no-redirects                          | do not have back redirects when no authentication is present, 401 them | false | PROXY_NO_REDIRECTS

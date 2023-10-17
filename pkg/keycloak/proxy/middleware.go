@@ -425,11 +425,11 @@ func (r *OauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 
 						if r.useStore() {
 							go func(old, newToken string, encrypted string) {
-								if err := r.DeleteRefreshToken(old); err != nil {
+								if err := r.DeleteRefreshToken(req.Context(), old); err != nil {
 									scope.Logger.Error("failed to remove old token", zap.Error(err))
 								}
 
-								if err := r.StoreRefreshToken(newToken, encrypted, refreshExpiresIn); err != nil {
+								if err := r.StoreRefreshToken(req.Context(), newToken, encrypted, refreshExpiresIn); err != nil {
 									scope.Logger.Error("failed to store refresh token", zap.Error(err))
 									return
 								}

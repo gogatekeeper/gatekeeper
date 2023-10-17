@@ -16,10 +16,10 @@ limitations under the License.
 package storage
 
 import (
-	"net/url"
+	"context"
 	"time"
 
-	redis "gopkg.in/redis.v4"
+	redis "github.com/redis/go-redis/v9"
 )
 
 var _ Storage = (*RedisStore)(nil)
@@ -29,28 +29,18 @@ type RedisStore struct {
 }
 
 // newRedisStore creates a new redis store
-func newRedisStore(location *url.URL) (Storage, error) {
-	// step: get any password
-	password := ""
-	if location.User != nil {
-		password, _ = location.User.Password()
+func newRedisStore(url string) (Storage, error) {
+	opts, err := redis.ParseURL(url)
+	if err != nil {
+		return nil, err
 	}
-
-	// step: parse the url notation
-	client := redis.NewClient(&redis.Options{
-		Addr:     location.Host,
-		DB:       0,
-		Password: password,
-	})
-
-	return RedisStore{
-		Client: client,
-	}, nil
+	client := redis.NewClient(opts)
+	return RedisStore{Client: client}, nil
 }
 
 // Set adds a token to the store
-func (r RedisStore) Set(key, value string, expiration time.Duration) error {
-	if err := r.Client.Set(key, value, expiration); err.Err() != nil {
+func (r RedisStore) Set(ctx context.Context, key, value string, expiration time.Duration) error {
+	if err := r.Client.Set(ctx, key, value, expiration); err.Err() != nil {
 		return err.Err()
 	}
 
@@ -58,18 +48,18 @@ func (r RedisStore) Set(key, value string, expiration time.Duration) error {
 }
 
 // Checks if key exists in store
-func (r RedisStore) Exists(key string) (bool, error) {
-	result := r.Client.Exists(key)
-	if result.Err() != nil {
-		return false, result.Err()
+func (r RedisStore) Exists(ctx context.Context, key string) (bool, error) {
+	val, err := r.Client.Exists(ctx, key).Result()
+	if err != nil {
+		return false, err
 	}
 
-	return result.Val(), nil
+	return val > 0, nil
 }
 
 // Get retrieves a token from the store
-func (r RedisStore) Get(key string) (string, error) {
-	result := r.Client.Get(key)
+func (r RedisStore) Get(ctx context.Context, key string) (string, error) {
+	result := r.Client.Get(ctx, key)
 	if result.Err() != nil {
 		return "", result.Err()
 	}
@@ -78,8 +68,8 @@ func (r RedisStore) Get(key string) (string, error) {
 }
 
 // Delete remove the key
-func (r RedisStore) Delete(key string) error {
-	return r.Client.Del(key).Err()
+func (r RedisStore) Delete(ctx context.Context, key string) error {
+	return r.Client.Del(ctx, key).Err()
 }
 
 // Close closes of any open resources

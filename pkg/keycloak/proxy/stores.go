@@ -16,6 +16,7 @@ limitations under the License.
 package proxy
 
 import (
+	"context"
 	"time"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
@@ -30,14 +31,14 @@ func (r *OauthProxy) useStore() bool {
 }
 
 // StoreRefreshToken the token to the store
-func (r *OauthProxy) StoreRefreshToken(token string, value string, expiration time.Duration) error {
-	return r.Store.Set(utils.GetHashKey(token), value, expiration)
+func (r *OauthProxy) StoreRefreshToken(ctx context.Context, token string, value string, expiration time.Duration) error {
+	return r.Store.Set(ctx, utils.GetHashKey(token), value, expiration)
 }
 
 // Get retrieves a token from the store, the key we are using here is the access token
-func (r *OauthProxy) GetRefreshToken(token string) (string, error) {
+func (r *OauthProxy) GetRefreshToken(ctx context.Context, token string) (string, error) {
 	// step: the key is the access token
-	val, err := r.Store.Get(utils.GetHashKey(token))
+	val, err := r.Store.Get(ctx, utils.GetHashKey(token))
 
 	if err != nil {
 		return val, err
@@ -50,8 +51,8 @@ func (r *OauthProxy) GetRefreshToken(token string) (string, error) {
 }
 
 // DeleteRefreshToken removes a key from the store
-func (r *OauthProxy) DeleteRefreshToken(token string) error {
-	if err := r.Store.Delete(utils.GetHashKey(token)); err != nil {
+func (r *OauthProxy) DeleteRefreshToken(ctx context.Context, token string) error {
+	if err := r.Store.Delete(ctx, utils.GetHashKey(token)); err != nil {
 		r.Log.Error("unable to delete token", zap.Error(err))
 
 		return err

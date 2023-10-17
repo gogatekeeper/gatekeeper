@@ -1500,7 +1500,7 @@ func TestAccessTokenEncryption(t *testing.T) {
 				conf.Verbose = true
 				conf.EnableLogging = true
 				conf.EncryptionKey = testEncryptionKey
-				conf.StoreURL = fmt.Sprintf("redis://%s", redisServer.Addr())
+				conf.StoreURL = fmt.Sprintf("redis://%s/2", redisServer.Addr())
 			},
 			ExecutionSettings: []fakeRequest{
 				{

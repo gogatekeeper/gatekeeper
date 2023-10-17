@@ -225,7 +225,7 @@ func (r *OauthProxy) oauthCallbackHandler(writer http.ResponseWriter, req *http.
 
 		switch {
 		case r.useStore():
-			if err = r.StoreRefreshToken(rawAccessToken, encrypted, oidcTokensCookiesExp); err != nil {
+			if err = r.StoreRefreshToken(req.Context(), rawAccessToken, encrypted, oidcTokensCookiesExp); err != nil {
 				scope.Logger.Error(
 					"failed to save the refresh token in the store",
 					zap.Error(err),
@@ -476,7 +476,7 @@ func (r *OauthProxy) loginHandler(writer http.ResponseWriter, req *http.Request)
 
 			switch r.useStore() {
 			case true:
-				if err = r.StoreRefreshToken(token.AccessToken, refreshToken, expiration); err != nil {
+				if err = r.StoreRefreshToken(req.Context(), token.AccessToken, refreshToken, expiration); err != nil {
 					scope.Logger.Warn(
 						"failed to save the refresh token in the store",
 						zap.Error(err),
@@ -628,7 +628,7 @@ func (r *OauthProxy) logoutHandler(writer http.ResponseWriter, req *http.Request
 	// step: check if the user has a state session and if so revoke it
 	if r.useStore() {
 		go func() {
-			if err = r.DeleteRefreshToken(user.RawToken); err != nil {
+			if err = r.DeleteRefreshToken(req.Context(), user.RawToken); err != nil {
 				scope.Logger.Error(
 					"unable to remove the refresh token from store",
 					zap.Error(err),
@@ -824,7 +824,7 @@ func (r *OauthProxy) retrieveRefreshToken(req *http.Request, user *UserContext) 
 
 	switch r.useStore() {
 	case true:
-		token, err = r.GetRefreshToken(user.RawToken)
+		token, err = r.GetRefreshToken(req.Context(), user.RawToken)
 	default:
 		token, err = utils.GetRefreshTokenFromCookie(req, r.Config.CookieRefreshName)
 	}

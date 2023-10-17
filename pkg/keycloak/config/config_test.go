@@ -1741,7 +1741,7 @@ func TestIsStoreURLValid(t *testing.T) {
 		{
 			Name: "ValidIsStoreURL",
 			Config: &Config{
-				StoreURL: "boltdb:////tmp/test.boltdb",
+				StoreURL: "redis://user:secret@localhost:6379/4?protocol=3",
 			},
 			Valid: true,
 		},

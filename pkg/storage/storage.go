@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"time"
@@ -10,13 +11,13 @@ import (
 // the default practice of a encrypted cookie
 type Storage interface {
 	// Set the token to the store
-	Set(string, string, time.Duration) error
+	Set(context.Context, string, string, time.Duration) error
 	// Get retrieves a token from the store
-	Get(string) (string, error)
+	Get(context.Context, string) (string, error)
 	// Exists checks if key exists in store
-	Exists(string) (bool, error)
+	Exists(context.Context, string) (bool, error)
 	// Delete removes a key from the store
-	Delete(string) error
+	Delete(context.Context, string) error
 	// Close is used to close off any resources
 	Close() error
 }
@@ -34,7 +35,7 @@ func CreateStorage(location string) (Storage, error) {
 
 	switch uri.Scheme {
 	case "redis":
-		store, err = newRedisStore(uri)
+		store, err = newRedisStore(location)
 	default:
 		return nil, fmt.Errorf("unsupport store: %s", uri.Scheme)
 	}
