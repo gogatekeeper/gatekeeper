@@ -703,7 +703,7 @@ spec:
     address: http://gatekeeper-dns-name:4180
 ```
 
-gatekeeper configuration
+gatekeeper configuration:
 
 ```yaml
   - args:
@@ -715,6 +715,31 @@ gatekeeper configuration
       - --enable-default-deny=true # this option will ensure protection of all paths /*, according our traefik config, traefik will send it to /
       - --resources=headers=x-some-header:somevalue,x-other-header:othervalue
 ```
+
+nginx forward-auth configuration, nginx is more strict than traefik and rejects redirects,
+so in this case redirection to authorization server can be done only on nginx, example:
+
+```yaml
+nginx.ingress.kubernetes.io/configuration-snippet: |
+     auth_request /auth;
+nginx.ingress.kubernetes.io/server-snippet: |
+     location ^~ /auth {
+          internal;
+          proxy_pass <gatekeeper-url>/$request_uri;
+          proxy_pass_request_body off;
+          proxy_set_header Content-Length "";
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Forwarded-Host $host;
+          proxy_set_header X-Forwarded-Method $request_method;
+          proxy_set_header X-Forwarded-URI $request_uri;
+          proxy_busy_buffers_size 64k;
+          proxy_buffers 8 32k;
+          proxy_buffer_size 32k;
+     }
+```
+
+gatekeeper configuration, must be ```--no-proxy=true with --no-redirects=true```
+
 
 ## Custom pages
 
