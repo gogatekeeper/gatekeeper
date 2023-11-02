@@ -33,6 +33,7 @@ options. Here is a list of options.
 # is the URL for retrieve the OpenID configuration
 discovery-url: <DISCOVERY URL>
 # Indicates we should deny by default all requests and explicitly specify what is permitted, default true
+# this is equivalent of --resource=/*|methods
 enable-default-deny: true
 # the client id for the 'client' application
 client-id: <CLIENT_ID>
@@ -73,7 +74,7 @@ scopes:
 # to get more complex authorization you can look at external authorization section in our documentation
 resources:
 - uri: /admin/test
-  # the methods on this URL that should be protected, if missing, we assuming all
+  # the methods on this URL that should be protected, uri is required when defining resource
   methods:
   - GET
   # a list of roles the user must have in order to access URLs under the above
@@ -120,7 +121,8 @@ client-secret: <CLIENT_SECRET> # require for access_type: confidential
 # Note the redirection-url is optional, it will default to the the URL scheme and host, 
 # only in case of forward auth it will use X-Forwarded-Proto / X-Forwarded-Host, please see forward-auth section
 discovery-url: https://keycloak.example.com/realms/<REALM_NAME>
-# Indicates we should deny by default all requests and explicitly specify what is permitted, default true
+# Indicates we should deny by default all requests and explicitly specify what is permitted, default true,
+# you cannot specify enable-default-deny:true together with defining resource=uri=/*
 enable-default-deny: true
 encryption-key: AgXa7xRcoClDEU0ZDSH4X0XhL5Qy2Z2j
 listen: :3000
@@ -133,8 +135,12 @@ resources:
   methods:
   - GET
   roles:
-  - client:test1
-  - client:test2
+  # this will match realm role from token
+  - examplerealmrole
+  # you can see here, that roles below will match client roles from token
+  # it will look for client1's client role test1 and client2's client role test2
+  - client1:test1
+  - client2:test2
   require-any-role: true
   groups:
   - admins
@@ -183,10 +189,30 @@ bin/gatekeeper \
     --headers="myheader2=value2"
 ```
 
+## Roles
+
 By default, the roles defined on a resource perform a logical `AND` so
 all roles specified must be present in the claims, this behavior can be
 altered by the `require-any-role` option, however, so as long as one
 role is present the permission is granted.
+
+You can match on realm roles or client roles:
+
+```yaml
+resources:
+- uri: /admin*
+  methods:
+  - GET
+  roles:
+  # this will match realm role from token
+  - examplerealmrole
+  # you can see here, that roles below will match client roles from token
+  # it will look for client1's client role test1 and client2's client role test2
+  - client1:test1
+  - client2:test2
+```
+
+If you have roles listed in some custom claim, please see [custom claim matching](#claim-matching)
 
 ## Authentication flows
 
@@ -222,7 +248,7 @@ By default, all requests will be proxied on to the upstream, if you wish
 to ensure all requests are authenticated you can use this:
 
 ``` bash
---resource=uri=/* # note, unless specified the method is assumed to be 'any|ANY'
+--resources=uri=/* # note, unless specified the method is assumed to be 'any|ANY'
 ```
 
 The HTTP routing rules follow the guidelines from
