@@ -361,6 +361,28 @@ to consider enabling additional methods for verifying that browsers connect only
 For this we recommend to turn-on `--enable-encrypted-token` and `--encryption-key` options and also verify `Origin` header with headers matching, please
 refer to [Headers matching](#headers-matching).
 
+## HMAC Signature, signing and verification
+
+For raising your security you can verify/sign HMAC for your requests.
+Signing can be done when using `--enable-hmac` with forward signing feature below.
+Verification is done when using gatekeeper as authentication/authorization proxy.
+Gatekeeper in forward-signing mode creates signature, this is also
+signature which gatekeeper expects when used as auth/authz proxy, you can create
+this signature on your own, assuming you have proper secret. Signature is passed
+in `X-HMAC-SHA256` header. Signature is created by signing several fields:
+
+```
+	stringToSign := fmt.Sprintf(
+		"%s\n%s%s\n%s;%s;%s",
+		req.Method,
+		req.URL.Path,
+		req.URL.RawQuery,
+		req.Header.Get(constant.AuthorizationHeader),
+		req.Host,
+		sha256.Sum256(body),
+	)
+```
+
 ## Forward-signing proxy
 
 Forward-signing provides a mechanism for authentication and
