@@ -140,7 +140,7 @@ func customSignInPage(
 }
 
 // redirectToURL redirects the user and aborts the context
-func (r *OauthProxy) redirectToURL(
+func redirectToURL(
 	logger *zap.Logger,
 	url string,
 	wrt http.ResponseWriter,
@@ -154,6 +154,17 @@ func (r *OauthProxy) redirectToURL(
 
 	http.Redirect(wrt, req, url, statusCode)
 	return revokeProxy(logger, req)
+}
+
+// WithOAuthURI returns the oauth uri
+func WithOAuthURI(baseURI string, oauthURI string) func(uri string) string {
+	return func(uri string) string {
+		uri = strings.TrimPrefix(uri, "/")
+		if baseURI != "" {
+			return fmt.Sprintf("%s/%s/%s", baseURI, oauthURI, uri)
+		}
+		return fmt.Sprintf("%s/%s", oauthURI, uri)
+	}
 }
 
 // redirectToAuthorization redirects the user to authorization handler
@@ -178,7 +189,7 @@ func (r *OauthProxy) redirectToAuthorization(wrt http.ResponseWriter, req *http.
 		return revokeProxy(r.Log, req)
 	}
 
-	url := r.Config.WithOAuthURI(constant.AuthorizationURL + authQuery)
+	url := r.WithOAuthURI(constant.AuthorizationURL + authQuery)
 
 	if r.Config.NoProxy && !r.Config.NoRedirects {
 		xForwardedHost := req.Header.Get("X-Forwarded-Host")
@@ -201,7 +212,7 @@ func (r *OauthProxy) redirectToAuthorization(wrt http.ResponseWriter, req *http.
 
 	r.Log.Debug("redirecting to url", zap.String("url", url))
 
-	r.redirectToURL(
+	redirectToURL(
 		r.Log,
 		url,
 		wrt,

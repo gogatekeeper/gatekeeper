@@ -56,6 +56,7 @@ func TestMetricsMiddleware(t *testing.T) {
 	cfg.EnableRefreshTokens = true
 	cfg.EnableEncryptedToken = true
 	cfg.EncryptionKey = testEncryptionKey
+	uri := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.MetricsURL)
 	requests := []fakeRequest{
 		{
 			URI:       FakeAuthAllURL,
@@ -74,7 +75,7 @@ func TestMetricsMiddleware(t *testing.T) {
 			ExpectedCode:  http.StatusOK,
 		},
 		{
-			URI: cfg.WithOAuthURI(constant.MetricsURL),
+			URI: uri,
 			Headers: map[string]string{
 				"X-Forwarded-For": "10.0.0.1",
 			},
@@ -82,22 +83,22 @@ func TestMetricsMiddleware(t *testing.T) {
 		},
 		// Some request must run before this one to generate request status numbers
 		{
-			URI:                     cfg.WithOAuthURI(constant.MetricsURL),
+			URI:                     uri,
 			ExpectedCode:            http.StatusOK,
 			ExpectedContentContains: "proxy_request_status_total",
 		},
 		{
-			URI:                     cfg.WithOAuthURI(constant.MetricsURL),
+			URI:                     uri,
 			ExpectedCode:            http.StatusOK,
 			ExpectedContentContains: "action=\"issued\"",
 		},
 		{
-			URI:                     cfg.WithOAuthURI(constant.MetricsURL),
+			URI:                     uri,
 			ExpectedCode:            http.StatusOK,
 			ExpectedContentContains: "action=\"exchange\"",
 		},
 		{
-			URI:                     cfg.WithOAuthURI(constant.MetricsURL),
+			URI:                     uri,
 			ExpectedCode:            http.StatusOK,
 			ExpectedContentContains: "action=\"renew\"",
 		},

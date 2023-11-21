@@ -33,21 +33,29 @@ import (
 )
 
 // newOAuth2Config returns a oauth2 config
-func (r *OauthProxy) newOAuth2Config(redirectionURL string) *oauth2.Config {
-	defaultScope := []string{"openid"}
+func newOAuth2Config(
+	clientID string,
+	clientSecret string,
+	authURL string,
+	tokenURL string,
+	scopes []string,
+) func(redirectionURL string) *oauth2.Config {
+	return func(redirectionURL string) *oauth2.Config {
+		defaultScope := []string{"openid"}
 
-	conf := &oauth2.Config{
-		ClientID:     r.Config.ClientID,
-		ClientSecret: r.Config.ClientSecret,
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  r.Provider.Endpoint().AuthURL,
-			TokenURL: r.Provider.Endpoint().TokenURL,
-		},
-		RedirectURL: redirectionURL,
-		Scopes:      append(r.Config.Scopes, defaultScope...),
+		conf := &oauth2.Config{
+			ClientID:     clientID,
+			ClientSecret: clientSecret,
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  authURL,
+				TokenURL: tokenURL,
+			},
+			RedirectURL: redirectionURL,
+			Scopes:      append(scopes, defaultScope...),
+		}
+
+		return conf
 	}
-
-	return conf
 }
 
 // getRefreshedToken attempts to refresh the access token, returning the parsed token, optionally with a renewed

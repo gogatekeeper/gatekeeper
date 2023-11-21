@@ -290,6 +290,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 	engine := chi.NewRouter()
 	r.useDefaultStack(engine)
 
+	r.WithOAuthURI = WithOAuthURI(r.Config.BaseURI, r.Config.OAuthURI)
 	r.Cm = &cookie.Manager{
 		CookieDomain:         r.Config.CookieDomain,
 		BaseURI:              r.Config.BaseURI,
@@ -308,12 +309,30 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		NoRedirects:          r.Config.NoRedirects,
 	}
 
+	r.newOAuth2Config = newOAuth2Config(
+		r.Config.ClientID,
+		r.Config.ClientSecret,
+		r.Provider.Endpoint().AuthURL,
+		r.Provider.Endpoint().TokenURL,
+		r.Config.Scopes,
+	)
+
 	r.GetIdentity = GetIdentity(
 		r.Log,
 		r.Config.SkipAuthorizationHeaderIdentity,
 		r.Config.EnableEncryptedToken,
 		r.Config.ForceEncryptedCookie,
 		r.Config.EncryptionKey,
+	)
+
+	r.getRedirectionURL = getRedirectionURL(
+		r.Log,
+		r.Config.RedirectionURL,
+		r.Config.NoProxy,
+		r.Config.NoRedirects,
+		r.Config.SecureCookie,
+		r.Config.CookieOAuthStateName,
+		r.WithOAuthURI,
 	)
 
 	if r.Config.EnableHmac {
@@ -350,7 +369,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 
 	r.Log.Info(
 		"enabled health service",
-		zap.String("path", path.Clean(r.Config.WithOAuthURI(constant.HealthURL))),
+		zap.String("path", path.Clean(r.WithOAuthURI(constant.HealthURL))),
 	)
 
 	adminEngine.Get(constant.HealthURL, handlers.HealthHandler)
@@ -358,7 +377,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 	if r.Config.EnableMetrics {
 		r.Log.Info(
 			"enabled the service metrics middleware",
-			zap.String("path", path.Clean(r.Config.WithOAuthURI(constant.MetricsURL))),
+			zap.String("path", path.Clean(r.WithOAuthURI(constant.MetricsURL))),
 		)
 		adminEngine.Get(
 			constant.MetricsURL,
@@ -382,7 +401,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 			tokenHandler(r.GetIdentity, r.Config.CookieAccessName, r.accessError),
 		)
 		eng.Post(constant.LoginURL, r.loginHandler)
-		eng.Get(constant.DiscoveryURL, r.discoveryHandler)
+		eng.Get(constant.DiscoveryURL, discoveryHandler(r.Log, r.WithOAuthURI))
 
 		if r.Config.ListenAdmin == "" {
 			eng.Mount("/", adminEngine)

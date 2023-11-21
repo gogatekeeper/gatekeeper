@@ -49,47 +49,57 @@ type DiscoveryResponse struct {
 }
 
 // getRedirectionURL returns the redirectionURL for the oauth flow
-func (r *OauthProxy) getRedirectionURL(wrt http.ResponseWriter, req *http.Request) string {
-	var redirect string
+func getRedirectionURL(
+	logger *zap.Logger,
+	redirectionURL string,
+	noProxy bool,
+	noRedirects bool,
+	secureCookie bool,
+	cookieOAuthStateName string,
+	withOAuthURI func(string) string,
+) func(wrt http.ResponseWriter, req *http.Request) string {
+	return func(wrt http.ResponseWriter, req *http.Request) string {
+		var redirect string
 
-	switch r.Config.RedirectionURL {
-	case "":
-		var scheme string
-		var host string
+		switch redirectionURL {
+		case "":
+			var scheme string
+			var host string
 
-		if r.Config.NoProxy && !r.Config.NoRedirects {
-			scheme = req.Header.Get("X-Forwarded-Proto")
-			host = req.Header.Get("X-Forwarded-Host")
-		} else {
-			// need to determine the scheme, cx.Request.URL.Scheme doesn't have it, best way is to default
-			// and then check for TLS
-			scheme = constant.UnsecureScheme
-			host = req.Host
-			if req.TLS != nil {
-				scheme = constant.SecureScheme
+			if noProxy && !noRedirects {
+				scheme = req.Header.Get("X-Forwarded-Proto")
+				host = req.Header.Get("X-Forwarded-Host")
+			} else {
+				// need to determine the scheme, cx.Request.URL.Scheme doesn't have it, best way is to default
+				// and then check for TLS
+				scheme = constant.UnsecureScheme
+				host = req.Host
+				if req.TLS != nil {
+					scheme = constant.SecureScheme
+				}
 			}
+
+			if scheme == constant.UnsecureScheme && secureCookie {
+				hint := "you have secure cookie set to true but using http "
+				hint += "use https or secure cookie false"
+				logger.Warn(hint)
+			}
+
+			redirect = fmt.Sprintf("%s://%s", scheme, host)
+		default:
+			redirect = redirectionURL
 		}
 
-		if scheme == constant.UnsecureScheme && r.Config.SecureCookie {
-			hint := "you have secure cookie set to true but using http "
-			hint += "use https or secure cookie false"
-			r.Log.Warn(hint)
+		state, _ := req.Cookie(cookieOAuthStateName)
+
+		if state != nil && req.URL.Query().Get("state") != state.Value {
+			logger.Error("state parameter mismatch")
+			wrt.WriteHeader(http.StatusForbidden)
+			return ""
 		}
 
-		redirect = fmt.Sprintf("%s://%s", scheme, host)
-	default:
-		redirect = r.Config.RedirectionURL
+		return fmt.Sprintf("%s%s", redirect, withOAuthURI(constant.CallbackURL))
 	}
-
-	state, _ := req.Cookie(r.Config.CookieOAuthStateName)
-
-	if state != nil && req.URL.Query().Get("state") != state.Value {
-		r.Log.Error("state parameter mismatch")
-		wrt.WriteHeader(http.StatusForbidden)
-		return ""
-	}
-
-	return fmt.Sprintf("%s%s", redirect, r.Config.WithOAuthURI(constant.CallbackURL))
 }
 
 // oauthAuthorizationHandler is responsible for performing the redirection to oauth provider
@@ -158,7 +168,7 @@ func (r *OauthProxy) oauthAuthorizationHandler(wrt http.ResponseWriter, req *htt
 	}
 
 	scope.Logger.Debug("redirecting to auth_url", zap.String("auth_url", authURL))
-	r.redirectToURL(scope.Logger, authURL, wrt, req, http.StatusSeeOther)
+	redirectToURL(scope.Logger, authURL, wrt, req, http.StatusSeeOther)
 }
 
 /*
@@ -300,7 +310,7 @@ func (r *OauthProxy) oauthCallbackHandler(writer http.ResponseWriter, req *http.
 	}
 
 	scope.Logger.Debug("redirecting to", zap.String("location", redirectURI))
-	r.redirectToURL(scope.Logger, redirectURI, writer, req, http.StatusSeeOther)
+	redirectToURL(scope.Logger, redirectURI, writer, req, http.StatusSeeOther)
 }
 
 /*
@@ -626,7 +636,7 @@ func (r *OauthProxy) logoutHandler(writer http.ResponseWriter, req *http.Request
 			postLogoutParams,
 		)
 
-		r.redirectToURL(
+		redirectToURL(
 			scope.Logger,
 			sendTo,
 			writer,
@@ -717,7 +727,7 @@ func (r *OauthProxy) logoutHandler(writer http.ResponseWriter, req *http.Request
 
 	// step: should we redirect the user
 	if redirectURL != "" {
-		r.redirectToURL(scope.Logger, redirectURL, writer, req, http.StatusSeeOther)
+		redirectToURL(scope.Logger, redirectURL, writer, req, http.StatusSeeOther)
 	}
 }
 
@@ -838,34 +848,39 @@ func (r *OauthProxy) retrieveIDToken(req *http.Request) (string, string, error) 
 }
 
 // discoveryHandler provides endpoint info
-func (r *OauthProxy) discoveryHandler(wrt http.ResponseWriter, _ *http.Request) {
-	resp := &DiscoveryResponse{
-		ExpiredURL: r.Config.WithOAuthURI(constant.ExpiredURL),
-		LogoutURL:  r.Config.WithOAuthURI(constant.LogoutURL),
-		TokenURL:   r.Config.WithOAuthURI(constant.TokenURL),
-		LoginURL:   r.Config.WithOAuthURI(constant.LoginURL),
-	}
+func discoveryHandler(
+	logger *zap.Logger,
+	withOAuthURI func(string) string,
+) func(wrt http.ResponseWriter, _ *http.Request) {
+	return func(wrt http.ResponseWriter, _ *http.Request) {
+		resp := &DiscoveryResponse{
+			ExpiredURL: withOAuthURI(constant.ExpiredURL),
+			LogoutURL:  withOAuthURI(constant.LogoutURL),
+			TokenURL:   withOAuthURI(constant.TokenURL),
+			LoginURL:   withOAuthURI(constant.LoginURL),
+		}
 
-	respBody, err := json.Marshal(resp)
+		respBody, err := json.Marshal(resp)
 
-	if err != nil {
-		r.Log.Error(
-			apperrors.ErrMarshallDiscoveryResp.Error(),
-			zap.String("error", err.Error()),
-		)
+		if err != nil {
+			logger.Error(
+				apperrors.ErrMarshallDiscoveryResp.Error(),
+				zap.String("error", err.Error()),
+			)
 
-		wrt.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+			wrt.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	wrt.Header().Set("Content-Type", "application/json")
-	wrt.WriteHeader(http.StatusOK)
-	_, err = wrt.Write(respBody)
+		wrt.Header().Set("Content-Type", "application/json")
+		wrt.WriteHeader(http.StatusOK)
+		_, err = wrt.Write(respBody)
 
-	if err != nil {
-		r.Log.Error(
-			apperrors.ErrDiscoveryResponseWrite.Error(),
-			zap.String("error", err.Error()),
-		)
+		if err != nil {
+			logger.Error(
+				apperrors.ErrDiscoveryResponseWrite.Error(),
+				zap.String("error", err.Error()),
+			)
+		}
 	}
 }

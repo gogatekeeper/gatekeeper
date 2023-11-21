@@ -56,7 +56,7 @@ func TestDebugHandler(t *testing.T) {
 
 func TestExpirationHandler(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
-	uri := cfg.WithOAuthURI(constant.ExpiredURL)
+	uri := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.ExpiredURL)
 	requests := []fakeRequest{
 		{
 			URI:          uri,
@@ -92,9 +92,10 @@ func TestOauthRequestNotProxying(t *testing.T) {
 func TestLoginHandlerDisabled(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.EnableLoginHandler = false
+	loginURL := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LoginURL)
 	requests := []fakeRequest{
-		{URI: cfg.WithOAuthURI(constant.LoginURL), Method: http.MethodPost, ExpectedCode: http.StatusNotImplemented},
-		{URI: cfg.WithOAuthURI(constant.LoginURL), ExpectedCode: http.StatusMethodNotAllowed},
+		{URI: loginURL, Method: http.MethodPost, ExpectedCode: http.StatusNotImplemented},
+		{URI: loginURL, ExpectedCode: http.StatusMethodNotAllowed},
 	}
 	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
 }
@@ -110,7 +111,7 @@ func TestLoginHandlerNotDisabled(t *testing.T) {
 
 func TestLoginHandler(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
-	uri := cfg.WithOAuthURI(constant.LoginURL)
+	uri := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LoginURL)
 
 	testCases := []struct {
 		Name              string
@@ -223,7 +224,7 @@ func TestLoginHandler(t *testing.T) {
 func TestSkipOpenIDProviderTLSVerifyLoginHandler(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.SkipOpenIDProviderTLSVerify = true
-	uri := cfg.WithOAuthURI(constant.LoginURL)
+	uri := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LoginURL)
 	requests := []fakeRequest{
 		{
 			URI:          uri,
@@ -287,7 +288,7 @@ func TestSkipOpenIDProviderTLSVerifyLoginHandler(t *testing.T) {
 //nolint:funlen
 func TestTokenEncryptionLoginHandler(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
-	uri := cfg.WithOAuthURI(constant.LoginURL)
+	uri := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LoginURL)
 	// !! it must be here because of how test is written
 	cfg.EncryptionKey = testEncryptionKey
 
@@ -552,9 +553,11 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 }
 
 func TestLogoutHandlerBadRequest(t *testing.T) {
+	cfg := newFakeKeycloakConfig()
+	logoutURL := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LogoutURL)
 	requests := []fakeRequest{
 		{
-			URI:          newFakeKeycloakConfig().WithOAuthURI(constant.LogoutURL),
+			URI:          logoutURL,
 			ExpectedCode: http.StatusUnauthorized,
 		},
 	}
@@ -563,19 +566,20 @@ func TestLogoutHandlerBadRequest(t *testing.T) {
 
 func TestLogoutHandlerBadToken(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
+	logoutURL := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LogoutURL)
 	requests := []fakeRequest{
 		{
-			URI:          cfg.WithOAuthURI(constant.LogoutURL),
+			URI:          logoutURL,
 			ExpectedCode: http.StatusUnauthorized,
 		},
 		{
-			URI:            cfg.WithOAuthURI(constant.LogoutURL),
+			URI:            logoutURL,
 			HasCookieToken: true,
 			RawToken:       "this.is.a.bad.token",
 			ExpectedCode:   http.StatusUnauthorized,
 		},
 		{
-			URI:          cfg.WithOAuthURI(constant.LogoutURL),
+			URI:          logoutURL,
 			RawToken:     "this.is.a.bad.token",
 			ExpectedCode: http.StatusUnauthorized,
 		},
@@ -585,7 +589,7 @@ func TestLogoutHandlerBadToken(t *testing.T) {
 
 func TestLogoutHandlerGood(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
-
+	logoutURL := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LogoutURL)
 	testCases := []struct {
 		Name              string
 		ProxySettings     func(c *config.Config)
@@ -596,7 +600,7 @@ func TestLogoutHandlerGood(t *testing.T) {
 			ProxySettings: func(c *config.Config) {},
 			ExecutionSettings: []fakeRequest{
 				{
-					URI:          cfg.WithOAuthURI(constant.LogoutURL),
+					URI:          logoutURL,
 					HasToken:     true,
 					ExpectedCode: http.StatusOK,
 				},
@@ -660,14 +664,15 @@ func TestLogoutHandlerGood(t *testing.T) {
 func TestSkipOpenIDProviderTLSVerifyLogoutHandler(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.SkipOpenIDProviderTLSVerify = true
+	logoutURL := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LogoutURL)
 	requests := []fakeRequest{
 		{
-			URI:          cfg.WithOAuthURI(constant.LogoutURL),
+			URI:          logoutURL,
 			HasToken:     true,
 			ExpectedCode: http.StatusOK,
 		},
 		{
-			URI:              cfg.WithOAuthURI(constant.LogoutURL) + "?redirect=http://example.com",
+			URI:              logoutURL + "?redirect=http://example.com",
 			HasToken:         true,
 			ExpectedCode:     http.StatusSeeOther,
 			ExpectedLocation: "http://example.com",
@@ -699,14 +704,15 @@ func TestSkipOpenIDProviderTLSVerifyLogoutHandler(t *testing.T) {
 func TestRevocation(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.RevocationEndpoint = ""
+	logoutURL := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LogoutURL)
 	requests := []fakeRequest{
 		{
-			URI:          cfg.WithOAuthURI(constant.LogoutURL),
+			URI:          logoutURL,
 			HasToken:     true,
 			ExpectedCode: http.StatusOK,
 		},
 		{
-			URI:              cfg.WithOAuthURI(constant.LogoutURL) + "?redirect=http://example.com",
+			URI:              logoutURL + "?redirect=http://example.com",
 			HasToken:         true,
 			ExpectedCode:     http.StatusSeeOther,
 			ExpectedLocation: "http://example.com",
@@ -717,12 +723,12 @@ func TestRevocation(t *testing.T) {
 	cfg.RevocationEndpoint = "http://non-existent.com/revoke"
 	requests = []fakeRequest{
 		{
-			URI:          cfg.WithOAuthURI(constant.LogoutURL),
+			URI:          logoutURL,
 			HasToken:     true,
 			ExpectedCode: http.StatusInternalServerError,
 		},
 		{
-			URI:          cfg.WithOAuthURI(constant.LogoutURL) + "?redirect=http://example.com",
+			URI:          logoutURL + "?redirect=http://example.com",
 			HasToken:     true,
 			ExpectedCode: http.StatusInternalServerError,
 		},
@@ -731,9 +737,9 @@ func TestRevocation(t *testing.T) {
 }
 
 func TestTokenHandler(t *testing.T) {
-	uri := newFakeKeycloakConfig().WithOAuthURI(constant.TokenURL)
+	cfg := newFakeKeycloakConfig()
+	uri := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.TokenURL)
 	goodToken, err := newTestToken("example").getToken()
-
 	if err != nil {
 		t.Fatalf("Error when creating test token %v", err)
 	}
@@ -793,11 +799,12 @@ func TestServiceRedirect(t *testing.T) {
 }
 
 func TestAuthorizationURLWithSkipToken(t *testing.T) {
-	c := newFakeKeycloakConfig()
-	c.SkipTokenVerification = true
-	newFakeProxy(c, &fakeAuthConfig{}).RunTests(t, []fakeRequest{
+	cfg := newFakeKeycloakConfig()
+	cfg.SkipTokenVerification = true
+	uri := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.AuthorizationURL)
+	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, []fakeRequest{
 		{
-			URI:          c.WithOAuthURI(constant.AuthorizationURL),
+			URI:          uri,
 			ExpectedCode: http.StatusNotAcceptable,
 		},
 	})
@@ -845,30 +852,31 @@ func TestAuthorizationURL(t *testing.T) {
 
 func TestCallbackURL(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
+	uri := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.CallbackURL)
 	requests := []fakeRequest{
 		{
-			URI:          cfg.WithOAuthURI(constant.CallbackURL),
+			URI:          uri,
 			Method:       http.MethodPost,
 			ExpectedCode: http.StatusMethodNotAllowed,
 		},
 		{
-			URI:          cfg.WithOAuthURI(constant.CallbackURL),
+			URI:          uri,
 			ExpectedCode: http.StatusBadRequest,
 		},
 		{
-			URI:              cfg.WithOAuthURI(constant.CallbackURL) + "?code=fake",
+			URI:              uri + "?code=fake",
 			ExpectedCookies:  map[string]string{cfg.CookieAccessName: ""},
 			ExpectedLocation: "/",
 			ExpectedCode:     http.StatusSeeOther,
 		},
 		{
-			URI:              cfg.WithOAuthURI(constant.CallbackURL) + "?code=fake&state=/admin",
+			URI:              uri + "?code=fake&state=/admin",
 			ExpectedCookies:  map[string]string{cfg.CookieAccessName: ""},
 			ExpectedLocation: "/",
 			ExpectedCode:     http.StatusSeeOther,
 		},
 		{
-			URI:              cfg.WithOAuthURI(constant.CallbackURL) + "?code=fake&state=L2FkbWlu",
+			URI:              uri + "?code=fake&state=L2FkbWlu",
 			ExpectedCookies:  map[string]string{cfg.CookieAccessName: ""},
 			ExpectedLocation: "/",
 			ExpectedCode:     http.StatusSeeOther,
@@ -879,9 +887,10 @@ func TestCallbackURL(t *testing.T) {
 
 func TestHealthHandler(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
+	uri := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.HealthURL)
 	requests := []fakeRequest{
 		{
-			URI:          cfg.WithOAuthURI(constant.HealthURL),
+			URI:          uri,
 			ExpectedCode: http.StatusOK,
 			ExpectedContent: func(body string, testNum int) {
 				assert.Equal(
@@ -892,7 +901,7 @@ func TestHealthHandler(t *testing.T) {
 			},
 		},
 		{
-			URI:          cfg.WithOAuthURI(constant.HealthURL),
+			URI:          uri,
 			Method:       http.MethodHead,
 			ExpectedCode: http.StatusMethodNotAllowed,
 		},

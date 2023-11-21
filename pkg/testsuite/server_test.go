@@ -1290,6 +1290,7 @@ func TestNoProxy(t *testing.T) {
 func TestAuthorizationTemplate(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.SignInPage = "../../templates/sign_in.html.tmpl"
+	uri := proxy.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.AuthorizationURL)
 	cfg.Resources = []*authorization.Resource{
 		{
 			URL:     "/*",
@@ -1299,7 +1300,7 @@ func TestAuthorizationTemplate(t *testing.T) {
 	}
 	requests := []fakeRequest{
 		{
-			URI:                     cfg.WithOAuthURI(constant.AuthorizationURL),
+			URI:                     uri,
 			Redirects:               true,
 			ExpectedCode:            http.StatusOK,
 			ExpectedContentContains: "Sign In",

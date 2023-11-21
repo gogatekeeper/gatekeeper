@@ -419,16 +419,6 @@ func (r *Config) ReadConfigFile(filename string) error {
 	return err
 }
 
-// WithOAuthURI returns the oauth uri
-func (r *Config) WithOAuthURI(uri string) string {
-	uri = strings.TrimPrefix(uri, "/")
-	if r.BaseURI != "" {
-		return fmt.Sprintf("%s/%s/%s", r.BaseURI, r.OAuthURI, uri)
-	}
-
-	return fmt.Sprintf("%s/%s", r.OAuthURI, uri)
-}
-
 func (r *Config) Update() error {
 	updateRegistry := []func() error{
 		r.updateDiscoveryURI,
