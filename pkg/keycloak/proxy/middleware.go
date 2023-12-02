@@ -375,6 +375,15 @@ func (r *OauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 					// step: inject the refreshed access token
 					r.Cm.DropAccessTokenCookie(req.WithContext(ctx), wrt, accessToken, accessExpiresIn)
 
+					// update the with the new access token and inject into the context
+					newUser, err := ExtractIdentity(&newAccToken)
+					if err != nil {
+						lLog.Error(err.Error())
+						//nolint:contextcheck
+						next.ServeHTTP(wrt, req.WithContext(r.accessForbidden(wrt, req)))
+						return
+					}
+
 					// step: inject the renewed refresh token
 					if newRefreshToken != "" {
 						lLog.Debug(
@@ -412,15 +421,6 @@ func (r *OauthProxy) authenticationMiddleware() func(http.Handler) http.Handler 
 						} else {
 							r.Cm.DropRefreshTokenCookie(req.WithContext(ctx), wrt, encryptedRefreshToken, refreshExpiresIn)
 						}
-					}
-
-					// update the with the new access token and inject into the context
-					newUser, err := ExtractIdentity(&newAccToken)
-					if err != nil {
-						lLog.Error(err.Error())
-						//nolint:contextcheck
-						next.ServeHTTP(wrt, req.WithContext(r.accessForbidden(wrt, req)))
-						return
 					}
 
 					// IMPORTANT: on this rely other middlewares, must be refreshed
