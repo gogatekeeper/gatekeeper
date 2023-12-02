@@ -405,7 +405,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:2.9.0
+  image: quay.io/gogatekeeper/gatekeeper:2.9.1
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -432,7 +432,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:2.9.0
+  image: quay.io/gogatekeeper/gatekeeper:2.9.1
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -745,6 +745,10 @@ traefik forward-auth configuration when you WANT to redirect user to authenticat
 server by gatekeeper (useful for e.g. frontend application authentication). Please be
 aware that in this mode you need to forward headers X-Forwarded-Host, X-Forwarded-Uri, X-Forwarded-Proto, from
 front proxy to gatekeeper. You can find more complete example [here](https://github.com/gogatekeeper/gatekeeper/blob/master/e2e/k8s/manifest_test_forwardauth.yml). 
+
+*NOTE*: Please very important is to forward `prefix` (means all paths with prefix) ```/oauth```
+directly to gatekeeper service as you can see in manifest, otherwise you will see redirect loop.
+
 *IMPORTANT*: Please ensure that you are receiving headers only from trusted proxy
 and gatekeeper is not exposed directly to internet, otherwise attacker might misuse this!
 
