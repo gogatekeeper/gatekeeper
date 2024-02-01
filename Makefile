@@ -34,12 +34,12 @@ static: golang
 
 .PHONY: container-build docker-build
 container-build: docker-build
-docker-build:
+docker-build: ## build the binary inside a container
 	@echo "--> Compiling the project, inside a temporary container"
 	@mkdir -p bin
-	$(eval IMAGE=$(shell uuidgen))
+	$(eval IMAGE=$(shell uuidgen | tr '[:upper:]' '[:lower:]'))
 	${CONTAINER_TOOL} build --target build-env -t ${IMAGE} .
-	${CONTAINER_TOOL} run --rm ${IMAGE} /bin/cat /gatekeeper > bin/gatekeeper
+	${CONTAINER_TOOL} run --rm ${IMAGE} /bin/cat /opt/gatekeeper/gatekeeper > bin/gatekeeper
 	${CONTAINER_TOOL} rmi ${IMAGE}
 	chmod +x bin/gatekeeper
 
