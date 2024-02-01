@@ -6,7 +6,7 @@ ROOT_DIR=${PWD}
 HARDWARE=$(shell uname -m)
 GIT_SHA=$(shell git --no-pager describe --always --dirty)
 BUILD_TIME=$(shell date '+%s')
-VERSION ?= $(shell awk '/release.*=/ { print $$3 }' doc.go | sed 's/"//g')
+VERSION ?= $(shell git describe --abbrev=0 --tags) # fetch the 'nearest' git tag on the current branch
 DEPS=$(shell go list -f '{{range .TestImports}}{{.}} {{end}}' ./...)
 PACKAGES=$(shell go list ./...)
 LFLAGS ?= -X main.gitsha=${GIT_SHA} -X main.compiled=${BUILD_TIME}
