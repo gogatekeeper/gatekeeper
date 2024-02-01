@@ -3,7 +3,6 @@ AUTHOR=gogatekeeper
 REGISTRY=quay.io
 CONTAINER_TOOL=$(shell command -v podman 2>/dev/null || command -v docker)
 ROOT_DIR=${PWD}
-HARDWARE=$(shell uname -m)
 GIT_SHA=$(shell git --no-pager describe --always --dirty)
 BUILD_TIME=$(shell date '+%s')
 VERSION ?= $(shell git describe --abbrev=0 --tags) # fetch the 'nearest' git tag on the current branch
@@ -11,9 +10,6 @@ DEPS=$(shell go list -f '{{range .TestImports}}{{.}} {{end}}' ./...)
 PACKAGES=$(shell go list ./...)
 LFLAGS ?= -X main.gitsha=${GIT_SHA} -X main.compiled=${BUILD_TIME}
 VETARGS ?= -asmdecl -atomic -bool -buildtags -copylocks -methods -nilfunc -printf -rangeloops -shift -unsafeptr
-PLATFORMS=darwin linux windows
-ARCHITECTURES=amd64
-
 
 default: build
 
@@ -59,10 +55,10 @@ docker-release: docker
 	${CONTAINER_TOOL} push ${REGISTRY}/${AUTHOR}/${NAME}:${VERSION}
 
 .PHONY: container docker
-container: docker
-docker:
+container: docker # podman support multiple '--platform' but for docker desktop this requires enabling 'containerd' image store. See https://docs.docker.com/desktop/containerd/#turn-on-the-containerd-image-store-feature
+docker: ## build the docker image ready for pushing to a registry
 	@echo "--> Building the container image"
-	${CONTAINER_TOOL} build -t ${REGISTRY}/${AUTHOR}/${NAME}:${VERSION} .
+	${CONTAINER_TOOL} build --platform=linux/arm64,linux/amd64 -t ${REGISTRY}/${AUTHOR}/${NAME}:${VERSION} .
 
 .PHONY: certs
 certs:
