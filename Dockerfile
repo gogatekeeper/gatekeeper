@@ -19,8 +19,7 @@ RUN mkdir -p bin && \
     TAG=$(git describe --tags) && \
     NAME=gatekeeper && \
     LFLAGS=" -X github.com/gogatekeeper/gatekeeper/pkg/proxy/core.release=$TAG -X github.com/gogatekeeper/gatekeeper/pkg/proxy/core.gitsha=$GIT_SHA -X github.com/gogatekeeper/gatekeeper/pkg/proxy/core.compiled=$BUILD_TIME" && \
-	CGO_ENABLED=0 && \
-    go build -a -tags netgo -ldflags "-extldflags=-static -s -w ${LFLAGS}" -o bin/${NAME} cmd/gatekeeper-keycloak.go
+    CGO_ENABLED=0 go build -a -tags netgo -ldflags "-s -w ${LFLAGS}" -o bin/${NAME} cmd/gatekeeper-keycloak.go
 
 WORKDIR ${HOMEDIR}
 
