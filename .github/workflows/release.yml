@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: quay.io
-  IMAGE_NAME: "gatekeeper"
+  IMAGE_NAME: "gogatekeeper/gatekeeper"
   REGISTRY_USER: "gogatekeeper+image_build"
 
 jobs:
