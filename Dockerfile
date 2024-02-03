@@ -4,13 +4,23 @@ ARG HOMEDIR=/opt/gatekeeper
 # Builder
 #
 
-FROM golang:1.21.6 AS build-env
+FROM --platform=$BUILDPLATFORM golang:1.21.6 AS build-env
 ARG HOMEDIR
+ARG TARGETOS TARGETARCH
+ENV GOOS $TARGETOS
+ENV GOARCH $TARGETARCH
 
 ADD . /src/
 WORKDIR /src/
 
-RUN make static
+RUN mkdir -p bin && \
+    GIT_SHA=$(git --no-pager describe --always --dirty) && \
+    BUILD_TIME=$(date '+%s') && \
+    TAG=$(git describe --tags) && \
+    NAME=gatekeeper && \
+    LFLAGS=" -X github.com/gogatekeeper/gatekeeper/pkg/proxy/core.release=$TAG -X github.com/gogatekeeper/gatekeeper/pkg/proxy/core.gitsha=$GIT_SHA -X github.com/gogatekeeper/gatekeeper/pkg/proxy/core.compiled=$BUILD_TIME" && \
+	CGO_ENABLED=0 && \
+    go build -a -tags netgo -ldflags "-s -w ${LFLAGS}" -o bin/${NAME} cmd/gatekeeper-keycloak.go
 
 WORKDIR ${HOMEDIR}
 
@@ -27,7 +37,7 @@ RUN echo "gatekeeper:x:1000:gatekeeper" >> /etc/group && \
 # Actual image
 #
 
-FROM scratch
+FROM --platform=$BUILDPLATFORM scratch
 ARG HOMEDIR
 
 LABEL Name=gatekeeper \
