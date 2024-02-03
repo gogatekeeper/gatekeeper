@@ -37,7 +37,7 @@ RUN echo "gatekeeper:x:1000:gatekeeper" >> /etc/group && \
 # Actual image
 #
 
-FROM --platform=$BUILDPLATFORM scratch
+FROM scratch
 ARG HOMEDIR
 
 LABEL Name=gatekeeper \
