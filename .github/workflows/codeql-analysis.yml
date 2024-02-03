@@ -25,17 +25,21 @@ jobs:
     - run: git checkout HEAD^2
       if: ${{ github.event_name == 'pull_request' }}
 
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: "1.21.6"
+
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v1
-      # Override language selection by uncommenting this and choosing your languages
-      # with:
-      #   languages: go, javascript, csharp, python, cpp, java
+      uses: github/codeql-action/init@v3
+      with:
+        languages: go
 
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     # If this step fails, then you should remove it and run the build manually (see below)
     - name: Autobuild
-      uses: github/codeql-action/autobuild@v1
+      uses: github/codeql-action/autobuild@v3
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 https://git.io/JvXDl
@@ -49,4 +53,4 @@ jobs:
     #   make release
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+      uses: github/codeql-action/analyze@v3
