@@ -232,7 +232,7 @@ the token, it isn't checked for some claims or roles, groups etc...(this is by d
 `--enable-default-deny-strict` (recommended) - option blocks all requests (including valid token) unless
 specific path with requirements specified in resources (this option is by default false)
 
-## OpenID Provider Communication
+## Upstream Host Proxy and OpenID Provider Proxy
 
 By default the communication with the OpenID provider is direct. If you
 wish, you can specify a forwarding proxy server in your configuration
@@ -241,6 +241,18 @@ file:
 ``` yaml
 openid-provider-proxy: http://proxy.example.com:8080
 ```
+
+or you can use standard env variables: `HTTP_PROXY, HTTPS_PROXY, NO_PROXY`
+
+By default also communication with upstream is direct, if you would like
+to use proxy server to forward traffic upstream you can use configuration file:
+
+```yaml
+upstream-proxy: http://proxy.example.com:8080
+upstream-no-proxy: http://donotproxy.example.com:8080
+```
+
+or corresponding env variables: `PROXY_UPSTREAM_PROXY, PROXY_UPSTREAM_NO_PROXY`
 
 ## HTTP routing
 
@@ -405,7 +417,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:2.9.6
+  image: quay.io/gogatekeeper/gatekeeper:2.10.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -432,7 +444,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:2.9.6
+  image: quay.io/gogatekeeper/gatekeeper:2.10.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local

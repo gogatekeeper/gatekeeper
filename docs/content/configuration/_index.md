@@ -22,6 +22,8 @@ weight: 2
 |    --openid-provider-timeout value         | timeout for openid configuration on .well-known/openid-configuration | 30s | PROXY_OPENID_PROVIDER_TIMEOUT
 |    --openid-provider-retry-count value     | number of retries for retrieving openid configuration | 3 | PROXY_OPENID_PROVIDER_RETRY_COUNT
 |    --openid-provider-headers value         | http headers sent to idp provider | |
+|    --upstream-proxy                        | proxy for communication with upstream | | PROXY_UPSTREAM_PROXY
+|    --upstream-no-proxy                     | list of upstream destinations which should be not proxied | | PROXY_UPSTREAM_NO_PROXY
 |    --base-uri value                        | common prefix for all URIs | | PROXY_BASE_URI
 |    --oauth-uri value                       | the uri for proxy oauth endpoints | /oauth | PROXY_OAUTH_URI
 |    --scopes value                          | list of scopes requested when authenticating the user | |
