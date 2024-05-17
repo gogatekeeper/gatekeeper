@@ -322,7 +322,7 @@ yaml example:
 ```yaml
   allowed-query-params:
     myparam: "myvalue"
-    yourparam: "yourvalueF"
+    yourparam: "yourvalue"
 ```
 
 ## TCP proxy with HTTP CONNECT
