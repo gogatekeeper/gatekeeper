@@ -85,18 +85,6 @@ func AuthenticationMiddleware(
 			// https://github.com/coreos/go-oidc/issues/402
 			oidcLibCtx := context.WithValue(ctx, oauth2.HTTPClient, httpClient)
 
-			if enableIDPSessionCheck {
-				tokenSource := oauth2.StaticTokenSource(
-					&oauth2.Token{AccessToken: user.RawToken},
-				)
-				_, err := provider.UserInfo(oidcLibCtx, tokenSource)
-				if err != nil {
-					scope.Logger.Error(err.Error())
-					redirectToAuthorization(wrt, req)
-					return
-				}
-			}
-
 			// step: skip if we are running skip-token-verification
 			if skipTokenVerification {
 				scope.Logger.Warn(
@@ -311,6 +299,18 @@ func AuthenticationMiddleware(
 					newUser.RawToken = newRawAccToken
 					scope.Identity = newUser
 					ctx = context.WithValue(req.Context(), constant.ContextScopeName, scope)
+				}
+			}
+
+			if enableIDPSessionCheck {
+				tokenSource := oauth2.StaticTokenSource(
+					&oauth2.Token{AccessToken: user.RawToken},
+				)
+				_, err := provider.UserInfo(oidcLibCtx, tokenSource)
+				if err != nil {
+					scope.Logger.Error(err.Error())
+					redirectToAuthorization(wrt, req)
+					return
 				}
 			}
 

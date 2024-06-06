@@ -1530,6 +1530,35 @@ func TestRefreshToken(t *testing.T) {
 			},
 		},
 		{
+			Name: "TestRefreshTokenWithIdpSessionCheck",
+			ProxySettings: func(conf *config.Config) {
+				conf.EnableIDPSessionCheck = true
+				conf.EnableRefreshTokens = true
+				conf.EnableEncryptedToken = true
+				conf.Verbose = true
+				conf.EnableLogging = true
+				conf.EncryptionKey = testEncryptionKey
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:                           FakeAuthAllURL,
+					HasLogin:                      true,
+					Redirects:                     true,
+					OnResponse:                    delay,
+					ExpectedProxy:                 true,
+					ExpectedCode:                  http.StatusOK,
+					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{cfg.CookieRefreshName: checkRefreshTokenEncryption},
+				},
+				{
+					URI:           FakeAuthAllURL,
+					Redirects:     false,
+					HasLogin:      false,
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+				},
+			},
+		},
+		{
 			Name: "TestRefreshTokenEncryptionWithClientIDAndIssuerCheckOn",
 			ProxySettings: func(conf *config.Config) {
 				conf.EnableRefreshTokens = true
@@ -2888,7 +2917,7 @@ func TestAuthenticationMiddleware(t *testing.T) {
 					RawToken:          badlySignedToken,
 					HasCookieToken:    true,
 					ExpectedProxy:     false,
-					ExpectedCode:      http.StatusSeeOther,
+					ExpectedCode:      http.StatusForbidden,
 				},
 			},
 		},
