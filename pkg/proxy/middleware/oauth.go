@@ -304,7 +304,7 @@ func AuthenticationMiddleware(
 
 			if enableIDPSessionCheck {
 				tokenSource := oauth2.StaticTokenSource(
-					&oauth2.Token{AccessToken: user.RawToken},
+					&oauth2.Token{AccessToken: scope.Identity.RawToken},
 				)
 				_, err := provider.UserInfo(oidcLibCtx, tokenSource)
 				if err != nil {
