@@ -220,8 +220,7 @@ You can use gatekeeper to protect APIs, frontend server applications, frontend c
 Frontend server-side applications can be protected by Authorization Code Flow (also with PKCE), during which several redirection
 steps take place. For protecting APIs you can use Client Credentials Grant to avoid redirections steps
 involved in authorization code flow you have to use `--no-redirects=true`. For frontend applications
-you can use Authorization Code Flow (also with PKCE) with encrypted refresh token cookies enabled, in this case however you have to handle redirections
-at login/logout and you must make cookies available to js (less secure, altough at least they are encrypted).
+you can use Authorization Code Flow (also with PKCE) with encrypted refresh token cookies enabled, in this case however you have to handle redirections, e.g. at token expiration.
 
 ## Default Deny
 
@@ -471,7 +470,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:2.11.0
+  image: quay.io/gogatekeeper/gatekeeper:2.12.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -498,7 +497,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:2.11.0
+  image: quay.io/gogatekeeper/gatekeeper:2.12.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
