@@ -17,7 +17,6 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -32,11 +31,12 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/config/core"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
+	redis "github.com/redis/go-redis/v9"
 	"gopkg.in/yaml.v2"
 )
 
-// Config is the configuration for the proxy
-//
+var _ core.Configs = &Config{}
+
 //nolint:musttag
 type Config struct {
 	core.CommonConfig
@@ -60,6 +60,9 @@ type Config struct {
 	RedirectionURL string `env:"REDIRECTION_URL" json:"redirection-url" usage:"redirection url for the oauth callback url, defaults to host header if absent" yaml:"redirection-url"`
 	// PostLogoutRedirectUri the url to which is redirected after logout
 	PostLogoutRedirectURI string `env:"POST_LOGOUT_REDIRECT_URI" json:"post-logout-redirect-uri" usage:"url to which client is redirected after successful logout" yaml:"post-logout-redirect-uri"`
+	// PostLoginRedirectPath path to which is redirected after login
+	PostLoginRedirectPath string `env:"POST_LOGIN_REDIRECT_PATH" json:"post-login-redirect-path" usage:"path to which client is redirected after successful login, in case user access /" yaml:"post-login-redirect-path"`
+
 	// RevocationEndpoint is the token revocation endpoint to revoke refresh tokens
 	RevocationEndpoint string `env:"REVOCATION_URL" json:"revocation-url" usage:"url for the revocation endpoint to revoke refresh token" yaml:"revocation-url"`
 	// SkipOpenIDProviderTLSVerify skips the tls verification for openid provider communication
@@ -72,6 +75,10 @@ type Config struct {
 	OpenIDProviderRetryCount int `env:"OPENID_PROVIDER_RETRY_COUNT" json:"openid-provider-retry-count" usage:"number of retries for retrieving openid configuration" yaml:"openid-provider-retry-count"`
 	// OpenIDProviderHeaders
 	OpenIDProviderHeaders map[string]string `json:"openid-provider-headers" usage:"http headers sent to idp provider" yaml:"openid-provider-headers"`
+	// UpstreamProxy proxy for upstream communication
+	UpstreamProxy string `env:"UPSTREAM_PROXY" json:"upstream-proxy" usage:"proxy for communication with upstream" yaml:"upstream-proxy"`
+	// UpstreamNoProxy list of upstream destinations which should be not proxied
+	UpstreamNoProxy string `env:"UPSTREAM_NO_PROXY" json:"upstream-no-proxy" usage:"list of upstream destinations which should be not proxied" yaml:"upstream-no-proxy"`
 	// BaseURI is prepended to all the generated URIs
 	BaseURI string `env:"BASE_URI" json:"base-uri" usage:"common prefix for all URIs" yaml:"base-uri"`
 	// OAuthURI is the uri for the oauth endpoints for the proxy
@@ -157,12 +164,10 @@ type Config struct {
 	// EnableCompression enables gzip compression for response
 	EnableCompression bool `env:"ENABLE_COMPRESSION" json:"enable-compression" usage:"enable gzip compression for response" yaml:"enable-compression"`
 	// EnablePKCE, only S256 code challenge method is supported
-	EnablePKCE bool `env:"ENABLE_PKCE" json:"enable-pkce" usage:"enable pkce for auth code flow, only S256 code challenge supported" yaml:"enable-pkce"`
-
-	EnableUma   bool          `env:"ENABLE_UMA"    json:"enable-uma"    usage:"enable uma authorization, please don't use it in production, we would like to receive feedback" yaml:"enable-uma"`
-	EnableOpa   bool          `env:"ENABLE_OPA"    json:"enable-opa"    usage:"enable authorization with external Open policy agent"                                           yaml:"enable-opa"`
-	OpaTimeout  time.Duration `env:"OPA_TIMEOUT"   json:"opa-timeout"   usage:"timeout for connection to OPA"                                                                  yaml:"opa-timeout"`
-	OpaAuthzURI string        `env:"OPA_AUTHZ_URI" json:"opa-authz-uri" usage:"OPA endpoint address with path"                                                                 yaml:"opa-authz-uri"`
+	EnablePKCE  bool          `env:"ENABLE_PKCE"              json:"enable-pkce"              usage:"enable pkce for auth code flow, only S256 code challenge supported"                                  yaml:"enable-pkce"`
+	EnableOpa   bool          `env:"ENABLE_OPA"               json:"enable-opa"               usage:"enable authorization with external Open policy agent"                                                yaml:"enable-opa"`
+	OpaTimeout  time.Duration `env:"OPA_TIMEOUT"              json:"opa-timeout"              usage:"timeout for connection to OPA"                                                                       yaml:"opa-timeout"`
+	OpaAuthzURI string        `env:"OPA_AUTHZ_URI"            json:"opa-authz-uri"            usage:"OPA endpoint address with path"                                                                      yaml:"opa-authz-uri"`
 
 	PatRetryCount    int           `env:"PAT_RETRY_COUNT"    json:"pat-retry-count"    usage:"number of retries to get PAT"        yaml:"pat-retry-count"`
 	PatRetryInterval time.Duration `env:"PAT_RETRY_INTERVAL" json:"pat-retry-interval" usage:"interval between retries to get PAT" yaml:"pat-retry-interval"`
@@ -190,6 +195,7 @@ type Config struct {
 	// SameSiteCookie enforces cookies to be send only to same site requests.
 	SameSiteCookie string `env:"SAME_SITE_COOKIE" json:"same-site-cookie" usage:"enforces cookies to be send only to same site requests according to the policy (can be Strict|Lax|None)" yaml:"same-site-cookie"`
 
+	EnableIDTokenCookie bool `env:"ENABLE_IDTOKEN_COOKIE" json:"enable-id-token-cookie" usage:"enable id token cookie" yaml:"enable-id-token-cookie"`
 	// MatchClaims is a series of checks, the claims in the token must match those here
 	MatchClaims map[string]string `json:"match-claims" usage:"keypair values for matching access token claims e.g. aud=myapp, iss=http://example.*" yaml:"match-claims"`
 	// AddClaims is a series of claims that should be added to the auth headers
@@ -235,9 +241,11 @@ type Config struct {
 	Hostnames []string `json:"hostnames" usage:"list of hostnames the service will respond to" yaml:"hostnames"`
 
 	// Store is a url for a store resource, used to hold the refresh tokens
-	StoreURL string `env:"STORE_URL" json:"store-url" usage:"url for the storage subsystem, e.g redis://127.0.0.1:6379, file:///etc/tokens.file" yaml:"store-url"`
+	StoreURL string `env:"STORE_URL" json:"store-url" usage:"url for the storage subsystem, e.g redis://user:secret@localhost:6379/0?protocol=3, only supported is redis usig redis uri spec" yaml:"store-url"`
 	// EncryptionKey is the encryption key used to encrypt the refresh token
 	EncryptionKey string `env:"ENCRYPTION_KEY" json:"encryption-key" usage:"encryption key used to encryption the session state" yaml:"encryption-key"`
+	// EnableHmac enables creating hmac for forwarded requests and verifications for incoming requests
+	EnableHmac bool `env:"Enable_HMAC" json:"enable-hmac" usage:"enable creating hmac for forwarded requests and verification on incoming requests"`
 
 	// NoProxy it passed through all middleware but not proxy to upstream, useful when using as auth backend for forward-auth (nginx, traefik)
 	NoProxy bool `env:"NO_PROXY" json:"no-proxy" usage:"do not proxy requests to upstream, useful for forward-auth usage (with nginx, traefik)" yaml:"no-proxy"`
@@ -306,11 +314,8 @@ type Config struct {
 
 	// DisableAllLogging indicates no logging at all
 	DisableAllLogging bool `env:"DISABLE_ALL_LOGGING" json:"disable-all-logging" usage:"disables all logging to stdout and stderr" yaml:"disable-all-logging"`
-	// this is non-configurable field, derived from discoveryurl at initialization
-	Realm               string
-	DiscoveryURI        *url.URL
-	OpaAuthzURL         *url.URL
-	IsDiscoverURILegacy bool
+	DiscoveryURI      *url.URL
+	OpaAuthzURL       *url.URL
 }
 
 // NewDefaultConfig returns a initialized config
@@ -422,20 +427,9 @@ func (r *Config) ReadConfigFile(filename string) error {
 	return err
 }
 
-// WithOAuthURI returns the oauth uri
-func (r *Config) WithOAuthURI(uri string) string {
-	uri = strings.TrimPrefix(uri, "/")
-	if r.BaseURI != "" {
-		return fmt.Sprintf("%s/%s/%s", r.BaseURI, r.OAuthURI, uri)
-	}
-
-	return fmt.Sprintf("%s/%s", r.OAuthURI, uri)
-}
-
 func (r *Config) Update() error {
 	updateRegistry := []func() error{
 		r.updateDiscoveryURI,
-		r.extractDiscoveryURIComponents,
 	}
 
 	for _, updateFunc := range updateRegistry {
@@ -467,6 +461,7 @@ func (r *Config) IsValid() error {
 		r.isAdminTLSFilesValid,
 		r.isLetsEncryptValid,
 		r.isTLSMinValid,
+		r.isUpstreamProxyValid,
 		r.isForwardingProxySettingsValid,
 		r.isReverseProxySettingsValid,
 	}
@@ -497,7 +492,7 @@ func (r *Config) HasCustomErrorPage() bool {
 
 func (r *Config) isListenValid() error {
 	if r.Listen == "" {
-		return errors.New("you have not specified the listening interface")
+		return apperrors.ErrMissingListenInterface
 	}
 	return nil
 }
@@ -505,7 +500,7 @@ func (r *Config) isListenValid() error {
 func (r *Config) isListenAdminSchemeValid() error {
 	if r.ListenAdminScheme != constant.SecureScheme &&
 		r.ListenAdminScheme != constant.UnsecureScheme {
-		return errors.New("scheme for admin listener must be one of [http, https]")
+		return apperrors.ErrAdminListenerScheme
 	}
 	return nil
 }
@@ -515,7 +510,7 @@ func (r *Config) isOpenIDProviderProxyValid() error {
 		_, err := url.ParseRequestURI(r.OpenIDProviderProxy)
 
 		if err != nil {
-			return errors.New("invalid proxy address for open IDP provider proxy")
+			return apperrors.ErrInvalidIdpProviderProxyURI
 		}
 	}
 
@@ -524,14 +519,11 @@ func (r *Config) isOpenIDProviderProxyValid() error {
 
 func (r *Config) isMaxIdlleConnValid() error {
 	if r.MaxIdleConns <= 0 {
-		return errors.New("max-idle-connections must be a number > 0")
+		return apperrors.ErrInvalidMaxIdleConnections
 	}
 
 	if r.MaxIdleConnsPerHost < 0 || r.MaxIdleConnsPerHost > r.MaxIdleConns {
-		return errors.New(
-			"maxi-idle-connections-per-host must be a " +
-				"number > 0 and <= max-idle-connections",
-		)
+		return apperrors.ErrInvalidMaxIdleConnsPerHost
 	}
 	return nil
 }
@@ -539,7 +531,7 @@ func (r *Config) isMaxIdlleConnValid() error {
 func (r *Config) isSameSiteValid() error {
 	if r.SameSiteCookie != "" && r.SameSiteCookie != constant.SameSiteStrict &&
 		r.SameSiteCookie != constant.SameSiteLax && r.SameSiteCookie != constant.SameSiteNone {
-		return errors.New("same-site-cookie must be one of Strict|Lax|None")
+		return apperrors.ErrInvalidSameSiteCookie
 	}
 	return nil
 }
@@ -547,11 +539,11 @@ func (r *Config) isSameSiteValid() error {
 //nolint:cyclop
 func (r *Config) isTLSFilesValid() error {
 	if r.TLSCertificate != "" && r.TLSPrivateKey == "" {
-		return errors.New("you have not provided a private key")
+		return apperrors.ErrMissingPrivateKey
 	}
 
 	if r.TLSPrivateKey != "" && r.TLSCertificate == "" {
-		return errors.New("you have not provided a certificate file")
+		return apperrors.ErrMissingCert
 	}
 
 	if r.TLSCertificate != "" && !utils.FileExists(r.TLSCertificate) {
@@ -582,13 +574,11 @@ func (r *Config) isTLSFilesValid() error {
 //nolint:cyclop
 func (r *Config) isAdminTLSFilesValid() error {
 	if r.TLSAdminCertificate != "" && r.TLSAdminPrivateKey == "" {
-		return errors.New("you have not provided a private key for admin endpoint")
+		return apperrors.ErrMissingAdminEndpointPrivateKey
 	}
 
 	if r.TLSAdminPrivateKey != "" && r.TLSAdminCertificate == "" {
-		return errors.New(
-			"you have not provided a certificate file for admin endpoint",
-		)
+		return apperrors.ErrMissingAdminEndpointCert
 	}
 
 	if r.TLSAdminCertificate != "" && !utils.FileExists(r.TLSAdminCertificate) {
@@ -624,7 +614,7 @@ func (r *Config) isAdminTLSFilesValid() error {
 
 func (r *Config) isLetsEncryptValid() error {
 	if r.UseLetsEncrypt && r.LetsEncryptCacheDir == "" {
-		return fmt.Errorf("the letsencrypt cache dir has not been set")
+		return apperrors.ErrMissingLetsEncryptCacheDir
 	}
 	return nil
 }
@@ -632,13 +622,22 @@ func (r *Config) isLetsEncryptValid() error {
 func (r *Config) isTLSMinValid() error {
 	switch strings.ToLower(r.TLSMinVersion) {
 	case "":
-		return fmt.Errorf("minimal TLS version should not be empty")
+		return apperrors.ErrMinimalTLSVersionEmpty
 	case "tlsv1.0":
 	case "tlsv1.1":
 	case "tlsv1.2":
 	case "tlsv1.3":
 	default:
-		return fmt.Errorf("invalid minimal TLS version specified")
+		return apperrors.ErrInvalidMinimalTLSVersion
+	}
+	return nil
+}
+
+func (r *Config) isUpstreamProxyValid() error {
+	if r.UpstreamProxy != "" {
+		if _, err := url.ParseRequestURI(r.UpstreamProxy); err != nil {
+			return fmt.Errorf("the upstream proxy is invalid, %s", err)
+		}
 	}
 	return nil
 }
@@ -649,19 +648,16 @@ func (r *Config) isForwardingProxySettingsValid() error {
 			r.isClientIDValid,
 			r.isDiscoveryURLValid,
 			r.isForwardingGrantValid,
+			r.isEnableHmacValid,
 			func() error {
 				if r.TLSCertificate != "" {
-					return errors.New("you don't need to specify a " +
-						"tls-certificate, use tls-ca-certificate instead",
-					)
+					return apperrors.ErrInvalidForwardTLSCertOpt
 				}
 				return nil
 			},
 			func() error {
 				if r.TLSPrivateKey != "" {
-					return errors.New("you don't need to specify the " +
-						"tls-private-key, use tls-ca-key instead",
-					)
+					return apperrors.ErrInvalidForwardTLSKeyOpt
 				}
 				return nil
 			},
@@ -688,6 +684,10 @@ func (r *Config) isReverseProxySettingsValid() error {
 			r.isResourceValid,
 			r.isMatchClaimValid,
 			r.isPKCEValid,
+			r.isPostLoginRedirectValid,
+			r.isEnableHmacValid,
+			r.isPostLogoutRedirectURIValid,
+			r.isAllowedQueryParamsValid,
 		}
 
 		for _, validationFunc := range validationRegistry {
@@ -730,17 +730,14 @@ func (r *Config) isTokenVerificationSettingsValid() error {
 
 func (r *Config) isNoProxyValid() error {
 	if r.NoProxy && !r.NoRedirects && r.RedirectionURL != "" {
-		return errors.New("when in forward-auth mode - " +
-			"noproxy=true with noredirect=false, redirectionURL " +
-			"should not be set, will be composed from X-FORWARDED-* headers",
-		)
+		return apperrors.ErrRedundantRedirectURIinForwardAuthMode
 	}
 	return nil
 }
 
 func (r *Config) isUpstreamValid() error {
 	if r.Upstream == "" && !r.NoProxy {
-		return errors.New("you have not specified an upstream endpoint to proxy to")
+		return apperrors.ErrMissingUpstream
 	}
 
 	if !r.NoProxy {
@@ -758,14 +755,14 @@ func (r *Config) isUpstreamValid() error {
 
 func (r *Config) isClientIDValid() error {
 	if r.ClientID == "" {
-		return errors.New("you have not specified the client id")
+		return apperrors.ErrMissingClientID
 	}
 	return nil
 }
 
 func (r *Config) isDiscoveryURLValid() error {
 	if r.DiscoveryURL == "" {
-		return errors.New("you have not specified the discovery url")
+		return apperrors.ErrMissingDiscoveryURI
 	}
 	return nil
 }
@@ -773,17 +770,16 @@ func (r *Config) isDiscoveryURLValid() error {
 func (r *Config) isForwardingGrantValid() error {
 	if r.ForwardingGrantType == core.GrantTypeUserCreds {
 		if r.ForwardingUsername == "" {
-			return errors.New("no forwarding username")
+			return apperrors.ErrMissingForwardUser
 		}
-
 		if r.ForwardingPassword == "" {
-			return errors.New("no forwarding password")
+			return apperrors.ErrMissingForwardPass
 		}
 	}
 
 	if r.ForwardingGrantType == core.GrantTypeClientCreds {
 		if r.ClientSecret == "" {
-			return errors.New("you have not specified the client secret")
+			return apperrors.ErrMissingClientSecret
 		}
 	}
 
@@ -793,36 +789,23 @@ func (r *Config) isForwardingGrantValid() error {
 func (r *Config) isSecurityFilterValid() error {
 	if !r.EnableSecurityFilter {
 		if r.EnableHTTPSRedirect {
-			return errors.New(
-				"the security filter must be switch on for this feature: http-redirect",
-			)
+			return apperrors.ErrSecFilterDisabledForHTTPSRedirect
 		}
 
 		if r.EnableBrowserXSSFilter {
-			return errors.New(
-				"the security filter must be switch on " +
-					"for this feature: brower-xss-filter",
-			)
+			return apperrors.ErrSecFilterDisabledForXSSFilter
 		}
 
 		if r.EnableFrameDeny {
-			return errors.New(
-				"the security filter must be switch on " +
-					"for this feature: frame-deny-filter",
-			)
+			return apperrors.ErrSecFilterDisabledForFrameDenyFilter
 		}
 
 		if r.ContentSecurityPolicy != "" {
-			return errors.New(
-				"the security filter must be switch on " +
-					"for this feature: content-security-policy",
-			)
+			return apperrors.ErrSecFilterDisabledForCSPFilter
 		}
 
 		if len(r.Hostnames) > 0 {
-			return errors.New(
-				"the security filter must be switch on for this feature: hostnames",
-			)
+			return apperrors.ErrSecFilterDisabledForHostnames
 		}
 	}
 
@@ -832,15 +815,11 @@ func (r *Config) isSecurityFilterValid() error {
 func (r *Config) isTokenEncryptionValid() error {
 	if (r.EnableEncryptedToken || r.ForceEncryptedCookie) &&
 		r.EncryptionKey == "" {
-		return errors.New(
-			"you have not specified an encryption key for encoding the access token",
-		)
+		return apperrors.ErrMissingEncryptionKey
 	}
 
 	if r.EnableRefreshTokens && r.EncryptionKey == "" {
-		return errors.New(
-			"enable refresh tokens requires encryption key to be defined",
-		)
+		return apperrors.ErrMissingEncryptionKeyForRefreshTokens
 	}
 
 	if r.EnableRefreshTokens && (len(r.EncryptionKey) != 16 &&
@@ -858,9 +837,7 @@ func (r *Config) isTokenEncryptionValid() error {
 func (r *Config) isSecureCookieValid() error {
 	if !r.NoRedirects && r.SecureCookie && r.RedirectionURL != "" &&
 		!strings.HasPrefix(r.RedirectionURL, "https") {
-		return errors.New(
-			"the cookie is set to secure but your redirection url is non-tls",
-		)
+		return apperrors.ErrSecureCookieWithNonTLSRedirectionURI
 	}
 
 	return nil
@@ -868,7 +845,7 @@ func (r *Config) isSecureCookieValid() error {
 
 func (r *Config) isStoreURLValid() error {
 	if r.StoreURL != "" {
-		if _, err := url.ParseRequestURI(r.StoreURL); err != nil {
+		if _, err := redis.ParseURL(r.StoreURL); err != nil {
 			return fmt.Errorf("the store url is invalid, error: %s", err)
 		}
 	}
@@ -920,24 +897,7 @@ func (r *Config) isMatchClaimValid() error {
 }
 
 func (r *Config) isExternalAuthzValid() error {
-	if r.EnableUma && r.EnableOpa {
-		return errors.New(
-			"only one type of external authz can be enabled at once",
-		)
-	}
-
-	if r.EnableUma {
-		if r.ClientID == "" || r.ClientSecret == "" {
-			return errors.New(
-				"enable uma requires client credentials",
-			)
-		}
-		if !r.NoRedirects {
-			return errors.New(
-				"enable-uma requires no-redirects option",
-			)
-		}
-	} else if r.EnableOpa {
+	if r.EnableOpa {
 		authzURL, err := url.ParseRequestURI(r.OpaAuthzURI)
 
 		if err != nil {
@@ -952,9 +912,7 @@ func (r *Config) isExternalAuthzValid() error {
 
 func (r *Config) isDefaultDenyValid() error {
 	if r.EnableDefaultDeny && r.EnableDefaultDenyStrict {
-		return errors.New(
-			"only one of enable-default-deny/enable-default-deny-strict can be true",
-		)
+		return apperrors.ErrTooManyDefaultDenyOpts
 	}
 	return nil
 }
@@ -981,31 +939,61 @@ func (r *Config) updateDiscoveryURI() error {
 	return nil
 }
 
-func (r *Config) extractDiscoveryURIComponents() error {
-	reg := regexp.MustCompile(
-		`(?P<legacy>(/auth){0,1})/realms/(?P<realm>[^/]+)(/{0,1}).*`,
-	)
-
-	matches := reg.FindStringSubmatch(r.DiscoveryURI.Path)
-
-	if len(matches) == 0 {
-		return apperrors.ErrBadDiscoveryURIFormat
-	}
-
-	legacyIndex := reg.SubexpIndex("legacy")
-	realmIndex := reg.SubexpIndex("realm")
-
-	if matches[legacyIndex] != "" {
-		r.IsDiscoverURILegacy = true
-	}
-
-	r.Realm = matches[realmIndex]
-	return nil
-}
-
 func (r *Config) isPKCEValid() error {
 	if r.NoRedirects && r.EnablePKCE {
 		return apperrors.ErrPKCEWithCodeOnly
+	}
+	return nil
+}
+
+func (r *Config) isPostLoginRedirectValid() error {
+	if r.PostLoginRedirectPath != "" && r.NoRedirects {
+		return apperrors.ErrPostLoginRedirectPathNoRedirectsInvalid
+	}
+	if r.PostLoginRedirectPath != "" {
+		parsedURI, err := url.ParseRequestURI(r.PostLoginRedirectPath)
+		if err != nil {
+			return err
+		}
+		if parsedURI.Host != "" || parsedURI.Scheme != "" {
+			return apperrors.ErrInvalidPostLoginRedirectPath
+		}
+	}
+	return nil
+}
+
+func (r *Config) isEnableHmacValid() error {
+	if r.EnableHmac && r.EncryptionKey == "" {
+		return apperrors.ErrHmacRequiresEncKey
+	}
+	return nil
+}
+
+func (r *Config) isPostLogoutRedirectURIValid() error {
+	if r.PostLogoutRedirectURI != "" && !r.EnableIDTokenCookie {
+		return apperrors.ErrPostLogoutRedirectURIRequiresIDToken
+	}
+	return nil
+}
+
+func (r *Config) isAllowedQueryParamsValid() error {
+	if (len(r.AllowedQueryParams) > 0 || len(r.DefaultAllowedQueryParams) > 0) && r.NoRedirects {
+		return apperrors.ErrAllowedQueryParamsWithNoRedirects
+	}
+	if len(r.DefaultAllowedQueryParams) > len(r.AllowedQueryParams) {
+		return apperrors.ErrTooManyDefaultAllowedQueryParams
+	}
+	for k, val := range r.DefaultAllowedQueryParams {
+		if val == "" {
+			return apperrors.ErrDefaultAllowedQueryParamEmpty
+		}
+		allowedVal, ok := r.AllowedQueryParams[k]
+		if !ok {
+			return apperrors.ErrMissingDefaultQueryParamInAllowed
+		}
+		if allowedVal != "" && val != allowedVal {
+			return apperrors.ErrDefaultQueryParamNotAllowed
+		}
 	}
 	return nil
 }

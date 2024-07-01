@@ -18,7 +18,10 @@ package proxy
 import (
 	"reflect"
 
+	googleproxy "github.com/gogatekeeper/gatekeeper/pkg/google/proxy"
+
 	configcore "github.com/gogatekeeper/gatekeeper/pkg/config/core"
+	googleconfig "github.com/gogatekeeper/gatekeeper/pkg/google/config"
 	keycloakconfig "github.com/gogatekeeper/gatekeeper/pkg/keycloak/config"
 	keycloakproxy "github.com/gogatekeeper/gatekeeper/pkg/keycloak/proxy"
 	proxycore "github.com/gogatekeeper/gatekeeper/pkg/proxy/core"
@@ -32,6 +35,12 @@ func ProduceProxy(cfg configcore.Configs) (proxycore.OauthProxies, error) {
 			panic("unexpected assertion problem")
 		}
 		return keycloakproxy.NewProxy(c, nil, nil)
+	case reflect.TypeOf(&(googleconfig.Config{})):
+		c, ok := cfg.(*googleconfig.Config)
+		if !ok {
+			panic("unexpected assertion problem")
+		}
+		return googleproxy.NewProxy(c, nil, nil)
 	default:
 		c, ok := cfg.(*keycloakconfig.Config)
 		if !ok {
