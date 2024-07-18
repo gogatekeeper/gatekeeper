@@ -35,7 +35,7 @@ docker run -it --rm quay.io/gogatekeeper/gatekeeper:2.13.0 \
       --client-id <CLIENT_ID>
 ```
 
-For more details refer to the [Documentation](docs/user-guide.md).
+For more details refer to the [Documentation](https://gogatekeeper.github.io/gatekeeper).
 
 
 ### Verifying Download
