@@ -27,6 +27,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -563,7 +564,7 @@ func TestSkipOpenIDProviderTLSVerifyForwardingProxy(t *testing.T) {
 	cfg.ForwardingUsername = ValidUsername
 	cfg.ForwardingPassword = ValidPassword
 	cfg.SkipOpenIDProviderTLSVerify = true
-	cfg.ForwardingGrantType = "password"
+	cfg.ForwardingGrantType = constant.ForwardingGrantTypePassword
 	s := httptest.NewServer(&FakeUpstreamService{})
 	requests := []fakeRequest{
 		{
@@ -2161,6 +2162,83 @@ func TestCustomHTTPMethod(t *testing.T) {
 				testCase.ProxySettings(c)
 				p := newFakeProxy(c, &fakeAuthConfig{})
 				p.RunTests(t, testCase.ExecutionSettings)
+			},
+		)
+	}
+}
+
+func TestGraceTimeout(t *testing.T) {
+	cfg := newFakeKeycloakConfig()
+	cfg.EnableForwarding = true
+	cfg.PatRetryCount = 5
+	cfg.PatRetryInterval = 2 * time.Second
+	cfg.OpenIDProviderTimeout = 30 * time.Second
+	cfg.ForwardingDomains = []string{}
+	cfg.ForwardingUsername = ValidUsername
+	cfg.ForwardingPassword = ValidPassword
+	cfg.SkipOpenIDProviderTLSVerify = true
+	cfg.ForwardingGrantType = constant.ForwardingGrantTypePassword
+
+	fakeServer := httptest.NewServer(&FakeUpstreamService{})
+
+	testCases := []struct {
+		Name                 string
+		ServerGraceTimeout   time.Duration
+		ResponseDelay        string
+		ExpectedCode         int
+		ExpectedRequestError string
+		ExpectedProxy        bool
+	}{
+		{
+			Name:                 "TestGraceTimeout",
+			ServerGraceTimeout:   2 * time.Second,
+			ResponseDelay:        "1",
+			ExpectedCode:         http.StatusOK,
+			ExpectedRequestError: "",
+			ExpectedProxy:        true,
+		},
+		{
+			Name:                 "TestGraceTimeoutClosedServer",
+			ServerGraceTimeout:   time.Second,
+			ResponseDelay:        "2",
+			ExpectedCode:         0,
+			ExpectedRequestError: "EOF",
+			ExpectedProxy:        false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				cfg.ServerGraceTimeout = testCase.ServerGraceTimeout
+
+				var waitShutdown sync.WaitGroup
+				waitShutdown.Add(1)
+
+				requests := []fakeRequest{
+					{
+						URL:                  fakeServer.URL + FakeTestURL,
+						ProxyRequest:         true,
+						ExpectedProxy:        testCase.ExpectedProxy,
+						ExpectedCode:         testCase.ExpectedCode,
+						ExpectedRequestError: testCase.ExpectedRequestError,
+						Headers:              map[string]string{"delay": testCase.ResponseDelay},
+					},
+				}
+
+				proxy := newFakeProxy(cfg, &fakeAuthConfig{EnableTLS: true})
+				<-time.After(time.Duration(100) * time.Millisecond)
+
+				go func() {
+					defer waitShutdown.Done()
+					<-time.After(time.Duration(200) * time.Millisecond)
+					if err := proxy.Shutdown(); err != nil {
+						t.Error("Failed to shutdown proxy")
+					}
+				}()
+				proxy.RunTests(t, requests)
+				waitShutdown.Wait()
 			},
 		)
 	}

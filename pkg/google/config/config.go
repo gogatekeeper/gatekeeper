@@ -271,6 +271,8 @@ type Config struct {
 	// MaxIdleConnsPerHost limits the number of idle connections maintained per host
 	MaxIdleConnsPerHost int `env:"MAX_IDLE_CONNS_PER_HOST" json:"max-idle-connections-per-host" usage:"limits the number of idle connections maintained per host" yaml:"max-idle-connections-per-host"`
 
+	// ServerGraceTimeout is the time to wait for the server to shutdown
+	ServerGraceTimeout time.Duration `env:"SERVER_GRACE_TIMEOUT" json:"server-grace-timeout" usage:"the server wait before closing the server" yaml:"server-grace-timeout"`
 	// ServerReadTimeout is the read timeout on the http server
 	ServerReadTimeout time.Duration `env:"SERVER_READ_TIMEOUT" json:"server-read-timeout" usage:"the server read timeout on the http server" yaml:"server-read-timeout"`
 	// ServerWriteTimeout is the write timeout on the http server
@@ -350,6 +352,7 @@ func NewDefaultConfig() *Config {
 		SameSiteCookie:                constant.SameSiteLax,
 		Scopes:                        []string{"email", "profile"},
 		SecureCookie:                  true,
+		ServerGraceTimeout:            constant.DefaultServerGraceTimeout,
 		ServerIdleTimeout:             constant.DefaultServerIdleTimeout,
 		ServerReadTimeout:             constant.DefaultServerReadTimeout,
 		ServerWriteTimeout:            constant.DefaultServerWriteTimeout,

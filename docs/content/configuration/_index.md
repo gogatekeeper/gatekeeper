@@ -124,6 +124,7 @@ weight: 2
 |    --enabled-proxy-protocol                 | enable proxy protocol | false | PROXY_ENABLE_PROXY_PROTOCOL
 |    --max-idle-connections value             | max idle upstream / keycloak connections to keep alive, ready for reuse | 0 | PROXY_MAX_IDLE_CONNS
 |    --max-idle-connections-per-host value    | limits the number of idle connections maintained per host | 0 | PROXY_MAX_IDLE_CONNS_PER_HOST
+|    --server-grace-timeout value             | the server graceful period before shutdown | 10s | PROXY_SERVER_GRACE_TIMEOUT
 |    --server-read-timeout value              | the server read timeout on the http server | 10s | PROXY_SERVER_READ_TIMEOUT
 |    --server-write-timeout value             | the server write timeout on the http server | 10s | PROXY_SERVER_WRITE_TIMEOUT
 |    --server-idle-timeout value              | the server idle timeout on the http server | 2m0s | PROXY_SERVER_IDLE_TIMEOUT

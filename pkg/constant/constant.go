@@ -89,6 +89,7 @@ const (
 	DefaultOpenIDProviderTimeout         = 30 * time.Second
 	DefaultOpenIDProviderRetryCount      = 3
 	DefaultSelfSignedTLSExpiration       = 3 * time.Hour
+	DefaultServerGraceTimeout            = 10 * time.Second
 	DefaultServerIdleTimeout             = 120 * time.Second
 	DefaultServerReadTimeout             = 10 * time.Second
 	DefaultServerWriteTimeout            = 10 * time.Second
@@ -100,6 +101,8 @@ const (
 	DefaultPatRetryCount                 = 5
 	DefaultPatRetryInterval              = 10 * time.Second
 	DefaultOpaTimeout                    = 10 * time.Second
+
+	ForwardingGrantTypePassword = "password"
 )
 
 var SignatureAlgs = [3]jose.SignatureAlgorithm{jose.RS256, jose.HS256, jose.HS512}

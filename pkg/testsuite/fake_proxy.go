@@ -82,6 +82,10 @@ type fakeProxy struct {
 	cookies map[string]*http.Cookie
 }
 
+func (f *fakeProxy) Shutdown() error {
+	return f.proxy.Shutdown()
+}
+
 func newFakeProxy(cfg *config.Config, authConfig *fakeAuthConfig) *fakeProxy {
 	log.SetOutput(io.Discard)
 

@@ -1006,6 +1006,18 @@ func (r *OauthProxy) Run() error {
 	return nil
 }
 
+// Shutdown finishes the proxy service with gracefully period
+func (r *OauthProxy) Shutdown() error {
+	ctx, cancel := context.WithTimeout(context.Background(), r.Config.ServerGraceTimeout)
+	defer cancel()
+
+	err := r.Server.Shutdown(ctx)
+	if err == nil {
+		return nil
+	}
+	return r.Server.Close()
+}
+
 // listenerConfig encapsulate listener options
 type listenerConfig struct {
 	ca                  string   // the path to a certificate authority

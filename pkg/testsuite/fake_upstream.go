@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/net/websocket"
 )
@@ -45,6 +47,21 @@ func (f *FakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Reque
 		reqBody, err := io.ReadAll(req.Body)
 		if err != nil {
 			wrt.WriteHeader(http.StatusInternalServerError)
+		}
+
+		var delay int
+		rawDelay := req.Header.Get("Delay")
+		if rawDelay != "" {
+			delay, err = strconv.Atoi(rawDelay)
+			if err != nil {
+				wrt.WriteHeader(http.StatusInternalServerError)
+			}
+		}
+
+		if delay > 0 {
+			// Sleep for the specified duration
+			// This is to simulate a slow upstream service
+			<-time.After(time.Duration(delay) * time.Second)
 		}
 
 		wrt.Header().Set(TestProxyAccepted, "true")

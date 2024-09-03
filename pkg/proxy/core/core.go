@@ -33,6 +33,7 @@ func GetVersion() string {
 type OauthProxies interface {
 	CreateReverseProxy() error
 	Run() error
+	Shutdown() error
 }
 
 // ReverseProxy is a wrapper

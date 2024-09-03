@@ -90,6 +90,10 @@ func NewOauthProxyApp[T proxycore.KeycloakProvider | proxycore.GoogleProvider](p
 		signal.Notify(signalChannel, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 		<-signalChannel
 
+		if err := proxy.Shutdown(); err != nil {
+			return utils.PrintError(err.Error())
+		}
+
 		return nil
 	}
 
