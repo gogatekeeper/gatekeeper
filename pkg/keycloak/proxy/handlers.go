@@ -91,7 +91,7 @@ func oauthAuthorizationHandler(
 		}
 
 		if enablePKCE {
-			codeVerifier, err := pkce.NewCodeVerifierWithLength(constant.PKCECodeVerifierLength)
+			codeVerifier, err := pkce.NewCodeVerifier(constant.PKCECodeVerifierLength)
 			if err != nil {
 				logger.Error(
 					apperrors.ErrPKCECodeCreation.Error(),
