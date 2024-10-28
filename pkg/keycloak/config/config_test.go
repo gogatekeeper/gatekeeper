@@ -2562,7 +2562,7 @@ func TestEnableLoa(t *testing.T) {
 			Name: "InvalidWithNoRedirects",
 			Config: &Config{
 				EnableLoA:   true,
-				NoRedirects: false,
+				NoRedirects: true,
 			},
 			Valid: false,
 		},
@@ -2580,7 +2580,7 @@ func TestEnableLoa(t *testing.T) {
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
-				err := testCase.Config.isEnableHmacValid()
+				err := testCase.Config.isEnableLoAValid()
 				if err != nil && testCase.Valid {
 					t.Fatalf("Expected test not to fail")
 				}
