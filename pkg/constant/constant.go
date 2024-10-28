@@ -103,6 +103,9 @@ const (
 	DefaultOpaTimeout                    = 10 * time.Second
 
 	ForwardingGrantTypePassword = "password"
+
+	TLS13 = "tlsv1.3"
+	TLS12 = "tlsv1.2"
 )
 
 var SignatureAlgs = [3]jose.SignatureAlgorithm{jose.RS256, jose.HS256, jose.HS512}

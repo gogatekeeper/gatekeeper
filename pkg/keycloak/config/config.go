@@ -232,7 +232,7 @@ func NewDefaultConfig() *Config {
 		SkipAccessTokenIssuerCheck:    true,
 		SkipAccessTokenClientIDCheck:  true,
 		Tags:                          make(map[string]string),
-		TLSMinVersion:                 "tlsv1.3",
+		TLSMinVersion:                 constant.TLS13,
 		UpstreamExpectContinueTimeout: constant.DefaultUpstreamExpectContinueTimeout,
 		UpstreamKeepaliveTimeout:      constant.DefaultUpstreamKeepaliveTimeout,
 		UpstreamKeepalives:            true,
@@ -491,8 +491,8 @@ func (r *Config) isTLSMinValid() error {
 	switch strings.ToLower(r.TLSMinVersion) {
 	case "":
 		return apperrors.ErrMinimalTLSVersionEmpty
-	case "tlsv1.2":
-	case "tlsv1.3":
+	case constant.TLS12:
+	case constant.TLS13:
 	default:
 		return apperrors.ErrInvalidMinimalTLSVersion
 	}

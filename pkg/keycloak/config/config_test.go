@@ -148,7 +148,7 @@ func TestIsConfig(t *testing.T) {
 				Upstream:            "http://120.0.0.1",
 				MaxIdleConns:        100,
 				MaxIdleConnsPerHost: 50,
-				TLSMinVersion:       "tlsv1.2",
+				TLSMinVersion:       constant.TLS12,
 			},
 			Ok: true,
 		},
@@ -198,7 +198,7 @@ func TestIsConfig(t *testing.T) {
 				Upstream:              "http://120.0.0.1",
 				MaxIdleConns:          100,
 				MaxIdleConnsPerHost:   50,
-				TLSMinVersion:         "tlsv1.3",
+				TLSMinVersion:         constant.TLS13,
 			},
 			Ok: true,
 		},
@@ -260,7 +260,7 @@ func TestIsConfig(t *testing.T) {
 				SecureCookie:        true,
 				MaxIdleConns:        100,
 				MaxIdleConnsPerHost: 50,
-				TLSMinVersion:       "tlsv1.3",
+				TLSMinVersion:       constant.TLS13,
 			},
 			Ok: true,
 		},
@@ -1222,14 +1222,14 @@ func TestIsTLSMinValid(t *testing.T) {
 		{
 			Name: "ValidTLS1.2",
 			Config: &Config{
-				TLSMinVersion: "tlsv1.2",
+				TLSMinVersion: constant.TLS12,
 			},
 			Valid: true,
 		},
 		{
 			Name: "ValidTLS1.3",
 			Config: &Config{
-				TLSMinVersion: "tlsv1.3",
+				TLSMinVersion: constant.TLS13,
 			},
 			Valid: true,
 		},
