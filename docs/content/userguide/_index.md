@@ -1127,6 +1127,22 @@ UNIX socket, `--upstream-url unix://path/to/the/file.sock`.
 
   - **/oauth/discovery** provides endpoint with basic urls gatekeeper provides
 
+## Level Of Authentication (Application Context Class Reference - ACR)
+
+Level Of Authentication or Step up authentication enables to raise required level of authentication while
+accessing certain resources.
+For setting up please first check keycloak documentation https://www.keycloak.org/docs/latest/server_admin/index.html#_step-up-flow.
+To configure it on gatekeeper side you will need to use option `--enable-loa=true` and configure resources:
+
+```yaml
+  --resources=uri=/cats|acr=level1,level2
+  --resources=uri=/pets|acr=level2
+```
+
+This example configures two URIs, first `/cats` accepts two level of authentications level1 or level2, in case
+token doesn't contain any of these levels, it redirects to authentication and uses first one `level1` as default one.
+Second URI `/pets` accepts one level of authentication `level2`. In case token contains level1 it redirets to authentication using `level2` acr value.
+
 ## External Authorization
 
 ### Open Policy Agent (OPA) authorization

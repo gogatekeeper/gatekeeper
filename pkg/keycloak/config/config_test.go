@@ -2543,3 +2543,52 @@ func TestIsAllowedQueryParamsValid(t *testing.T) {
 		)
 	}
 }
+
+func TestEnableLoa(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidEnabLoA",
+			Config: &Config{
+				EnableLoA:   true,
+				NoRedirects: false,
+			},
+			Valid: true,
+		},
+		{
+			Name: "InvalidWithNoRedirects",
+			Config: &Config{
+				EnableLoA:   true,
+				NoRedirects: false,
+			},
+			Valid: false,
+		},
+		{
+			Name: "InvalidWithEnableUMA",
+			Config: &Config{
+				EnableLoA: true,
+				EnableUma: true,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isEnableHmacValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}

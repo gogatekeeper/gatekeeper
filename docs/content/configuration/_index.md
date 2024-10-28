@@ -138,6 +138,7 @@ weight: 2
 |    --forwarding-username value              | username to use when logging into the openid provider | | PROXY_FORWARDING_USERNAME
 |    --forwarding-password value              | password to use when logging into the openid provider | | PROXY_FORWARDING_PASSWORD
 |    --forwarding-domains value               | list of domains which should be signed; everything else is relayed unsigned | |
+|    --enable-loa                             | enable level of authentication            | false |
 |    --disable-all-logging                    | disables all logging to stdout and stderr | false | PROXY_DISABLE_ALL_LOGGING
 |    --help, -h                               | show help
 |    --version, -v                            | print the version

@@ -904,5 +904,8 @@ func (r *Config) isEnableLoAValid() error {
 	if r.EnableLoA && r.NoRedirects {
 		return apperrors.ErrLoAWithNoRedirects
 	}
+	if r.EnableLoA && r.EnableUma {
+		return apperrors.ErrLoaWithUMA
+	}
 	return nil
 }
