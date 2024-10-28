@@ -1210,14 +1210,14 @@ func TestIsTLSMinValid(t *testing.T) {
 			Config: &Config{
 				TLSMinVersion: "tlsv1.0",
 			},
-			Valid: true,
+			Valid: false,
 		},
 		{
 			Name: "ValidTLS1.1",
 			Config: &Config{
 				TLSMinVersion: "tlsv1.1",
 			},
-			Valid: true,
+			Valid: false,
 		},
 		{
 			Name: "ValidTLS1.2",

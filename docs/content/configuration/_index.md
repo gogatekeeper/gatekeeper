@@ -87,7 +87,7 @@ weight: 2
 |    --match-claims value                    | keypair values for matching access token claims e.g. aud=myapp, iss=http://example.* | |
 |    --add-claims value                      | extra claims from the token and inject into headers, e.g given_name -> X-Auth-Given-Name | |
 |    --enable-uma-method-scope               | enables passing request method as 'method:GET' scope to keycloak for authorization | false | PROXY_ENABLE_UMA_METHOD_SCOPE
-|    --tls-min-version                       | specify server minimal TLS version one of tlsv1.0,tlsv1.1,tlsv1.2,tlsv1.3 | | TLS_MIN_VERSION |
+|    --tls-min-version                       | specify server minimal TLS version one of tlsv1.2,tlsv1.3 | | TLS_MIN_VERSION |
 |    --tls-cert value                        | path to ths TLS certificate | | PROXY_TLS_CERTIFICATE
 |    --tls-private-key value                 | path to the private key for TLS | | PROXY_TLS_PRIVATE_KEY
 |    --tls-ca-certificate value              | path to the ca certificate used for signing requests | | PROXY_TLS_CA_CERTIFICATE

@@ -1119,10 +1119,6 @@ func makeListenerConfig(config *config.Config) listenerConfig {
 	switch strings.ToLower(config.TLSMinVersion) {
 	case "":
 		minTLSVersion = 0 // zero means default value
-	case "tlsv1.0":
-		minTLSVersion = tls.VersionTLS10
-	case "tlsv1.1":
-		minTLSVersion = tls.VersionTLS11
 	case "tlsv1.2":
 		minTLSVersion = tls.VersionTLS12
 	case "tlsv1.3":

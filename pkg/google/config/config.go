@@ -82,7 +82,7 @@ type Config struct {
 	TLSCaCertificate                string                    `env:"TLS_CA_CERTIFICATE" json:"tls-ca-certificate" usage:"path to the ca certificate used for signing requests" yaml:"tls-ca-certificate"`
 	TLSCaPrivateKey                 string                    `env:"TLS_CA_PRIVATE_KEY" json:"tls-ca-key" usage:"path the ca private key, used by the forward signing proxy" yaml:"tls-ca-key"`
 	TLSClientCertificate            string                    `env:"TLS_CLIENT_CERTIFICATE" json:"tls-client-certificate" usage:"path to the client certificate for outbound connections in reverse and forwarding proxy modes" yaml:"tls-client-certificate"`
-	TLSMinVersion                   string                    `env:"TLS_MIN_VERSION" json:"tls-min-version" usage:"specify server minimal TLS version one of tlsv1.0,tlsv1.1,tlsv1.2,tlsv1.3" yaml:"tls-min-version"`
+	TLSMinVersion                   string                    `env:"TLS_MIN_VERSION" json:"tls-min-version" usage:"specify server minimal TLS version one of tlsv1.2,tlsv1.3" yaml:"tls-min-version"`
 	TLSAdminCertificate             string                    `env:"TLS_ADMIN_CERTIFICATE" json:"tls-admin-cert" usage:"path to ths TLS certificate" yaml:"tls-admin-cert"`
 	TLSAdminPrivateKey              string                    `env:"TLS_ADMIN_PRIVATE_KEY" json:"tls-admin-private-key" usage:"path to the private key for TLS" yaml:"tls-admin-private-key"`
 	TLSAdminCaCertificate           string                    `env:"TLS_ADMIN_CA_CERTIFICATE" json:"tls-admin-ca-certificate" usage:"path to the ca certificate used for signing requests" yaml:"tls-admin-ca-certificate"`
@@ -485,8 +485,6 @@ func (r *Config) isTLSMinValid() error {
 	switch strings.ToLower(r.TLSMinVersion) {
 	case "":
 		return apperrors.ErrMinimalTLSVersionEmpty
-	case "tlsv1.0":
-	case "tlsv1.1":
 	case "tlsv1.2":
 	case "tlsv1.3":
 	default:
