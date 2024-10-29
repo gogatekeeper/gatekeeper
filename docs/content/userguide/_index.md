@@ -537,7 +537,7 @@ the proxy will use the default certificate. If you wish to verify the
 trust, you’ll need to generate a CA, for example.
 
 ``` bash
-$ openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ca.key -out ca.pem
+$ openssl req -x509 -nodes -days 365 -newkey ed2551 -keyout ca.key -out ca.pem
 $ bin/gatekeeper \
   --enable-forwarding \
   --forwarding-username=USERNAME \

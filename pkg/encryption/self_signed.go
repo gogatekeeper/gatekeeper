@@ -18,8 +18,8 @@ package encryption
 
 import (
 	"context"
+	"crypto/ed25519"
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -44,7 +44,7 @@ type SelfSignedCertificate struct {
 	// hostnames is the list of host names on the certificate
 	hostnames []string
 	// privateKey is the rsa private key
-	privateKey *rsa.PrivateKey
+	privateKey *ed25519.PrivateKey
 	// the logger for this service
 	log *zap.Logger
 	// stopCh is a channel to close off the rotation
@@ -67,14 +67,14 @@ func NewSelfSignedCertificate(hostnames []string, expiry time.Duration, log *zap
 		zap.String("common_name", hostnames[0]),
 	)
 
-	key, err := rsa.GenerateKey(rand.Reader, constant.SelfSignedRSAKeyLength)
+	_, key, err := ed25519.GenerateKey(rand.Reader)
 
 	if err != nil {
 		return nil, err
 	}
 
 	// @step: create an initial certificate
-	certificate, err := CreateCertificate(key, hostnames, expiry)
+	certificate, err := CreateCertificate(&key, hostnames, expiry)
 
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func NewSelfSignedCertificate(hostnames []string, expiry time.Duration, log *zap
 		expiration:  expiry,
 		hostnames:   hostnames,
 		log:         log,
-		privateKey:  key,
+		privateKey:  &key,
 		cancel:      cancel,
 	}
 
@@ -114,7 +114,11 @@ func (c *SelfSignedCertificate) rotate(ctx context.Context) error {
 				return
 			case <-time.After(ticker):
 			}
-			c.log.Info("going to sleep until required for rotation", zap.Time("expires", expires), zap.Duration("duration", time.Until(expires)))
+			c.log.Info(
+				"going to sleep until required for rotation",
+				zap.Time("expires", expires),
+				zap.Duration("duration", time.Until(expires)),
+			)
 
 			// @step: got to sleep until we need to rotate
 			time.Sleep(time.Until(expires))
@@ -154,7 +158,7 @@ func (c *SelfSignedCertificate) GetCertificate(_ *tls.ClientHelloInfo) (*tls.Cer
 }
 
 // createCertificate is responsible for creating a certificate
-func CreateCertificate(key *rsa.PrivateKey, hostnames []string, expire time.Duration) (tls.Certificate, error) {
+func CreateCertificate(key *ed25519.PrivateKey, hostnames []string, expire time.Duration) (tls.Certificate, error) {
 	// @step: create a serial for the certificate
 	serial, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), constant.SelfSignedMaxSerialBits))
 	if err != nil {
@@ -168,9 +172,8 @@ func CreateCertificate(key *rsa.PrivateKey, hostnames []string, expire time.Dura
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		NotAfter:              time.Now().Add(expire),
 		NotBefore:             time.Now().Add(-30 * time.Second),
-		PublicKeyAlgorithm:    x509.ECDSA,
+		PublicKeyAlgorithm:    x509.Ed25519,
 		SerialNumber:          serial,
-		SignatureAlgorithm:    x509.SHA512WithRSA,
 		Subject: pkix.Name{
 			CommonName:   hostnames[0],
 			Organization: []string{"Gatekeeper"},
@@ -189,12 +192,18 @@ func CreateCertificate(key *rsa.PrivateKey, hostnames []string, expire time.Dura
 	}
 
 	// @step: create the certificate
-	cert, err := x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
+	cert, err := x509.CreateCertificate(rand.Reader, &template, &template, key.Public(), key)
 	if err != nil {
 		return tls.Certificate{}, err
 	}
+
+	pkcsPrivKey, err := x509.MarshalPKCS8PrivateKey(*key)
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert})
-	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "X25519 PRIVATE KEY", Bytes: pkcsPrivKey})
 
 	return tls.X509KeyPair(certPEM, keyPEM)
 }

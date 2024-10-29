@@ -78,7 +78,6 @@ const (
 	PKCECodeVerifierLength  = 96
 	PATRefreshInPercent     = 0.85
 	HTTPCompressionLevel    = 5
-	SelfSignedRSAKeyLength  = 2048
 	SelfSignedMaxSerialBits = 128
 	CookiesPerDomainSize    = 4069
 	RedisTimeout            = 10 * time.Second
