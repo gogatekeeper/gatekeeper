@@ -40,6 +40,8 @@ var _ = Describe("UMA Code Flow authorization", func() {
 			"--skip-access-token-issuer-check=true",
 			"--openid-provider-retry-count=30",
 			"--secure-cookie=false",
+			"--enable-encrypted-token=false",
+			"--enable-pkce=false",
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -136,6 +138,8 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 			"--secure-cookie=false",
 			"--verbose=true",
 			"--enable-logging=true",
+			"--enable-encrypted-token=false",
+			"--enable-pkce=false",
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -198,6 +202,8 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 			"--skip-access-token-issuer-check=true",
 			"--openid-provider-retry-count=30",
 			"--enable-idp-session-check=false",
+			"--enable-encrypted-token=false",
+			"--enable-pkce=false",
 		}
 
 		fwdProxyArgs := []string{
@@ -214,6 +220,8 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 			"--skip-access-token-clientid-check=true",
 			"--skip-access-token-issuer-check=true",
 			"--openid-provider-retry-count=30",
+			"--enable-encrypted-token=false",
+			"--enable-pkce=false",
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -279,6 +287,8 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 			"--openid-provider-retry-count=30",
 			"--verbose=true",
 			"--enable-idp-session-check=false",
+			"--enable-encrypted-token=false",
+			"--enable-pkce=false",
 		}
 
 		fwdProxyArgs := []string{
@@ -296,6 +306,8 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 			"--skip-access-token-clientid-check=true",
 			"--skip-access-token-issuer-check=true",
 			"--openid-provider-retry-count=30",
+			"--enable-encrypted-token=false",
+			"--enable-pkce=false",
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -375,6 +387,8 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 			"--secure-cookie=false",
 			"--verbose=true",
 			"--enable-logging=true",
+			"--enable-encrypted-token=false",
+			"--enable-pkce=false",
 		}
 
 		osArgs = append(osArgs, proxyArgs...)

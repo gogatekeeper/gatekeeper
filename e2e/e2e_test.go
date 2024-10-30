@@ -146,6 +146,8 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 			"--skip-access-token-clientid-check=true",
 			"--skip-access-token-issuer-check=true",
 			"--openid-provider-retry-count=30",
+			"--enable-encrypted-token=false",
+			"--enable-pkce=false",
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -210,6 +212,8 @@ var _ = Describe("Code Flow login/logout", func() {
 			"--encryption-key=sdkljfalisujeoir",
 			"--secure-cookie=false",
 			"--post-login-redirect-path=" + postLoginRedirectPath,
+			"--enable-encrypted-token=false",
+			"--enable-pkce=false",
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -347,6 +351,7 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 			"--secure-cookie=false",
 			"--enable-pkce=true",
 			"--cookie-pkce-name=" + pkceCookieName,
+			"--enable-encrypted-token=false",
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -405,6 +410,8 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 			"--enable-logout-redirect=true",
 			"--enable-id-token-cookie=true",
 			"--post-logout-redirect-uri=http://google.com",
+			"--enable-encrypted-token=false",
+			"--enable-pkce=false",
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -431,6 +438,7 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 			"--enable-logout-redirect=true",
 			"--enable-id-token-cookie=true",
 			"--post-logout-redirect-uri=http://google.com",
+			"--enable-encrypted-token=false",
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -506,6 +514,8 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 			"--encryption-key=sdkljfalisujeoir",
 			"--secure-cookie=false",
 			"--post-login-redirect-path=" + postLoginRedirectPath,
+			"--enable-encrypted-token=false",
+			"--enable-pkce=false",
 		}
 
 		osArgs = append(osArgs, proxyArgs...)

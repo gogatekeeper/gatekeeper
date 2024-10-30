@@ -44,10 +44,10 @@ weight: 2
 |    --enable-logout-redirect                | indicates we should redirect to the identity provider for logging out | false | PROXY_ENABLE_LOGOUT_REDIRECT
 |    --enable-default-deny                   | enables a default denial on all requests, requests with valid token are permitted, you have to explicitly say what is permitted | true | PROXY_ENABLE_DEFAULT_DENY
 |    --enable-default-deny-strict            | enables a default denial on all requests, requests with valid token are denied, you have to explicitly say what is permitted (recommended) | false | PROXY_ENABLE_DEFAULT_DENY_STRICT
-|    --enable-encrypted-token                | enable encryption for the access tokens | false | PROXY_ENABLE_ENCRYPTED_TOKEN
+|    --enable-encrypted-token                | enable encryption for the access tokens | true | PROXY_ENABLE_ENCRYPTED_TOKEN
 |    --force-encrypted-cookie                | force encryption for the access tokens in cookies | false | PROXY_FORCE_ENCRYPTED_COOKIE
 |    --enable-logging                        | enable http logging of the requests | false | PROXY_ENABLE_LOGGING
-|    --enable-json-logging                   | switch on json logging rather than text | false | PROXY_ENABLE_JSON_LOGGING
+|    --enable-json-logging                   | switch on json logging rather than text | true | PROXY_ENABLE_JSON_LOGGING
 |    --enable-forwarding                     | enables the forwarding proxy mode, signing outbound request | false | PROXY_ENABLE_FORWARDING
 |    --enable-security-filter                | enables the security filter handler | false | PROXY_ENABLE_SECURITY_FILTER
 |    --enable-refresh-tokens                 | enables the handling of the refresh tokens | false | PROXY_ENABLE_REFRESH_TOKEN
@@ -65,7 +65,7 @@ weight: 2
 |    --content-security-policy value         | specify the content security policy | | PROXY_CONTENT_SECURITY_POLICY
 |    --localhost-metrics                     | enforces the metrics page can only been requested from 127.0.0.1 | false | PROXY_LOCALHOST_METRICS
 |    --enable-compression                    | enable gzip compression for response | false | PROXY_ENABLE_COMPRESSION
-|    --enable-pkce                           | enable pkce for auth code flow, only S256 code challenge supported | false | PROXY_ENABLE_PKCE
+|    --enable-pkce                           | enable pkce for auth code flow, only S256 code challenge supported | true | PROXY_ENABLE_PKCE
 |    --enable-idp-session-check              | during token validation it also checks if user session is still present, useful for multi app logout | true | PROXY_ENABLE_IDP_SESSION_CHECK
 |    --enable-uma                            | enable UMA authorization, please don't use in production as it is new feature, we would like to receive feedback first             | false | PROXY_ENABLE_UMA
 |	 --enable-opa                            | enable authorization with external Open policy agent  | false | PROXY_ENABLE_OPA

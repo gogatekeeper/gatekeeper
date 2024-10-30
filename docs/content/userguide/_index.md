@@ -43,6 +43,10 @@ client-secret: <CLIENT_SECRET>
 listen: :3000
 # port on which metrics and health endpoints will be available, if not specified it will be on above specified port
 listen-admin: :4000
+# this encrypts access token, set by default to true, you need to setup encryption key
+enable-encrypted-token: true
+# enables use of PKCE, enabled by default in gatekeeper, you need to enable it in keycloak for client
+enable-pkce: true
 # whether to enable refresh tokens
 enable-refresh-tokens: true
 # you can set up custom templates for forbidden/error/sign-in pages, gatekeeper
