@@ -483,6 +483,10 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		getIdentity,
 	)
 
+	if r.Config.EnablePKCE {
+		r.Log.Info("enabling PKCE, please enable it for client in keycloak")
+	}
+
 	oauthCallbackHand := oauthCallbackHandler(
 		r.Log,
 		r.Config.ClientID,
