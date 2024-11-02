@@ -56,6 +56,6 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.59
+          version: v1.61
           args: "--out-${NO_FUTURE}format colored-line-number --timeout=3m"
           github-token: "${{ secrets.GITHUB_TOKEN }}"

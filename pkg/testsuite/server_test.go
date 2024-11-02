@@ -588,7 +588,7 @@ func TestSkipOpenIDProviderTLSVerifyForwardingProxy(t *testing.T) {
 			failure, assertOk := r.(string)
 
 			if !assertOk {
-				t.Fatalf(apperrors.ErrAssertionFailed.Error())
+				t.Fatal(apperrors.ErrAssertionFailed.Error())
 			}
 
 			check := strings.Contains(
@@ -860,7 +860,7 @@ func TestSkipOpenIDProviderTLSVerify(t *testing.T) {
 							failure, assertOk := r.(string)
 
 							if !assertOk {
-								t.Fatalf(apperrors.ErrAssertionFailed.Error())
+								t.Fatal(apperrors.ErrAssertionFailed.Error())
 							}
 
 							check := strings.Contains(
@@ -912,7 +912,7 @@ func TestOpenIDProviderProxy(t *testing.T) {
 			failure, assertOk := r.(string)
 
 			if !assertOk {
-				t.Fatalf(apperrors.ErrAssertionFailed.Error())
+				t.Fatal(apperrors.ErrAssertionFailed.Error())
 			}
 
 			check := strings.Contains(

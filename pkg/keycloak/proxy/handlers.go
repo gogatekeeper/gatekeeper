@@ -415,6 +415,7 @@ func loginHandler(
 		defer cancel()
 
 		code, err := func(context.Context) (int, error) {
+			//nolint:fatcontext
 			ctx = context.WithValue(
 				ctx,
 				oauth2.HTTPClient,

@@ -68,9 +68,9 @@ var idpRealmURI = fmt.Sprintf("%s/realms/%s", idpURI, testRealm)
 
 func generateRandomPort() string {
 	rg := rand.New(rand.NewSource(time.Now().UnixNano()))
-	min := 1024
-	max := 65000
-	return strconv.Itoa(rg.Intn(max-min+1) + min)
+	minPort := 1024
+	maxPort := 65000
+	return strconv.Itoa(rg.Intn(maxPort-minPort+1) + minPort)
 }
 
 func startAndWait(portNum string, osArgs []string) {

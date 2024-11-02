@@ -237,7 +237,7 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 		if reqCfg.HasToken {
 			token := NewTestToken(f.idp.getLocation())
 
-			if reqCfg.TokenClaims != nil && len(reqCfg.TokenClaims) > 0 {
+			if len(reqCfg.TokenClaims) > 0 {
 				for i := range reqCfg.TokenClaims {
 					err := reflections.SetField(
 						&token.Claims,
@@ -366,8 +366,7 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 			}
 		}
 
-		if reqCfg.ExpectedHeadersValidator != nil &&
-			len(reqCfg.ExpectedHeadersValidator) > 0 {
+		if len(reqCfg.ExpectedHeadersValidator) > 0 {
 			// comment
 			for headerName, headerValidator := range reqCfg.ExpectedHeadersValidator {
 				headers := resp.Header()
@@ -400,7 +399,7 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 			)
 		}
 
-		if reqCfg.ExpectedProxyHeaders != nil && len(reqCfg.ExpectedProxyHeaders) > 0 {
+		if len(reqCfg.ExpectedProxyHeaders) > 0 {
 			for headerName, headerVal := range reqCfg.ExpectedProxyHeaders {
 				headers := upstream.Headers
 
@@ -428,8 +427,7 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 			}
 		}
 
-		if reqCfg.ExpectedProxyHeadersValidator != nil &&
-			len(reqCfg.ExpectedProxyHeadersValidator) > 0 {
+		if len(reqCfg.ExpectedProxyHeadersValidator) > 0 {
 			// comment
 			for headerName, headerValidator := range reqCfg.ExpectedProxyHeadersValidator {
 				headers := upstream.Headers

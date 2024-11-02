@@ -272,7 +272,7 @@ func TestSkipOpenIDProviderTLSVerifyLoginHandler(t *testing.T) {
 			failure, assertOk := r.(string)
 
 			if !assertOk {
-				t.Fatalf(apperrors.ErrAssertionFailed.Error())
+				t.Fatal(apperrors.ErrAssertionFailed.Error())
 			}
 
 			check := strings.Contains(
@@ -728,7 +728,7 @@ func TestSkipOpenIDProviderTLSVerifyLogoutHandler(t *testing.T) {
 		if r := recover(); r != nil {
 			failure, assertOk := r.(string)
 			if !assertOk {
-				t.Fatalf(apperrors.ErrAssertionFailed.Error())
+				t.Fatal(apperrors.ErrAssertionFailed.Error())
 			}
 
 			check := strings.Contains(

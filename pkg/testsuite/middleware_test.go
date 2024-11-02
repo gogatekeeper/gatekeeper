@@ -2829,7 +2829,7 @@ func TestAuthenticationMiddleware(t *testing.T) {
 	tok.SetExpiration(time.Now().Add(-5 * time.Minute))
 	unsignedToken, err := tok.GetUnsignedToken()
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	badlySignedToken := unsignedToken + FakeSignature
