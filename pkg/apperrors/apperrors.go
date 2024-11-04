@@ -166,4 +166,5 @@ var (
 
 	ErrLetsEncryptMissingCacheDir = errors.New("letsencrypt cache dir has not been set")
 	ErrHijackerMethodMissing      = errors.New("writer does not implement http.Hijacker method")
+	ErrInvalidOriginWithCreds     = errors.New("origin cannot be set to * together with AllowedCredentials true")
 )

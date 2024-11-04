@@ -328,6 +328,7 @@ func (r *Config) IsValid() error {
 		r.isOpenIDProviderProxyValid,
 		r.isMaxIdlleConnValid,
 		r.isSameSiteValid,
+		r.isCorsValid,
 		r.isTLSFilesValid,
 		r.isAdminTLSFilesValid,
 		r.isLetsEncryptValid,
@@ -907,6 +908,15 @@ func (r *Config) isEnableLoAValid() error {
 	}
 	if r.EnableLoA && r.EnableUma {
 		return apperrors.ErrLoaWithUMA
+	}
+	return nil
+}
+
+func (r *Config) isCorsValid() error {
+	for _, origin := range r.CorsOrigins {
+		if origin == "*" && r.CorsCredentials {
+			return apperrors.ErrInvalidOriginWithCreds
+		}
 	}
 	return nil
 }

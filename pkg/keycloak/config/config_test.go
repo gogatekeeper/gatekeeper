@@ -2592,3 +2592,44 @@ func TestEnableLoa(t *testing.T) {
 		)
 	}
 }
+
+func TestIsCorsValid(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidOrigin",
+			Config: &Config{
+				CorsOrigins:     []string{"example.com"},
+				CorsCredentials: false,
+			},
+			Valid: true,
+		},
+		{
+			Name: "InvalidOrigin",
+			Config: &Config{
+				CorsOrigins:     []string{"*"},
+				CorsCredentials: true,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isCorsValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}
