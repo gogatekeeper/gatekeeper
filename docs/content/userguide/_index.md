@@ -1,6 +1,7 @@
 ---
 title: "User Guide"
 weight: 1
+URL: /
 ---
 
 # Gatekeeper
