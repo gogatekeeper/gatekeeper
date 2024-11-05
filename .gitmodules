@@ -1,9 +1,9 @@
-[submodule "docs/themes/hugo-theme-relearn"]
-	path = docs/themes/hugo-theme-relearn
-	url = https://github.com/McShelby/hugo-theme-relearn
 [submodule "gogatekeeper.github.io"]
 	path = gogatekeeper.github.io
 	url = git@github.com:gogatekeeper/gogatekeeper.github.io.git
 [submodule "docs/public"]
 	path = docs/public
 	url = git@github.com:gogatekeeper/gogatekeeper.github.io.git
+[submodule "docs/themes/hugo-theme-relearn"]
+	path = docs/themes/hugo-theme-relearn
+	url = https://github.com/McShelby/hugo-theme-relearn
