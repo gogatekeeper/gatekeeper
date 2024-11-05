@@ -1,6 +1,724 @@
-<!doctype html><html lang=en class="js csstransforms3d"><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=generator content="Hugo 0.134.2"><meta name=description content="Gatekeeper's homepage"><meta name=author content="gogatekeeper"><link rel="shortcut icon" href=/logo/logo.svg type=image/x-icon><title>- Gatekeeper</title>
-<link href=/gatekeeper/css/nucleus.css?1726256532 rel=stylesheet><link href=/gatekeeper/css/fontawesome-all.min.css?1726256532 rel=stylesheet><link href=/gatekeeper/css/hybrid.css?1726256532 rel=stylesheet><link href=/gatekeeper/css/featherlight.min.css?1726256532 rel=stylesheet><link href=/gatekeeper/css/perfect-scrollbar.min.css?1726256532 rel=stylesheet><link href=/gatekeeper/css/auto-complete.css?1726256532 rel=stylesheet><link href=/gatekeeper/css/atom-one-dark-reasonable.css?1726256532 rel=stylesheet><link href=/gatekeeper/css/theme.css?1726256532 rel=stylesheet><link href=/gatekeeper/css/tabs.css?1726256532 rel=stylesheet><link href=/gatekeeper/css/hugo-theme.css?1726256532 rel=stylesheet><link href=/gatekeeper/css/theme-blue.css?1726256532 rel=stylesheet><link href=/gatekeeper/css/index.css?1726256532 rel=stylesheet><script src=/gatekeeper/js/jquery-3.3.1.min.js?1726256532></script><style>:root #header+#content>#left>#rlblock_left{display:none!important}:not(pre)>code+span.copy-to-clipboard{display:none}</style></head><body data-url=/gatekeeper/><nav id=sidebar><div id=header-wrapper><div id=header><a id=logo href=/><img src=/logo/logo.svg width=200><div id=logo-text>gatekeeper</div></a></div><div class=searchbox><label for=search-by><i class="fas fa-search"></i></label>
-<input data-search-input id=search-by type=search placeholder=Search...>
-<span data-search-clear><i class="fas fa-times"></i></span></div><script type=text/javascript src=/gatekeeper/js/lunr.min.js?1726256532></script><script type=text/javascript src=/gatekeeper/js/auto-complete.js?1726256532></script><script type=text/javascript>var baseurl="https://gogatekeeper.github.io/gatekeeper/"</script><script type=text/javascript src=/gatekeeper/js/search.js?1726256532></script></div><div class=highlightable><ul class=topics><li data-nav-id=/gatekeeper/userguide/ title="User Guide" class=dd-item><a href=/gatekeeper/userguide/>User Guide</a></li><li data-nav-id=/gatekeeper/configuration/ title="Configuration Reference" class=dd-item><a href=/gatekeeper/configuration/>Configuration Reference</a></li></ul><section id=shortcuts><h3>More</h3><ul><li><a class=padding href=https://github.com/gogatekeeper/gatekeeper><i class='fab fa-github fa-fw'></i> Github repo</a></li><li><a class=padding href=https://discord.gg/zRqVXXTMCv><i class='fab fa-discord fa-fw'></i> Join us on Discord</a></li><li><a class=padding href=https://www.keycloak.org/documentation><i class='fas fa-code fa-fw'></i> Keycloak Docs</a></li></ul></section><section id=footer><p>Built with <a href=https://github.com/matcornic/hugo-theme-learn><i class="fas fa-heart"></i></a> from <a href=https://getgrav.org>Grav</a> and <a href=https://gohugo.io/>Hugo</a></p></section></div></nav><section id=body><div id=overlay></div><div class="padding highlightable"><div id=head-tags></div><div id=body-inner><span id=sidebar-toggle-span><a href=# id=sidebar-toggle data-sidebar-toggle><i class="fas fa-bars"></i> navigation</a></span><h1 id=gatekeeper>gatekeeper</h1><p>gatekeeper is the simple authentication and authorization proxy that gets your app off the ground!</p><blockquote><p>gatekeeper was previously known as louketo and keycloak-gatekeeper.</p></blockquote><h2 id=goals>Goals</h2><ul><li>To have just enough auth features (both authentication and authorization) to get your app off the ground</li><li>To be well documented and easy to get started with</li><li>To remain true to the roots of this project<ul><li>gatekeeper will be interoperable with keycloak out of the box,</li></ul></li></ul><h2 id=announcements>Announcements!</h2><p>gatekeeper is reborn with from the ashes of
-<a href=https://github.com/louketo/louketo-proxy/>louketo</a> under the new organization
-<a href=https://github.com/gogatekeeper/>gogatekeeper</a>.</p><p>Watch this space!</p></div></div><div id=navigation></div></section><div style=left:-1000px;overflow:scroll;position:absolute;top:-1000px;border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px><div style=border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px></div></div><script src=/gatekeeper/js/clipboard.min.js?1726256532></script><script src=/gatekeeper/js/perfect-scrollbar.min.js?1726256532></script><script src=/gatekeeper/js/perfect-scrollbar.jquery.min.js?1726256532></script><script src=/gatekeeper/js/jquery.sticky.js?1726256532></script><script src=/gatekeeper/js/featherlight.min.js?1726256532></script><script src=/gatekeeper/js/highlight.pack.js?1726256532></script><script>hljs.initHighlightingOnLoad()</script><script src=/gatekeeper/js/modernizr.custom-3.6.0.js?1726256532></script><script src=/gatekeeper/js/learn.js?1726256532></script><script src=/gatekeeper/js/hugo-learn.js?1726256532></script><script src=https://unpkg.com/mermaid@8.8.0/dist/mermaid.min.js></script><script>mermaid.initialize({startOnLoad:!0})</script></body></html>
+<!doctype html><html lang=en-us dir=ltr itemscope itemtype=http://schema.org/Article><head><meta charset=utf-8><meta name=viewport content="height=device-height,width=device-width,initial-scale=1,minimum-scale=1"><meta name=generator content="Hugo 0.137.1"><meta name=generator content="Relearn 7.1.1"><meta name=description content="Gatekeeper Gatekeeper is a proxy which integrates with OpenID Connect (OIDC) Providers, it supports both access tokens in a browser cookie or bearer tokens.
+This documentation details how to build and configure Gatekeeper followed by details of how to use each of its features.
+For further information, see the included help file which includes a full list of commands and switches. View the file by entering the following at the command line (modify the location to match where you install Gatekeeper Proxy):"><meta name=author content="gogatekeeper"><meta name=twitter:card content="summary"><meta name=twitter:title content="User Guide - Gatekeeper"><meta name=twitter:description content="Gatekeeper Gatekeeper is a proxy which integrates with OpenID Connect (OIDC) Providers, it supports both access tokens in a browser cookie or bearer tokens.
+This documentation details how to build and configure Gatekeeper followed by details of how to use each of its features.
+For further information, see the included help file which includes a full list of commands and switches. View the file by entering the following at the command line (modify the location to match where you install Gatekeeper Proxy):"><meta property="og:url" content="https://gogatekeeper.github.io/gatekeeper/index.html"><meta property="og:site_name" content="Gatekeeper"><meta property="og:title" content="User Guide - Gatekeeper"><meta property="og:description" content="Gatekeeper Gatekeeper is a proxy which integrates with OpenID Connect (OIDC) Providers, it supports both access tokens in a browser cookie or bearer tokens.
+This documentation details how to build and configure Gatekeeper followed by details of how to use each of its features.
+For further information, see the included help file which includes a full list of commands and switches. View the file by entering the following at the command line (modify the location to match where you install Gatekeeper Proxy):"><meta property="og:locale" content="en_us"><meta property="og:type" content="website"><meta itemprop=name content="User Guide - Gatekeeper"><meta itemprop=description content="Gatekeeper Gatekeeper is a proxy which integrates with OpenID Connect (OIDC) Providers, it supports both access tokens in a browser cookie or bearer tokens.
+This documentation details how to build and configure Gatekeeper followed by details of how to use each of its features.
+For further information, see the included help file which includes a full list of commands and switches. View the file by entering the following at the command line (modify the location to match where you install Gatekeeper Proxy):"><meta itemprop=wordCount content="6038"><title>User Guide - Gatekeeper</title>
+<link href=/gatekeeper/index.xml rel=alternate type=application/rss+xml title="User Guide - Gatekeeper"><link rel="shortcut icon" href=/logo/logo.svg type=image/x-icon><link href=/gatekeeper/css/fontawesome-all.min.css?1730848810 rel=stylesheet media=print onload='this.media="all",this.onload=null'><noscript><link href=/gatekeeper/css/fontawesome-all.min.css?1730848810 rel=stylesheet></noscript><link href=/gatekeeper/css/nucleus.css?1730848810 rel=stylesheet><link href=/gatekeeper/css/auto-complete.css?1730848810 rel=stylesheet media=print onload='this.media="all",this.onload=null'><noscript><link href=/gatekeeper/css/auto-complete.css?1730848810 rel=stylesheet></noscript><link href=/gatekeeper/css/perfect-scrollbar.min.css?1730848810 rel=stylesheet><link href=/gatekeeper/css/fonts.css?1730848810 rel=stylesheet media=print onload='this.media="all",this.onload=null'><noscript><link href=/gatekeeper/css/fonts.css?1730848810 rel=stylesheet></noscript><link href=/gatekeeper/css/theme.css?1730848810 rel=stylesheet><link href=/gatekeeper/css/theme-blue.css?1730848810 rel=stylesheet id=R-variant-style><link href=/gatekeeper/css/chroma-learn.css?1730848810 rel=stylesheet id=R-variant-chroma-style><link href=/gatekeeper/css/print.css?1730848810 rel=stylesheet media=print><script src=/gatekeeper/js/variant.js?1730848810></script><script>window.relearn=window.relearn||{},window.relearn.relBasePath=".",window.relearn.relBaseUri="..",window.relearn.absBaseUri="https://gogatekeeper.github.io/gatekeeper",window.relearn.disableAnchorCopy=!1,window.relearn.disableAnchorScrolling=!1,window.variants&&variants.init(["blue"]),window.T_Copy_to_clipboard=`Copy to clipboard`,window.T_Copied_to_clipboard=`Copied to clipboard!`,window.T_Copy_link_to_clipboard=`Copy link to clipboard`,window.T_Link_copied_to_clipboard=`Copied link to clipboard!`,window.T_Reset_view=`Reset view`,window.T_View_reset=`View reset!`,window.T_No_results_found=`No results found for "{0}"`,window.T_N_results_found=`{1} results found for "{0}"`</script></head><body class="mobile-support html disableInlineCopyToClipboard" data-url=/gatekeeper/index.html><div id=R-body class=default-animation><div id=R-body-overlay></div><nav id=R-topbar><div class=topbar-wrapper><div class=topbar-sidebar-divider></div><div class="topbar-area topbar-area-start" data-area=start><div class="topbar-button topbar-button-sidebar" data-content-empty=disable data-width-s=show data-width-m=hide data-width-l=hide><button class=topbar-control onclick=toggleNav() type=button title="Menu (CTRL+ALT+n)"><i class="fa-fw fas fa-bars"></i></button></div><div class="topbar-button topbar-button-toc" data-content-empty=hide data-width-s=show data-width-m=show data-width-l=show><button class=topbar-control onclick=toggleTopbarFlyout(this) type=button title="Table of Contents (CTRL+ALT+t)"><i class="fa-fw fas fa-list-alt"></i></button><div class=topbar-content><div class=topbar-content-wrapper><nav class=TableOfContents><ul><li><a href=#requirements>Requirements</a></li><li><a href=#configuration-options>Configuration options</a></li><li><a href=#example-of-usage-and-configuration-with-keycloak>Example of usage and configuration with Keycloak</a></li><li><a href=#roles>Roles</a></li><li><a href=#authentication-flows>Authentication flows</a></li><li><a href=#default-deny>Default Deny</a></li><li><a href=#upstream-host-proxy-and-openid-provider-proxy>Upstream Host Proxy and OpenID Provider Proxy</a></li><li><a href=#http-routing>HTTP routing</a></li><li><a href=#cookies-size>Cookies size</a></li><li><a href=#session-only-cookies>Session-only cookies</a></li><li><a href=#cookie-names>Cookie Names</a></li><li><a href=#allowed-query-params-for-authentication>Allowed Query Params for Authentication</a></li><li><a href=#tcp-proxy-with-http-connect>TCP proxy with HTTP CONNECT</a></li><li><a href=#websocket-proxy>Websocket proxy</a></li><li><a href=#hmac-signature-signing-and-verification>HMAC Signature, signing and verification</a></li><li><a href=#forward-signing-proxy>Forward-signing proxy</a></li><li><a href=#forwarding-signed-https-connections>Forwarding signed HTTPS connections</a></li><li><a href=#forwarding-with-uma-token>Forwarding with UMA token</a></li><li><a href=#https-redirect>HTTPS redirect</a></li><li><a href=#lets-encrypt-configuration>Let’s Encrypt configuration</a></li><li><a href=#access-token-encryption>Access token encryption</a></li><li><a href=#bearer-token-passthrough>Bearer token passthrough</a></li><li><a href=#upstream-headers>Upstream headers</a></li><li><a href=#custom-claim-headers>Custom claim headers</a></li><li><a href=#custom-headers>Custom headers</a></li><li><a href=#openid-provider-headers>OpenID provider headers</a></li><li><a href=#encryption-key>Encryption key</a></li><li><a href=#claim-matching>Claim matching</a></li><li><a href=#group-claims>Group claims</a></li><li><a href=#headers-matching>Headers matching</a></li><li><a href=#forward-auth>Forward-auth</a></li><li><a href=#custom-pages>Custom pages</a><ul><li><a href=#custom-error-page-for-bad-request>Custom Error Page for Bad Request</a></li></ul></li><li><a href=#white-listed-urls>White-listed URL’s</a></li><li><a href=#pkce-proof-key-for-code-exchange>PKCE (Proof Key for Code Exchange)</a></li><li><a href=#mutual-tls>Mutual TLS</a></li><li><a href=#certificate-rotation>Certificate rotation</a></li><li><a href=#refresh-tokens>Refresh tokens</a></li><li><a href=#post-login-redirect>Post Login Redirect</a></li><li><a href=#logout-endpoint>Logout endpoint</a><ul><li><a href=#session-logout>Session logout</a></li></ul></li><li><a href=#cross-origin-resource-sharing-cors>Cross-origin resource sharing (CORS)</a></li><li><a href=#upstream-url>Upstream URL</a></li><li><a href=#endpoints>Endpoints</a></li><li><a href=#level-of-authentication-application-context-class-reference---acr>Level Of Authentication (Application Context Class Reference - ACR)</a></li><li><a href=#external-authorization>External Authorization</a><ul><li><a href=#open-policy-agent-opa-authorization>Open Policy Agent (OPA) authorization</a></li><li><a href=#keycloak-authorization-uma>Keycloak authorization (UMA)</a><ul><li><a href=#example-browser-flow>Example Browser Flow:</a></li><li><a href=#example-api-flow>Example API Flow:</a></li></ul></li></ul></li><li><a href=#request-tracing>Request tracing</a></li><li><a href=#logs-and-gdpr>Logs and GDPR</a></li><li><a href=#metrics>Metrics</a></li><li><a href=#limitations>Limitations</a></li><li><a href=#known-issues>Known Issues</a></li></ul></nav></div></div></div></div><ol class="topbar-breadcrumbs breadcrumbs highlightable" itemscope itemtype=http://schema.org/BreadcrumbList><li itemscope itemtype=https://schema.org/ListItem itemprop=itemListElement><span itemprop=name>User Guide</span><meta itemprop=position content="1"></li></ol><div class="topbar-area topbar-area-end" data-area=end><div class="topbar-button topbar-button-more" data-content-empty=hide data-width-s=show data-width-m=show data-width-l=show><button class=topbar-control onclick=toggleTopbarFlyout(this) type=button title=More><i class="fa-fw fas fa-ellipsis-v"></i></button><div class=topbar-content><div class=topbar-content-wrapper><div class="topbar-area topbar-area-more" data-area=more></div></div></div></div></div></div></nav><div id=R-main-overlay></div><main id=R-body-inner class="highlightable page" tabindex=-1><div class=flex-block-wrapper><article class=default><header class=headline></header><h1 id=user-guide>User Guide</h1><h1 id=gatekeeper>Gatekeeper</h1><p>Gatekeeper is a proxy which integrates with OpenID Connect (OIDC) Providers, it supports both access tokens in a browser cookie or bearer tokens.</p><p>This documentation details how to build and configure Gatekeeper followed by details of how to use each of its features.</p><p>For further information, see the included help file which includes a
+full list of commands and switches. View the file by entering the
+following at the command line (modify the location to match where you
+install Gatekeeper Proxy):</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>    $ bin/gatekeeper help</span></span></code></pre></div><p>You can view all settings also in this table <a href=https://gogatekeeper.github.io/gatekeeper/configuration/ rel=external target=_blank>Settings</a></p><h2 id=requirements>Requirements</h2><ul><li>Go 1.19 or higher</li></ul><h2 id=configuration-options>Configuration options</h2><p>Configuration can come from a YAML/JSON file or by using command line
+options. Here is a list of options.</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#75715e># is the URL for retrieve the OpenID configuration</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>discovery-url</span>: <span style=color:#ae81ff>&lt;DISCOVERY URL&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Indicates we should deny by default all requests and explicitly specify what is permitted, default true</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># this is equivalent of --resource=/*|methods</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>enable-default-deny</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># the client id for the &#39;client&#39; application</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>client-id</span>: <span style=color:#ae81ff>&lt;CLIENT_ID&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># the secret associated to the &#39;client&#39; application</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>client-secret</span>: <span style=color:#ae81ff>&lt;CLIENT_SECRET&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># the interface definition you wish the proxy to listen, all interfaces is specified as &#39;:&lt;port&gt;&#39;, unix sockets as unix://&lt;REL_PATH&gt;|&lt;/ABS PATH&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>listen</span>: :<span style=color:#ae81ff>3000</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># port on which metrics and health endpoints will be available, if not specified it will be on above specified port</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>listen-admin</span>: :<span style=color:#ae81ff>4000</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># this encrypts access token, set by default to true, you need to setup encryption key</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>enable-encrypted-token</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># enables use of PKCE, enabled by default in gatekeeper, you need to enable it in keycloak for client</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>enable-pkce</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># whether to enable refresh tokens</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>enable-refresh-tokens</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># you can set up custom templates for forbidden/error/sign-in pages, gatekeeper</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># also provides these already builtin (but they are not set by default)</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>forbidden-page</span>: <span style=color:#ae81ff>templates/forbidden.html.tmpl</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>error-page</span>: <span style=color:#ae81ff>templates/error.html.tmpl</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>sign-in-page</span>: <span style=color:#ae81ff>sign_in.html.tmpl</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># the location of a certificate you wish the proxy to use for TLS support</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>tls-cert</span>:
+</span></span><span style=display:flex><span><span style=color:#75715e># the location of a private key for TLS</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>tls-private-key</span>:
+</span></span><span style=display:flex><span><span style=color:#75715e># TLS options related to admin listener</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>tls-admin-cert</span>:
+</span></span><span style=display:flex><span><span style=color:#f92672>tls-admin-private-key</span>:
+</span></span><span style=display:flex><span><span style=color:#f92672>tls-admin-ca-certificate</span>:
+</span></span><span style=display:flex><span><span style=color:#f92672>tls-admin-client-certificate</span>:
+</span></span><span style=display:flex><span><span style=color:#75715e># the redirection URL, essentially the site URL, note: /oauth/callback is added at the end</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>redirection-url</span>: <span style=color:#ae81ff>http://127.0.0.1:3000</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># the encryption key used to encode the session state</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>encryption-key</span>: <span style=color:#ae81ff>&lt;ENCRYPTION_KEY&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># the upstream endpoint which we should proxy request</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>upstream-url</span>: <span style=color:#ae81ff>http://127.0.0.1:80</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Returns HTTP 401 when no authentication is present, used with forward proxies or API protection with client credentials grant.</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>no-redirects</span>: <span style=color:#66d9ef>false</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># additional scopes to add to the default (openid+email+profile)</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>scopes</span>:
+</span></span><span style=display:flex><span>- <span style=color:#ae81ff>vpn-user</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># a collection of resource i.e. URLs that you wish to protect, this are simple gatekeeper authorization rules,</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># to get more complex authorization you can look at external authorization section in our documentation</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>resources</span>:
+</span></span><span style=display:flex><span>- <span style=color:#f92672>uri</span>: <span style=color:#ae81ff>/admin/test</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># the methods on this URL that should be protected, uri is required when defining resource</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>methods</span>:
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>GET</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># a list of roles the user must have in order to access URLs under the above</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># If all you want is authentication ONLY, simply remove the roles array - the user must be authenticated but</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># no roles are required</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>roles</span>:
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>openvpn:vpn-user</span>
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>openvpn:prod-vpn</span>
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>test</span>
+</span></span><span style=display:flex><span>- <span style=color:#f92672>uri</span>: <span style=color:#ae81ff>/admin/*</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>methods</span>:
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>GET</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>roles</span>:
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>openvpn:vpn-user</span>
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>openvpn:commons-prod-vpn</span></span></span></code></pre></div><p>Options issued at the command line have a higher priority and will
+override or merge with options referenced in a config file. Examples of
+each style are shown in the following sections.</p><h2 id=example-of-usage-and-configuration-with-keycloak>Example of usage and configuration with Keycloak</h2><p>Assuming you have some web service you wish protected by
+Keycloak:</p><ul><li><p>Create the <strong>client</strong> using the Keycloak GUI or CLI; the
+client protocol is <strong>&lsquo;openid-connect&rsquo;</strong>, access-type:
+<strong>confidential</strong>.</p></li><li><p>Add a Valid Redirect URI of
+<strong><a href=http://127.0.0.1:3000/oauth/callback rel=external target=_blank>http://127.0.0.1:3000/oauth/callback</a></strong>.</p></li><li><p>Grab the client id and client secret.</p></li><li><p>Create the roles under the client or existing clients for
+authorization purposes.</p></li></ul><p>Here is an example configuration file.</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>client-id</span>: <span style=color:#ae81ff>&lt;CLIENT_ID&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>client-secret: &lt;CLIENT_SECRET&gt; # require for access_type</span>: <span style=color:#ae81ff>confidential</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Note the redirection-url is optional, it will default to the the URL scheme and host, </span>
+</span></span><span style=display:flex><span><span style=color:#75715e># only in case of forward auth it will use X-Forwarded-Proto / X-Forwarded-Host, please see forward-auth section</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>discovery-url</span>: <span style=color:#ae81ff>https://keycloak.example.com/realms/&lt;REALM_NAME&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Indicates we should deny by default all requests and explicitly specify what is permitted, default true,</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># you cannot specify enable-default-deny:true together with defining resource=uri=/*</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>enable-default-deny</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>encryption-key</span>: <span style=color:#ae81ff>AgXa7xRcoClDEU0ZDSH4X0XhL5Qy2Z2j</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>listen</span>: :<span style=color:#ae81ff>3000</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>redirection-url</span>: <span style=color:#ae81ff>http://127.0.0.1:3000</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>upstream-url</span>: <span style=color:#ae81ff>http://127.0.0.1:80</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># a collection of resource i.e. URLs that you wish to protect, this are simple gatekeeper authorization rules,</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># to get more complex authorization you can look at external authorization section in our documentation</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>resources</span>:
+</span></span><span style=display:flex><span>- <span style=color:#f92672>uri</span>: <span style=color:#ae81ff>/admin*</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>methods</span>:
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>GET</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>roles</span>:
+</span></span><span style=display:flex><span>  <span style=color:#75715e># this will match realm role from token</span>
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>examplerealmrole</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># you can see here, that roles below will match client roles from token</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># it will look for client1&#39;s client role test1 and client2&#39;s client role test2</span>
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>client1:test1</span>
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>client2:test2</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>require-any-role</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>groups</span>:
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>admins</span>
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>users</span>
+</span></span><span style=display:flex><span>- <span style=color:#f92672>uri</span>: <span style=color:#ae81ff>/backend*</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>roles</span>:
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>client:test1</span>
+</span></span><span style=display:flex><span>- <span style=color:#f92672>uri</span>: <span style=color:#ae81ff>/public/*</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Allow access to the resource above</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>white-listed</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>- <span style=color:#f92672>uri</span>: <span style=color:#ae81ff>/favicon</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Allow access to the resource above</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>white-listed</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>- <span style=color:#f92672>uri</span>: <span style=color:#ae81ff>/css/*</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Allow access to the resource above</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>white-listed</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>- <span style=color:#f92672>uri</span>: <span style=color:#ae81ff>/img/*</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Allow access to the resource above</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>white-listed</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Adds custom headers</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>headers</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>myheader1</span>: <span style=color:#ae81ff>value_1</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>myheader2</span>: <span style=color:#ae81ff>value_2</span></span></span></code></pre></div><p>Anything defined in a configuration file can also be configured using
+command line options, such as in this example.</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>bin/gatekeeper <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>    --discovery-url<span style=color:#f92672>=</span>https://keycloak.example.com/realms/&lt;REALM_NAME&gt; <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>    --client-id<span style=color:#f92672>=</span>&lt;CLIENT_ID&gt; <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>    --client-secret<span style=color:#f92672>=</span>&lt;SECRET&gt; <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>    --listen<span style=color:#f92672>=</span>127.0.0.1:3000 <span style=color:#ae81ff>\ </span><span style=color:#75715e># unix sockets format unix://path</span>
+</span></span><span style=display:flex><span>    --redirection-url<span style=color:#f92672>=</span>http://127.0.0.1:3000 <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>    --enable-refresh-tokens<span style=color:#f92672>=</span>true <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>    --encryption-key<span style=color:#f92672>=</span>AgXa7xRcoClDEU0ZDSH4X0XhL5Qy2Z2j <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>    --upstream-url<span style=color:#f92672>=</span>http://127.0.0.1:80 <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>    --enable-default-deny<span style=color:#f92672>=</span>true <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>    --resources<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;uri=/admin*|roles=test1,test2&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>    --resources<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;uri=/backend*|roles=test1&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>    --resources<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;uri=/css/*|white-listed=true&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>    --resources<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;uri=/img/*|white-listed=true&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>    --resources<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;uri=/public/*|white-listed=true&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>    --headers<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;myheader1=value1&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>    --headers<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;myheader2=value2&#34;</span></span></span></code></pre></div><h2 id=roles>Roles</h2><p>By default, the roles defined on a resource perform a logical <code>AND</code> so
+all roles specified must be present in the claims, this behavior can be
+altered by the <code>require-any-role</code> option, however, so as long as one
+role is present the permission is granted.</p><p>You can match on realm roles or client roles:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>resources</span>:
+</span></span><span style=display:flex><span>- <span style=color:#f92672>uri</span>: <span style=color:#ae81ff>/admin*</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>methods</span>:
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>GET</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>roles</span>:
+</span></span><span style=display:flex><span>  <span style=color:#75715e># this will match realm role from token</span>
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>examplerealmrole</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># you can see here, that roles below will match client roles from token</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># it will look for client1&#39;s client role test1 and client2&#39;s client role test2</span>
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>client1:test1</span>
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>client2:test2</span></span></span></code></pre></div><p>If you have roles listed in some custom claim, please see <a href=/gatekeeper/index.html#claim-matching>custom claim matching</a></p><h2 id=authentication-flows>Authentication flows</h2><p>You can use gatekeeper to protect APIs, frontend server applications, frontend client applications.
+Frontend server-side applications can be protected by Authorization Code Flow (also with PKCE), during which several redirection
+steps take place. For protecting APIs you can use Client Credentials Grant to avoid redirections steps
+involved in authorization code flow you have to use <code>--no-redirects=true</code>. For frontend applications
+you can use Authorization Code Flow (also with PKCE) with encrypted refresh token cookies enabled, in this case however you have to handle redirections, e.g. at token expiration.</p><h2 id=default-deny>Default Deny</h2><p><code>--enable-default-deny</code> - option blocks all requests without valid token on all basic HTTP methods,
+(DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, TRACE). <strong>WARNING:</strong> There are no additional requirements on
+the token, it isn&rsquo;t checked for some claims or roles, groups etc&mldr;(this is by default true)</p><p><code>--enable-default-deny-strict</code> (recommended) - option blocks all requests (including valid token) unless
+specific path with requirements specified in resources (this option is by default false)</p><h2 id=upstream-host-proxy-and-openid-provider-proxy>Upstream Host Proxy and OpenID Provider Proxy</h2><p>By default the communication with the OpenID provider is direct. If you
+wish, you can specify a forwarding proxy server in your configuration
+file:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>openid-provider-proxy</span>: <span style=color:#ae81ff>http://proxy.example.com:8080</span></span></span></code></pre></div><p>or you can use standard env variables: <code>HTTP_PROXY, HTTPS_PROXY, NO_PROXY</code></p><p>By default also communication with upstream is direct, if you would like
+to use proxy server to forward traffic upstream you can use configuration file:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>upstream-proxy</span>: <span style=color:#ae81ff>http://proxy.example.com:8080</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>upstream-no-proxy</span>: <span style=color:#ae81ff>http://donotproxy.example.com:8080</span></span></span></code></pre></div><p>or corresponding env variables: <code>PROXY_UPSTREAM_PROXY, PROXY_UPSTREAM_NO_PROXY</code></p><h2 id=http-routing>HTTP routing</h2><p>By default, all requests will be proxied on to the upstream, if you wish
+to ensure all requests are authenticated you can use this:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>--resources<span style=color:#f92672>=</span>uri<span style=color:#f92672>=</span>/* <span style=color:#75715e># note, unless specified the method is assumed to be &#39;any|ANY&#39;</span></span></span></code></pre></div><p>The HTTP routing rules follow the guidelines from
+<a href=https://github.com/go-chi/chi#router-design rel=external target=_blank>chi</a>. The ordering of the
+resources does not matter, the router will handle that for you.</p><h2 id=cookies-size>Cookies size</h2><p>All browsers have limitations on cookies number and cookie size. This usually does not adhere
+to any standard. E.g. Chrome has limitation of 4096 bytes on all cookies per domain.
+This might cause you troubles e.g. Chrome responding with 431 Request Header Fields are Too Large.
+To overcome this limitations gatekeeper offers several options:</p><p><code>--enable-id-token-cookie</code> - is set by default false, in case you don&rsquo;t need id token, leave it/turn it off
+<code>--store-url</code> - this will enable storing of refresh token in redis store, instead of cookies, which saves you some bytes,
+also has some additional effect of raising security on client side as refresh token won&rsquo;t be exposed on client side</p><h2 id=session-only-cookies>Session-only cookies</h2><p>By default, the access and refresh cookies are session-only and disposed
+of on browser close; you can disable this feature using the
+<code>--enable-session-cookies</code> option.</p><h2 id=cookie-names>Cookie Names</h2><p>There are two parameters which you can use to set up cookie names for access token and refresh token.</p><div class="highlight wrap-code"><pre tabindex=0><code>--cookie-access-name=myAccessTokenCookie
+--cookie-refresh-name=myRefreshTokenCookie</code></pre></div><h2 id=allowed-query-params-for-authentication>Allowed Query Params for Authentication</h2><p>Sometimes you may want to pass some query params to IDP e.g. <code>kc_idp_hint</code> or <code>ui_locales</code> etc&mldr;Gatekeeper provides param <code>allowed-query-params</code>
+where you can specify which query params will be forwarded to IDP</p><p>This example will allow passing <code>myparam</code> and <code>yourparam</code> with any value to IDP:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>  --allowed-query-params<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;myparam&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  --allowed-query-params<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;yourparam&#34;</span></span></span></code></pre></div><p>yaml example:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>  <span style=color:#f92672>allowed-query-params</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>myparam</span>: <span style=color:#e6db74>&#34;&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>yourparam</span>: <span style=color:#e6db74>&#34;&#34;</span></span></span></code></pre></div><p>This example will allow passing <code>myparam</code> and <code>yourparam</code> only with specified value:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>  --allowed-query-params<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;myparam=myvalue&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  --allowed-query-params<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;yourparam=yourvalue&#34;</span></span></span></code></pre></div><p>yaml example:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>  <span style=color:#f92672>allowed-query-params</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>myparam</span>: <span style=color:#e6db74>&#34;myvalue&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>yourparam</span>: <span style=color:#e6db74>&#34;yourvalue&#34;</span></span></span></code></pre></div><p>If you would like to have defaults for your parameters, there is <code>default-allowed-query-params</code> option available, these values
+will be used only when there are no params specified in url:</p><p><strong>NOTE</strong>: Params present in default query params must be allowed by allowed-query-params option</p><p>cli example:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>  --default-allowed-query-params<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;myparam=myvalue&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  --default-allowed-query-params<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;yourparam=yourvalue&#34;</span></span></span></code></pre></div><p>yaml example:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>  <span style=color:#f92672>default-allowed-query-params</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>myparam</span>: <span style=color:#e6db74>&#34;myvalue&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>yourparam</span>: <span style=color:#e6db74>&#34;yourvalue&#34;</span></span></span></code></pre></div><h2 id=tcp-proxy-with-http-connect>TCP proxy with HTTP CONNECT</h2><p>You can protect your TCP services with gogatekeeper by adding <code>CONNECT</code> HTTP method to list of <code>custom-http-methods</code>. On client side you will need to pass of course token in <code>Authorization</code> header (righ now there are few clients which could make HTTP connect with <code>Bearer</code> token and then forward tcp, e.g. gost proxy - but only in static way, some IDE provide HTTP CONNECT functionality for db connectors but only with <code>Basic</code> authentication, we would like to add this functionality to gatekeeper in future). This setup will authenticate connection at start and will create tunnel to your backend service. Please use with care and ensure that it allows connection only to intended services, otherwise it can be missused for various attacks.</p><p>This example allows users with valid token to connect to backend postgres service:</p><div class="highlight wrap-code"><pre tabindex=0><code>  &#34;--discovery-url=http://127.0.0.1:8081/realms/test/.well-known/openid-configuration&#34;,
+  &#34;--client-id=test-client&#34;,
+  &#34;--client-secret=6447d0c0-d510-42a7-b654-6e3a16b2d7e2&#34;,
+  &#34;--upstream-url=http://127.0.0.1:5432&#34;,
+  &#34;--listen=0.0.0.0:5000&#34;,
+  &#34;--no-redirects=true&#34;,
+  &#34;--enable-authorization-header=true&#34;,
+  &#34;--custom-http-methods=CONNECT&#34;,
+  &#34;--enable-default-deny=true&#34;,
+  &#34;--enable-logging=true&#34;,
+  &#34;--enable-compression=true&#34;,
+  &#34;--enable-json-logging=true&#34;,
+  &#34;--verbose=true&#34;,
+  &#34;--skip-token-verification=false&#34;,
+  &#34;--upstream-keepalive-timeout=30s&#34;,
+  &#34;--scopes=openid&#34;,
+  &#34;--skip-access-token-clientid-check=true&#34;</code></pre></div><p>Configuration for gost proxy, to forward your tcp client connection with HTTP CONNECT, please be aware that you need to input there your token (there is only example token in this config):</p><div class="highlight wrap-code"><pre tabindex=0><code>cat &gt; config.yaml &lt;&lt;EOF
+services:
+- name: service-0
+  addr: &#34;:8000&#34;
+  handler:
+    type: tcp
+    chain: chain-0
+  listener:
+    type: tcp
+chains:
+- name: chain-0
+  hops:
+  - name: hop-0
+    nodes:
+    - name: localhost
+      addr: :5000
+      connector:
+        type: http
+        metadata:
+          header:
+            Authorization: &#34;Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJndWZUNUxaOWROWE5QSHV1d2U3T3AwWnI3b0VqdjhqVzdzbF8xUU1jaUkwIn0.eyJleHAiOjE2ODY1NzI1MDEsImlhdCI6MTY4NjU3MjIwMSwianRpIjoiY2UyZmRkMjAtNTc1YS00ZjIyLThkYTktOWQxYjM0ZTE3YjE3IiwiaXNzIjoiaHR0cDov
+LzEyNy4wLjAuMTo4MDgxL3JlYWxtcy90ZXN0IiwiYXVkIjoiYWNjb3VudCIsInN1YiI6ImE2NzgyMzg4LTNjOTMtNDA4Ny1iNDk5LTI5MmViYTU2ZDYwNiIsInR5cCI6IkJlYXJlciIsImF6cCI6InRlc3QtY2xpZW50Iiwic2Vzc2lvbl9zdGF0ZSI6ImRhODlmMDU4LTAyOGItNGJlNS05ZmQ4LTg5MjBmOTRkZTEwNiIsImFsbG93ZWQtb3JpZ2lucyI6WyIqIl0
+sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIiwidXNlciJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6Im9wZW5pZCBlbWFpbCBwcm9maWxlIiwic2lkIjoiZGE4OWYwNTgtMDI4Yi00YmU1LT
+lmZDgtODkyMGY5NGRlMTA2IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJUZXN0IFRlc3QiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJteXVzZXIiLCJnaXZlbl9uYW1lIjoiVGVzdCIsImZhbWlseV9uYW1lIjoiVGVzdCIsImVtYWlsIjoic29tZWJvZHlAc29tZXdoZXJlLmNvbSJ9.D-qDEDBumfIsVRJY6ONaXAY6fZWKZhrTG9-qtaSxYZIq7TLfApKh
+ZCdLTkNzZPDSuL7FugJ7AGnwnmbRos9hOV25UgqAZ9biO2eo04olwXXsn7q0cboVqQXMlFc4kNCWQJov9JqhG_f21T25gdQH7eMlSu1QvnKvvTRQNEHpG9fvL86D16GETPnVExRoH81fe0zHMQPk7u_eZcOlNxg5HDFacNSUpnpgoH37Fhzt0FHj5mN_nfknty5KLCO6Zs_kmdvlgVkPzceZqp2Chmq4rmlp9OPMslTEwBlRn1qTRZPpJXCxoLuMMNMeVvrXXKvFXuI
+uQ7vZFOE8xNVogm7cxQ&#34;
+      dialer:
+        type: tcp
+EOF</code></pre></div><p>start gost proxy:</p><div class="highlight wrap-code"><pre tabindex=0><code>gost -C config.yaml</code></pre></div><p>Connect with psql client:</p><div class="highlight wrap-code"><pre tabindex=0><code>psql -U postgres -h localhost -p 8000</code></pre></div><h2 id=websocket-proxy>Websocket proxy</h2><p>You can protect also websocket servers with gatekeeper proxy. You must use standard upgrade headers to proxy to your websocket backend.
+There are additional considerations you need to take into account when protecting websocket backend. Browsers doesn&rsquo;t have built-in protection against CORS for websocket protocol like they have for HTTP. That means you need
+to consider enabling additional methods for verifying that browsers connect only to your backend and receives response only from your backend.
+For this we recommend to turn-on <code>--enable-encrypted-token</code> and <code>--encryption-key</code> options and also verify <code>Origin</code> header with headers matching, please
+refer to <a href=/gatekeeper/index.html#headers-matching>Headers matching</a>.</p><h2 id=hmac-signature-signing-and-verification>HMAC Signature, signing and verification</h2><p>For raising your security you can verify/sign HMAC for your requests.
+Signing can be done when using <code>--enable-hmac</code> with forward signing feature below.
+Verification is done when using gatekeeper as authentication/authorization proxy.
+Gatekeeper in forward-signing mode creates signature, this is also
+signature which gatekeeper expects when used as auth/authz proxy, you can create
+this signature on your own, assuming you have proper secret. Signature is passed
+in <code>X-HMAC-SHA256</code> header. Signature is created by signing several fields:</p><div class="highlight wrap-code"><pre tabindex=0><code>	stringToSign := fmt.Sprintf(
+		&#34;%s\n%s%s\n%s;%s;%s&#34;,
+		req.Method,
+		req.URL.Path,
+		req.URL.RawQuery,
+		req.Header.Get(constant.AuthorizationHeader),
+		req.Host,
+		sha256.Sum256(body),
+	)</code></pre></div><h2 id=forward-signing-proxy>Forward-signing proxy</h2><p>Forward-signing provides a mechanism for authentication and
+authorization between services using tokens issued from the IdP. When
+operating in this mode the proxy will automatically acquire an access
+token (handling the refreshing or logins on your behalf) and tag
+outbound requests with an Authorization header. You can control which
+domains are tagged with the <code>--forwarding-domains</code> option. Note, this
+option uses a <strong>contains</strong> comparison on domains. So, if you wanted to
+match all domains under *.svc.cluster.local you can use:
+<code>--forwarding-domain=svc.cluster.local</code>.</p><p>You can choose between two types of OAuth authentications: <em>password</em> grant type (default) or <em>client_credentials</em> grant type.</p><p>Example setup password grant:</p><p>You have a collection of micro-services which are permitted to speak to
+one another; you have already set up the credentials, roles, and clients
+in Keycloak, providing granular role controls over issue tokens.</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>gatekeeper</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>image</span>: <span style=color:#ae81ff>quay.io/gogatekeeper/gatekeeper:2.14.2</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>args</span>:
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>enable-forwarding=true</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>forwarding-username=projecta</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>forwarding-password=some_password</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>forwarding-domains=projecta.svc.cluster.local</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>forwarding-domains=projectb.svc.cluster.local</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>client-id=xxxxxx</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>client-secret=xxxx</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>discovery-url=http://keycloak:8080/realms/master</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>tls-ca-certificate=/etc/secrets/ca.pem</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>tls-ca-key=/etc/secrets/ca-key.pem</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># Note: if you don&#39;t specify any forwarding domains, all domains will be signed; Also the code checks is the</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># domain &#39;contains&#39; the value (it&#39;s not a regex) so if you wanted to sign all requests to svc.cluster.local, just use</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># svc.cluster.local</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>volumeMounts</span>:
+</span></span><span style=display:flex><span>  - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>keycloak-socket</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>mountPoint</span>: <span style=color:#ae81ff>/var/run/keycloak</span>
+</span></span><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>projecta</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>image</span>: <span style=color:#ae81ff>some_images</span></span></span></code></pre></div><p>Example setup client credentials grant:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>gatekeeper</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>image</span>: <span style=color:#ae81ff>quay.io/gogatekeeper/gatekeeper:2.14.2</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>args</span>:
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>enable-forwarding=true</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>forwarding-domains=projecta.svc.cluster.local</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>forwarding-domains=projectb.svc.cluster.local</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>client-id=xxxxxx</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>client-secret=xxxx</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>discovery-url=http://keycloak:8080/realms/master</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>tls-ca-certificate=/etc/secrets/ca.pem</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>tls-ca-key=/etc/secrets/ca-key.pem</span>
+</span></span><span style=display:flex><span>  - --<span style=color:#ae81ff>forwarding-grant-type=client_credentials</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># Note: if you don&#39;t specify any forwarding domains, all domains will be signed; Also the code checks is the</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># domain &#39;contains&#39; the value (it&#39;s not a regex) so if you wanted to sign all requests to svc.cluster.local, just use</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># svc.cluster.local</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>volumeMounts</span>:
+</span></span><span style=display:flex><span>  - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>keycloak-socket</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>mountPoint</span>: <span style=color:#ae81ff>/var/run/keycloak</span>
+</span></span><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>projecta</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>image</span>: <span style=color:#ae81ff>some_images</span></span></span></code></pre></div><p>Test the forward proxy:</p><div class="highlight wrap-code"><pre tabindex=0><code>curl -k --proxy http://127.0.0.1:3000 https://test.projesta.svc.cluster.local</code></pre></div><p>On the receiver side, you could set up the Gatekeeper Proxy
+<code>--no-redirects=true</code> and permit this to verify and handle admission for
+you. Alternatively, the access token can found as a bearer token in the
+request.</p><h2 id=forwarding-signed-https-connections>Forwarding signed HTTPS connections</h2><p>Handling HTTPS requires a man-in-the-middle sort of TLS connection. By
+default, if no <code>--tls-ca-certificate</code> and <code>--tls-ca-key</code> are provided
+the proxy will use the default certificate. If you wish to verify the
+trust, you’ll need to generate a CA, for example.</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>$ openssl req -x509 -nodes -days <span style=color:#ae81ff>365</span> -newkey ed2551 -keyout ca.key -out ca.pem
+</span></span><span style=display:flex><span>$ bin/gatekeeper <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  --enable-forwarding <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  --forwarding-username<span style=color:#f92672>=</span>USERNAME <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  --forwarding-password<span style=color:#f92672>=</span>PASSWORD <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  --client-id<span style=color:#f92672>=</span>CLIENT_ID <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  --client-secret<span style=color:#f92672>=</span>SECRET <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  --discovery-url<span style=color:#f92672>=</span>https://keycloak.example.com/realms/test <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  --tls-ca-certificate<span style=color:#f92672>=</span>ca.pem <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  --tls-ca-key<span style=color:#f92672>=</span>ca-key.pem</span></span></code></pre></div><h2 id=forwarding-with-uma-token>Forwarding with UMA token</h2><p>When <code>--enable-uma</code> is set in forwarding mode, proxy signs request with RPT token</p><h2 id=https-redirect>HTTPS redirect</h2><p>The proxy supports an HTTP listener, so the only real requirement here
+is to perform an HTTP → HTTPS redirect. You can enable the option like
+this:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>--listen-http<span style=color:#f92672>=</span>127.0.0.1:80
+</span></span><span style=display:flex><span>--enable-security-filter<span style=color:#f92672>=</span>true  <span style=color:#75715e># is required for the https redirect</span>
+</span></span><span style=display:flex><span>--enable-https-redirection</span></span></code></pre></div><h2 id=lets-encrypt-configuration>Let’s Encrypt configuration</h2><p>Here is an example of the required configuration for Let’s Encrypt
+support:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>listen</span>: <span style=color:#ae81ff>0.0.0.0</span>:<span style=color:#ae81ff>443</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>enable-https-redirection</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>enable-security-filter</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>use-letsencrypt</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>letsencrypt-cache-dir</span>: <span style=color:#ae81ff>./cache/</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>redirection-url</span>: <span style=color:#ae81ff>https://domain.tld:443/</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>hostnames</span>:
+</span></span><span style=display:flex><span>  - <span style=color:#ae81ff>domain.tld</span></span></span></code></pre></div><p>Listening on port 443 is mandatory.</p><h2 id=access-token-encryption>Access token encryption</h2><p>By default, the session token is placed into a cookie in plaintext. If
+you prefer to encrypt the session cookie, use the
+<code>--enable-encrypted-token</code> and <code>--encryption-key</code> options. Note that the
+access token forwarded in the X-Auth-Token header to upstream is
+unaffected.</p><h2 id=bearer-token-passthrough>Bearer token passthrough</h2><p>If your Bearer token is intended for your upstream application and not for gatekeeper
+you can use option <code>--skip-authorization-header-identity</code>. Please be aware that
+token is still required to be in cookies.</p><h2 id=upstream-headers>Upstream headers</h2><p>On protected resources, the upstream endpoint will receive a number of
+headers added by the proxy, along with custom claims, like this:</p><ul><li>X-Auth-Email</li><li>X-Auth-ExpiresIn</li><li>X-Auth-Groups</li><li>X-Auth-Roles</li><li>X-Auth-Subject</li><li>X-Auth-Token</li><li>X-Auth-Userid</li><li>X-Auth-Username</li></ul><p>To control the <code>Authorization</code> header use the
+<code>enable-authorization-header</code> YAML configuration or the
+<code>--enable-authorization-header</code> command line option. By default, this
+option is set to <code>true</code>.</p><h2 id=custom-claim-headers>Custom claim headers</h2><p>You can inject additional claims from the access token into the
+upstream headers with the <code>--add-claims</code> option. For example, a
+token from a Keycloak provider might include the following
+claims:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>&#34;resource_access&#34;: </span>{},
+</span></span><span style=display:flex><span><span style=color:#f92672>&#34;name&#34;: </span><span style=color:#e6db74>&#34;Beloved User&#34;</span>,
+</span></span><span style=display:flex><span><span style=color:#f92672>&#34;preferred_username&#34;: </span><span style=color:#e6db74>&#34;beloved.user&#34;</span>,
+</span></span><span style=display:flex><span><span style=color:#f92672>&#34;given_name&#34;: </span><span style=color:#e6db74>&#34;Beloved&#34;</span>,
+</span></span><span style=display:flex><span><span style=color:#f92672>&#34;family_name&#34;: </span><span style=color:#e6db74>&#34;User&#34;</span>,
+</span></span><span style=display:flex><span><span style=color:#f92672>&#34;email&#34;: </span><span style=color:#e6db74>&#34;beloved@example.com&#34;</span></span></span></code></pre></div><p>In order to request you receive the <em>given_name</em>, <em>family_name</em>, and name
+in the authentication header, we would add <code>--add-claims=given_name</code> and
+<code>--add-claims=family_name</code> and so on, or we can do it in the
+configuration file, like this:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>add-claims</span>:
+</span></span><span style=display:flex><span>- <span style=color:#ae81ff>given_name</span>
+</span></span><span style=display:flex><span>- <span style=color:#ae81ff>family_name</span>
+</span></span><span style=display:flex><span>- <span style=color:#ae81ff>name</span></span></span></code></pre></div><p>This would add the additional headers to the authenticated request along
+with standard ones.</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>X-Auth-Family-Name: User
+</span></span><span style=display:flex><span>X-Auth-Given-Name: Beloved
+</span></span><span style=display:flex><span>X-Auth-Name: Beloved User</span></span></code></pre></div><h2 id=custom-headers>Custom headers</h2><p>You can inject custom headers using the <code>--headers="name=value"</code> option
+or the configuration file:</p><pre><code>headers:
+  name: value
+</code></pre><h2 id=openid-provider-headers>OpenID provider headers</h2><p>In some cases you might need to send headers to your OpenId provider discovery endpoint (e.g. you have your endpoint protected by basic auth).
+For this use cases there is <code>--openid-provider-headers</code> option:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>openid-provider-headers</span>:
+</span></span><span style=display:flex><span>  - <span style=color:#f92672>X-SEND</span>: <span style=color:#e6db74>&#34;MYVALUE&#34;</span>
+</span></span><span style=display:flex><span>  - <span style=color:#f92672>X-OTHER-SEND</span>: <span style=color:#e6db74>&#34;NEXT VALUE&#34;</span></span></span></code></pre></div><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>  --openid-provider-headers<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;myheader1=value1&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  --openid-provider-headers<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;myheader2=value2&#34;</span></span></span></code></pre></div><h2 id=encryption-key>Encryption key</h2><p>In order to remain stateless and not have to rely on a central cache to
+persist the <em>refresh_tokens</em>, the refresh token is encrypted and added as
+a cookie using <strong>crypto/aes</strong>. The key must be the same if you are
+running behind a load balancer. The key length should be either <em>16</em> or <em>32</em>
+bytes, depending or whether you want <em>AES-128</em> or <em>AES-256</em>.</p><h2 id=claim-matching>Claim matching</h2><p>The proxy supports adding a variable list of claim matches against the
+presented tokens for additional access control. You can match the &lsquo;iss&rsquo;
+or &lsquo;aud&rsquo; to the token or custom attributes; each of the matches are
+regexes. For example, <code>--match-claims 'aud=sso.*'</code> or <code>--claim iss=https://.*'</code> or via the configuration file, like this:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>match-claims</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>aud</span>: <span style=color:#ae81ff>openvpn</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>iss</span>: <span style=color:#ae81ff>https://keycloak.example.com/realms/commons</span></span></span></code></pre></div><p>or via the CLI, like this:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>--match-claims<span style=color:#f92672>=</span>auth<span style=color:#f92672>=</span>openvpn
+</span></span><span style=display:flex><span>--match-claims<span style=color:#f92672>=</span>iss<span style=color:#f92672>=</span>http://keycloak.example.com/realms/commons</span></span></code></pre></div><p>You can limit the email domain permitted; for example, if you want to
+limit to only users on the example.com domain:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>match-claims</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>email</span>: <span style=color:#ae81ff>^.*@example.com$</span></span></span></code></pre></div><p>The adapter supports matching on multi-value strings claims. The match
+will succeed if one of the values matches, for example:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>match-claims</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>perms</span>: <span style=color:#ae81ff>perm1</span></span></span></code></pre></div><p>will successfully match</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;iss&#34;</span>: <span style=color:#e6db74>&#34;https://sso.example.com&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;sub&#34;</span>: <span style=color:#e6db74>&#34;&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;perms&#34;</span>: [<span style=color:#e6db74>&#34;perm1&#34;</span>, <span style=color:#e6db74>&#34;perm2&#34;</span>]
+</span></span><span style=display:flex><span>}</span></span></code></pre></div><h2 id=group-claims>Group claims</h2><p>You can match on the group claims within a token via the <code>groups</code>
+parameter available within the resource. While roles are implicitly
+required, such as <code>roles=admin,user</code> where the user MUST have roles
+&lsquo;admin&rsquo; AND &lsquo;user&rsquo;, groups are applied with an OR operation, so
+<code>groups=users,testers</code> requires that the user MUST be within either
+&lsquo;users&rsquo; OR &rsquo;testers&rsquo;. The claim name is hard-coded to <code>groups</code>, so a <em>JWT</em>
+token would look like this:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;iss&#34;</span>: <span style=color:#e6db74>&#34;https://sso.example.com&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;sub&#34;</span>: <span style=color:#e6db74>&#34;&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;aud&#34;</span>: <span style=color:#e6db74>&#34;test&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;exp&#34;</span>: <span style=color:#ae81ff>1515269245</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;iat&#34;</span>: <span style=color:#ae81ff>1515182845</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;email&#34;</span>: <span style=color:#e6db74>&#34;beloved@example.com&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;groups&#34;</span>: [
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;group_one&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;group_two&#34;</span>
+</span></span><span style=display:flex><span>  ],
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;name&#34;</span>: <span style=color:#e6db74>&#34;Beloved&#34;</span>
+</span></span><span style=display:flex><span>}</span></span></code></pre></div><h2 id=headers-matching>Headers matching</h2><p>You can match on the request headers via the <code>headers</code>
+parameter available within the resource. Headers are implicitly
+required, such as <code>headers=x-some-header:somevalue,x-other-header:othervalue</code> where the request
+MUST have headers &lsquo;x-some-header&rsquo; with value &lsquo;somevalue&rsquo; AND &lsquo;x-other-header&rsquo;, with value &lsquo;othervalue&rsquo;.</p><h2 id=forward-auth>Forward-auth</h2><p>Traefik, nginx ingress and other gateways usually have feature called forward-auth.
+This enables them to forward request to external auth/authz service which returns 2xx in case
+auth/authz was successful and otherwise some higher code (usually 401/403) or redirects them
+for authentication to keycloak server. You can use
+gatekeeper as this external auth/authz service by using headers matching feature as describe above
+and enabling <code>--no-proxy</code> option (this option will not forward request to upstream).</p><p>Example:</p><p>traefik forward-auth configuration when you don&rsquo;t want to redirect user to authentication
+server by gatekeeper (useful for e.g. API authentication or when you are using redirect
+to keycloak server on front proxy)</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>traefik.containo.us/v1alpha1</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>kind</span>: <span style=color:#ae81ff>Middleware</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>metadata</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>labels</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>app.kubernetes.io/name</span>: <span style=color:#ae81ff>dashboard-apis-oauth</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>app.kubernetes.io/part-of</span>: <span style=color:#ae81ff>dashboard</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>dashboard-apis-oauth</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>namespace</span>: <span style=color:#ae81ff>censored</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>spec</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>forwardAuth</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>address</span>: <span style=color:#ae81ff>http://gatekeeper-dns-name:4180</span></span></span></code></pre></div><p>gatekeeper configuration</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>  - <span style=color:#f92672>args</span>:
+</span></span><span style=display:flex><span>      - --<span style=color:#ae81ff>client-id=dashboard</span>
+</span></span><span style=display:flex><span>      - --<span style=color:#66d9ef>no</span>-<span style=color:#ae81ff>redirects=true</span> <span style=color:#75715e># this option will ensure there will be no redirects</span>
+</span></span><span style=display:flex><span>      - --<span style=color:#66d9ef>no</span>-<span style=color:#ae81ff>proxy=true</span> <span style=color:#75715e># this option will ensure that request will be not forwarded to upstream</span>
+</span></span><span style=display:flex><span>      - --<span style=color:#ae81ff>listen=0.0.0.0:4180</span>
+</span></span><span style=display:flex><span>      - --<span style=color:#ae81ff>discovery-url=https://keycloak-dns-name/realms/censored</span>
+</span></span><span style=display:flex><span>      - --<span style=color:#ae81ff>enable-default-deny=true</span> <span style=color:#75715e># this option will ensure protection of all paths /*, according our traefik config, traefik will send it to /</span>
+</span></span><span style=display:flex><span>      - --<span style=color:#ae81ff>resources=headers=x-some-header:somevalue,x-other-header:othervalue</span></span></span></code></pre></div><p>traefik forward-auth configuration when you WANT to redirect user to authentication
+server by gatekeeper (useful for e.g. frontend application authentication). Please be
+aware that in this mode you need to forward headers X-Forwarded-Host, X-Forwarded-Uri, X-Forwarded-Proto, from
+front proxy to gatekeeper. You can find more complete example <a href=https://github.com/gogatekeeper/gatekeeper/blob/master/e2e/k8s/manifest_test_forwardauth.yml rel=external target=_blank>here</a>.</p><p><em>NOTE</em>: Please very important is to forward <code>prefix</code> (means all paths with prefix) <code>/oauth</code>
+directly to gatekeeper service as you can see in manifest, otherwise you will see redirect loop.</p><p><em>IMPORTANT</em>: Please ensure that you are receiving headers only from trusted proxy
+and gatekeeper is not exposed directly to internet, otherwise attacker might misuse this!</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>traefik.containo.us/v1alpha1</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>kind</span>: <span style=color:#ae81ff>Middleware</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>metadata</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>labels</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>app.kubernetes.io/name</span>: <span style=color:#ae81ff>dashboard-apis-oauth</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>app.kubernetes.io/part-of</span>: <span style=color:#ae81ff>dashboard</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>dashboard-apis-oauth</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>namespace</span>: <span style=color:#ae81ff>censored</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>spec</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>forwardAuth</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>address</span>: <span style=color:#ae81ff>http://gatekeeper-dns-name:4180</span></span></span></code></pre></div><p>gatekeeper configuration:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>  - <span style=color:#f92672>args</span>:
+</span></span><span style=display:flex><span>      - --<span style=color:#ae81ff>client-id=dashboard</span>
+</span></span><span style=display:flex><span>      - --<span style=color:#66d9ef>no</span>-<span style=color:#ae81ff>redirects=false</span> <span style=color:#75715e># this option will ensure there WILL BE redirects to keycloak server</span>
+</span></span><span style=display:flex><span>      - --<span style=color:#66d9ef>no</span>-<span style=color:#ae81ff>proxy=true</span> <span style=color:#75715e># this option will ensure that request will be not forwarded to upstream</span>
+</span></span><span style=display:flex><span>      - --<span style=color:#ae81ff>listen=0.0.0.0:4180</span>
+</span></span><span style=display:flex><span>      - --<span style=color:#ae81ff>discovery-url=https://keycloak-dns-name/realms/censored</span>
+</span></span><span style=display:flex><span>      - --<span style=color:#ae81ff>enable-default-deny=true</span> <span style=color:#75715e># this option will ensure protection of all paths /*, according our traefik config, traefik will send it to /</span>
+</span></span><span style=display:flex><span>      - --<span style=color:#ae81ff>resources=headers=x-some-header:somevalue,x-other-header:othervalue</span></span></span></code></pre></div><p>in some cases you maybe use traefik without k8s, here is example traefik configuration, no k8s resources:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>http</span>:
+</span></span><span style=display:flex><span> <span style=color:#f92672>routers</span>:
+</span></span><span style=display:flex><span>   <span style=color:#f92672>app</span>:
+</span></span><span style=display:flex><span>     <span style=color:#f92672>entryPoints</span>:
+</span></span><span style=display:flex><span>       - <span style=color:#e6db74>&#34;websecure&#34;</span>
+</span></span><span style=display:flex><span>     <span style=color:#f92672>rule</span>: <span style=color:#e6db74>&#34;Host(`domain.org`)&#34;</span>
+</span></span><span style=display:flex><span>     <span style=color:#f92672>middlewares</span>:
+</span></span><span style=display:flex><span>       - <span style=color:#e6db74>&#34;app-middleware&#34;</span>
+</span></span><span style=display:flex><span>       - <span style=color:#e6db74>&#34;app-headers&#34;</span>
+</span></span><span style=display:flex><span>     <span style=color:#f92672>tls</span>:
+</span></span><span style=display:flex><span>       <span style=color:#f92672>certResolver</span>: <span style=color:#ae81ff>letsencrypt</span>
+</span></span><span style=display:flex><span>     <span style=color:#f92672>service</span>: <span style=color:#ae81ff>app-service</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>   <span style=color:#f92672>app-proxy</span>:
+</span></span><span style=display:flex><span>     <span style=color:#f92672>entryPoints</span>:
+</span></span><span style=display:flex><span>       - <span style=color:#e6db74>&#34;websecure&#34;</span>
+</span></span><span style=display:flex><span>     <span style=color:#f92672>rule</span>: <span style=color:#e6db74>&#34;Host(`domain.org`) &amp;&amp; PathPrefix(`/oauth`)&#34;</span> <span style=color:#75715e># here you see that /oauth prefix is routed directly to gatekeeper</span>
+</span></span><span style=display:flex><span>     <span style=color:#f92672>tls</span>:
+</span></span><span style=display:flex><span>       <span style=color:#f92672>certResolver</span>: <span style=color:#ae81ff>letsencrypt</span>
+</span></span><span style=display:flex><span>     <span style=color:#f92672>service</span>: <span style=color:#ae81ff>app-proxy</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>################     </span>
+</span></span><span style=display:flex><span> 
+</span></span><span style=display:flex><span>  <span style=color:#f92672>middlewares</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>app-headers</span>:
+</span></span><span style=display:flex><span>      <span style=color:#f92672>headers</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>customRequestHeaders</span>:
+</span></span><span style=display:flex><span>          <span style=color:#f92672>X-Forwarded-Proto</span>: <span style=color:#ae81ff>https</span>
+</span></span><span style=display:flex><span>          <span style=color:#f92672>X-Forwarded-Host</span>: <span style=color:#ae81ff>domain.org</span>
+</span></span><span style=display:flex><span>          <span style=color:#f92672>X-Forwarded-Uri</span>: <span style=color:#ae81ff>/</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>app-middleware</span>:
+</span></span><span style=display:flex><span>      <span style=color:#f92672>forwardAuth</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>address</span>: <span style=color:#e6db74>&#34;http://192.168.140.93:4180 # gatekeeper container address
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>#####################          
+</span></span></span><span style=display:flex><span><span style=color:#e6db74> services:          
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>   app-service:
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>     loadBalancer:
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>       servers:
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>         - url: &#34;</span><span style=color:#ae81ff>http://192.168.x.x:80&#34;</span> <span style=color:#75715e># App container address</span>
+</span></span><span style=display:flex><span>       <span style=color:#f92672>passHostHeader</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>   <span style=color:#f92672>app-proxy</span>:
+</span></span><span style=display:flex><span>     <span style=color:#f92672>loadBalancer</span>:
+</span></span><span style=display:flex><span>       <span style=color:#f92672>servers</span>:
+</span></span><span style=display:flex><span>         - <span style=color:#f92672>url</span>: <span style=color:#e6db74>&#34;http://192.168.x.x:4180&#34;</span> <span style=color:#75715e># Gatekeeper container address</span>
+</span></span><span style=display:flex><span>       <span style=color:#f92672>passHostHeader</span>: <span style=color:#66d9ef>true</span></span></span></code></pre></div><p>nginx forward-auth configuration, nginx is more strict than traefik and rejects redirects,
+so in this case redirection to authorization server can be done only on nginx, example:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>nginx.ingress.kubernetes.io/configuration-snippet</span>: |<span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>     auth_request /auth;</span>     
+</span></span><span style=display:flex><span><span style=color:#f92672>nginx.ingress.kubernetes.io/server-snippet</span>: |<span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>     location ^~ /auth {
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          internal;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          proxy_pass &lt;gatekeeper-url&gt;/$request_uri;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          proxy_pass_request_body off;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          proxy_set_header Content-Length &#34;&#34;;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          proxy_set_header X-Forwarded-Proto $scheme;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          proxy_set_header X-Forwarded-Host $host;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          proxy_set_header X-Forwarded-Method $request_method;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          proxy_set_header X-Forwarded-URI $request_uri;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          proxy_busy_buffers_size 64k;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          proxy_buffers 8 32k;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          proxy_buffer_size 32k;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>     }</span>     </span></span></code></pre></div><p>gatekeeper configuration, must be <code>--no-proxy=true with --no-redirects=true</code></p><h2 id=custom-pages>Custom pages</h2><p>By default, Gatekeeper Proxy will immediately redirect you
+for authentication and hand back a 403 for access denied. Most users
+will probably want to present the user with a more friendly sign-in and
+access denied page. You can pass the command line options (or via config
+file) paths to the files with <code>--sign-in-page=PATH</code>. The sign-in page
+will have a &lsquo;redirect&rsquo; variable passed into the scope and holding the
+OAuth redirection URL. If you wish to pass additional variables into the
+templates, such as title, sitename and so on, you can use the -<code>-tags key=pair</code> option, like this: <code>--tags title="This is my site"</code> and the
+variable would be accessible from <code>{{ .title }}</code>.</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span>&lt;<span style=color:#f92672>html</span>&gt;
+</span></span><span style=display:flex><span>&lt;<span style=color:#f92672>body</span>&gt;
+</span></span><span style=display:flex><span>&lt;<span style=color:#f92672>a</span> <span style=color:#a6e22e>href</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;{{ .redirect }}&#34;</span>&gt;Sign-in&lt;/<span style=color:#f92672>a</span>&gt;
+</span></span><span style=display:flex><span>&lt;/<span style=color:#f92672>body</span>&gt;
+</span></span><span style=display:flex><span>&lt;/<span style=color:#f92672>html</span>&gt;</span></span></code></pre></div><h3 id=custom-error-page-for-bad-request>Custom Error Page for Bad Request</h3><p>One use case for this is that: inside keycloak server have &ldquo;required user actions&rdquo; set to &ldquo;Terms and Conditions&rdquo;. That means, if it is the first time an user access app X, he will need to accept the T&amp;C or decline. If he accepts the terms, he can login fine to app X. However, if he declines it, he gets an empty error page with &ldquo;bad request&rdquo;.</p><p>You can use built-in template or your custom:</p><div class="highlight wrap-code"><pre tabindex=0><code>--error-page=templates/error.html.tmpl</code></pre></div><h2 id=white-listed-urls>White-listed URL’s</h2><p>Depending on how the application URL’s are laid out, you might want
+protect the root / URL but have exceptions on a list of paths, for
+example <code>/health</code>. While this is best solved by adjusting the paths, you
+can add exceptions to the protected resources, like this:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>  <span style=color:#f92672>resources</span>:
+</span></span><span style=display:flex><span>  - <span style=color:#f92672>uri</span>: <span style=color:#ae81ff>/some_white_listed_url</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>white-listed</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>  - <span style=color:#f92672>uri</span>: <span style=color:#ae81ff>/*</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>methods</span>:
+</span></span><span style=display:flex><span>      - <span style=color:#ae81ff>GET</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>roles</span>:
+</span></span><span style=display:flex><span>      - <span style=color:#ae81ff>&lt;CLIENT_APP_NAME&gt;:&lt;ROLE_NAME&gt;</span>
+</span></span><span style=display:flex><span>      - <span style=color:#ae81ff>&lt;CLIENT_APP_NAME&gt;:&lt;ROLE_NAME&gt;</span></span></span></code></pre></div><p>Or on the command line</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>  --resources <span style=color:#e6db74>&#34;uri=/some_white_listed_url|white-listed=true&#34;</span>
+</span></span><span style=display:flex><span>  --resources <span style=color:#e6db74>&#34;uri=/*&#34;</span>  <span style=color:#75715e># requires authentication on the rest</span>
+</span></span><span style=display:flex><span>  --resources <span style=color:#e6db74>&#34;uri=/admin*|roles=admin,superuser|methods=POST,DELETE&#34;</span></span></span></code></pre></div><h2 id=pkce-proof-key-for-code-exchange>PKCE (Proof Key for Code Exchange)</h2><p>Gatekeeper supports PKCE with S256 code challenge method. It stores code verifier in cookie.
+You can set custom cookie name with <code>--cookie-pkce-name</code>.</p><h2 id=mutual-tls>Mutual TLS</h2><p>The proxy support enforcing mutual TLS for the clients by adding the
+<code>--tls-ca-certificate</code> command line option or configuration file option.
+All clients connecting must present a certificate that was signed by
+the CA being used.</p><h2 id=certificate-rotation>Certificate rotation</h2><p>The proxy will automatically rotate the server certificates if the files
+change on disk. Note, no downtime will occur as the change is made
+inline. Clients who connected before the certificate rotation will be
+unaffected and will continue as normal with all new connections
+presented with the new certificate.</p><h2 id=refresh-tokens>Refresh tokens</h2><p>If a request for an access token contains a refresh token and
+<code>--enable-refresh-tokens</code> is set to <code>true</code>, the proxy will automatically
+refresh the access token for you. The tokens themselves are kept either
+as an encrypted (<code>--encryption-key=KEY</code>) cookie <strong>(cookie name:
+kc-state).</strong> or a store <strong>(still requires encryption key)</strong>.</p><p>To enable a local Redis store use <code>redis://user:secret@localhost:6379/0?protocol=3</code>.
+See <a href=https://github.com/redis/redis-specifications/blob/master/uri/redis.txt rel=external target=_blank>redis-uri</a> specification
+In both cases, the refresh token is encrypted before being placed into
+the store.</p><h2 id=post-login-redirect>Post Login Redirect</h2><p>Without this option if user comes to site protected by gatekeeper e.g. <code>http://somesite/somepath</code>, user
+will be redirected to login and after login back to <code>http://somesite/path</code>. If user comes to <code>/</code> before login
+he will be redirected back to <code>/</code>. Sometimes you want redirect user back not to <code>/</code> but some path. For this
+there is option <code>--post-login-redirect-path=/fallback/path</code> which enables you to define some path to which user will be redirected
+after login if user comes to root path <code>/</code>.</p><h2 id=logout-endpoint>Logout endpoint</h2><p>There are 2 possibilities how to logout:</p><ol><li><p>Using gatekeeper own mechanism <code>--enable-logout-redirect=false</code>
+In this case calling <strong>/oauth/logout</strong> will use revocation endpoint which might be set by option <code>--revocation-url</code>
+or if not set it will be retrieved from keycloak OpenID discovery response <a href=https://keycloak.example.com/realms/REALM_NAME/protocol/openid-connect/revoke rel=external target=_blank>https://keycloak.example.com/realms/REALM_NAME/protocol/openid-connect/revoke</a>.
+By default it will try to retrieve token from authorization header or access token cookie and then token from refresh token cookie, if latter present
+it will be used for revocation, if not first will be used. If access token is passed to revocation endpoint
+it will only revoke that access token, so on next request with refresh token user will get new access token.
+If refresh token is passed to revocation endpoint it will revoke refresh token and all access tokens.
+Thus it is recommended to pass refresh tokens, this means for <code>--no-redirects=false</code> (code flow) you should
+enable refresh tokens <code>--enable-refresh-tokens=true</code> so that refresh cookie will be passed to endpoint.
+For <code>--no-redirects=true</code> you have to pass refresh token in authorization header.</p><p>Post Logout Redirection - redirection url will be gathered from this places from highest priority to lowest:</p><ul><li>&ndash;post-logout-redirect-uri option - recommended</li><li><strong>/oauth/logout?redirect=url</strong> - from <code>redirect</code> url query parameter, not recommended, kept only for convenience</li><li>&ndash;redirection-url option</li></ul></li><li><p>Using keycloak mechanism, valid only for keycloak 18+ <code>--enable-logout-redirect=true</code>
+Uses keycloak logout endpoint <a href=https://keycloak.example.com/realms/REALM_NAME/protocol/openid-connect/logout rel=external target=_blank>https://keycloak.example.com/realms/REALM_NAME/protocol/openid-connect/logout</a>.</p><p>Post Logout Redirection - you can specify url in <code>--post-logout-redirect-uri</code> option, this logout mechanism uses
+id token for logging out, in case of code flow this is gathered automatically from id token cookie. In case of
+<code>--no-redirects=true</code> you have to pass id token in authorization header.</p></li></ol><h3 id=session-logout>Session logout</h3><p>Many times there are cases when you have multiple applications (multiple keycloak clients for gatekeeper) and you would
+like to achieve that logout on one application causes logout also on other application. For this use case there is option
+<code>--enable-idp-session-check=true</code> together with <code>--enable-logout-redirect=true</code>.</p><h2 id=cross-origin-resource-sharing-cors>Cross-origin resource sharing (CORS)</h2><p>You can add a CORS header via the <code>--cors-[method]</code> with these
+configuration options.</p><ul><li><p>Access-Control-Allow-Origin</p></li><li><p>Access-Control-Allow-Methods</p></li><li><p>Access-Control-Allow-Headers</p></li><li><p>Access-Control-Expose-Headers</p></li><li><p>Access-Control-Allow-Credentials</p></li><li><p>Access-Control-Max-Age</p></li></ul><p>You can add using the config file:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>cors-origins</span>:
+</span></span><span style=display:flex><span>- <span style=color:#e6db74>&#39;*&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>cors-methods</span>:
+</span></span><span style=display:flex><span>- <span style=color:#ae81ff>GET</span>
+</span></span><span style=display:flex><span>- <span style=color:#ae81ff>POST</span></span></span></code></pre></div><p>or via the command line:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>--cors-origins <span style=color:#f92672>[</span>--cors-origins option<span style=color:#f92672>]</span>                  a set of origins to add to the CORS access control <span style=color:#f92672>(</span>Access-Control-Allow-Origin<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>--cors-methods <span style=color:#f92672>[</span>--cors-methods option<span style=color:#f92672>]</span>                  the method permitted in the access control <span style=color:#f92672>(</span>Access-Control-Allow-Methods<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>--cors-headers <span style=color:#f92672>[</span>--cors-headers option<span style=color:#f92672>]</span>                  a set of headers to add to the CORS access control <span style=color:#f92672>(</span>Access-Control-Allow-Headers<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>--cors-exposes-headers <span style=color:#f92672>[</span>--cors-exposes-headers option<span style=color:#f92672>]</span>  set the expose cors headers access control <span style=color:#f92672>(</span>Access-Control-Expose-Headers<span style=color:#f92672>)</span></span></span></code></pre></div><h2 id=upstream-url>Upstream URL</h2><p>You can control the upstream endpoint via the <code>--upstream-url</code> option.
+Both HTTP and HTTPS are supported with TLS verification and keep-alive
+support configured via the <code>--skip-upstream-tls-verify</code> /
+<code>--upstream-keepalives</code> option. Note, the proxy can also upstream via a
+UNIX socket, <code>--upstream-url unix://path/to/the/file.sock</code>.</p><h2 id=endpoints>Endpoints</h2><ul><li><p><strong>/oauth/authorize</strong> is authentication endpoint which will generate
+the OpenID redirect to the provider</p></li><li><p><strong>/oauth/callback</strong> is provider OpenID callback endpoint</p></li><li><p><strong>/oauth/expired</strong> is a helper endpoint to check if a access token
+has expired, 200 for ok and, 401 for no token and 401 for expired</p></li><li><p><strong>/oauth/health</strong> is the health checking endpoint for the proxy, you
+can also grab version from headers</p></li><li><p><strong>/oauth/login</strong> provides a relay endpoint to login via
+<code>grant_type=password</code>, for example, <code>POST /oauth/login</code> form values
+are <code>username=USERNAME&amp;password=PASSWORD</code> (must be enabled)</p></li><li><p><strong>/oauth/logout</strong> provides a convenient endpoint to log the user
+out, it will always attempt to perform a back channel log out of
+offline tokens</p></li><li><p><strong>/oauth/token</strong> is a helper endpoint which will display the current
+access token for you</p></li><li><p><strong>/oauth/metrics</strong> is a Prometheus metrics handler</p></li><li><p><strong>/oauth/discovery</strong> provides endpoint with basic urls gatekeeper provides</p></li></ul><h2 id=level-of-authentication-application-context-class-reference---acr>Level Of Authentication (Application Context Class Reference - ACR)</h2><p>Level Of Authentication or Step up authentication enables to raise required level of authentication while
+accessing certain resources.
+For setting up please first check keycloak documentation <a href=https://www.keycloak.org/docs/latest/server_admin/index.html#_step-up-flow rel=external target=_blank>https://www.keycloak.org/docs/latest/server_admin/index.html#_step-up-flow</a>.
+To configure it on gatekeeper side you will need to use option <code>--enable-loa=true</code> and configure resources:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>  --<span style=color:#ae81ff>resources=uri=/cats|acr=level1,level2</span>
+</span></span><span style=display:flex><span>  --<span style=color:#ae81ff>resources=uri=/pets|acr=level2</span></span></span></code></pre></div><p>This example configures two URIs, first <code>/cats</code> accepts two level of authentications level1 or level2, in case
+token doesn&rsquo;t contain any of these levels, it redirects to authentication and uses first one <code>level1</code> as default one.
+Second URI <code>/pets</code> accepts one level of authentication <code>level2</code>. In case token contains level1 it redirets to authentication using <code>level2</code> acr value.</p><h2 id=external-authorization>External Authorization</h2><h3 id=open-policy-agent-opa-authorization>Open Policy Agent (OPA) authorization</h3><p>In version 1.8.8 we are introducing external authorization with OPA (applicable to auth code flow <code>--no-redirects=false</code> as well as for <code>--no-redirects=true</code>).
+Gatekeeper sends request with this structure to OPA for authorization:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;input&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;body&#34;</span>: <span style=color:#e6db74>&#34;{\&#34;name\&#34;: \&#34;test\&#34;}&#34;</span> <span style=color:#75715e>// body is sent as string so you will have to unmarshal it in case of json/yaml in OPA
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#e6db74>&#34;headers&#34;</span>: {
+</span></span><span style=display:flex><span>      <span style=color:#f92672>&#34;X-SOME&#34;</span>: [<span style=color:#e6db74>&#34;some value&#34;</span>, <span style=color:#e6db74>&#34;other value&#34;</span>],
+</span></span><span style=display:flex><span>    },
+</span></span><span style=display:flex><span>	  <span style=color:#f92672>&#34;host&#34;</span>: <span style=color:#e6db74>&#34;some.com&#34;</span>,
+</span></span><span style=display:flex><span>	  <span style=color:#f92672>&#34;protocol&#34;</span>: <span style=color:#e6db74>&#34;HTTP/1.1&#34;</span>,
+</span></span><span style=display:flex><span>	  <span style=color:#f92672>&#34;path&#34;</span>: <span style=color:#e6db74>&#34;/test&#34;</span>,
+</span></span><span style=display:flex><span>	  <span style=color:#f92672>&#34;remote_addr&#34;</span>: <span style=color:#e6db74>&#34;192.168.1.90&#34;</span>,
+</span></span><span style=display:flex><span>	  <span style=color:#f92672>&#34;method&#34;</span>: <span style=color:#e6db74>&#34;POST&#34;</span>,
+</span></span><span style=display:flex><span>	  <span style=color:#f92672>&#34;user_agent&#34;</span>: <span style=color:#e6db74>&#34;Firefox&#34;</span>,
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}</span></span></code></pre></div><p>Example gatekeeper configuration:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>  <span style=color:#f92672>enable-opa</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>	<span style=color:#f92672>enable-default-deny</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>	<span style=color:#f92672>opa-timeout</span>: <span style=color:#e6db74>&#34;60s&#34;</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>opa-authz-uri</span>: <span style=color:#e6db74>&#34;http://127.0.0.1/v1/data/authz/allow&#34;</span></span></span></code></pre></div><p>Example OPA policy, with upper gatekeeper configuration and request would result allowing request to upstream:</p><div class="highlight wrap-code"><pre tabindex=0><code>  package authz
+
+  default allow := false
+
+  body := json.unmarshal(input.body)
+  allow {
+    body.name = &#34;test&#34;
+    body.method = &#34;POST&#34;
+  }</code></pre></div><h3 id=keycloak-authorization-uma>Keycloak authorization (UMA)</h3><p>Gatekeeper has ability of external authorization with keycloak using <code>--enable-uma</code> option for browser flows and also api flows.
+You have to also either populate resources or use <code>--enable-default-deny</code> (see examples in previous sections). So you can mix both external authorization+static resource permissions, but
+we don&rsquo;t recommend it to not overcomplicate setup. First is always external authorization then static resource authorization.
+As it is new feature please don&rsquo;t use it in production, we would like first to receive feedback/testing by community.
+Right now we use external authorization options provided by Keycloak which are specified in UMA (user managed access specification <a href=https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html rel=external target=_blank>UMA</a>).
+To use this feature you <strong>MUST</strong> execute these actions in <strong>keycloak</strong>:</p><ol><li>enable authorization for client in keycloak (client which you will use in gatekeeper)</li><li>in client authorization tab, you MUST have at least one protected resource</li><li>protected resource MUST have User-Managed Access enabled</li><li>protected resource MUST have at least one authorization scope</li><li>protected resource MUST have proper permissions set</li></ol><p><a href=https://gruchalski.com/posts/2020-09-05-introduction-to-keycloak-authorization-services/ rel=external target=_blank>Example Keycloak Authorization Guide</a>.</p><h4 id=example-browser-flow>Example Browser Flow:</h4><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>  --discovery-url<span style=color:#f92672>=</span>&lt;DISCOVERY_URL&gt;
+</span></span><span style=display:flex><span>  --openid-provider-timeout<span style=color:#f92672>=</span>120s
+</span></span><span style=display:flex><span>  --listen<span style=color:#f92672>=</span>0.0.0.0:3000
+</span></span><span style=display:flex><span>  --client-id<span style=color:#f92672>=</span>&lt;CLIENT_ID&gt;
+</span></span><span style=display:flex><span>  --client-secret<span style=color:#f92672>=</span>&lt;CLIENT_SECRET&gt;
+</span></span><span style=display:flex><span>  --upstream-url<span style=color:#f92672>=</span>&lt;UPSTREAM_URL&gt;
+</span></span><span style=display:flex><span>  <span style=color:#75715e># code flow/browser flow</span>
+</span></span><span style=display:flex><span>  --no-redirects<span style=color:#f92672>=</span>false
+</span></span><span style=display:flex><span>  <span style=color:#75715e># you have to set this or resources=/* to have enable-uma working</span>
+</span></span><span style=display:flex><span>  --enable-default-deny<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  <span style=color:#75715e># we are enabling UMA</span>
+</span></span><span style=display:flex><span>  --enable-uma<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  <span style=color:#75715e># we are also enabling using method scope, this is optional,</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># it will check resource in keycloak not just for accessed URL</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># but also for method scope e.g. method:GET, it will return</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># UMA token in cookie only for that URL+method scope,</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># if you don&#39;t turn it on it will check just for URL </span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># and will return UMA token in cookie</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># with all scopes</span>
+</span></span><span style=display:flex><span>  --enable-uma-method-scope<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  <span style=color:#75715e># UMA token is stored in cookie, you can setup custom name</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># by default cookie name is uma_token</span>
+</span></span><span style=display:flex><span>  --cookie-uma-name<span style=color:#f92672>=</span>&lt;CUSTOM_COOKIE_NAME&gt;
+</span></span><span style=display:flex><span>  --skip-access-token-clientid-check<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  --skip-access-token-issuer-check<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  --openid-provider-retry-count<span style=color:#f92672>=</span><span style=color:#ae81ff>30</span></span></span></code></pre></div><p><strong>NOTE</strong>: You can have only one resource with same URL+method scope combination or URL (in case you don&rsquo;t have method scope enabled), if you have
+more your access will be forbidden</p><h4 id=example-api-flow>Example API Flow:</h4><p>we are recommending to use UMA forward signing for these purpose on client app side, otherwise you will have to get RPT token for client side manually.
+On client app side, forward signing setup (you app should have http proxy options set to this forward-signing proxy):</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>  --discovery-url<span style=color:#f92672>=</span>&lt;DISCOVERY_URL&gt;
+</span></span><span style=display:flex><span>  --openid-provider-timeout<span style=color:#f92672>=</span>120s
+</span></span><span style=display:flex><span>  --listen<span style=color:#f92672>=</span>0.0.0.0:3000
+</span></span><span style=display:flex><span>  --client-id<span style=color:#f92672>=</span>&lt;CLIENT_ID&gt;
+</span></span><span style=display:flex><span>  --client-secret<span style=color:#f92672>=</span>&lt;CLIENT_SECRET&gt;
+</span></span><span style=display:flex><span>  --enable-uma<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  --enable-uma-method-scope<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  --enable-forwarding<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  <span style=color:#75715e># you can use client credentials grant or direct access grant</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># see Forward-signing proxy section</span>
+</span></span><span style=display:flex><span>  --forwarding-grant-type<span style=color:#f92672>=</span>client_credentials
+</span></span><span style=display:flex><span>  --skip-access-token-clientid-check<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  --skip-access-token-issuer-check<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  --openid-provider-retry-count<span style=color:#f92672>=</span><span style=color:#ae81ff>30</span></span></span></code></pre></div><p>On server side, UMA in no-redirects mode:</p><div class="highlight wrap-code"><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>  --discovery-url<span style=color:#f92672>=</span>&lt;DISCOVERY_URL&gt;
+</span></span><span style=display:flex><span>  --openid-provider-timeout<span style=color:#f92672>=</span>120s
+</span></span><span style=display:flex><span>  --listen<span style=color:#f92672>=</span>0.0.0.0:3000
+</span></span><span style=display:flex><span>  --client-id<span style=color:#f92672>=</span>&lt;CLIENT_ID&gt;
+</span></span><span style=display:flex><span>  --client-secret<span style=color:#f92672>=</span>&lt;CLIENT_SECRET&gt;
+</span></span><span style=display:flex><span>  --upstream-url<span style=color:#f92672>=</span>&lt;UPSTREAM_URL&gt;
+</span></span><span style=display:flex><span>  <span style=color:#75715e># api flow</span>
+</span></span><span style=display:flex><span>  --no-redirects<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  <span style=color:#75715e># you have to set this or resources=/* to have enable-uma working</span>
+</span></span><span style=display:flex><span>  --enable-default-deny<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  <span style=color:#75715e># we are enabling UMA</span>
+</span></span><span style=display:flex><span>  --enable-uma<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  <span style=color:#75715e># we are also enabling using method scope, this is optional,</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># it will check resource in keycloak not just for accessed URL</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># but also for method scope e.g. method:GET, it will return</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># UMA token in cookie only for that URL+method scope,</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># if you don&#39;t turn it on it will check just for URL </span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># and will return UMA token in cookie</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># with all scopes</span>
+</span></span><span style=display:flex><span>  --enable-uma-method-scope<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  --skip-access-token-clientid-check<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  --skip-access-token-issuer-check<span style=color:#f92672>=</span>true
+</span></span><span style=display:flex><span>  --openid-provider-retry-count<span style=color:#f92672>=</span><span style=color:#ae81ff>30</span></span></span></code></pre></div><h2 id=request-tracing>Request tracing</h2><p>Usually when there are multiple http services involved in serving user requests
+you need to use X-REQUEST-ID or some other header to track request flow through
+services. To make this possible with gatekeeper you can enable header logging
+by enabling <code>--enable-logging</code> and <code>--verbose</code> options. Also you can use <code>request-id-header</code>
+and <code>enable-request-id</code> options, which will generate unique uuid and will inject in
+header supplied in <code>request-id-header</code> option.</p><h2 id=logs-and-gdpr>Logs and GDPR</h2><p>You can enable/disable logging by specifying <code>--enable-logging</code> option. This will log all
+messages with info log level and higher. It will NOT log any personal sensitive information, like client IP or user email. When you would like to see debug messages you need to use <code>--verbose=true</code> option.</p><p><strong>IMPORTANT</strong>: debug messages WILL contain personal information, for easier debugging</p><h2 id=metrics>Metrics</h2><p>Assuming <code>--enable-metrics</code> has been set, a Prometheus endpoint can be
+found on <strong>/oauth/metrics</strong>; at present the only metric being exposed is
+a counter per HTTP code.</p><h2 id=limitations>Limitations</h2><p>Keep in mind <a href=http://browsercookielimits.squawky.net/ rel=external target=_blank>browser cookie
+limits</a> if you use access or
+refresh tokens in the browser cookie. Gatekeeper Proxy divides
+the cookie automatically if your cookie is longer than 4093 bytes. The real
+size of the cookie depends on the content of the issued access token.
+Also, encryption might add additional bytes to the cookie size. If you
+have large cookies (>200 KB), you might reach browser cookie limits.</p><p>All cookies are part of the header request, so you might find a problem
+with the max headers size limits in your infrastructure (some load
+balancers have very low this value, such as 8 KB). Be sure that all
+network devices have sufficient header size limits. Otherwise, your
+users won’t be able to obtain an access token.</p><h2 id=known-issues>Known Issues</h2><p>There WAS a known issue with the Keycloak server 4.6.0.Final in which
+Gatekeeper Proxy is unable to find the <em>client_id</em> in the <em>aud</em> claim. This
+is due to the fact the <em>client_id</em> is not in the audience anymore. The
+workaround is to add the &ldquo;Audience&rdquo; protocol mapper to the client with
+the audience pointed to the <em>client_id</em>. For more information, see
+<a href=https://issues.redhat.com/browse/KEYCLOAK-8954 rel=external target=_blank>KEYCLOAK-8954</a>.</p><p>you can now use <code>--skip-access-token-clientid-check</code> and
+<code>--skip-access-token-issuer-check</code> to overcome this limitations.
+These are now set by default to <code>true</code> so you should not by default see any these issues,
+but in case you would like to enable this checks you still have opportunity.</p><footer class=footline></footer></article></div></main></div><aside id=R-sidebar class=default-animation><div id=R-header-topbar class=default-animation></div><div id=R-header-wrapper class=default-animation><div id=R-header class=default-animation><a id=logo href=/><img src=/logo/logo.svg width=200><div id=logo-text>gatekeeper</div></a></div><script>window.index_js_url="/gatekeeper/searchindex.en.js?1730848810"</script><search><form action=/gatekeeper/search/index.html method=get><div class="searchbox default-animation"><button class=search-detail type=submit title="Search (CTRL+ALT+f)"><i class="fas fa-search"></i></button>
+<label class=a11y-only for=R-search-by>Search</label>
+<input data-search-input id=R-search-by name=search-by class=search-by type=search placeholder=Search...>
+<button class=search-clear type=button data-search-clear title="Clear search"><i class="fas fa-times" title="Clear search"></i></button></div></form></search><script>var contentLangs=["en"]</script><script src=/gatekeeper/js/auto-complete.js?1730848810 defer></script><script src=/gatekeeper/js/lunr/lunr.min.js?1730848810 defer></script><script src=/gatekeeper/js/lunr/lunr.stemmer.support.min.js?1730848810 defer></script><script src=/gatekeeper/js/lunr/lunr.multi.min.js?1730848810 defer></script><script src=/gatekeeper/js/lunr/lunr.en.min.js?1730848810 defer></script><script src=/gatekeeper/js/search.js?1730848810 defer></script></div><div id=R-homelinks class=default-animation><hr class=padding></div><div id=R-content-wrapper class=highlightable><div id=R-shortcutmenu-home class=R-sidebarmenu><ul class="enlarge morespace collapsible-menu"><li data-nav-id=/gatekeeper/configuration/index.html><a class=padding href=/gatekeeper/configuration/index.html>Configuration Reference</a></li></ul></div><div id=R-shortcutmenu-shortcuts class=R-sidebarmenu><div class="nav-title padding">More</div><ul class="space collapsible-menu"><li data-nav-id=https://github.com/gogatekeeper/gatekeeper><a class=padding href=https://github.com/gogatekeeper/gatekeeper target=_blank><i class='fab fa-github fa-fw'></i> Github repo</a></li><li data-nav-id=https://discord.gg/zRqVXXTMCv><a class=padding href=https://discord.gg/zRqVXXTMCv target=_blank><i class='fab fa-discord fa-fw'></i> Join us on Discord</a></li><li data-nav-id=https://www.keycloak.org/documentation><a class=padding href=https://www.keycloak.org/documentation target=_blank><i class='fas fa-code fa-fw'></i> Keycloak Docs</a></li></ul></div><div class="padding footermargin footerLangSwitch footerVariantSwitch footerVisitedLinks footerFooter showFooter"></div><div id=R-menu-footer><hr class="padding default-animation footerLangSwitch footerVariantSwitch footerVisitedLinks footerFooter showFooter"><div id=R-prefooter class="footerLangSwitch footerVariantSwitch footerVisitedLinks"><ul><li id=R-select-language-container class=footerLangSwitch><div class="padding menu-control"><i class="fa-fw fas fa-language"></i>
+<span>&nbsp;</span><div class=control-style><label class=a11y-only for=R-select-language>Language</label>
+<select id=R-select-language onchange="location=this.querySelector(this.value).dataset.url"><option id=R-select-language-en value=#R-select-language-en data-url=/gatekeeper/index.html lang=en-us selected></option></select></div><div class=clear></div></div></li><li id=R-select-variant-container class=footerVariantSwitch><div class="padding menu-control"><i class="fa-fw fas fa-paint-brush"></i>
+<span>&nbsp;</span><div class=control-style><label class=a11y-only for=R-select-variant>Theme</label>
+<select id=R-select-variant onchange=window.variants&&variants.changeVariant(this.value)><option id=R-select-variant-blue value=blue selected>Blue</option></select></div><div class=clear></div></div><script>window.variants&&variants.markSelectedVariant()</script></li><li class=footerVisitedLinks><div class="padding menu-control"><i class="fa-fw fas fa-history"></i>
+<span>&nbsp;</span><div class=control-style><button onclick=clearHistory()>Clear History</button></div><div class=clear></div></div></li></ul></div><div id=R-footer class="footerFooter showFooter"><p>Built with <a href=https://github.com/McShelby/hugo-theme-relearn title=love><i class="fas fa-heart"></i></a> by <a href=https://gohugo.io/>Hugo</a></p></div></div></div></aside><script src=/gatekeeper/js/clipboard.min.js?1730848810 defer></script><script src=/gatekeeper/js/perfect-scrollbar.min.js?1730848810 defer></script><script src=/gatekeeper/js/theme.js?1730848810 defer></script></body></html>
