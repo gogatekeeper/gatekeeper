@@ -26,6 +26,9 @@ You can view all settings also in this table [Settings](https://gogatekeeper.git
 
 ## Example, simple setup architecture
 
+This image provides simple example architecture, using gatekeeper and also flows to show what is happening,
+so that you better understand how it works
+
 ![simple architecture](images/simple-arch.svg "Example Simple Architecture")
 
 ## Configuration options
