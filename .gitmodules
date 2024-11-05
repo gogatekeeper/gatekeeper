@@ -1,6 +1,6 @@
-[submodule "docs/themes/hugo-theme-learn"]
-	path = docs/themes/hugo-theme-learn
-	url = https://github.com/matcornic/hugo-theme-learn.git
+[submodule "docs/themes/hugo-theme-relearn"]
+	path = docs/themes/hugo-theme-relearn
+	url = https://github.com/McShelby/hugo-theme-relearn
 [submodule "gogatekeeper.github.io"]
 	path = gogatekeeper.github.io
 	url = git@github.com:gogatekeeper/gogatekeeper.github.io.git
