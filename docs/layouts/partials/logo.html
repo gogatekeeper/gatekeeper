@@ -1,4 +1,4 @@
-<a id="logo" href='{{ (cond (and (ne .Site.Params.landingPageURL nil) (.Site.IsMultiLingual)) .Site.Params.landingPageURL "/") }}'>
+<a id="logo" href='{{ (cond (and (ne .Site.Params.landingPageURL nil) (.hugo.IsMultiLingual)) .Site.Params.landingPageURL "/") }}'>
   <img src="/logo/logo.svg" width="200" />
   <div id="logo-text">gatekeeper</div>
 </a>
