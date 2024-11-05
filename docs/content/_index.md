@@ -22,7 +22,11 @@ You can view all settings also in this table [Settings](https://gogatekeeper.git
 
 ## Requirements
 
-  - Go 1.19 or higher
+  - Go 1.23 or higher
+
+## Example, simple setup architecture
+
+![simple architecture](images/simple-arch.svg "Example Simple Architecture")
 
 ## Configuration options
 
