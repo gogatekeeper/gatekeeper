@@ -81,9 +81,6 @@ func NewOauthProxyApp[T proxycore.KeycloakProvider | proxycore.GoogleProvider](p
 		// step: create the proxy
 		proxy, err := ProduceProxy(cfg)
 		if err != nil {
-			if errShut := proxy.Shutdown(); errShut != nil {
-				err = errors.Join(err, errShut)
-			}
 			return utils.PrintError(err.Error())
 		}
 
