@@ -51,9 +51,10 @@ const (
 
 	_ contextKey = iota
 	ContextScopeName
-	HeaderXForwardedFor = "X-Forwarded-For"
-	HeaderXRealIP       = "X-Real-IP"
-	HeaderXHMAC         = "X-HMAC-SHA256"
+	HeaderXForwardedFor  = "X-Forwarded-For"
+	HeaderXForwardedHost = "X-Forwarded-Host"
+	HeaderXRealIP        = "X-Real-IP"
+	HeaderXHMAC          = "X-HMAC-SHA256"
 
 	DurationType = "time.Duration"
 

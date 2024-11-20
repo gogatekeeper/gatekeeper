@@ -322,12 +322,11 @@ func ProxyMiddleware(
 			// @step: add the proxy forwarding headers
 			req.Header.Set("X-Real-IP", utils.RealIP(req))
 			if xff := req.Header.Get(constant.HeaderXForwardedFor); xff == "" {
-				req.Header.Set("X-Forwarded-For", utils.RealIP(req))
-			} else {
-				req.Header.Set("X-Forwarded-For", xff)
+				req.Header.Set(constant.HeaderXForwardedFor, utils.RealIP(req))
 			}
-			req.Header.Set("X-Forwarded-Host", req.Host)
-			req.Header.Set("X-Forwarded-Proto", req.Header.Get("X-Forwarded-Proto"))
+			if xfh := req.Header.Get(constant.HeaderXForwardedHost); xfh == "" {
+				req.Header.Set(constant.HeaderXForwardedHost, req.Host)
+			}
 
 			if len(corsOrigins) > 0 {
 				// if CORS is enabled by Gatekeeper, do not propagate CORS requests upstream
