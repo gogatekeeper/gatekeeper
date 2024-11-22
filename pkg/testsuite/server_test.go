@@ -1611,6 +1611,43 @@ func TestXForwarded(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "TestEmptyXForwardedHost",
+			ProxySettings: func(_ *config.Config) {
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAuthAllURL + FakeTestURL,
+					HasToken:      true,
+					ExpectedProxy: true,
+					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *config.Config, string){
+						"X-Forwarded-Host": func(t *testing.T, _ *config.Config, value string) {
+							assert.Contains(t, value, "127.0.0.1")
+						},
+					},
+					ExpectedCode: http.StatusOK,
+				},
+			},
+		},
+		{
+			Name: "TestXForwardedHostPresent",
+			ProxySettings: func(_ *config.Config) {
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAuthAllURL + FakeTestURL,
+					HasToken:      true,
+					ExpectedProxy: true,
+					Headers: map[string]string{
+						"X-Forwarded-Host": "189.10.10.1",
+					},
+					ExpectedProxyHeaders: map[string]string{
+						"X-Forwarded-Host": "189.10.10.1",
+					},
+					ExpectedCode: http.StatusOK,
+				},
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
