@@ -80,7 +80,7 @@ func TestMetricsMiddleware(t *testing.T) {
 		{
 			URI: uri,
 			Headers: map[string]string{
-				"X-Forwarded-For": "10.0.0.1",
+				constant.HeaderXForwardedFor: "10.0.0.1",
 			},
 			ExpectedCode: http.StatusForbidden,
 		},
@@ -2487,19 +2487,19 @@ func TestLogRealIP(t *testing.T) {
 			ExpectedIP: "127.0.0.1",
 		},
 		{
-			Headers:    map[string]string{"X-Forwarded-For": "192.168.1.1"},
+			Headers:    map[string]string{constant.HeaderXForwardedFor: "192.168.1.1"},
 			ExpectedIP: "192.168.1.1",
 		},
 		{
-			Headers:    map[string]string{"X-Forwarded-For": "192.168.1.1, 192.168.1.2"},
+			Headers:    map[string]string{constant.HeaderXForwardedFor: "192.168.1.1, 192.168.1.2"},
 			ExpectedIP: "192.168.1.1",
 		},
 		{
-			Headers:    map[string]string{"X-Real-Ip": "10.0.0.1"},
+			Headers:    map[string]string{constant.HeaderXRealIP: "10.0.0.1"},
 			ExpectedIP: "10.0.0.1",
 		},
 		{
-			Headers:    map[string]string{"X-Forwarded-For": "192.168.1.1", "X-Real-Ip": "10.0.0.1"},
+			Headers:    map[string]string{constant.HeaderXForwardedFor: "192.168.1.1", constant.HeaderXRealIP: "10.0.0.1"},
 			ExpectedIP: "192.168.1.1",
 		},
 	}

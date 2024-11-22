@@ -400,10 +400,10 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 			var err error
 			rClient := resty.New()
 			rClient.SetHeaders(map[string]string{
-				"X-Forwarded-Proto":  "http",
-				"X-Forwarded-Host":   strings.Split(proxyAddress, "//")[1],
-				"X-Forwarded-URI":    umaMethodAllowedPath,
-				"X-Forwarded-Method": "GET",
+				constant.HeaderXForwardedProto:  "http",
+				constant.HeaderXForwardedHost:   strings.Split(proxyAddress, "//")[1],
+				constant.HeaderXForwardedURI:    umaMethodAllowedPath,
+				constant.HeaderXForwardedMethod: "GET",
 			})
 			resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 			Expect(resp.Header().Get(constant.AuthorizationHeader)).ToNot(BeEmpty())
@@ -422,10 +422,10 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 		It("should be forbidden", func(_ context.Context) {
 			rClient := resty.New()
 			rClient.SetHeaders(map[string]string{
-				"X-Forwarded-Proto":  "http",
-				"X-Forwarded-Host":   strings.Split(proxyAddress, "//")[1],
-				"X-Forwarded-URI":    umaMethodAllowedPath,
-				"X-Forwarded-Method": "POST",
+				constant.HeaderXForwardedProto:  "http",
+				constant.HeaderXForwardedHost:   strings.Split(proxyAddress, "//")[1],
+				constant.HeaderXForwardedURI:    umaMethodAllowedPath,
+				constant.HeaderXForwardedMethod: "POST",
 			})
 			resp := codeFlowLogin(rClient, proxyAddress, http.StatusForbidden, testUser, testPass)
 			Expect(resp.Header().Get(constant.AuthorizationHeader)).To(BeEmpty())
@@ -436,9 +436,9 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 		It("should be forbidden", func(_ context.Context) {
 			rClient := resty.New()
 			rClient.SetHeaders(map[string]string{
-				"X-Forwarded-Proto": "http",
-				"X-Forwarded-Host":  strings.Split(proxyAddress, "//")[1],
-				"X-Forwarded-URI":   umaMethodAllowedPath,
+				constant.HeaderXForwardedProto: "http",
+				constant.HeaderXForwardedHost:  strings.Split(proxyAddress, "//")[1],
+				constant.HeaderXForwardedURI:   umaMethodAllowedPath,
 			})
 			resp := codeFlowLogin(rClient, proxyAddress, http.StatusForbidden, testUser, testPass)
 			Expect(resp.Header().Get(constant.AuthorizationHeader)).To(BeEmpty())

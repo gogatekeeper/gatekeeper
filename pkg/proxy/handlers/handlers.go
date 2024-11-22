@@ -190,8 +190,8 @@ func GetRedirectionURL(
 			var host string
 
 			if noProxy && !noRedirects {
-				scheme = req.Header.Get("X-Forwarded-Proto")
-				host = req.Header.Get("X-Forwarded-Host")
+				scheme = req.Header.Get(constant.HeaderXForwardedProto)
+				host = req.Header.Get(constant.HeaderXForwardedHost)
 			} else {
 				// need to determine the scheme, cx.Request.URL.Scheme doesn't have it, best way is to default
 				// and then check for TLS

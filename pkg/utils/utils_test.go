@@ -97,14 +97,14 @@ func TestGetRequestHostURL(t *testing.T) {
 	}{
 		{
 			Expected: "http://www.test.com",
-			Headers:  map[string]string{"X-Forwarded-Host": "www.test.com"},
+			Headers:  map[string]string{constant.HeaderXForwardedHost: "www.test.com"},
 		},
 		{
 			Expected: "http://",
 		},
 		{
 			Expected: "http://www.override.com",
-			Headers:  map[string]string{"X-Forwarded-Host": "www.override.com"},
+			Headers:  map[string]string{constant.HeaderXForwardedHost: "www.override.com"},
 			Hostname: "www.test.com",
 		},
 		{
@@ -114,15 +114,15 @@ func TestGetRequestHostURL(t *testing.T) {
 		},
 		{
 			Expected: "https://www.override.com",
-			Headers:  map[string]string{"X-Forwarded-Host": "www.override.com"},
+			Headers:  map[string]string{constant.HeaderXForwardedHost: "www.override.com"},
 			Hostname: "www.test.com",
 			TLS:      &tls.ConnectionState{},
 		},
 		{
 			Expected: "https://www.override.com",
 			Headers: map[string]string{
-				"X-Forwarded-Host":  "www.override.com",
-				"X-Forwarded-Proto": "https"},
+				constant.HeaderXForwardedHost:  "www.override.com",
+				constant.HeaderXForwardedProto: "https"},
 			Hostname: "www.override.com",
 		},
 	}

@@ -94,7 +94,7 @@ func authorizationMiddleware(
 				if enableUmaMethodScope {
 					methSc := constant.UmaMethodScope + req.Method
 					if noProxy {
-						xForwardedMethod := req.Header.Get("X-Forwarded-Method")
+						xForwardedMethod := req.Header.Get(constant.HeaderXForwardedMethod)
 						if xForwardedMethod == "" {
 							scope.Logger.Error(apperrors.ErrForwardAuthMissingHeaders.Error())
 							accessForbidden(wrt, req)
@@ -107,7 +107,7 @@ func authorizationMiddleware(
 
 				authzPath := req.URL.Path
 				if noProxy {
-					authzPath = req.Header.Get("X-Forwarded-Uri")
+					authzPath = req.Header.Get(constant.HeaderXForwardedURI)
 					if authzPath == "" {
 						scope.Logger.Error(apperrors.ErrForwardAuthMissingHeaders.Error())
 						accessForbidden(wrt, req)

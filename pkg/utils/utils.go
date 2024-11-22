@@ -67,8 +67,8 @@ func GetRequestHostURL(req *http.Request) string {
 	}
 
 	redirect := fmt.Sprintf("%s://%s",
-		DefaultTo(req.Header.Get("X-Forwarded-Proto"), scheme),
-		DefaultTo(req.Header.Get("X-Forwarded-Host"), req.Host))
+		DefaultTo(req.Header.Get(constant.HeaderXForwardedProto), scheme),
+		DefaultTo(req.Header.Get(constant.HeaderXForwardedHost), req.Host))
 
 	return redirect
 }

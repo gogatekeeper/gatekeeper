@@ -749,8 +749,8 @@ func makeTestCodeFlowLogin(location string, xforwarded bool) (*http.Response, []
 		}
 
 		if xforwarded {
-			req.Header.Add("X-Forwarded-Host", uri.Host)
-			req.Header.Add("X-Forwarded-Proto", uri.Scheme)
+			req.Header.Add(constant.HeaderXForwardedHost, uri.Host)
+			req.Header.Add(constant.HeaderXForwardedProto, uri.Scheme)
 		}
 
 		if err != nil {

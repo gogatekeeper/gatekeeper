@@ -37,7 +37,7 @@ func SecurityMiddleware(
 			ContentSecurityPolicy: contentSecurityPolicy,
 			ContentTypeNosniff:    contentTypeNosniff,
 			FrameDeny:             frameDeny,
-			SSLProxyHeaders:       map[string]string{"X-Forwarded-Proto": "https"},
+			SSLProxyHeaders:       map[string]string{constant.HeaderXForwardedProto: "https"},
 			SSLRedirect:           sslRedirect,
 		})
 

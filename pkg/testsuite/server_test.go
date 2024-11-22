@@ -1352,8 +1352,8 @@ func TestNoProxy(t *testing.T) {
 					},
 					ExpectedLocation: "https://thiswillbereplaced/oauth",
 					Headers: map[string]string{
-						"X-Forwarded-Host":  "thiswillbereplaced",
-						"X-Forwarded-Proto": "https",
+						constant.HeaderXForwardedHost:  "thiswillbereplaced",
+						constant.HeaderXForwardedProto: "https",
 					},
 				},
 			},
@@ -1426,8 +1426,8 @@ func TestNoProxy(t *testing.T) {
 						assert.Equal(t, "", body)
 					},
 					Headers: map[string]string{
-						"X-Forwarded-Uri":    "/private",
-						"X-Forwarded-Method": "POST",
+						constant.HeaderXForwardedURI:    "/private",
+						constant.HeaderXForwardedMethod: "POST",
 					},
 				},
 				{
@@ -1441,8 +1441,8 @@ func TestNoProxy(t *testing.T) {
 						assert.Equal(t, "", body)
 					},
 					Headers: map[string]string{
-						"X-Forwarded-Uri":    "/private",
-						"X-Forwarded-Method": "DELETE",
+						constant.HeaderXForwardedURI:    "/private",
+						constant.HeaderXForwardedMethod: "DELETE",
 					},
 				},
 			},
@@ -1493,7 +1493,7 @@ func TestProxyProtocol(t *testing.T) {
 			HasToken:      true,
 			ExpectedProxy: true,
 			ExpectedProxyHeaders: map[string]string{
-				"X-Forwarded-For": "127.0.0.1",
+				constant.HeaderXForwardedFor: "127.0.0.1",
 			},
 			ExpectedCode: http.StatusOK,
 		},
@@ -1503,7 +1503,7 @@ func TestProxyProtocol(t *testing.T) {
 			ProxyProtocol: "189.10.10.1",
 			ExpectedProxy: true,
 			ExpectedProxyHeaders: map[string]string{
-				"X-Forwarded-For": "189.10.10.1",
+				constant.HeaderXForwardedFor: "189.10.10.1",
 			},
 			ExpectedCode: http.StatusOK,
 		},
@@ -1527,8 +1527,8 @@ func TestXForwarded(t *testing.T) {
 					HasToken:      true,
 					ExpectedProxy: true,
 					ExpectedProxyHeaders: map[string]string{
-						"X-Forwarded-For": "127.0.0.1",
-						"X-Real-IP":       "127.0.0.1",
+						constant.HeaderXForwardedFor: "127.0.0.1",
+						constant.HeaderXRealIP:       "127.0.0.1",
 					},
 					ExpectedCode: http.StatusOK,
 				},
@@ -1544,11 +1544,11 @@ func TestXForwarded(t *testing.T) {
 					HasToken:      true,
 					ExpectedProxy: true,
 					Headers: map[string]string{
-						"X-Forwarded-For": "189.10.10.1",
+						constant.HeaderXForwardedFor: "189.10.10.1",
 					},
 					ExpectedProxyHeaders: map[string]string{
-						"X-Forwarded-For": "189.10.10.1",
-						"X-Real-IP":       "189.10.10.1",
+						constant.HeaderXForwardedFor: "189.10.10.1",
+						constant.HeaderXRealIP:       "189.10.10.1",
 					},
 					ExpectedCode: http.StatusOK,
 				},
@@ -1564,11 +1564,11 @@ func TestXForwarded(t *testing.T) {
 					HasToken:      true,
 					ExpectedProxy: true,
 					Headers: map[string]string{
-						"X-Real-IP": "189.10.10.1",
+						constant.HeaderXRealIP: "189.10.10.1",
 					},
 					ExpectedProxyHeaders: map[string]string{
-						"X-Forwarded-For": "189.10.10.1",
-						"X-Real-IP":       "189.10.10.1",
+						constant.HeaderXForwardedFor: "189.10.10.1",
+						constant.HeaderXRealIP:       "189.10.10.1",
 					},
 					ExpectedCode: http.StatusOK,
 				},
@@ -1584,7 +1584,7 @@ func TestXForwarded(t *testing.T) {
 					HasToken:      true,
 					ExpectedProxy: true,
 					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *config.Config, string){
-						"X-Forwarded-Host": func(t *testing.T, _ *config.Config, value string) {
+						constant.HeaderXForwardedHost: func(t *testing.T, _ *config.Config, value string) {
 							assert.Contains(t, value, "127.0.0.1")
 						},
 					},
@@ -1602,10 +1602,10 @@ func TestXForwarded(t *testing.T) {
 					HasToken:      true,
 					ExpectedProxy: true,
 					Headers: map[string]string{
-						"X-Forwarded-Host": "189.10.10.1",
+						constant.HeaderXForwardedHost: "189.10.10.1",
 					},
 					ExpectedProxyHeaders: map[string]string{
-						"X-Forwarded-Host": "189.10.10.1",
+						constant.HeaderXForwardedHost: "189.10.10.1",
 					},
 					ExpectedCode: http.StatusOK,
 				},
@@ -1662,10 +1662,10 @@ func TestTokenEncryption(t *testing.T) {
 					ExpectedProxy: true,
 					Redirects:     true,
 					ExpectedProxyHeaders: map[string]string{
-						"X-Auth-Email":    "gambol99@gmail.com",
-						"X-Auth-Userid":   "rjayawardene",
-						"X-Auth-Username": "rjayawardene",
-						"X-Forwarded-For": "127.0.0.1",
+						"X-Auth-Email":               "gambol99@gmail.com",
+						"X-Auth-Userid":              "rjayawardene",
+						"X-Auth-Username":            "rjayawardene",
+						constant.HeaderXForwardedFor: "127.0.0.1",
 					},
 					ExpectedCode: http.StatusOK,
 				},

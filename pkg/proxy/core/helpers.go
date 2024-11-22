@@ -89,8 +89,8 @@ func RedirectToAuthorization(
 		url := utils.WithOAuthURI(baseURI, oAuthURI)(constant.AuthorizationURL + authQuery)
 
 		if noProxy && !noRedirects {
-			xForwardedHost := req.Header.Get("X-Forwarded-Host")
-			xProto := req.Header.Get("X-Forwarded-Proto")
+			xForwardedHost := req.Header.Get(constant.HeaderXForwardedHost)
+			xProto := req.Header.Get(constant.HeaderXForwardedProto)
 
 			if xForwardedHost == "" || xProto == "" {
 				logger.Error(apperrors.ErrForwardAuthMissingHeaders.Error())

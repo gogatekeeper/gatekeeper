@@ -188,7 +188,7 @@ func (cm *Manager) DropStateParameterCookie(req *http.Request, wrt http.Response
 	requestURI := req.URL.RequestURI()
 
 	if cm.NoProxy && !cm.NoRedirects {
-		xReqURI := req.Header.Get("X-Forwarded-Uri")
+		xReqURI := req.Header.Get(constant.HeaderXForwardedURI)
 		requestURI = xReqURI
 	}
 

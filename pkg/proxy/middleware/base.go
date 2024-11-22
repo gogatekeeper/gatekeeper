@@ -320,7 +320,7 @@ func ProxyMiddleware(
 			}
 
 			// @step: add the proxy forwarding headers
-			req.Header.Set("X-Real-IP", utils.RealIP(req))
+			req.Header.Set(constant.HeaderXRealIP, utils.RealIP(req))
 			if xff := req.Header.Get(constant.HeaderXForwardedFor); xff == "" {
 				req.Header.Set(constant.HeaderXForwardedFor, utils.RealIP(req))
 			}
@@ -379,11 +379,11 @@ func ForwardAuthMiddleware(logger *zap.Logger, oAuthURI string) func(http.Handle
 
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
 			if !strings.Contains(req.URL.Path, oAuthURI) { // this condition is here only because of tests to work
-				if forwardedPath := req.Header.Get("X-Forwarded-Uri"); forwardedPath != "" {
+				if forwardedPath := req.Header.Get(constant.HeaderXForwardedURI); forwardedPath != "" {
 					req.URL.Path = forwardedPath
 					req.URL.RawPath = forwardedPath
 				}
-				if forwardedMethod := req.Header.Get("X-Forwarded-Method"); forwardedMethod != "" {
+				if forwardedMethod := req.Header.Get(constant.HeaderXForwardedMethod); forwardedMethod != "" {
 					req.Method = forwardedMethod
 				}
 			}
