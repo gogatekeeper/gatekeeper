@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"golang.org/x/net/websocket"
 )
 
@@ -24,7 +25,7 @@ type fakeUpstreamResponse struct {
 type FakeUpstreamService struct{}
 
 func (f *FakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Request) {
-	upgrade := strings.ToLower(req.Header.Get("Upgrade"))
+	upgrade := strings.ToLower(req.Header.Get(constant.HeaderUpgrade))
 	if upgrade == "websocket" {
 		wrt.Header().Set(TestProxyAccepted, "true")
 		websocket.Handler(func(wsock *websocket.Conn) {
@@ -65,7 +66,7 @@ func (f *FakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Reque
 		}
 
 		wrt.Header().Set(TestProxyAccepted, "true")
-		wrt.Header().Set("Content-Type", "application/json")
+		wrt.Header().Set(constant.HeaderContentType, "application/json")
 		content, err := json.Marshal(&fakeUpstreamResponse{
 			// r.RequestURI is what was received by the proxy.
 			// r.URL.String() is what is actually sent to the upstream service.

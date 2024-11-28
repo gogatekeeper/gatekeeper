@@ -27,6 +27,7 @@ const (
 	FakePrivFilePrefix           = "/gateadmin_priv_"
 	FakeCaFilePrefix             = "/gateadmin_ca_"
 	TestProxyHeaderKey           = "X-GoProxy"
+	TestSetCookieHeader          = "Set-Cookie"
 	TestProxyHeaderVal           = "yxorPoG-X"
 	DefaultOpenIDProviderTimeout = time.Second * 5
 	DefaultIat                   = 1450372669

@@ -478,7 +478,7 @@ func (r *fakeAuthServer) revocationHandler(wrt http.ResponseWriter, req *http.Re
 }
 
 func (r *fakeAuthServer) userInfoHandler(wrt http.ResponseWriter, req *http.Request) {
-	items := strings.Split(req.Header.Get("Authorization"), " ")
+	items := strings.Split(req.Header.Get(constant.AuthorizationHeader), " ")
 	authItems := 2
 	if len(items) != authItems {
 		wrt.WriteHeader(http.StatusUnauthorized)
@@ -768,7 +768,7 @@ func getRandomString(n int) (string, error) {
 }
 
 func renderJSON(code int, w http.ResponseWriter, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(constant.HeaderContentType, "application/json")
 	w.WriteHeader(code)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

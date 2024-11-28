@@ -40,7 +40,7 @@ func TestGetIndentity(t *testing.T) {
 			Request: func(token string) *http.Request {
 				return &http.Request{
 					Header: http.Header{
-						"Authorization": []string{"Bearer " + token},
+						constant.AuthorizationHeader: []string{"Bearer " + token},
 					},
 				}
 			},
@@ -53,7 +53,7 @@ func TestGetIndentity(t *testing.T) {
 			Request: func(_ string) *http.Request {
 				return &http.Request{
 					Header: http.Header{
-						"Authorization": []string{"Basic QWxhZGRpbjpPcGVuU2VzYW1l"},
+						constant.AuthorizationHeader: []string{"Basic QWxhZGRpbjpPcGVuU2VzYW1l"},
 					},
 				}
 			},
@@ -66,7 +66,7 @@ func TestGetIndentity(t *testing.T) {
 			Request: func(token string) *http.Request {
 				return &http.Request{
 					Header: http.Header{
-						"Authorization": []string{"Test " + token},
+						constant.AuthorizationHeader: []string{"Test " + token},
 					},
 				}
 			},
@@ -101,7 +101,7 @@ func TestGetIndentity(t *testing.T) {
 			Request: func(token string) *http.Request {
 				return &http.Request{
 					Header: http.Header{
-						"Authorization": []string{"Bearer " + token},
+						constant.AuthorizationHeader: []string{"Bearer " + token},
 					},
 				}
 			},
@@ -114,7 +114,7 @@ func TestGetIndentity(t *testing.T) {
 			Request: func(_ string) *http.Request {
 				return &http.Request{
 					Header: http.Header{
-						"Authorization": []string{"Basic QWxhZGRpbjpPcGVuU2VzYW1l"},
+						constant.AuthorizationHeader: []string{"Basic QWxhZGRpbjpPcGVuU2VzYW1l"},
 					},
 				}
 			},

@@ -58,6 +58,7 @@ const (
 	HeaderXForwardedURI    = "X-Forwarded-URI"
 	HeaderXForwardedMethod = "X-Forwarded-Method"
 	HeaderXHMAC            = "X-HMAC-SHA256"
+	HeaderContentType      = "Content-Type"
 
 	DurationType = "time.Duration"
 

@@ -268,7 +268,7 @@ func IdentityHeadersMiddleware(
 				}
 				// add the authorization header if requested
 				if enableAuthzHeader {
-					headers.Set("Authorization", "Bearer "+user.RawToken)
+					headers.Set(constant.AuthorizationHeader, "Bearer "+user.RawToken)
 				}
 				// are we filtering out the cookies
 				if !enableAuthzCookies {

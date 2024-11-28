@@ -466,7 +466,7 @@ func loginHandler(
 					errors.Join(apperrors.ErrExtractIdentityFromAccessToken, err)
 			}
 
-			writer.Header().Set("Content-Type", "application/json")
+			writer.Header().Set(constant.HeaderContentType, "application/json")
 			idToken, assertOk := token.Extra("id_token").(string)
 			if !assertOk {
 				return http.StatusInternalServerError,
@@ -791,7 +791,7 @@ func logoutHandler(
 
 			// step: add the authentication headers and content-type
 			request.SetBasicAuth(encodedID, encodedSecret)
-			request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			request.Header.Set(constant.HeaderContentType, "application/x-www-form-urlencoded")
 
 			start := time.Now()
 			response, err := httpClient.Do(request)

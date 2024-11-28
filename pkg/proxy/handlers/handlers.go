@@ -158,7 +158,7 @@ func DiscoveryHandler(
 			return
 		}
 
-		wrt.Header().Set("Content-Type", "application/json")
+		wrt.Header().Set(constant.HeaderContentType, "application/json")
 		wrt.WriteHeader(http.StatusOK)
 		_, err = wrt.Write(respBody)
 
@@ -278,7 +278,7 @@ func TokenHandler(
 			return
 		}
 
-		wrt.Header().Set("Content-Type", "application/json")
+		wrt.Header().Set(constant.HeaderContentType, "application/json")
 		_, _ = wrt.Write(result)
 	}
 }

@@ -116,7 +116,7 @@ func TestDropCookie(t *testing.T) {
 
 	assert.Equal(t,
 		"test-cookie=test-value; Path=/",
-		resp.Header().Get("Set-Cookie"),
+		resp.Header().Get(TestSetCookieHeader),
 		"we have not set the cookie, headers: %v", resp.Header())
 
 	resp = httptest.NewRecorder()
@@ -125,7 +125,7 @@ func TestDropCookie(t *testing.T) {
 
 	assert.Equal(t,
 		"test-cookie=test-value; Path=/",
-		resp.Header().Get("Set-Cookie"),
+		resp.Header().Get(TestSetCookieHeader),
 		"we have not set the cookie, headers: %v", resp.Header())
 
 	resp = httptest.NewRecorder()
@@ -133,7 +133,7 @@ func TestDropCookie(t *testing.T) {
 	proxy.Cm.DropCookie(resp, "test-cookie", "test-value", 0)
 	assert.NotEqual(t,
 		"test-cookie=test-value; Path=/; HttpOnly; Secure",
-		resp.Header().Get("Set-Cookie"),
+		resp.Header().Get(TestSetCookieHeader),
 		"we have not set the cookie, headers: %v", resp.Header())
 
 	proxy.Config.CookieDomain = "test.com"
@@ -141,7 +141,7 @@ func TestDropCookie(t *testing.T) {
 	proxy.Config.SecureCookie = false
 	assert.NotEqual(t,
 		"test-cookie=test-value; Path=/; Domain=test.com;",
-		resp.Header().Get("Set-Cookie"),
+		resp.Header().Get(TestSetCookieHeader),
 		"we have not set the cookie, headers: %v", resp.Header())
 }
 
@@ -154,7 +154,7 @@ func TestDropRefreshCookie(t *testing.T) {
 
 	assert.Equal(t,
 		constant.RefreshCookie+"=test; Path=/",
-		resp.Header().Get("Set-Cookie"),
+		resp.Header().Get(TestSetCookieHeader),
 		"we have not set the cookie, headers: %v", resp.Header())
 }
 
@@ -167,7 +167,7 @@ func TestSessionOnlyCookie(t *testing.T) {
 
 	assert.Equal(t,
 		"test-cookie=test-value; Path=/",
-		resp.Header().Get("Set-Cookie"),
+		resp.Header().Get(TestSetCookieHeader),
 		"we have not set the cookie, headers: %v", resp.Header())
 }
 
@@ -179,7 +179,7 @@ func TestSameSiteCookie(t *testing.T) {
 
 	assert.Equal(t,
 		"test-cookie=test-value; Path=/",
-		resp.Header().Get("Set-Cookie"),
+		resp.Header().Get(TestSetCookieHeader),
 		"we have not set the cookie, headers: %v", resp.Header())
 
 	resp = httptest.NewRecorder()
@@ -188,7 +188,7 @@ func TestSameSiteCookie(t *testing.T) {
 
 	assert.Equal(t,
 		"test-cookie=test-value; Path=/; SameSite=Strict",
-		resp.Header().Get("Set-Cookie"),
+		resp.Header().Get(TestSetCookieHeader),
 		"we have not set the cookie, headers: %v", resp.Header())
 
 	resp = httptest.NewRecorder()
@@ -197,7 +197,7 @@ func TestSameSiteCookie(t *testing.T) {
 
 	assert.Equal(t,
 		"test-cookie=test-value; Path=/; SameSite=Lax",
-		resp.Header().Get("Set-Cookie"),
+		resp.Header().Get(TestSetCookieHeader),
 		"we have not set the cookie, headers: %v", resp.Header())
 
 	resp = httptest.NewRecorder()
@@ -206,7 +206,7 @@ func TestSameSiteCookie(t *testing.T) {
 
 	assert.Equal(t,
 		"test-cookie=test-value; Path=/; SameSite=None",
-		resp.Header().Get("Set-Cookie"),
+		resp.Header().Get(TestSetCookieHeader),
 		"we have not set the cookie, headers: %v", resp.Header())
 }
 
@@ -218,7 +218,7 @@ func TestHTTPOnlyCookie(t *testing.T) {
 
 	assert.Equal(t,
 		"test-cookie=test-value; Path=/",
-		resp.Header().Get("Set-Cookie"),
+		resp.Header().Get(TestSetCookieHeader),
 		"we have not set the cookie, headers: %v", resp.Header())
 
 	resp = httptest.NewRecorder()
@@ -227,7 +227,7 @@ func TestHTTPOnlyCookie(t *testing.T) {
 
 	assert.Equal(t,
 		"test-cookie=test-value; Path=/; HttpOnly",
-		resp.Header().Get("Set-Cookie"),
+		resp.Header().Get(TestSetCookieHeader),
 		"we have not set the cookie, headers: %v", resp.Header())
 }
 
@@ -238,7 +238,7 @@ func TestClearAccessTokenCookie(t *testing.T) {
 	resp := httptest.NewRecorder()
 	proxy.Cm.ClearAccessTokenCookie(req, resp)
 	assert.Contains(t,
-		resp.Header().Get("Set-Cookie"),
+		resp.Header().Get(TestSetCookieHeader),
 		constant.AccessCookie+"=; Path=/; Expires=",
 		"we have not cleared the, headers: %v", resp.Header())
 }
@@ -249,7 +249,7 @@ func TestClearRefreshAccessTokenCookie(t *testing.T) {
 	resp := httptest.NewRecorder()
 	p.Cm.ClearRefreshTokenCookie(req, resp)
 	assert.Contains(t,
-		resp.Header().Get("Set-Cookie"),
+		resp.Header().Get(TestSetCookieHeader),
 		constant.RefreshCookie+"=; Path=/; Expires=",
 		"we have not cleared the, headers: %v", resp.Header())
 }
@@ -260,7 +260,7 @@ func TestClearAllCookies(t *testing.T) {
 	resp := httptest.NewRecorder()
 	p.Cm.ClearAllCookies(req, resp)
 	assert.Contains(t,
-		resp.Header().Get("Set-Cookie"),
+		resp.Header().Get(TestSetCookieHeader),
 		constant.AccessCookie+"=; Path=/; Expires=",
 		"we have not cleared the, headers: %v", resp.Header())
 }

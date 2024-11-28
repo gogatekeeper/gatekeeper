@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/open-policy-agent/opa/plugins"
 	opaserver "github.com/open-policy-agent/opa/server"
 	opastorage "github.com/open-policy-agent/opa/storage"
@@ -90,7 +91,7 @@ func (p *OpaAuthorizationProvider) Authorize() (AuthzDecision, error) {
 		return DeniedAuthz, err
 	}
 
-	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set(constant.HeaderContentType, "application/json")
 	httpReq = httpReq.WithContext(ctx)
 
 	client := &http.Client{}
