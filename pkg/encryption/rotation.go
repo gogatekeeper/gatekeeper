@@ -74,7 +74,7 @@ func (c *CertificationRotation) Watch() error {
 	// add the files to the watch list
 	for _, x := range []string{c.certificateFile, c.privateKeyFile} {
 		if err := watcher.Add(path.Dir(x)); err != nil {
-			return fmt.Errorf("unable to add watch on directory: %s, error: %s", path.Dir(x), err)
+			return fmt.Errorf("unable to add watch on directory: %s, error: %w", path.Dir(x), err)
 		}
 	}
 

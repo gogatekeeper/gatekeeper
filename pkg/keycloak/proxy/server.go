@@ -841,7 +841,7 @@ func (r *OauthProxy) createForwardingProxy() error {
 		cAuthority, err := encryption.LoadCA(r.Config.TLSCaCertificate, r.Config.TLSCaPrivateKey)
 
 		if err != nil {
-			return fmt.Errorf("unable to load certificate authority, error: %s", err)
+			return fmt.Errorf("unable to load certificate authority, error: %w", err)
 		}
 
 		// implement the goproxy connect method

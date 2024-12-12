@@ -278,7 +278,7 @@ func parseCLIOptions(cliCtx *cli.Context, config core.Configs) error {
 		for _, x := range cliCtx.StringSlice("resources") {
 			resource, err := authorization.NewResource().Parse(x)
 			if err != nil {
-				return fmt.Errorf("invalid resource %s, %s", x, err)
+				return fmt.Errorf("invalid resource %s, %w", x, err)
 			}
 			config.SetResources(append(config.GetResources(), resource))
 		}

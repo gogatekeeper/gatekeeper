@@ -506,7 +506,7 @@ func (r *Config) isTLSMinValid() error {
 func (r *Config) isUpstreamProxyValid() error {
 	if r.UpstreamProxy != "" {
 		if _, err := url.ParseRequestURI(r.UpstreamProxy); err != nil {
-			return fmt.Errorf("the upstream proxy is invalid, %s", err)
+			return fmt.Errorf("the upstream proxy is invalid, %w", err)
 		}
 	}
 	return nil
@@ -613,7 +613,7 @@ func (r *Config) isUpstreamValid() error {
 
 	if !r.NoProxy {
 		if _, err := url.ParseRequestURI(r.Upstream); err != nil {
-			return fmt.Errorf("the upstream endpoint is invalid, %s", err)
+			return fmt.Errorf("the upstream endpoint is invalid, %w", err)
 		}
 	}
 
@@ -717,7 +717,7 @@ func (r *Config) isSecureCookieValid() error {
 func (r *Config) isStoreURLValid() error {
 	if r.StoreURL != "" {
 		if _, err := redis.ParseURL(r.StoreURL); err != nil {
-			return fmt.Errorf("the store url is invalid, error: %s", err)
+			return fmt.Errorf("the store url is invalid, error: %w", err)
 		}
 	}
 

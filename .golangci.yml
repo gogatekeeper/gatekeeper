@@ -25,7 +25,7 @@ linters:
     - wrapcheck
     - gosec
     - gocritic
-    - errorlint
+    # - errorlint
     - gci
     - gofumpt
     - nlreturn

@@ -18,6 +18,7 @@ package proxy
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -202,18 +203,18 @@ func authorizationMiddleware(
 				}
 			}
 
-			switch err {
-			case apperrors.ErrPermissionNotInToken:
+			switch true {
+			case errors.Is(err, apperrors.ErrPermissionNotInToken):
 				scope.Logger.Info(apperrors.ErrPermissionNotInToken.Error())
-			case apperrors.ErrResourceRetrieve:
+			case errors.Is(err, apperrors.ErrResourceRetrieve):
 				scope.Logger.Info(apperrors.ErrResourceRetrieve.Error())
-			case apperrors.ErrNoIDPResourceForPath:
+			case errors.Is(err, apperrors.ErrNoIDPResourceForPath):
 				scope.Logger.Info(apperrors.ErrNoIDPResourceForPath.Error())
-			case apperrors.ErrResourceIDNotPresent:
+			case errors.Is(err, apperrors.ErrResourceIDNotPresent):
 				scope.Logger.Info(apperrors.ErrResourceIDNotPresent.Error())
-			case apperrors.ErrTokenScopeNotMatchResourceScope:
+			case errors.Is(err, apperrors.ErrTokenScopeNotMatchResourceScope):
 				scope.Logger.Info(apperrors.ErrTokenScopeNotMatchResourceScope.Error())
-			case apperrors.ErrNoAuthzFound:
+			case errors.Is(err, apperrors.ErrNoAuthzFound):
 			default:
 				if err != nil {
 					scope.Logger.Error(apperrors.ErrFailedAuthzRequest.Error(), zap.Error(err))

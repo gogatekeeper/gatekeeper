@@ -258,8 +258,8 @@ func getRPT(
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"%s %s",
-			apperrors.ErrNoIDPResourceForPath.Error(),
+			"%w %w",
+			apperrors.ErrNoIDPResourceForPath,
 			err,
 		)
 	}

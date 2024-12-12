@@ -184,8 +184,8 @@ func AuthenticationMiddleware(
 
 					newAccToken, newRawAccToken, newRefreshToken, accessExpiresAt, refreshExpiresIn, err := utils.GetRefreshedToken(ctx, conf, httpClient, refresh)
 					if err != nil {
-						switch err {
-						case apperrors.ErrRefreshTokenExpired:
+						switch true {
+						case errors.Is(err, apperrors.ErrRefreshTokenExpired):
 							lLog.Warn("refresh token has expired, cannot retrieve access token")
 							cookMgr.ClearAllCookies(req.WithContext(ctx), wrt)
 						default:

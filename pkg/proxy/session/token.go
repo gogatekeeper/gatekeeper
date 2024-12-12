@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -49,14 +50,14 @@ func GetTokenInRequest(
 
 	if tokenHeader == "" && !skipAuthorizationHeaderIdentity {
 		token, err = GetTokenInBearer(req)
-		if err != nil && err != apperrors.ErrSessionNotFound {
+		if err != nil && !errors.Is(err, apperrors.ErrSessionNotFound) {
 			return "", false, err
 		}
 	}
 
 	if tokenHeader != "" {
 		token, err = GetTokenInHeader(req, tokenHeader)
-		if err != nil && err != apperrors.ErrSessionNotFound {
+		if err != nil && !errors.Is(err, apperrors.ErrSessionNotFound) {
 			return "", false, err
 		}
 	}
