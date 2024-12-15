@@ -1921,8 +1921,11 @@ func TestTLS(t *testing.T) {
 			Name: "TestProxyTLS",
 			ProxySettings: func(conf *config.Config) {
 				conf.EnableDefaultDeny = true
+				//nolint:gosec
 				conf.TLSCertificate = os.TempDir() + FakeCertFilePrefix + strconv.Itoa(rand.Intn(10000))
+				//nolint:gosec
 				conf.TLSPrivateKey = os.TempDir() + FakePrivFilePrefix + strconv.Itoa(rand.Intn(10000))
+				//nolint:gosec
 				conf.TLSCaCertificate = os.TempDir() + FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
 				conf.Listen = testProxyAddr
 				conf.NoRedirects = true
@@ -1940,8 +1943,11 @@ func TestTLS(t *testing.T) {
 			Name: "TestProxyTLSMatch",
 			ProxySettings: func(conf *config.Config) {
 				conf.EnableDefaultDeny = true
+				//nolint:gosec
 				conf.TLSCertificate = os.TempDir() + FakeCertFilePrefix + strconv.Itoa(rand.Intn(10000))
+				//nolint:gosec
 				conf.TLSPrivateKey = os.TempDir() + FakePrivFilePrefix + strconv.Itoa(rand.Intn(10000))
+				//nolint:gosec
 				conf.TLSCaCertificate = os.TempDir() + FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
 				conf.Listen = testProxyAddr
 				conf.TLSMinVersion = constant.TLS13
@@ -1961,8 +1967,11 @@ func TestTLS(t *testing.T) {
 			Name: "TestProxyTLSDiffer",
 			ProxySettings: func(conf *config.Config) {
 				conf.EnableDefaultDeny = true
+				//nolint:gosec
 				conf.TLSCertificate = os.TempDir() + FakeCertFilePrefix + strconv.Itoa(rand.Intn(10000))
+				//nolint:gosec
 				conf.TLSPrivateKey = os.TempDir() + FakePrivFilePrefix + strconv.Itoa(rand.Intn(10000))
+				//nolint:gosec
 				conf.TLSCaCertificate = os.TempDir() + FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
 				conf.Listen = testProxyAddr
 				conf.TLSMinVersion = constant.TLS12
@@ -1982,8 +1991,11 @@ func TestTLS(t *testing.T) {
 			Name: "TestProxyTLSMinNotFullfilled",
 			ProxySettings: func(conf *config.Config) {
 				conf.EnableDefaultDeny = true
+				//nolint:gosec
 				conf.TLSCertificate = os.TempDir() + FakeCertFilePrefix + strconv.Itoa(rand.Intn(10000))
+				//nolint:gosec
 				conf.TLSPrivateKey = os.TempDir() + FakePrivFilePrefix + strconv.Itoa(rand.Intn(10000))
+				//nolint:gosec
 				conf.TLSCaCertificate = os.TempDir() + FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
 				conf.Listen = testProxyAddr
 				conf.TLSMinVersion = constant.TLS13
@@ -2024,7 +2036,7 @@ func TestTLS(t *testing.T) {
 
 				if certFile != "" {
 					fakeCertByte := []byte(fakeCert)
-					err := os.WriteFile(certFile, fakeCertByte, 0644)
+					err := os.WriteFile(certFile, fakeCertByte, 0600)
 
 					if err != nil {
 						t.Fatalf("Problem writing certificate %s", err)
@@ -2034,7 +2046,7 @@ func TestTLS(t *testing.T) {
 
 				if privFile != "" {
 					fakeKeyByte := []byte(fakePrivateKey)
-					err := os.WriteFile(privFile, fakeKeyByte, 0644)
+					err := os.WriteFile(privFile, fakeKeyByte, 0600)
 
 					if err != nil {
 						t.Fatalf("Problem writing privateKey %s", err)
@@ -2044,7 +2056,7 @@ func TestTLS(t *testing.T) {
 
 				if caFile != "" {
 					fakeCAByte := []byte(fakeCA)
-					err := os.WriteFile(caFile, fakeCAByte, 0644)
+					err := os.WriteFile(caFile, fakeCAByte, 0600)
 
 					if err != nil {
 						t.Fatalf("Problem writing cacertificate %s", err)

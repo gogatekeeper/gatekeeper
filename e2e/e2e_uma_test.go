@@ -22,8 +22,10 @@ var _ = Describe("UMA Code Flow authorization", func() {
 	var umaCookieName = "TESTUMACOOKIE"
 
 	BeforeEach(func() {
+		var err error
 		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
-		portNum = generateRandomPort()
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
@@ -117,8 +119,10 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 	var umaCookieName = "TESTUMACOOKIE"
 
 	BeforeEach(func() {
+		var err error
 		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
-		portNum = generateRandomPort()
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
@@ -181,9 +185,12 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 	var fwdProxyAddress string
 
 	BeforeEach(func() {
+		var err error
 		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
-		portNum = generateRandomPort()
-		fwdPortNum = generateRandomPort()
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
+		fwdPortNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 		fwdProxyAddress = localURI + fwdPortNum
 		osArgs := []string{os.Args[0]}
@@ -265,9 +272,12 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 	var fwdProxyAddress string
 
 	BeforeEach(func() {
+		var err error
 		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
-		portNum = generateRandomPort()
-		fwdPortNum = generateRandomPort()
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
+		fwdPortNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 		fwdProxyAddress = localURI + fwdPortNum
 		osArgs := []string{os.Args[0]}
@@ -367,7 +377,9 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 	// server := httptest.NewServer(&testsuite.FakeUpstreamService{})
 
 	BeforeEach(func() {
-		portNum = generateRandomPort()
+		var err error
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{

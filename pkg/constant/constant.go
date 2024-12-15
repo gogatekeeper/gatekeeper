@@ -69,6 +69,7 @@ const (
 
 	AllPath = "/*"
 
+	//nolint:gosec
 	IdpWellKnownURI   = "/.well-known/openid-configuration"
 	IdpCertsURI       = "/protocol/openid-connect/certs"
 	IdpTokenURI       = "/protocol/openid-connect/token"

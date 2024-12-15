@@ -1274,6 +1274,7 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 			getCertificate = rotate.GetCertificate
 		}
 
+		//nolint:gosec
 		tlsConfig := &tls.Config{
 			GetCertificate: getCertificate,
 			// Causes servers to use Go's default ciphersuite preferences,
@@ -1506,6 +1507,7 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 	restyClient.SetTimeout(r.Config.OpenIDProviderTimeout)
 	restyClient.SetTLSClientConfig(
 		&tls.Config{
+			//nolint:gosec
 			InsecureSkipVerify: r.Config.SkipOpenIDProviderTLSVerify,
 		},
 	)
@@ -1547,6 +1549,7 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 
 	bo := backoff.WithMaxRetries(
 		backoff.NewExponentialBackOff(),
+		//nolint:gosec
 		uint64(r.Config.OpenIDProviderRetryCount),
 	)
 	err = backoff.RetryNotify(operation, bo, notify)

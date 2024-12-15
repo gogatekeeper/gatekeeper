@@ -3,8 +3,9 @@ package e2e_test
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -30,14 +31,18 @@ import (
 )
 
 const (
-	testRealm               = "test"
-	testClient              = "test-client"
-	testClientSecret        = "6447d0c0-d510-42a7-b654-6e3a16b2d7e2"
-	pkceTestClient          = "test-client-pkce"
-	pkceTestClientSecret    = "F2GqU40xwX0P2LrTvHUHqwNoSk4U4n5R"
-	umaTestClient           = "test-client-uma"
-	umaTestClientSecret     = "A5vokiGdI3H2r4aXFrANbKvn4R7cbf6P"
-	loaTestClient           = "test-loa"
+	testRealm  = "test"
+	testClient = "test-client"
+	//nolint:gosec
+	testClientSecret = "6447d0c0-d510-42a7-b654-6e3a16b2d7e2"
+	pkceTestClient   = "test-client-pkce"
+	//nolint:gosec
+	pkceTestClientSecret = "F2GqU40xwX0P2LrTvHUHqwNoSk4U4n5R"
+	umaTestClient        = "test-client-uma"
+	//nolint:gosec
+	umaTestClientSecret = "A5vokiGdI3H2r4aXFrANbKvn4R7cbf6P"
+	loaTestClient       = "test-loa"
+	//nolint:gosec
 	loaTestClientSecret     = "4z9PoOooXNFmSCPZx0xHXaUxX4eYGFO0"
 	timeout                 = time.Second * 300
 	idpURI                  = "http://localhost:8081"
@@ -59,18 +64,24 @@ const (
 	loaStepUpPath           = "/level2"
 	loaDefaultLevel         = "level1"
 	loaStepUpLevel          = "level2"
-	otpSecret               = "NE4VKZJYKVDDSYTIK5CVOOLVOFDFE2DC"
-	postLoginRedirectPath   = "/post/login/path"
-	pkceCookieName          = "TESTPKCECOOKIE"
+	//nolint:gosec
+	otpSecret             = "NE4VKZJYKVDDSYTIK5CVOOLVOFDFE2DC"
+	postLoginRedirectPath = "/post/login/path"
+	pkceCookieName        = "TESTPKCECOOKIE"
 )
 
 var idpRealmURI = fmt.Sprintf("%s/realms/%s", idpURI, testRealm)
 
-func generateRandomPort() string {
-	rg := rand.New(rand.NewSource(time.Now().UnixNano()))
-	minPort := 1024
-	maxPort := 65000
-	return strconv.Itoa(rg.Intn(maxPort-minPort+1) + minPort)
+func generateRandomPort() (string, error) {
+	var minPort int64 = 1024
+	var maxPort int64 = 65000
+	maxRand := big.NewInt(maxPort - minPort + 1)
+	randPort, err := rand.Int(rand.Reader, maxRand)
+	if err != nil {
+		return "", err
+	}
+	randP := int(randPort.Int64() + minPort)
+	return strconv.Itoa(randP), nil
 }
 
 func startAndWait(portNum string, osArgs []string) {
@@ -129,8 +140,10 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 	var proxyAddress string
 
 	BeforeEach(func() {
+		var err error
 		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
-		portNum = generateRandomPort()
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 
 		osArgs := []string{os.Args[0]}
@@ -189,8 +202,10 @@ var _ = Describe("Code Flow login/logout", func() {
 	var proxyAddress string
 
 	BeforeEach(func() {
+		var err error
 		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
-		portNum = generateRandomPort()
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 
 		osArgs := []string{os.Args[0]}
@@ -333,8 +348,10 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 	var proxyAddress string
 
 	BeforeEach(func() {
+		var err error
 		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
-		portNum = generateRandomPort()
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
@@ -389,8 +406,10 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 	var proxyAddressSec string
 
 	BeforeEach(func() {
+		var err error
 		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
-		portNum = generateRandomPort()
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
 		proxyAddressFirst = "http://127.0.0.1:" + portNum
 
 		osArgs := []string{os.Args[0]}
@@ -417,7 +436,8 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 
-		portNum = generateRandomPort()
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
 		proxyAddressSec = localURI + portNum
 		osArgs = []string{os.Args[0]}
 		proxyArgs = []string{
@@ -488,8 +508,10 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 	var proxyAddress string
 
 	BeforeEach(func() {
+		var err error
 		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
-		portNum = generateRandomPort()
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 
 		osArgs := []string{os.Args[0]}

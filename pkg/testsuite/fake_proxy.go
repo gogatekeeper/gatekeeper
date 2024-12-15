@@ -155,10 +155,12 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 		client := resty.New()
 
 		if reqCfg.TLSMin != 0 {
+			//nolint:gosec
 			client.SetTLSClientConfig(&tls.Config{MinVersion: reqCfg.TLSMin})
 		}
 
 		if reqCfg.TLSMax != 0 {
+			//nolint:gosec
 			client.SetTLSClientConfig(&tls.Config{MaxVersion: reqCfg.TLSMax})
 		}
 

@@ -2,7 +2,6 @@ package testsuite
 
 import (
 	"crypto/rand"
-	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/json"
@@ -312,7 +311,6 @@ func newFakeAuthServer(config *fakeAuthConfig) *fakeAuthServer {
 		panic("failed to parse certificate from block, error: " + err.Error())
 	}
 
-	x5tSHA1 := sha1.Sum(cert.Raw)
 	x5tSHA256 := sha256.Sum256(cert.Raw)
 
 	service := &fakeAuthServer{
@@ -322,7 +320,6 @@ func newFakeAuthServer(config *fakeAuthConfig) *fakeAuthServer {
 			KeyID:                       "test-kid",
 			Algorithm:                   "RS256",
 			Certificates:                []*x509.Certificate{cert},
-			CertificateThumbprintSHA1:   x5tSHA1[:],
 			CertificateThumbprintSHA256: x5tSHA256[:],
 		},
 	}

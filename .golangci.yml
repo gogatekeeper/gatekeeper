@@ -23,7 +23,6 @@ linters:
     - ireturn
     - maintidx
     - wrapcheck
-    - gosec
     - gocritic
     - gci
     - gofumpt

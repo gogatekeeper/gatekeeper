@@ -149,6 +149,7 @@ func refreshPAT(
 
 		bom := backoff.WithMaxRetries(
 			backoff.NewConstantBackOff(patRetryInterval),
+			//nolint:gosec
 			uint64(patRetryCount),
 		)
 		boCtx, cancel := context.WithCancel(ctx)
