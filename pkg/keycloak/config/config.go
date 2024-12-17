@@ -183,7 +183,6 @@ type Config struct {
 	IsDiscoverURILegacy             bool
 }
 
-// NewDefaultConfig returns a initialized config
 func NewDefaultConfig() *Config {
 	var hostnames []string
 	if name, err := os.Hostname(); err == nil {
@@ -278,7 +277,7 @@ func (r *Config) GetDefaultAllowedQueryParams() map[string]string {
 	return r.DefaultAllowedQueryParams
 }
 
-// readConfigFile reads and parses the configuration file
+// readConfigFile reads and parses the configuration file.
 func (r *Config) ReadConfigFile(filename string) error {
 	content, err := os.ReadFile(filename)
 
@@ -312,7 +311,7 @@ func (r *Config) Update() error {
 	return nil
 }
 
-// IsValid validates if the config is valid
+// IsValid validates if the config is valid.
 func (r *Config) IsValid() error {
 	if r.ListenAdmin == r.Listen {
 		r.ListenAdmin = ""
@@ -347,17 +346,14 @@ func (r *Config) IsValid() error {
 	return nil
 }
 
-// HasCustomSignInPage checks if there is a custom sign in  page
 func (r *Config) HasCustomSignInPage() bool {
 	return r.SignInPage != ""
 }
 
-// HasForbiddenPage checks if there is a custom forbidden page
 func (r *Config) HasCustomForbiddenPage() bool {
 	return r.ForbiddenPage != ""
 }
 
-// HasCustomErrorPage checks if there is a custom error page
 func (r *Config) HasCustomErrorPage() bool {
 	return r.ErrorPage != ""
 }

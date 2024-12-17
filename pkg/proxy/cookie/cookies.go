@@ -44,7 +44,7 @@ type Manager struct {
 	NoRedirects          bool
 }
 
-// DropCookie drops a cookie into the response
+// DropCookie drops a cookie into the response.
 func (cm *Manager) DropCookie(
 	wrt http.ResponseWriter,
 	name,
@@ -88,7 +88,7 @@ func (cm *Manager) DropCookie(
 }
 
 // maxCookieChunkSize calculates max cookie chunk size, which can be used for cookie value
-// this seems to be not useful as many browsers have limits of all cookies per domain = 4096 bytes
+// this seems to be not useful as many browsers have limits of all cookies per domain = 4096 bytes.
 func (cm *Manager) GetMaxCookieChunkLength(
 	req *http.Request,
 	cookieName string,
@@ -125,7 +125,7 @@ func (cm *Manager) GetMaxCookieChunkLength(
 	return maxCookieChunkLength
 }
 
-// dropCookieWithChunks drops a cookie from the response, taking into account possible chunks
+// dropCookieWithChunks drops a cookie from the response, taking into account possible chunks.
 func (cm *Manager) dropCookieWithChunks(
 	req *http.Request,
 	wrt http.ResponseWriter,
@@ -138,7 +138,7 @@ func (cm *Manager) dropCookieWithChunks(
 	if len(value) <= maxCookieChunkLength {
 		cm.DropCookie(wrt, name, value, duration)
 	} else {
-		// write divided cookies because payload is too long for single cookie
+		// write divided cookies because payload is too long for single cookie.
 		cm.DropCookie(wrt, name, value[0:maxCookieChunkLength], duration)
 
 		for idx := maxCookieChunkLength; idx < len(value); idx += maxCookieChunkLength {
@@ -157,27 +157,27 @@ func (cm *Manager) dropCookieWithChunks(
 	}
 }
 
-// dropAccessTokenCookie drops a access token cookie
+// dropAccessTokenCookie drops a access token cookie.
 func (cm *Manager) DropAccessTokenCookie(req *http.Request, w http.ResponseWriter, value string, duration time.Duration) {
 	cm.dropCookieWithChunks(req, w, cm.CookieAccessName, value, duration)
 }
 
-// DropRefreshTokenCookie drops a refresh token cookie
+// DropRefreshTokenCookie drops a refresh token cookie.
 func (cm *Manager) DropRefreshTokenCookie(req *http.Request, w http.ResponseWriter, value string, duration time.Duration) {
 	cm.dropCookieWithChunks(req, w, cm.CookieRefreshName, value, duration)
 }
 
-// dropIdTokenCookie drops a id token cookie
+// dropIdTokenCookie drops a id token cookie.
 func (cm *Manager) DropIDTokenCookie(req *http.Request, w http.ResponseWriter, value string, duration time.Duration) {
 	cm.dropCookieWithChunks(req, w, cm.CookieIDTokenName, value, duration)
 }
 
-// dropUMATokenCookie drops a uma token cookie
+// dropUMATokenCookie drops a uma token cookie.
 func (cm *Manager) DropUMATokenCookie(req *http.Request, w http.ResponseWriter, value string, duration time.Duration) {
 	cm.dropCookieWithChunks(req, w, cm.CookieUMAName, value, duration)
 }
 
-// DropStateParameterCookie sets a state parameter cookie into the response
+// DropStateParameterCookie sets a state parameter cookie into the response.
 func (cm *Manager) DropStateParameterCookie(req *http.Request, wrt http.ResponseWriter) string {
 	uuid, err := uuid.NewV4()
 
@@ -200,12 +200,12 @@ func (cm *Manager) DropStateParameterCookie(req *http.Request, wrt http.Response
 	return uuid.String()
 }
 
-// DropPKCECookie sets a code verifier cookie into the response
+// DropPKCECookie sets a code verifier cookie into the response.
 func (cm *Manager) DropPKCECookie(wrt http.ResponseWriter, codeVerifier string) {
 	cm.DropCookie(wrt, cm.CookiePKCEName, codeVerifier, 0)
 }
 
-// ClearAllCookies is just a helper function for the below
+// ClearAllCookies is just a helper function for the below.
 func (cm *Manager) ClearAllCookies(req *http.Request, w http.ResponseWriter) {
 	cm.ClearAccessTokenCookie(req, w)
 	cm.ClearRefreshTokenCookie(req, w)
@@ -217,7 +217,7 @@ func (cm *Manager) ClearAllCookies(req *http.Request, w http.ResponseWriter) {
 func (cm *Manager) ClearCookie(req *http.Request, wrt http.ResponseWriter, name string) {
 	cm.DropCookie(wrt, name, "", constant.InvalidCookieDuration)
 
-	// clear divided cookies
+	// clear divided cookies.
 	for idx := 1; idx < 600; idx++ {
 		var _, err = req.Cookie(name + "-" + strconv.Itoa(idx))
 
@@ -234,38 +234,38 @@ func (cm *Manager) ClearCookie(req *http.Request, wrt http.ResponseWriter, name 
 	}
 }
 
-// clearRefreshSessionCookie clears the session cookie
+// clearRefreshSessionCookie clears the session cookie.
 func (cm *Manager) ClearRefreshTokenCookie(req *http.Request, wrt http.ResponseWriter) {
 	cm.ClearCookie(req, wrt, cm.CookieRefreshName)
 }
 
-// ClearAccessTokenCookie clears the session cookie
+// ClearAccessTokenCookie clears the session cookie.
 func (cm *Manager) ClearAccessTokenCookie(req *http.Request, wrt http.ResponseWriter) {
 	cm.ClearCookie(req, wrt, cm.CookieAccessName)
 }
 
-// ClearIDTokenCookie clears the session cookie
+// ClearIDTokenCookie clears the session cookie.
 func (cm *Manager) ClearIDTokenCookie(req *http.Request, wrt http.ResponseWriter) {
 	cm.ClearCookie(req, wrt, cm.CookieIDTokenName)
 }
 
-// ClearUMATokenCookie clears the session cookie
+// ClearUMATokenCookie clears the session cookie.
 func (cm *Manager) ClearUMATokenCookie(req *http.Request, wrt http.ResponseWriter) {
 	cm.ClearCookie(req, wrt, cm.CookieUMAName)
 }
 
-// ClearPKCECookie clears the session cookie
+// ClearPKCECookie clears the session cookie.
 func (cm *Manager) ClearPKCECookie(req *http.Request, wrt http.ResponseWriter) {
 	cm.ClearCookie(req, wrt, cm.CookiePKCEName)
 }
 
-// ClearStateParameterCookie clears the session cookie
+// ClearStateParameterCookie clears the session cookie.
 func (cm *Manager) ClearStateParameterCookie(req *http.Request, wrt http.ResponseWriter) {
 	cm.ClearCookie(req, wrt, cm.CookieRequestURIName)
 	cm.ClearCookie(req, wrt, cm.CookieOAuthStateName)
 }
 
-// findCookie looks for a cookie in a list of cookies
+// findCookie looks for a cookie in a list of cookies.
 func FindCookie(name string, cookies []*http.Cookie) *http.Cookie {
 	for _, cookie := range cookies {
 		if cookie.Name == name {
@@ -276,7 +276,7 @@ func FindCookie(name string, cookies []*http.Cookie) *http.Cookie {
 	return nil
 }
 
-// filterCookies is responsible for censoring any cookies we don't want sent
+// filterCookies is responsible for censoring any cookies we don't want sent.
 func FilterCookies(req *http.Request, filter []string) error {
 	// @NOTE: there doesn't appear to be a way of removing a cookie from the http.Request as
 	// AddCookie() just append

@@ -30,7 +30,7 @@ type RedisStore struct {
 	Client *redis.Client
 }
 
-// newRedisStore creates a new redis store
+// newRedisStore creates a new redis store.
 func newRedisStore(url string) (Storage, error) {
 	opts, err := redis.ParseURL(url)
 	if err != nil {
@@ -40,7 +40,7 @@ func newRedisStore(url string) (Storage, error) {
 	return RedisStore{Client: client}, nil
 }
 
-// Set adds a token to the store
+// Set adds a token to the store.
 func (r RedisStore) Set(ctx context.Context, key, value string, expiration time.Duration) error {
 	if err := r.Client.Set(ctx, key, value, expiration); err.Err() != nil {
 		return err.Err()
@@ -49,7 +49,7 @@ func (r RedisStore) Set(ctx context.Context, key, value string, expiration time.
 	return nil
 }
 
-// Checks if key exists in store
+// Checks if key exists in store.
 func (r RedisStore) Exists(ctx context.Context, key string) (bool, error) {
 	val, err := r.Client.Exists(ctx, key).Result()
 	if err != nil {
@@ -59,7 +59,7 @@ func (r RedisStore) Exists(ctx context.Context, key string) (bool, error) {
 	return val > 0, nil
 }
 
-// Get retrieves a token from the store
+// Get retrieves a token from the store.
 func (r RedisStore) Get(ctx context.Context, key string) (string, error) {
 	result := r.Client.Get(ctx, key)
 	if result.Err() != nil {
@@ -69,12 +69,12 @@ func (r RedisStore) Get(ctx context.Context, key string) (string, error) {
 	return result.Val(), nil
 }
 
-// Delete remove the key
+// Delete remove the key.
 func (r RedisStore) Delete(ctx context.Context, key string) error {
 	return r.Client.Del(ctx, key).Err()
 }
 
-// Close closes of any open resources
+// Close closes of any open resources.
 func (r RedisStore) Close() error {
 	if r.Client != nil {
 		return r.Client.Close()
@@ -83,7 +83,7 @@ func (r RedisStore) Close() error {
 	return nil
 }
 
-// Get retrieves a token from the store, the key we are using here is the access token
+// Get retrieves a token from the store, the key we are using here is the access token.
 func (r RedisStore) GetRefreshTokenFromStore(
 	ctx context.Context,
 	token string,

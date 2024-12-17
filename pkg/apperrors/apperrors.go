@@ -83,7 +83,7 @@ var (
 	ErrStartRedirectHTTP = errors.New("failed to start http redirect service")
 	ErrStartAdminHTTP    = errors.New("failed to start admin service")
 
-	// config errors
+	// config errors.
 
 	ErrNoRedirectsWithEnableRefreshTokensInvalid = errors.New("no-redirects true cannot be enabled with refresh tokens")
 	ErrInvalidPostLoginRedirectPath              = errors.New("post login redirect path invalid, should be only path not absolute url (no hostname, scheme)")

@@ -24,11 +24,10 @@ import (
 )
 
 const (
-	// normalizeFlags is the options to purell
 	normalizeFlags purell.NormalizationFlags = purell.FlagRemoveDotSegments | purell.FlagRemoveDuplicateSlashes
 )
 
-// entrypointMiddleware is custom filtering for incoming requests
+// entrypointMiddleware is custom filtering for incoming requests.
 func EntrypointMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
@@ -66,7 +65,7 @@ func EntrypointMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-// requestIDMiddleware is responsible for adding a request id if none found
+// requestIDMiddleware is responsible for adding a request id if none found.
 func RequestIDMiddleware(header string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
@@ -83,7 +82,7 @@ func RequestIDMiddleware(header string) func(http.Handler) http.Handler {
 	}
 }
 
-// loggingMiddleware is a custom http logger
+// loggingMiddleware is a custom http logger.
 func LoggingMiddleware(
 	logger *zap.Logger,
 	verbose bool,
@@ -138,7 +137,7 @@ func LoggingMiddleware(
 	}
 }
 
-// ResponseHeaderMiddleware is responsible for adding response headers
+// ResponseHeaderMiddleware is responsible for adding response headers.
 func ResponseHeaderMiddleware(headers map[string]string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
@@ -152,7 +151,6 @@ func ResponseHeaderMiddleware(headers map[string]string) func(http.Handler) http
 	}
 }
 
-// DenyMiddleware
 func DenyMiddleware(
 	logger *zap.Logger,
 	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
@@ -165,7 +163,7 @@ func DenyMiddleware(
 	}
 }
 
-// ProxyDenyMiddleware just block everything
+// ProxyDenyMiddleware just block everything.
 func ProxyDenyMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
@@ -192,7 +190,6 @@ func ProxyDenyMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-// MethodCheck middleware
 func MethodCheckMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		logger.Info("enabling the method check middleware")
@@ -372,7 +369,6 @@ func ProxyMiddleware(
 	}
 }
 
-// ForwardAuthMiddleware
 func ForwardAuthMiddleware(logger *zap.Logger, oAuthURI string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		logger.Info("enabling the forward-auth middleware")

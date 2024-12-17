@@ -25,7 +25,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 )
 
-// Resource represents a url resource to protect
+// Resource represents a url resource to protect.
 type Resource struct {
 	// URL the url for the resource
 	URL string `json:"uri" yaml:"uri"`
@@ -171,22 +171,22 @@ func (r *Resource) Valid() error {
 	return nil
 }
 
-// GetRoles returns a list of roles for this resource
+// GetRoles returns a list of roles for this resource.
 func (r Resource) GetRoles() string {
 	return strings.Join(r.Roles, ",")
 }
 
-// GetAcr returns a list of authentication levels for this resource
+// GetAcr returns a list of authentication levels for this resource.
 func (r Resource) GetAcr() string {
 	return strings.Join(r.Acr, ",")
 }
 
-// GetHeaders returns a list of headers for this resource
+// GetHeaders returns a list of headers for this resource.
 func (r Resource) GetHeaders() string {
 	return strings.Join(r.Headers, ",")
 }
 
-// String returns a string representation of the resource
+// String returns a string representation of the resource.
 func (r Resource) String() string {
 	if r.WhiteListed {
 		return fmt.Sprintf("uri: %s, white-listed", r.URL)

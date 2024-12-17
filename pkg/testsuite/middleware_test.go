@@ -1997,7 +1997,7 @@ func TestAdmissionHandlerRoles(t *testing.T) {
 	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
 }
 
-// check to see if custom headers are hitting the upstream
+// check to see if custom headers are hitting the upstream.
 func TestCustomHeaders(t *testing.T) {
 	requests := []struct {
 		Headers map[string]string

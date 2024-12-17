@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// RedirectToURL redirects the user and aborts the context
+// RedirectToURL redirects the user and aborts the context.
 func RedirectToURL(
 	logger *zap.Logger,
 	url string,
@@ -142,7 +142,7 @@ func EncryptToken(
 	return encrypted, nil
 }
 
-// revokeProxy is responsible for stopping middleware from proxying the request
+// revokeProxy is responsible for stopping middleware from proxying the request.
 func revokeProxy(logger *zap.Logger, req *http.Request) context.Context {
 	var scope *models.RequestScope
 	ctxVal := req.Context().Value(constant.ContextScopeName)

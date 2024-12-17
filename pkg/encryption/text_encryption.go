@@ -11,7 +11,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 )
 
-// encryptDataBlock encrypts the plaintext string with the key
+// encryptDataBlock encrypts the plaintext string with the key.
 func EncryptDataBlock(plaintext, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 
@@ -34,7 +34,7 @@ func EncryptDataBlock(plaintext, key []byte) ([]byte, error) {
 	return gcm.Seal(nonce, nonce, plaintext, nil), nil
 }
 
-// decryptDataBlock decrypts some cipher text
+// decryptDataBlock decrypts some cipher text.
 func DecryptDataBlock(cipherText, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 
@@ -59,7 +59,7 @@ func DecryptDataBlock(cipherText, key []byte) ([]byte, error) {
 	return gcm.Open(nil, nonce, input, nil)
 }
 
-// encodeText encodes the session state information into a value for a cookie to consume
+// encodeText encodes the session state information into a value for a cookie to consume.
 func EncodeText(plaintext string, key string) (string, error) {
 	cipherText, err := EncryptDataBlock([]byte(plaintext), []byte(key))
 
@@ -70,7 +70,7 @@ func EncodeText(plaintext string, key string) (string, error) {
 	return base64.RawStdEncoding.EncodeToString(cipherText), nil
 }
 
-// decodeText decodes the session state cookie value
+// decodeText decodes the session state cookie value.
 func DecodeText(state, key string) (string, error) {
 	cipherText, err := base64.RawStdEncoding.DecodeString(state)
 

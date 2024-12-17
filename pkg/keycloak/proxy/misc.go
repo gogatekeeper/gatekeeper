@@ -230,7 +230,7 @@ func WithUMAIdentity(
 	return authzFunc(targetPath, umaUser.Permissions)
 }
 
-// getRPT retrieves relaying party token
+// getRPT retrieves relaying party token.
 func getRPT(
 	ctx context.Context,
 	pat *PAT,

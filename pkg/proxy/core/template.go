@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// AccessForbidden redirects the user to the forbidden page
+// AccessForbidden redirects the user to the forbidden page.
 func AccessForbidden(
 	logger *zap.Logger,
 	httpStatus int,
@@ -37,7 +37,6 @@ func AccessForbidden(
 	}
 }
 
-// renders CustomSignInPage
 func CustomSignInPage(
 	logger *zap.Logger,
 	page string,

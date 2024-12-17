@@ -42,5 +42,4 @@ linters:
     # TODO: Revisit after the refactor
     - gocognit
     - testpackage
-    - godot
     - nestif

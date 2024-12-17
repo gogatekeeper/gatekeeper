@@ -42,7 +42,7 @@ const (
 	IDTokenCookie      = "id_token"
 	UMACookie          = "uma_token"
 	// case is like this because go net package canonicalizes it
-	// to this form, see net package
+	// to this form, see net package.
 	UMAHeader      = "X-Uma-Token"
 	UnsecureScheme = "http"
 	SecureScheme   = "https"
@@ -62,7 +62,7 @@ const (
 
 	DurationType = "time.Duration"
 
-	// SameSite cookie config options
+	// SameSite cookie config options.
 	SameSiteStrict = "Strict"
 	SameSiteLax    = "Lax"
 	SameSiteNone   = "None"

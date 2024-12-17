@@ -2,7 +2,7 @@ package models
 
 import "go.uber.org/zap"
 
-// RequestScope is a request level context scope passed between middleware
+// RequestScope is a request level context scope passed between middleware.
 type RequestScope struct {
 	// AccessDenied indicates the request should not be proxied on
 	AccessDenied bool

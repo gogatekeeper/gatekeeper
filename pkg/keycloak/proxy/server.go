@@ -171,7 +171,7 @@ func NewProxy(config *config.Config, log *zap.Logger, upstream core.ReverseProxy
 	return svc, nil
 }
 
-// createLogger is responsible for creating the service logger
+// createLogger is responsible for creating the service logger.
 func createLogger(config *config.Config) (*zap.Logger, error) {
 	httplog.SetOutput(io.Discard) // disable the http logger
 
@@ -202,7 +202,7 @@ func createLogger(config *config.Config) (*zap.Logger, error) {
 	return cfg.Build()
 }
 
-// useDefaultStack sets the default middleware stack for router
+// useDefaultStack sets the default middleware stack for router.
 func (r *OauthProxy) useDefaultStack(engine chi.Router, accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context) {
 	engine.NotFound(handlers.EmptyHandler)
 
@@ -1065,7 +1065,7 @@ func (r *OauthProxy) Run() (context.Context, error) {
 	return ctx, nil
 }
 
-// Shutdown finishes the proxy service with gracefully period
+// Shutdown finishes the proxy service with gracefully period.
 func (r *OauthProxy) Shutdown() error {
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
@@ -1100,7 +1100,7 @@ func (r *OauthProxy) Shutdown() error {
 	return err
 }
 
-// listenerConfig encapsulate listener options
+// listenerConfig encapsulate listener options.
 type listenerConfig struct {
 	hostnames           []string // list of hostnames the service will respond to
 	ca                  string   // the path to a certificate authority
@@ -1117,7 +1117,7 @@ type listenerConfig struct {
 	useSelfSignedTLS    bool     // indicates we are using the self-signed tls
 }
 
-// makeListenerConfig extracts a listener configuration from a proxy Config
+// makeListenerConfig extracts a listener configuration from a proxy Config.
 func makeListenerConfig(config *config.Config) listenerConfig {
 	var minTLSVersion uint16
 	switch strings.ToLower(config.TLSMinVersion) {
@@ -1148,10 +1148,10 @@ func makeListenerConfig(config *config.Config) listenerConfig {
 	}
 }
 
-// ErrHostNotConfigured indicates the hostname was not configured
+// ErrHostNotConfigured indicates the hostname was not configured.
 var ErrHostNotConfigured = errors.New("acme/autocert: host not configured")
 
-// createHTTPListener is responsible for creating a listening socket
+// createHTTPListener is responsible for creating a listening socket.
 //
 //nolint:cyclop
 func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, error) {
@@ -1304,7 +1304,7 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 	return listener, nil
 }
 
-// createUpstreamProxy create a reverse http proxy from the upstream
+// createUpstreamProxy create a reverse http proxy from the upstream.
 func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 	dialer := (&net.Dialer{
 		KeepAlive: r.Config.UpstreamKeepaliveTimeout,
@@ -1417,7 +1417,7 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 	return nil
 }
 
-// createTemplates loads the custom template
+// createTemplates loads the custom template.
 func createTemplates(
 	logger *zap.Logger,
 	signInPage string,
@@ -1489,7 +1489,7 @@ func (r OpenIDRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 }
 
 // newOpenIDProvider initializes the openID configuration, note: the redirection url is deliberately left blank
-// in order to retrieve it from the host header on request
+// in order to retrieve it from the host header on request.
 func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, error) {
 	host := fmt.Sprintf(
 		"%s://%s",

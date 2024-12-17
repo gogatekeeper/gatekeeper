@@ -58,7 +58,6 @@ var (
 	symbolsFilter = regexp.MustCompilePOSIX("[_$><\\[\\].,\\+-/'%^&*()!\\\\]+")
 )
 
-// getRequestHostURL returns the hostname from the request
 func GetRequestHostURL(req *http.Request) string {
 	scheme := constant.UnsecureScheme
 
@@ -73,7 +72,6 @@ func GetRequestHostURL(req *http.Request) string {
 	return redirect
 }
 
-// decodeKeyPairs converts a list of strings (key=pair) to a map
 func DecodeKeyPairs(list []string) (map[string]string, error) {
 	keyPairs := make(map[string]string)
 
@@ -90,7 +88,6 @@ func DecodeKeyPairs(list []string) (map[string]string, error) {
 	return keyPairs, nil
 }
 
-// IsValidHTTPMethod ensure this is a valid http method type
 func IsValidHTTPMethod(method string) bool {
 	for _, x := range AllHTTPMethods {
 		if method == x {
@@ -101,7 +98,6 @@ func IsValidHTTPMethod(method string) bool {
 	return false
 }
 
-// defaultTo returns the value of the default
 func DefaultTo(v, d string) string {
 	if v != "" {
 		return v
@@ -110,7 +106,6 @@ func DefaultTo(v, d string) string {
 	return d
 }
 
-// fileExists check if a file exists
 func FileExists(filename string) bool {
 	if _, err := os.Stat(filename); err != nil {
 		if os.IsNotExist(err) {
@@ -121,7 +116,6 @@ func FileExists(filename string) bool {
 	return true
 }
 
-// hasAccess checks we have all or any of the needed items in the list
 func HasAccess(need, have []string, all bool) bool {
 	if len(need) == 0 {
 		return true
@@ -148,7 +142,6 @@ func HasAccess(need, have []string, all bool) bool {
 	return matched > 0
 }
 
-// containedIn checks if a value in a list of a strings
 func ContainedIn(value string, list []string) bool {
 	for _, x := range list {
 		if x == value {
@@ -159,7 +152,6 @@ func ContainedIn(value string, list []string) bool {
 	return false
 }
 
-// containsSubString checks if substring exists
 func ContainsSubString(value string, list []string) bool {
 	for _, x := range list {
 		if strings.Contains(value, x) {
@@ -170,7 +162,7 @@ func ContainsSubString(value string, list []string) bool {
 	return false
 }
 
-// tryDialEndpoint dials the upstream endpoint via plain HTTP
+// tryDialEndpoint dials the upstream endpoint via plain HTTP.
 func TryDialEndpoint(location *url.URL) (net.Conn, error) {
 	switch dialAddress := DialAddress(location); location.Scheme {
 	case constant.UnsecureScheme:
@@ -184,18 +176,17 @@ func TryDialEndpoint(location *url.URL) (net.Conn, error) {
 	}
 }
 
-// isUpgradedConnection checks to see if the request is requesting
 func IsUpgradedConnection(req *http.Request) bool {
 	return req.Header.Get(constant.HeaderUpgrade) != ""
 }
 
-// transferBytes transfers bytes between the sink and source
+// transferBytes transfers bytes between the sink and source.
 func TransferBytes(src io.Reader, dest io.Writer, wg *sync.WaitGroup) (int64, error) {
 	defer wg.Done()
 	return io.Copy(dest, src)
 }
 
-// tryUpdateConnection attempt to upgrade the connection to a http pdy stream
+// tryUpdateConnection attempt to upgrade the connection to a http pdy stream.
 func TryUpdateConnection(req *http.Request, writer http.ResponseWriter, endpoint *url.URL) error {
 	// step: dial the endpoint
 	server, err := TryDialEndpoint(endpoint)
@@ -238,7 +229,7 @@ func TryUpdateConnection(req *http.Request, writer http.ResponseWriter, endpoint
 	return nil
 }
 
-// dialAddress extracts the dial address from the url
+// dialAddress extracts the dial address from the url.
 func DialAddress(location *url.URL) string {
 	items := strings.Split(location.Host, ":")
 
@@ -255,7 +246,6 @@ func DialAddress(location *url.URL) string {
 	return location.Host
 }
 
-// toHeader is a helper method to play nice in the headers
 func ToHeader(v string) string {
 	symbols := symbolsFilter.Split(v, -1)
 	list := make([]string, 0, len(symbols))
@@ -268,7 +258,7 @@ func ToHeader(v string) string {
 	return strings.Join(list, "-")
 }
 
-// capitalize capitalizes the first letter of a word
+// capitalize capitalizes the first letter of a word.
 func Capitalize(word string) string {
 	if word == "" {
 		return ""
@@ -278,7 +268,7 @@ func Capitalize(word string) string {
 	return string(unicode.ToUpper(r)) + word[n:]
 }
 
-// mergeMaps simples copies the keys from source to destination
+// mergeMaps simples copies the keys from source to destination.
 func MergeMaps(dest, source map[string]string) map[string]string {
 	for k, v := range source {
 		dest[k] = v
@@ -288,7 +278,7 @@ func MergeMaps(dest, source map[string]string) map[string]string {
 }
 
 // getWithin calculates a duration of x percent of the time period, i.e. something
-// expires in 1 hours, get me a duration within 80%
+// expires in 1 hours, get me a duration within 80%.
 func GetWithin(expires time.Time, within float64) time.Duration {
 	left := expires.UTC().Sub(time.Now().UTC()).Seconds()
 
@@ -301,18 +291,18 @@ func GetWithin(expires time.Time, within float64) time.Duration {
 	return time.Duration(seconds) * time.Second
 }
 
-// getHashKey returns a hash of the encodes jwt token
+// getHashKey returns a hash of the encoded jwt token.
 func GetHashKey(token string) string {
 	hash := sha.Sum512([]byte(token))
 	return base64.RawStdEncoding.EncodeToString(hash[:])
 }
 
-// printError display the command line usage and error
+// printError display the command line usage and error.
 func PrintError(message string, args ...interface{}) cli.ExitCoder {
 	return cli.Exit(fmt.Sprintf("[error] "+message, args...), 1)
 }
 
-// realIP retrieves the client ip address from a http request
+// realIP retrieves the client ip address from a http request.
 func RealIP(req *http.Request) string {
 	rAddr := req.RemoteAddr
 
@@ -351,7 +341,7 @@ func GenerateHmac(req *http.Request, encKey string) (string, error) {
 	return hexHmac, nil
 }
 
-// WithOAuthURI returns the oauth uri
+// WithOAuthURI returns the oauth uri.
 func WithOAuthURI(baseURI string, oauthURI string) func(uri string) string {
 	return func(uri string) string {
 		uri = strings.TrimPrefix(uri, "/")

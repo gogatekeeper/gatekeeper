@@ -12,7 +12,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-// fakeUpstreamResponse is the response from fake upstream
+// fakeUpstreamResponse is the response from fake upstream.
 type fakeUpstreamResponse struct {
 	URI     string      `json:"uri"`
 	Method  string      `json:"method"`
@@ -21,7 +21,7 @@ type fakeUpstreamResponse struct {
 	Body    string      `json:"body"`
 }
 
-// FakeUpstreamService acts as a fake upstream service, returns the headers and request
+// FakeUpstreamService acts as a fake upstream service, returns the headers and request.
 type FakeUpstreamService struct{}
 
 func (f *FakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Request) {

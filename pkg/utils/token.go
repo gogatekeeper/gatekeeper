@@ -243,7 +243,6 @@ func CheckClaim(
 	return false
 }
 
-// VerifyOIDCTokens
 func VerifyOIDCTokens(
 	ctx context.Context,
 	provider *oidc3.Provider,
@@ -287,7 +286,6 @@ func VerifyOIDCTokens(
 	return oAccToken, oIDToken, nil
 }
 
-// NewOAuth2Config returns a oauth2 config
 func NewOAuth2Config(
 	clientID string,
 	clientSecret string,

@@ -103,7 +103,6 @@ func NewTestToken(issuer string) *FakeToken {
 	return &FakeToken{Claims: claims}
 }
 
-// getToken returns a JWT token from the clains
 func (t *FakeToken) GetToken() (string, error) {
 	input := []byte("")
 	block, _ := pem.Decode([]byte(fakePrivateKey))
@@ -133,7 +132,6 @@ func (t *FakeToken) GetToken() (string, error) {
 	return jwt, nil
 }
 
-// getUnsignedToken returns a unsigned JWT token from the claims
 func (t *FakeToken) GetUnsignedToken() (string, error) {
 	input := []byte("")
 	block, _ := pem.Decode([]byte(fakePrivateKey))
@@ -169,22 +167,18 @@ func (t *FakeToken) GetUnsignedToken() (string, error) {
 	return jwt, nil
 }
 
-// setExpiration sets the expiration of the token
 func (t *FakeToken) SetExpiration(tm time.Time) {
 	t.Claims.Exp = tm.Unix()
 }
 
-// addGroups adds groups to then token
 func (t *FakeToken) addGroups(groups []string) {
 	t.Claims.Groups = groups
 }
 
-// addRealmRoles adds realms roles to token
 func (t *FakeToken) addRealmRoles(roles []string) {
 	t.Claims.RealmAccess.Roles = roles
 }
 
-// addClientRoles adds client roles to the token
 func (t *FakeToken) addClientRoles(client string, roles []string) {
 	t.Claims.ResourceAccess = make(map[string]RoleClaim)
 	t.Claims.ResourceAccess[client] = RoleClaim{Roles: roles}
@@ -300,7 +294,7 @@ type fakeAuthConfig struct {
 	ResourceSetHandlerFailure bool
 }
 
-// newFakeAuthServer simulates a oauth service
+// newFakeAuthServer simulates a oauth service.
 func newFakeAuthServer(config *fakeAuthConfig) *fakeAuthServer {
 	certBlock, _ := pem.Decode([]byte(fakeCert))
 

@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// SecurityMiddleware performs numerous security checks on the request
+// SecurityMiddleware performs numerous security checks on the request.
 func SecurityMiddleware(
 	logger *zap.Logger,
 	allowedHosts []string,
@@ -59,7 +59,7 @@ func SecurityMiddleware(
 	}
 }
 
-// HmacMiddleware verifies hmac
+// HmacMiddleware verifies hmac.
 func HmacMiddleware(logger *zap.Logger, encKey string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {

@@ -40,7 +40,7 @@ type CertificationRotation struct {
 	rotationMetric *prometheus.Counter
 }
 
-// newCertificateRotator creates a new certificate
+// newCertificateRotator creates a new certificate.
 func NewCertificateRotator(cert, key string, log *zap.Logger, metric *prometheus.Counter) (*CertificationRotation, error) {
 	// step: attempt to load the certificate
 	certificate, err := tls.LoadX509KeyPair(cert, key)
@@ -59,7 +59,7 @@ func NewCertificateRotator(cert, key string, log *zap.Logger, metric *prometheus
 	}, nil
 }
 
-// watch is responsible for adding a file notification and watch on the files for changes
+// watch is responsible for adding a file notification and watch on the files for changes.
 func (c *CertificationRotation) Watch() error {
 	c.log.Info(
 		"adding a file watch on the certificates, certificate",
@@ -115,7 +115,7 @@ func (c *CertificationRotation) Watch() error {
 	return nil
 }
 
-// storeCertificate provides entrypoint to update the certificate
+// storeCertificate provides entrypoint to update the certificate.
 func (c *CertificationRotation) storeCertificate(certifacte tls.Certificate) error {
 	c.Lock()
 	defer c.Unlock()
@@ -124,7 +124,7 @@ func (c *CertificationRotation) storeCertificate(certifacte tls.Certificate) err
 	return nil
 }
 
-// GetCertificate is responsible for retrieving
+// GetCertificate is responsible for retrieving.
 func (c *CertificationRotation) GetCertificate(_ *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	c.RLock()
 	defer c.RUnlock()

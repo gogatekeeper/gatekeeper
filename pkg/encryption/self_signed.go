@@ -51,7 +51,7 @@ type SelfSignedCertificate struct {
 	cancel context.CancelFunc
 }
 
-// newSelfSignedCertificate creates and returns a self signed certificate manager
+// newSelfSignedCertificate creates and returns a self signed certificate manager.
 func NewSelfSignedCertificate(hostnames []string, expiry time.Duration, log *zap.Logger) (*SelfSignedCertificate, error) {
 	if len(hostnames) == 0 {
 		return nil, apperrors.ErrCertSelfNoHostname
@@ -99,7 +99,7 @@ func NewSelfSignedCertificate(hostnames []string, expiry time.Duration, log *zap
 	return svc, nil
 }
 
-// rotate is responsible for rotation the certificate
+// rotate is responsible for rotation the certificate.
 func (c *SelfSignedCertificate) rotate(ctx context.Context) error {
 	go func() {
 		c.log.Info("starting the self-signed certificate rotation",
@@ -136,12 +136,12 @@ func (c *SelfSignedCertificate) rotate(ctx context.Context) error {
 }
 
 // Deprecated:unused
-// close is used to shutdown resources
+// close is used to shutdown resources.
 func (c *SelfSignedCertificate) close() {
 	c.cancel()
 }
 
-// updateCertificate is responsible for update the certificate
+// updateCertificate is responsible for update the certificate.
 func (c *SelfSignedCertificate) updateCertificate(cert tls.Certificate) {
 	c.Lock()
 	defer c.Unlock()
@@ -149,7 +149,7 @@ func (c *SelfSignedCertificate) updateCertificate(cert tls.Certificate) {
 	c.certificate = cert
 }
 
-// GetCertificate is responsible for retrieving
+// GetCertificate is responsible for retrieving.
 func (c *SelfSignedCertificate) GetCertificate(_ *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	c.RLock()
 	defer c.RUnlock()
@@ -157,7 +157,7 @@ func (c *SelfSignedCertificate) GetCertificate(_ *tls.ClientHelloInfo) (*tls.Cer
 	return &c.certificate, nil
 }
 
-// createCertificate is responsible for creating a certificate
+// createCertificate is responsible for creating a certificate.
 func CreateCertificate(key *ed25519.PrivateKey, hostnames []string, expire time.Duration) (tls.Certificate, error) {
 	// @step: create a serial for the certificate
 	serial, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), constant.SelfSignedMaxSerialBits))
@@ -208,7 +208,7 @@ func CreateCertificate(key *ed25519.PrivateKey, hostnames []string, expire time.
 	return tls.X509KeyPair(certPEM, keyPEM)
 }
 
-// loadCA loads the certificate authority
+// loadCA loads the certificate authority.
 func LoadCA(cert, key string) (*tls.Certificate, error) {
 	caCert, err := os.ReadFile(cert)
 

@@ -23,7 +23,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// forwardProxyHandler is responsible for signing outbound requests
+// forwardProxyHandler is responsible for signing outbound requests.
 func forwardProxyHandler(
 	logger *zap.Logger,
 	pat *PAT,

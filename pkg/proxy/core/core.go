@@ -18,7 +18,6 @@ var (
 	Version  = ""
 )
 
-// GetVersion returns the proxy version
 func GetVersion() string {
 	if Version == "" {
 		tm, err := strconv.ParseInt(compiled, 10, 64)
@@ -37,7 +36,6 @@ type OauthProxies interface {
 	Shutdown() error
 }
 
-// ReverseProxy is a wrapper
 type ReverseProxy interface {
 	ServeHTTP(rw http.ResponseWriter, req *http.Request)
 }

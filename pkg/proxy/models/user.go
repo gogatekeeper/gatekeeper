@@ -20,7 +20,7 @@ type RealmRoles struct {
 	Roles []string `json:"roles"`
 }
 
-// Extract custom claims
+// Extract custom claims.
 type CustClaims struct {
 	Email          string                 `json:"email"`
 	Acr            string                 `json:"acr"`
@@ -34,12 +34,12 @@ type CustClaims struct {
 	Authorization  Permissions            `json:"authorization"`
 }
 
-// isExpired checks if the token has expired
+// isExpired checks if the token has expired.
 func (r *UserContext) IsExpired() bool {
 	return r.ExpiresAt.Before(time.Now())
 }
 
-// String returns a string representation of the user context
+// String returns a string representation of the user context.
 func (r *UserContext) String() string {
 	return fmt.Sprintf(
 		"user: %s, expires: %s, roles: %s",
@@ -49,7 +49,7 @@ func (r *UserContext) String() string {
 	)
 }
 
-// userContext holds the information extracted the token
+// userContext holds the information extracted the token.
 type UserContext struct {
 	// the id of the user
 	ID string
