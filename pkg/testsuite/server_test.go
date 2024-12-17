@@ -103,6 +103,7 @@ func TestReverseProxyHeaders(t *testing.T) {
 			},
 			ExpectedProxyHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 				"X-Auth-Token": func(t *testing.T, c *config.Config, value string) {
+					t.Helper()
 					assert.Equal(t, jwt, value)
 					assert.False(t, checkAccessTokenEncryption(t, c, value))
 				},
@@ -139,6 +140,7 @@ func TestAuthTokenHeader(t *testing.T) {
 					ExpectedCode:  http.StatusOK,
 					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 						"X-Auth-Token": func(t *testing.T, c *config.Config, value string) {
+							t.Helper()
 							_, err := jwt.ParseSigned(value, constant.SignatureAlgs[:])
 							require.NoError(t, err, "Problem parsing X-Auth-Token")
 							assert.False(t, checkAccessTokenEncryption(t, c, value))
@@ -150,6 +152,7 @@ func TestAuthTokenHeader(t *testing.T) {
 					ExpectedProxy: true,
 					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 						"X-Auth-Token": func(t *testing.T, c *config.Config, value string) {
+							t.Helper()
 							_, err := jwt.ParseSigned(value, constant.SignatureAlgs[:])
 							require.NoError(t, err, "Problem parsing X-Auth-Token")
 							assert.False(t, checkAccessTokenEncryption(t, c, value))
@@ -176,6 +179,7 @@ func TestAuthTokenHeader(t *testing.T) {
 					ExpectedCode:  http.StatusOK,
 					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 						"X-Auth-Token": func(t *testing.T, c *config.Config, value string) {
+							t.Helper()
 							_, err := jwt.ParseSigned(value, constant.SignatureAlgs[:])
 							require.NoError(t, err, "Problem parsing X-Auth-Token")
 							assert.False(t, checkAccessTokenEncryption(t, c, value))
@@ -187,6 +191,7 @@ func TestAuthTokenHeader(t *testing.T) {
 					ExpectedProxy: true,
 					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 						"X-Auth-Token": func(t *testing.T, c *config.Config, value string) {
+							t.Helper()
 							_, err := jwt.ParseSigned(value, constant.SignatureAlgs[:])
 							require.NoError(t, err, "Problem parsing X-Auth-Token")
 							assert.False(t, checkAccessTokenEncryption(t, c, value))
@@ -1585,6 +1590,7 @@ func TestXForwarded(t *testing.T) {
 					ExpectedProxy: true,
 					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 						constant.HeaderXForwardedHost: func(t *testing.T, _ *config.Config, value string) {
+							t.Helper()
 							assert.Contains(t, value, "127.0.0.1")
 						},
 					},
@@ -1622,6 +1628,7 @@ func TestXForwarded(t *testing.T) {
 					ExpectedProxy: true,
 					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 						"X-Forwarded-Host": func(t *testing.T, _ *config.Config, value string) {
+							t.Helper()
 							assert.Contains(t, value, "127.0.0.1")
 						},
 					},

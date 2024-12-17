@@ -320,6 +320,7 @@ func TestCustomCookieNames(t *testing.T) {
 					ExpectedCode:  http.StatusOK,
 					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						customStateName: func(t *testing.T, _ *config.Config, value string) bool {
+							t.Helper()
 							return assert.NotEqual(t, "", value)
 						},
 					},
@@ -343,6 +344,7 @@ func TestCustomCookieNames(t *testing.T) {
 					ExpectedCode:  http.StatusOK,
 					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						customAccessName: func(t *testing.T, _ *config.Config, value string) bool {
+							t.Helper()
 							return assert.NotEqual(t, "", value)
 						},
 					},
@@ -368,6 +370,7 @@ func TestCustomCookieNames(t *testing.T) {
 					ExpectedCode:  http.StatusOK,
 					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						customRefreshName: func(t *testing.T, _ *config.Config, value string) bool {
+							t.Helper()
 							return assert.NotEqual(t, "", value)
 						},
 					},
@@ -392,6 +395,7 @@ func TestCustomCookieNames(t *testing.T) {
 					ExpectedCode:  http.StatusOK,
 					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						customRedirectName: func(t *testing.T, _ *config.Config, value string) bool {
+							t.Helper()
 							return assert.NotEqual(t, "", value)
 						},
 					},
@@ -418,6 +422,7 @@ func TestCustomCookieNames(t *testing.T) {
 					ExpectedCode:  http.StatusOK,
 					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						customPKCEName: func(t *testing.T, _ *config.Config, value string) bool {
+							t.Helper()
 							return assert.NotEqual(t, "", value)
 						},
 					},
@@ -445,6 +450,7 @@ func TestCustomCookieNames(t *testing.T) {
 					ExpectedCode:  http.StatusOK,
 					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						customIDTokenName: func(t *testing.T, _ *config.Config, value string) bool {
+							t.Helper()
 							return assert.NotEqual(t, "", value)
 						},
 					},

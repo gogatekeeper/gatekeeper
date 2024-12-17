@@ -82,6 +82,7 @@ func TestRedirectToAuthorizationSkipToken(t *testing.T) {
 }
 
 func assertAlmostEquals(t *testing.T, expected time.Duration, actual time.Duration) {
+	t.Helper()
 	delta := expected - actual
 	if delta < 0 {
 		delta = -delta

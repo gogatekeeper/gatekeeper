@@ -1643,6 +1643,7 @@ func delay(no int, _ *resty.Request, _ *resty.Response) {
 }
 
 func checkAccessTokenEncryption(t *testing.T, cfg *config.Config, value string) bool {
+	t.Helper()
 	rawToken, err := encryption.DecodeText(value, cfg.EncryptionKey)
 
 	if err != nil {

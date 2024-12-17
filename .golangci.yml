@@ -19,7 +19,6 @@ linters:
   enable-all: true
   disable:
     - depguard
-    - thelper
     - ireturn
     - maintidx
     - wrapcheck

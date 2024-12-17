@@ -460,6 +460,7 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 					ExpectedCookies: map[string]string{cfg.CookieAccessName: ""},
 					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						cfg.CookieAccessName: func(t *testing.T, _ *config.Config, rawToken string) bool {
+							t.Helper()
 							token, err := jwt.ParseSigned(rawToken, constant.SignatureAlgs[:])
 							if err != nil {
 								return false
@@ -511,6 +512,7 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 					},
 					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						cfg.CookieAccessName: func(t *testing.T, _ *config.Config, rawToken string) bool {
+							t.Helper()
 							token, err := jwt.ParseSigned(rawToken, constant.SignatureAlgs[:])
 							if err != nil {
 								return false
@@ -970,6 +972,7 @@ func TestAuthorizationURL(t *testing.T) {
 					ExpectedLocation: "test=yes",
 					ExpectedHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 						"Location": func(t *testing.T, _ *config.Config, value string) {
+							t.Helper()
 							assert.NotContains(t, value, "test1=test")
 						},
 					},
@@ -1008,6 +1011,7 @@ func TestAuthorizationURL(t *testing.T) {
 					Redirects: true,
 					ExpectedHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 						"Location": func(t *testing.T, _ *config.Config, value string) {
+							t.Helper()
 							assert.Contains(t, value, "test1=test")
 							assert.Contains(t, value, "test=yes")
 						},
@@ -1034,6 +1038,7 @@ func TestAuthorizationURL(t *testing.T) {
 					Redirects: true,
 					ExpectedHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 						"Location": func(t *testing.T, _ *config.Config, value string) {
+							t.Helper()
 							assert.Contains(t, value, "test1=test")
 							assert.Contains(t, value, "test=yes")
 						},
@@ -1060,6 +1065,7 @@ func TestAuthorizationURL(t *testing.T) {
 					Redirects: true,
 					ExpectedHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 						"Location": func(t *testing.T, _ *config.Config, value string) {
+							t.Helper()
 							assert.Contains(t, value, "test1=test")
 							assert.Contains(t, value, "test=yes")
 						},

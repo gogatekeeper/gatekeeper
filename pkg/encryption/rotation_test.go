@@ -34,6 +34,7 @@ const (
 )
 
 func newTestCertificateRotator(t *testing.T) *CertificationRotation {
+	t.Helper()
 	counter := prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Name: "proxy_certificate_rotation_total",

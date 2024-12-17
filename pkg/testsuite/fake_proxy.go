@@ -135,6 +135,7 @@ func (f *fakeProxy) getServiceURL() string {
 //
 //nolint:gocyclo,funlen,cyclop
 func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
+	t.Helper()
 	defer func() {
 		f.idp.Close()
 		f.proxy.Server.Close()
