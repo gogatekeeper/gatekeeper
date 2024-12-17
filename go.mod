@@ -1,7 +1,7 @@
 module github.com/gogatekeeper/gatekeeper
 
 require (
-	github.com/Nerzal/gocloak/v12 v12.0.0
+	github.com/Nerzal/gocloak/v13 v13.9.0
 	github.com/PuerkitoBio/goquery v1.10.0
 	github.com/PuerkitoBio/purell v1.2.1
 	github.com/alicebob/miniredis/v2 v2.33.0
@@ -31,7 +31,7 @@ require (
 	go.uber.org/automaxprocs v1.6.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.31.0
-	golang.org/x/net v0.30.0
+	golang.org/x/net v0.32.0
 	golang.org/x/oauth2 v0.23.0
 	golang.org/x/sync v0.10.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -62,8 +62,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
-	github.com/golang/glog v1.2.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.0.0 // indirect
 	github.com/google/flatbuffers v24.3.25+incompatible // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/pprof v0.0.0-20241101162523-b92577c0c142 // indirect
@@ -102,7 +101,6 @@ require (
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/tools v0.26.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241021214115-324edc3d5d38 // indirect
 	google.golang.org/grpc v1.67.1 // indirect
 	google.golang.org/protobuf v1.35.1 // indirect

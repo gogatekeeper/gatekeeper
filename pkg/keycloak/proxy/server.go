@@ -41,7 +41,7 @@ import (
 
 	httplog "log"
 
-	"github.com/Nerzal/gocloak/v12"
+	"github.com/Nerzal/gocloak/v13"
 	proxyproto "github.com/armon/go-proxyproto"
 	backoff "github.com/cenkalti/backoff/v4"
 	oidc3 "github.com/coreos/go-oidc/v3/oidc"
