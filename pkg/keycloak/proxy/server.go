@@ -1176,7 +1176,7 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 		if listener, err = net.Listen("unix", socket); err != nil {
 			return nil, err
 		}
-	} else { //nolint:gocritic
+	} else {
 		if listener, err = net.Listen("tcp", config.listen); err != nil {
 			return nil, err
 		}

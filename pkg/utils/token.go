@@ -168,8 +168,6 @@ func GetRefreshedToken(
 }
 
 // CheckClaim checks whether claim in userContext matches claimName, match. It can be String or Strings claim.
-//
-//nolint:cyclop
 func CheckClaim(
 	logger *zap.Logger,
 	user *models.UserContext,
@@ -190,14 +188,8 @@ func CheckClaim(
 		return false
 	}
 
-	switch user.Claims[claimName].(type) {
+	switch claims := user.Claims[claimName].(type) {
 	case []interface{}:
-		claims, assertOk := user.Claims[claimName].([]interface{})
-		if !assertOk {
-			logger.Error(apperrors.ErrAssertionFailed.Error())
-			return false
-		}
-
 		for _, v := range claims {
 			value, ok := v.(string)
 			if !ok {
@@ -226,11 +218,6 @@ func CheckClaim(
 
 		return false
 	case string:
-		claims, assertOk := user.Claims[claimName].(string)
-		if !assertOk {
-			logger.Error(apperrors.ErrAssertionFailed.Error())
-			return false
-		}
 		if match.MatchString(claims) {
 			return true
 		}

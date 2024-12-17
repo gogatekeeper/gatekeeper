@@ -648,7 +648,7 @@ func logoutHandler(
 	cookManager *cookie.Manager,
 	httpClient *http.Client,
 	accessError func(wrt http.ResponseWriter, req *http.Request) context.Context,
-	GetIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (*models.UserContext, error),
+	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (*models.UserContext, error),
 ) func(wrt http.ResponseWriter, req *http.Request) {
 	return func(writer http.ResponseWriter, req *http.Request) {
 		// @check if the redirection is there
@@ -680,7 +680,7 @@ func logoutHandler(
 		}
 
 		// @step: drop the access token
-		user, err := GetIdentity(req, cookieAccessName, "")
+		user, err := getIdentity(req, cookieAccessName, "")
 		if err != nil {
 			accessError(writer, req)
 			return

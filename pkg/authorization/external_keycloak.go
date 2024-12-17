@@ -26,7 +26,7 @@ func NewKeycloakAuthorizationProvider(
 	targetPath string,
 	idpClient *gocloak.GoCloak,
 	idpTimeout time.Duration,
-	PAT string,
+	pat string,
 	realm string,
 	methodScope *string,
 ) Provider {
@@ -35,7 +35,7 @@ func NewKeycloakAuthorizationProvider(
 		targetPath:  targetPath,
 		idpClient:   idpClient,
 		idpTimeout:  idpTimeout,
-		pat:         PAT,
+		pat:         pat,
 		realm:       realm,
 		methodScope: methodScope,
 	}

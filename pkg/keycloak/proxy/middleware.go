@@ -203,7 +203,7 @@ func authorizationMiddleware(
 				}
 			}
 
-			switch true {
+			switch {
 			case errors.Is(err, apperrors.ErrPermissionNotInToken):
 				scope.Logger.Info(apperrors.ErrPermissionNotInToken.Error())
 			case errors.Is(err, apperrors.ErrResourceRetrieve):
