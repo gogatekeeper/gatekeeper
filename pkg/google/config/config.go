@@ -161,6 +161,7 @@ type Config struct {
 	CorsCredentials                 bool `env:"CORS_CREDENTIALS" json:"cors-credentials" usage:"credentials access control header (Access-Control-Allow-Credentials)" yaml:"cors-credentials"`
 	NoProxy                         bool `env:"NO_PROXY" json:"no-proxy" usage:"do not proxy requests to upstream, useful for forward-auth usage (with nginx, traefik)" yaml:"no-proxy"`
 	NoRedirects                     bool `env:"NO_REDIRECTS" json:"no-redirects" usage:"do not have back redirects when no authentication is present, 401 them" yaml:"no-redirects"`
+	AjaxNoRedirects                 bool `env:"AJAX_NO_REDIRECTS" json:"ajax-no-redirects" usage:"do not have back redirects when no authentication is present and the request type is application/json, 401 them" yaml:"ajax-no-redirects"`
 	SkipTokenVerification           bool `env:"SKIP_TOKEN_VERIFICATION" json:"skip-token-verification" usage:"TESTING ONLY; bypass token verification, only expiration and roles enforced" yaml:"skip-token-verification"`
 	SkipAccessTokenIssuerCheck      bool `env:"SKIP_ACCESS_TOKEN_ISSUER_CHECK" json:"skip-access-token-issuer-check" usage:"according RFC issuer should not be checked on access token, this will be default true in future" yaml:"skip-access-token-issuer-check"`
 	SkipAccessTokenClientIDCheck    bool `env:"SKIP_ACCESS_TOKEN_CLIENT_ID_CHECK" json:"skip-access-token-clientid-check" usage:"according RFC client id should not be checked on access token, this will be default true in future" yaml:"skip-access-token-clientid-check"`

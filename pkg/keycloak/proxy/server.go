@@ -347,6 +347,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 
 	redToAuth := core.RedirectToAuthorization(
 		r.Log,
+		r.Config.AjaxNoRedirects,
 		r.Config.NoRedirects,
 		r.Cm,
 		r.Config.SkipTokenVerification,

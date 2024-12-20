@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
@@ -13,6 +14,8 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"go.uber.org/zap"
 )
+
+const applicationJSON = "application/json"
 
 // RedirectToURL redirects the user and aborts the context.
 func RedirectToURL(
@@ -36,6 +39,7 @@ func RedirectToURL(
 //nolint:cyclop
 func RedirectToAuthorization(
 	logger *zap.Logger,
+	ajaxNoRedirects bool,
 	noRedirects bool,
 	cookManager *cookie.Manager,
 	skipTokenVerification bool,
@@ -46,7 +50,10 @@ func RedirectToAuthorization(
 	defaultAllowedQueryParams map[string]string,
 ) func(wrt http.ResponseWriter, req *http.Request) context.Context {
 	return func(wrt http.ResponseWriter, req *http.Request) context.Context {
-		if noRedirects {
+		if noRedirects || (ajaxNoRedirects && isAjax(req)) {
+			logger.Debug(
+				"redirect is disabled, refusing to redirect",
+			)
 			wrt.WriteHeader(http.StatusUnauthorized)
 			return revokeProxy(logger, req)
 		}
@@ -162,4 +169,24 @@ func revokeProxy(logger *zap.Logger, req *http.Request) context.Context {
 	scope.AccessDenied = true
 
 	return context.WithValue(req.Context(), constant.ContextScopeName, scope)
+}
+
+// isAjax checks if a request is an ajax request
+func isAjax(req *http.Request) bool {
+	acceptValues := req.Header.Values("Accept")
+	const ajaxReq = applicationJSON
+	// Iterate over multiple Accept headers, i.e.
+	// Accept: application/json
+	// Accept: text/plain
+	for _, mimeTypes := range acceptValues {
+		// Iterate over multiple mimetypes in a single header, i.e.
+		// Accept: application/json, text/plain, */*
+		for _, mimeType := range strings.Split(mimeTypes, ",") {
+			mimeType = strings.TrimSpace(mimeType)
+			if mimeType == ajaxReq {
+				return true
+			}
+		}
+	}
+	return false
 }
