@@ -79,7 +79,7 @@ upstream-url: http://127.0.0.1:80
 # Returns HTTP 401 when no authentication is present, used with forward proxies or API protection with client credentials grant.
 no-redirects: false
 # Returns HTTP 401 when no authentication is present and the request type is ajax (application/json).
-ajax-no-redirects: false
+ajax-no-redirects: true
 # additional scopes to add to the default (openid+email+profile)
 scopes:
 - vpn-user
