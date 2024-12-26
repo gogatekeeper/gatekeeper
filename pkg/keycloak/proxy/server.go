@@ -355,6 +355,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.OAuthURI,
 		r.Config.AllowedQueryParams,
 		r.Config.DefaultAllowedQueryParams,
+		r.Config.NoRedirectPathRegexes,
 	)
 
 	if r.Config.EnableHmac {

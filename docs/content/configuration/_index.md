@@ -110,6 +110,7 @@ weight: 2
 |	 --enable-hmac                           | enable creating hmac for forwarded requests and verification on incoming requests | false | PROXY_ENABLE_HMAC
 |    --no-proxy value                        | do not proxy requests to upstream, useful for forward-auth usage (with nginx, traefik) | | PROXY_NO_PROXY
 |    --no-redirects                          | do not have back redirects when no authentication is present, 401 them | false | PROXY_NO_REDIRECTS
+|    --no-redirect-paths                     | do not have back redirects when no authentication is present for these paths, 401 them | | PROXY_NO_REDIRECT_PATHS
 |    --skip-token-verification               | TESTING ONLY; bypass token verification, only expiration and roles enforced | false | PROXY_SKIP_TOKEN_VERIFICATION
 |    --skip-access-token-issuer-check        | according RFC issuer should not be checked on access token, this will be default true in future | true | PROXY_SKIP_ACCESS_TOKEN_ISSUER_CHECK
 |    --skip-access-token-clientid-check      | according RFC client id should not be checked on access token, this will be default true in future | true | PROXY_SKIP_ACCESS_TOKEN_CLIENT_ID_CHECK

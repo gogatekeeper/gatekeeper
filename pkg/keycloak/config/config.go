@@ -127,6 +127,7 @@ type Config struct {
 	ServerReadTimeout               time.Duration     `env:"SERVER_READ_TIMEOUT" json:"server-read-timeout" usage:"the server read timeout on the http server" yaml:"server-read-timeout"`
 	ServerWriteTimeout              time.Duration     `env:"SERVER_WRITE_TIMEOUT" json:"server-write-timeout" usage:"the server write timeout on the http server" yaml:"server-write-timeout"`
 	ServerIdleTimeout               time.Duration     `env:"SERVER_IDLE_TIMEOUT" json:"server-idle-timeout" usage:"the server idle timeout on the http server" yaml:"server-idle-timeout"`
+	NoRedirectPathRegexes           []string          `env:"NO_REDIRECT_PATHS" json:"no-redirect-paths" usage:"do not have back redirects when no authentication is present for these paths, 401 them" yaml:"no-redirect-paths"`
 	Tags                            map[string]string `json:"tags" usage:"keypairs passed to the templates at render,e.g title=Page" yaml:"tags"`
 	DiscoveryURI                    *url.URL
 	OpaAuthzURL                     *url.URL

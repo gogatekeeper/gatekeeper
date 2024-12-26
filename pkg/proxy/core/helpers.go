@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
@@ -44,9 +45,10 @@ func RedirectToAuthorization(
 	oAuthURI string,
 	allowedQueryParams map[string]string,
 	defaultAllowedQueryParams map[string]string,
+	noRedirectPathRegexes []string, // regex patterns array as a parameter for no re-directs
 ) func(wrt http.ResponseWriter, req *http.Request) context.Context {
 	return func(wrt http.ResponseWriter, req *http.Request) context.Context {
-		if noRedirects {
+		if noRedirects || isAuthorizationFlowNoRedirectsForPath(noRedirectPathRegexes, req.URL.Path) {
 			wrt.WriteHeader(http.StatusUnauthorized)
 			return revokeProxy(logger, req)
 		}
@@ -162,4 +164,17 @@ func revokeProxy(logger *zap.Logger, req *http.Request) context.Context {
 	scope.AccessDenied = true
 
 	return context.WithValue(req.Context(), constant.ContextScopeName, scope)
+}
+
+func isAuthorizationFlowNoRedirectsForPath(noRedirectPathRegexes []string, requestPath string) bool {
+	// Check if the request path matches any regex pattern
+	matched := false
+	for _, pattern := range noRedirectPathRegexes {
+		match, _ := regexp.MatchString(pattern, requestPath)
+		if match {
+			matched = true
+			break
+		}
+	}
+	return matched
 }

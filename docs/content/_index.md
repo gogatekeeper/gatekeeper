@@ -78,6 +78,8 @@ encryption-key: <ENCRYPTION_KEY>
 upstream-url: http://127.0.0.1:80
 # Returns HTTP 401 when no authentication is present, used with forward proxies or API protection with client credentials grant.
 no-redirects: false
+# Returns HTTP 401 when no authentication is present for specified set of path regular expressions, used with Ajax / SPA where specific paths do not support authentication flow.
+no-redirect-paths: ["/api/v1/.*"]
 # additional scopes to add to the default (openid+email+profile)
 scopes:
 - vpn-user
@@ -848,6 +850,7 @@ gatekeeper configuration:
   - args:
       - --client-id=dashboard
       - --no-redirects=false # this option will ensure there WILL BE redirects to keycloak server
+      - --no-redirect-paths=["/api/v1/.*"] # this option will ensure there WILL BE NO redirects to keycloak server for specified paths
       - --no-proxy=true # this option will ensure that request will be not forwarded to upstream
       - --listen=0.0.0.0:4180
       - --discovery-url=https://keycloak-dns-name/realms/censored
