@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/Nerzal/gocloak/v12"
+	"github.com/Nerzal/gocloak/v13"
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 )

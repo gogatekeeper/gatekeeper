@@ -28,7 +28,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Nerzal/gocloak/v12"
+	"github.com/Nerzal/gocloak/v13"
 	oidc3 "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
