@@ -649,45 +649,45 @@ func TestLogoutHandlerGood(t *testing.T) {
 				},
 			},
 		},
-		// {
-		// 	Name:          "TestLogoutWithRedirectQueryParam",
-		// 	ProxySettings: func(_ *config.Config) {},
-		// 	ExecutionSettings: []fakeRequest{
-		// 		{
-		// 			URI:              utils.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LogoutURL) + "?redirect=http://example.com",
-		// 			HasToken:         true,
-		// 			ExpectedCode:     http.StatusSeeOther,
-		// 			ExpectedLocation: "http://example.com",
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	Name: "TestLogoutWithEnabledLogoutRedirect",
-		// 	ProxySettings: func(c *config.Config) {
-		// 		c.EnableLogoutRedirect = true
-		// 	},
-		// 	ExecutionSettings: []fakeRequest{
-		// 		{
-		// 			URI:              utils.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LogoutURL),
-		// 			HasToken:         true,
-		// 			ExpectedCode:     http.StatusSeeOther,
-		// 			ExpectedLocation: "http://127.0.0.1",
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	Name: "TestLogoutWithEmptyRedirectQueryParam",
-		// 	ProxySettings: func(c *config.Config) {
-		// 		c.RedirectionURL = "http://example.com"
-		// 	},
-		// 	ExecutionSettings: []fakeRequest{
-		// 		{
-		// 			URI:          utils.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LogoutURL) + "?redirect=",
-		// 			HasToken:     true,
-		// 			ExpectedCode: http.StatusSeeOther,
-		// 		},
-		// 	},
-		// },
+		{
+			Name:          "TestLogoutWithRedirectQueryParam",
+			ProxySettings: func(_ *config.Config) {},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:              utils.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LogoutURL) + "?redirect=http://example.com",
+					HasToken:         true,
+					ExpectedCode:     http.StatusSeeOther,
+					ExpectedLocation: "http://example.com",
+				},
+			},
+		},
+		{
+			Name: "TestLogoutWithEnabledLogoutRedirect",
+			ProxySettings: func(c *config.Config) {
+				c.EnableLogoutRedirect = true
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:              utils.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LogoutURL),
+					HasToken:         true,
+					ExpectedCode:     http.StatusSeeOther,
+					ExpectedLocation: "http://127.0.0.1",
+				},
+			},
+		},
+		{
+			Name: "TestLogoutWithEmptyRedirectQueryParam",
+			ProxySettings: func(c *config.Config) {
+				c.RedirectionURL = "http://example.com"
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:          utils.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LogoutURL) + "?redirect=",
+					HasToken:     true,
+					ExpectedCode: http.StatusSeeOther,
+				},
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
