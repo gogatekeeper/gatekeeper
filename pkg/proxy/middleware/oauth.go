@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/encryption"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/cookie"
+	"github.com/gogatekeeper/gatekeeper/pkg/proxy/core"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/session"
 	"github.com/gogatekeeper/gatekeeper/pkg/storage"
@@ -44,7 +46,6 @@ func AuthenticationMiddleware(
 	enableEncryptedToken bool,
 	forceEncryptedCookie bool,
 	encryptionKey string,
-	redirectToAuthorization func(wrt http.ResponseWriter, req *http.Request) context.Context,
 	newOAuth2Config func(redirectionURL string) *oauth2.Config,
 	store storage.Storage,
 	accessTokenDuration time.Duration,
@@ -63,7 +64,8 @@ func AuthenticationMiddleware(
 			user, err := getIdentity(req, cookieAccessName, "")
 			if err != nil {
 				scope.Logger.Error(err.Error())
-				redirectToAuthorization(wrt, req)
+				core.RevokeProxy(logger, req)
+				next.ServeHTTP(wrt, req)
 				return
 			}
 
@@ -91,7 +93,8 @@ func AuthenticationMiddleware(
 
 				if user.IsExpired() {
 					lLog.Error(apperrors.ErrSessionExpiredVerifyOff.Error())
-					redirectToAuthorization(wrt, req)
+					core.RevokeProxy(logger, req)
+					next.ServeHTTP(wrt, req)
 					return
 				}
 			} else {
@@ -124,7 +127,8 @@ func AuthenticationMiddleware(
 
 					if !enableRefreshTokens {
 						lLog.Error(apperrors.ErrSessionExpiredRefreshOff.Error())
-						redirectToAuthorization(wrt, req)
+						core.RevokeProxy(logger, req)
+						next.ServeHTTP(wrt, req)
 						return
 					}
 
@@ -143,7 +147,8 @@ func AuthenticationMiddleware(
 							apperrors.ErrRefreshTokenNotFound.Error(),
 							zap.Error(err),
 						)
-						redirectToAuthorization(wrt, req)
+						core.RevokeProxy(logger, req)
+						next.ServeHTTP(wrt, req)
 						return
 					}
 
@@ -199,7 +204,8 @@ func AuthenticationMiddleware(
 							)
 						}
 
-						redirectToAuthorization(wrt, req)
+						core.RevokeProxy(logger, req)
+						next.ServeHTTP(wrt, req)
 						return
 					}
 
@@ -306,12 +312,232 @@ func AuthenticationMiddleware(
 				_, err := provider.UserInfo(oidcLibCtx, tokenSource)
 				if err != nil {
 					scope.Logger.Error(err.Error())
-					redirectToAuthorization(wrt, req)
+					core.RevokeProxy(logger, req)
+					next.ServeHTTP(wrt, req)
 					return
 				}
 			}
 
 			*req = *(req.WithContext(ctx))
+			next.ServeHTTP(wrt, req)
+		})
+	}
+}
+
+// RedirectToAuthorizationMiddleware redirects the user to authorization handler
+//
+//nolint:cyclop
+func RedirectToAuthorizationMiddleware(
+	logger *zap.Logger,
+	noRedirects bool,
+	cookManager *cookie.Manager,
+	skipTokenVerification bool,
+	noProxy bool,
+	baseURI string,
+	oAuthURI string,
+	allowedQueryParams map[string]string,
+	defaultAllowedQueryParams map[string]string,
+) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
+			scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
+			if !assertOk {
+				logger.Error(apperrors.ErrAssertionFailed.Error())
+				return
+			}
+
+			scope.Logger.Debug("redirecttoauthorization middleware")
+
+			if scope.AccessDenied {
+				if noRedirects {
+					wrt.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+
+				// step: add a state referrer to the authorization page
+				uuid := cookManager.DropStateParameterCookie(req, wrt)
+				authQuery := "?state=" + uuid
+
+				if len(allowedQueryParams) > 0 {
+					query := ""
+					for key, val := range allowedQueryParams {
+						if param := req.URL.Query().Get(key); param != "" {
+							if val != "" {
+								if val != param {
+									wrt.WriteHeader(http.StatusForbidden)
+								}
+							}
+							query += fmt.Sprintf("&%s=%s", key, param)
+						} else {
+							if val, ok := defaultAllowedQueryParams[key]; ok {
+								query += fmt.Sprintf("&%s=%s", key, val)
+							}
+						}
+					}
+					authQuery += query
+				}
+
+				// step: if verification is switched off, we can't authorization
+				if skipTokenVerification {
+					logger.Error(
+						"refusing to redirection to authorization endpoint, " +
+							"skip token verification switched on",
+					)
+
+					wrt.WriteHeader(http.StatusForbidden)
+					return
+				}
+
+				url := utils.WithOAuthURI(baseURI, oAuthURI)(constant.AuthorizationURL + authQuery)
+
+				if noProxy && !noRedirects {
+					xForwardedHost := req.Header.Get(constant.HeaderXForwardedHost)
+					xProto := req.Header.Get(constant.HeaderXForwardedProto)
+
+					if xForwardedHost == "" || xProto == "" {
+						logger.Error(apperrors.ErrForwardAuthMissingHeaders.Error())
+
+						wrt.WriteHeader(http.StatusForbidden)
+						return
+					}
+
+					url = fmt.Sprintf(
+						"%s://%s%s",
+						xProto,
+						xForwardedHost,
+						url,
+					)
+				}
+
+				logger.Debug("redirecting to url", zap.String("url", url))
+
+				core.RedirectToURL(
+					logger,
+					url,
+					wrt,
+					req,
+					http.StatusSeeOther,
+				)
+			} else {
+				next.ServeHTTP(wrt, req)
+			}
+		})
+	}
+}
+
+// RedirectToAuthorizationMiddleware redirects the user to authorization handler
+//
+//nolint:cyclop
+func NewRedirectToAuthorizationMiddleware(
+	logger *zap.Logger,
+	cookManager *cookie.Manager,
+	skipTokenVerification bool,
+	noProxy bool,
+	baseURI string,
+	oAuthURI string,
+	allowedQueryParams map[string]string,
+	defaultAllowedQueryParams map[string]string,
+) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
+			scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
+			if !assertOk {
+				logger.Error(apperrors.ErrAssertionFailed.Error())
+				return
+			}
+
+			scope.Logger.Debug("redirecttoauthorization middleware")
+
+			if scope.AccessDenied {
+				// step: add a state referrer to the authorization page
+				uuid := cookManager.DropStateParameterCookie(req, wrt)
+				authQuery := "?state=" + uuid
+
+				if len(allowedQueryParams) > 0 {
+					query := ""
+					for key, val := range allowedQueryParams {
+						if param := req.URL.Query().Get(key); param != "" {
+							if val != "" {
+								if val != param {
+									wrt.WriteHeader(http.StatusForbidden)
+								}
+							}
+							query += fmt.Sprintf("&%s=%s", key, param)
+						} else {
+							if val, ok := defaultAllowedQueryParams[key]; ok {
+								query += fmt.Sprintf("&%s=%s", key, val)
+							}
+						}
+					}
+					authQuery += query
+				}
+
+				// step: if verification is switched off, we can't authorization
+				if skipTokenVerification {
+					logger.Error(
+						"refusing to redirection to authorization endpoint, " +
+							"skip token verification switched on",
+					)
+
+					wrt.WriteHeader(http.StatusForbidden)
+					return
+				}
+
+				url := utils.WithOAuthURI(baseURI, oAuthURI)(constant.AuthorizationURL + authQuery)
+
+				if noProxy {
+					xForwardedHost := req.Header.Get(constant.HeaderXForwardedHost)
+					xProto := req.Header.Get(constant.HeaderXForwardedProto)
+
+					if xForwardedHost == "" || xProto == "" {
+						logger.Error(apperrors.ErrForwardAuthMissingHeaders.Error())
+
+						wrt.WriteHeader(http.StatusForbidden)
+						return
+					}
+
+					url = fmt.Sprintf(
+						"%s://%s%s",
+						xProto,
+						xForwardedHost,
+						url,
+					)
+				}
+
+				logger.Debug("redirecting to url", zap.String("url", url))
+
+				core.RedirectToURL(
+					logger,
+					url,
+					wrt,
+					req,
+					http.StatusSeeOther,
+				)
+			} else {
+				next.ServeHTTP(wrt, req)
+			}
+		})
+	}
+}
+
+// NoRedirectToAuthorizationMiddleware stops request after faild authentication, in no-redirects=true mode.
+func NoRedirectToAuthorizationMiddleware(
+	logger *zap.Logger,
+) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
+			scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
+			if !assertOk {
+				logger.Error(apperrors.ErrAssertionFailed.Error())
+				return
+			}
+
+			scope.Logger.Debug("noredirecttoauthorization middleware")
+
+			if scope.AccessDenied {
+				wrt.WriteHeader(http.StatusUnauthorized)
+				return
+			}
 			next.ServeHTTP(wrt, req)
 		})
 	}

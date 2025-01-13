@@ -33,6 +33,8 @@ type Resource struct {
 	Methods []string `json:"methods" yaml:"methods"`
 	// WhiteListed permits the prefix through
 	WhiteListed bool `json:"white-listed" yaml:"white-listed"`
+	// NoRedirect overrides global no-redirect setting
+	NoRedirect bool
 	// RequireAnyRole indicates that ANY of the roles are required, the default is all
 	RequireAnyRole bool `json:"require-any-role" yaml:"require-any-role"`
 	// Headers required to access this url
@@ -116,6 +118,16 @@ func (r *Resource) Parse(resource string) (*Resource, error) {
 			}
 
 			r.WhiteListed = value
+		case "no-redirect":
+			value, err := strconv.ParseBool(keyPair[1])
+			if err != nil {
+				return nil, errors.New(
+					"the value of no-redirect must be " +
+						"true|TRUE|T or it's false equivalent",
+				)
+			}
+
+			r.NoRedirect = value
 		case "acr":
 			r.Acr = strings.Split(keyPair[1], ",")
 		default:

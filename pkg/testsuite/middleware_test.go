@@ -2345,6 +2345,37 @@ func TestEnableUma(t *testing.T) {
 			AuthServerSettings: &fakeAuthConfig{},
 		},
 		{
+			Name: "TestUmaDisabledWhenPerResourceNoRedirect",
+			ProxySettings: func(conf *config.Config) {
+				conf.EnableUma = true
+				conf.EnableDefaultDeny = true
+				conf.ClientID = ValidUsername
+				conf.ClientSecret = ValidPassword
+				conf.PatRetryCount = 5
+				conf.PatRetryInterval = 2 * time.Second
+				conf.Resources = []*authorization.Resource{
+					{
+						URL:        FakeTestURL,
+						Methods:    utils.AllHTTPMethods,
+						NoRedirect: true,
+					},
+				}
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeTestURL,
+					ExpectedProxy: false,
+					ExpectedCode:  http.StatusUnauthorized,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "")
+					},
+				},
+			},
+			AuthServerSettings: &fakeAuthConfig{
+				ResourceSetHandlerFailure: true,
+			},
+		},
+		{
 			Name: "TestUmaTokenWithoutAuthzWithNoResourcesInAuthServer",
 			ProxySettings: func(conf *config.Config) {
 				conf.EnableUma = true

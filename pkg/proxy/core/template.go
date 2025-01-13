@@ -33,7 +33,7 @@ func AccessForbidden(
 			}
 		}
 
-		return revokeProxy(logger, req)
+		return RevokeProxy(logger, req)
 	}
 }
 

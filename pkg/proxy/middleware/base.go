@@ -181,7 +181,7 @@ func ProxyDenyMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 				}
 			}
 
-			scope.AccessDenied = true
+			scope.NoProxy = true
 			// update the request context
 			ctx := context.WithValue(req.Context(), constant.ContextScopeName, scope)
 
@@ -311,7 +311,7 @@ func ProxyMiddleware(
 					logger.Error(apperrors.ErrAssertionFailed.Error())
 					return
 				}
-				if scope.AccessDenied {
+				if scope.AccessDenied || scope.NoProxy {
 					return
 				}
 			}
