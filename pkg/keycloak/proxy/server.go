@@ -517,7 +517,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.DefaultAllowedQueryParams,
 	)
 
-	redToAuthMiddleware := gmiddleware.NewRedirectToAuthorizationMiddleware(
+	redToAuthMiddleware := gmiddleware.RedirectToAuthorizationMiddleware(
 		r.Log,
 		r.Cm,
 		r.Config.SkipTokenVerification,

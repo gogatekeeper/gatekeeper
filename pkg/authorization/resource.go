@@ -34,7 +34,7 @@ type Resource struct {
 	// WhiteListed permits the prefix through
 	WhiteListed bool `json:"white-listed" yaml:"white-listed"`
 	// NoRedirect overrides global no-redirect setting
-	NoRedirect bool
+	NoRedirect bool `json:"no-redirect" yaml:"no-redirect"`
 	// RequireAnyRole indicates that ANY of the roles are required, the default is all
 	RequireAnyRole bool `json:"require-any-role" yaml:"require-any-role"`
 	// Headers required to access this url
