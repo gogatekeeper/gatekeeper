@@ -59,3 +59,7 @@ jobs:
           version: v1.61
           args: "--out-${NO_FUTURE}format colored-line-number --timeout=3m"
           github-token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Check Golang sources with Aligo
+        uses: essentialkaos/aligo-action@v2
+        with:
+          files: ./...
