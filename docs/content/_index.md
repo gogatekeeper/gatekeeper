@@ -230,8 +230,41 @@ If you have roles listed in some custom claim, please see [custom claim matching
 You can use gatekeeper to protect APIs, frontend server applications, frontend client applications.
 Frontend server-side applications can be protected by Authorization Code Flow (also with PKCE), during which several redirection
 steps take place. For protecting APIs you can use Client Credentials Grant to avoid redirections steps
-involved in authorization code flow you have to use `--no-redirects=true`. For frontend applications
-you can use Authorization Code Flow (also with PKCE) with encrypted refresh token cookies enabled, in this case however you have to handle redirections, e.g. at token expiration.
+involved in authorization code flow you have to use `--no-redirects=true`.
+
+From version 3.1.0 gatekeeper also supports both Authorization Code Flow and "API" mode to be configured
+on same gatekeeper, example:
+
+```yaml
+# this configuration enables globally Authorization Code Flow and "API" (no-redirect=true) mode
+# on /api/v1/* and /api/v2*
+no-redirects: false
+resources:
+- uri: /api/v1/*
+  methods:
+    - GET
+  no-redirect: true
+- uri: /api/v2/*
+  methods:
+    - GET
+  no-redirect: true
+```
+
+**IMPORTANT** - This will not work, from technical and backward compatibility reasons, you can override in
+resources only to no-redirect=true:
+
+```yaml
+no-redirects: true
+resources:
+- uri: /myfrontend1
+  methods:
+    - GET
+  no-redirect: false
+- uri: /myfrontend2
+  methods:
+    - GET
+  no-redirect: false
+```
 
 ## Default Deny
 
@@ -481,7 +514,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:3.0.2
+  image: quay.io/gogatekeeper/gatekeeper:3.1.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -508,7 +541,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:3.0.2
+  image: quay.io/gogatekeeper/gatekeeper:3.1.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
