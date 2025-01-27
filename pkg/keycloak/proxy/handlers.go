@@ -151,7 +151,7 @@ func oauthAuthorizationHandler(
 
 		// step: if we have a custom sign in page, lets display that
 		if signInPage != "" {
-			customSignInPage(wrt, signInPage)
+			customSignInPage(wrt, authURL)
 			return
 		}
 
