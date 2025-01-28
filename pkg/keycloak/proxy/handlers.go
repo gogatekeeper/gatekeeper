@@ -157,13 +157,14 @@ func oauthAuthorizationHandler(
 			customSignInPage(wrt, authURL)
 			return
 		}
-		if registerPage != "" && registrationEnabled {
-			customRegisterPage(wrt, authURL)
-			return
-		}
 
 		if registrationEnabled {
 			authURL = strings.Replace(authURL, "auth", "registrations", 1)
+		}
+
+		if registerPage != "" && registrationEnabled {
+			customRegisterPage(wrt, authURL)
+			return
 		}
 
 		scope.Logger.Debug("redirecting to auth_url", zap.String("auth_url", authURL))
