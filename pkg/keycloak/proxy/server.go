@@ -272,6 +272,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.SignInPage,
 		r.Config.ForbiddenPage,
 		r.Config.ErrorPage,
+		r.Config.RegisterPage,
 	)
 
 	accessForbidden := core.AccessForbidden(
@@ -285,6 +286,13 @@ func (r *OauthProxy) CreateReverseProxy() error {
 	customSignInPage := core.CustomSignInPage(
 		r.Log,
 		r.Config.SignInPage,
+		r.Config.Tags,
+		tmpl,
+	)
+
+	customRegisterPage := core.CustomSignInPage(
+		r.Log,
+		r.Config.RegisterPage,
 		r.Config.Tags,
 		tmpl,
 	)
@@ -508,14 +516,37 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.SkipTokenVerification,
 		r.Config.Scopes,
 		r.Config.EnablePKCE,
+		false,
 		r.Config.SignInPage,
+		r.Config.RegisterPage,
 		r.Cm,
 		newOAuth2Config,
 		getRedirectionURL,
 		customSignInPage,
+		customRegisterPage,
 		r.Config.AllowedQueryParams,
 		r.Config.DefaultAllowedQueryParams,
 	)
+
+	var oauthRegistrationHand func(wrt http.ResponseWriter, req *http.Request)
+	if r.Config.EnableRegisterHandler {
+		oauthRegistrationHand = oauthAuthorizationHandler(
+			r.Log,
+			r.Config.SkipTokenVerification,
+			r.Config.Scopes,
+			r.Config.EnablePKCE,
+			r.Config.EnableRegisterHandler,
+			r.Config.SignInPage,
+			r.Config.RegisterPage,
+			r.Cm,
+			newOAuth2Config,
+			getRedirectionURL,
+			customSignInPage,
+			customRegisterPage,
+			r.Config.AllowedQueryParams,
+			r.Config.DefaultAllowedQueryParams,
+		)
+	}
 
 	redToAuthMiddleware := gmiddleware.RedirectToAuthorizationMiddleware(
 		r.Log,
@@ -540,6 +571,9 @@ func (r *OauthProxy) CreateReverseProxy() error {
 	engine.With(gmiddleware.ProxyDenyMiddleware(r.Log)).Route(r.Config.BaseURI+r.Config.OAuthURI, func(eng chi.Router) {
 		eng.MethodNotAllowed(handlers.MethodNotAllowHandlder)
 		eng.HandleFunc(constant.AuthorizationURL, oauthAuthorizationHand)
+		if r.Config.EnableRegisterHandler {
+			eng.HandleFunc(constant.RegistrationURL, oauthRegistrationHand)
+		}
 		eng.Get(constant.CallbackURL, oauthCallbackHand)
 		eng.Get(constant.ExpiredURL, handlers.ExpirationHandler(getIdentity, r.Config.CookieAccessName))
 		eng.With(authMid, authFailMiddleware).Get(constant.LogoutURL, logoutHand)
@@ -1429,6 +1463,7 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 func createTemplates(
 	logger *zap.Logger,
 	signInPage string,
+	registerPage string,
 	forbiddenPage string,
 	errorPage string,
 ) *template.Template {
@@ -1455,6 +1490,14 @@ func createTemplates(
 			zap.String("page", errorPage),
 		)
 		list = append(list, errorPage)
+	}
+
+	if registerPage != "" {
+		logger.Debug(
+			"loading the custom register page",
+			zap.String("page", registerPage),
+		)
+		list = append(list, registerPage)
 	}
 
 	if len(list) > 0 {

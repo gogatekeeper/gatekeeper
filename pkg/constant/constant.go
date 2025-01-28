@@ -22,6 +22,7 @@ const (
 	UMATicketHeader     = "WWW-Authenticate"
 
 	AuthorizationURL = "/authorize"
+	RegistrationURL  = "/register"
 	CallbackURL      = "/callback"
 	ExpiredURL       = "/expired"
 	HealthURL        = "/health"

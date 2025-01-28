@@ -96,6 +96,7 @@ type Config struct {
 	EncryptionKey                   string                    `env:"ENCRYPTION_KEY" json:"encryption-key" usage:"encryption key used to encryption the session state" yaml:"encryption-key"`
 	LetsEncryptCacheDir             string                    `env:"LETS_ENCRYPT_CACHE_DIR" json:"letsencrypt-cache-dir" usage:"path where cached letsencrypt certificates are stored" yaml:"letsencrypt-cache-dir"`
 	SignInPage                      string                    `env:"SIGN_IN_PAGE" json:"sign-in-page" usage:"path to custom template displayed for signin" yaml:"sign-in-page"`
+	RegisterPage                    string                    `env:"REGISTER_PAGE" json:"register-page" usage:"path to custom template displayed for registration" yaml:"register-page"`
 	ForbiddenPage                   string                    `env:"FORBIDDEN_PAGE" json:"forbidden-page" usage:"path to custom template used for access forbidden" yaml:"forbidden-page"`
 	ErrorPage                       string                    `env:"ERROR_PAGE" json:"error-page" usage:"path to custom template displayed for http.StatusBadRequest" yaml:"error-page"`
 	ForwardingGrantType             string                    `env:"FORWARDING_GRANT_TYPE" json:"forwarding-grant-type" usage:"grant-type to use when logging into the openid provider, can be one of password, client_credentials" yaml:"forwarding-grant-type"`
@@ -146,6 +147,7 @@ type Config struct {
 	EnableRefreshTokens             bool `env:"ENABLE_REFRESH_TOKEN" json:"enable-refresh-tokens" usage:"enables the handling of the refresh tokens" yaml:"enable-refresh-tokens"`
 	EnableSessionCookies            bool `env:"ENABLE_SESSION_COOKIES" json:"enable-session-cookies" usage:"access and refresh tokens are session only i.e. removed browser close" yaml:"enable-session-cookies"`
 	EnableLoginHandler              bool `env:"ENABLE_LOGIN_HANDLER" json:"enable-login-handler" usage:"enables the handling of the refresh tokens" yaml:"enable-login-handler"`
+	EnableRegisterHandler           bool `env:"ENABLE_REGISTER_HANDLER" json:"enable-register-handler" usage:"enables the register handler" yaml:"enable-register-handler"`
 	EnableTokenHeader               bool `env:"ENABLE_TOKEN_HEADER" json:"enable-token-header" usage:"enables the token authentication header X-Auth-Token to upstream" yaml:"enable-token-header"`
 	EnableAuthorizationHeader       bool `env:"ENABLE_AUTHORIZATION_HEADER" json:"enable-authorization-header" usage:"adds the authorization header to the proxy request" yaml:"enable-authorization-header"`
 	EnableAuthorizationCookies      bool `env:"ENABLE_AUTHORIZATION_COOKIES" json:"enable-authorization-cookies" usage:"adds the authorization cookies to the uptream proxy request" yaml:"enable-authorization-cookies"`
