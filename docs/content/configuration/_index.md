@@ -53,7 +53,8 @@ weight: 2
 |    --enable-refresh-tokens                 | enables the handling of the refresh tokens | false | PROXY_ENABLE_REFRESH_TOKEN
 |    --enable-session-cookies                | access and refresh tokens are session only i.e. removed browser close | true | PROXY_ENABLE_SESSION_COOKIES
 |    --enable-login-handler                  | enables the handling of the refresh tokens | false | PROXY_ENABLE_LOGIN_HANDLER
-|    --enable-token-header                   | enables the token authentication header X-Auth-Token to upstream | true | PROXY_ENABLE_TOKEN_HEADER
+|   --enable-register-handler               | enables the handling of registration       | false | PROXY_ENABLE_REGISTER_HANDLER
+|    --enable-token-header                   | enables the token authentication header X-Auth-Token to upstream | true |PROXY_ENABLE_TOKEN_HEADER
 |    --enable-authorization-header           | adds the authorization header to the proxy request | true | PROXY_ENABLE_AUTHORIZATION_HEADER
 |    --enable-authorization-cookies          | adds the authorization cookies to the uptream proxy request | true | PROXY_ENABLE_AUTHORIZATION_COOKIES
 |    --enable-https-redirection              | enable the http to https redirection on the http service | false | PROXY_ENABLE_HTTPS_REDIRECT
@@ -131,6 +132,7 @@ weight: 2
 |    --use-letsencrypt                        | use letsencrypt for certificates | false | PROXY_USE_LETS_ENCRYPT
 |    --letsencrypt-cache-dir value            | path where cached letsencrypt certificates are stored | ./cache/ | PROXY_LETS_ENCRYPT_CACHE_DIR
 |    --sign-in-page value                     | path to custom template displayed for signin | | PROXY_SIGN_IN_PAGE
+|    --register-page value                    | path to custom template displayed for registration | | PROXY_REGISTER_PAGE
 |    --forbidden-page value                   | path to custom template used for access forbidden | | PROXY_FORBIDDEN_PAGE
 |    --error-page value                       | path to custom template displayed for http.StatusBadRequest | | PROXY_ERROR_PAGE
 |    --tags value                             | keypairs passed to the templates at render,e.g title=Page | |
