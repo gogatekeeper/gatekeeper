@@ -47,11 +47,14 @@ const (
 	timeout                 = time.Second * 300
 	idpURI                  = "http://localhost:8081"
 	localURI                = "http://localhost:"
-	logoutURI               = "/oauth/logout"
+	logoutURI               = "/oauth" + constant.LogoutURL
+	registerURI             = "/oauth" + constant.RegistrationURL
 	allInterfaces           = "0.0.0.0:"
 	anyURI                  = "/any"
 	testUser                = "myuser"
 	testPass                = "baba1234"
+	testRegisterUser        = "registerUser"
+	testRegisterPass        = "registerPass"
 	testLoAUser             = "myloa"
 	testLoAPass             = "baba5678"
 	testPath                = "/test"
@@ -126,6 +129,43 @@ func codeFlowLogin(
 
 		client.FormData.Add("username", userName)
 		client.FormData.Add("password", userPass)
+		resp, err = client.R().Post(action)
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resp.StatusCode()).To(Equal(expStatusCode))
+	})
+
+	return resp
+}
+
+func registerLogin(
+	client *resty.Client,
+	reqAddress string,
+	expStatusCode int,
+	userName string,
+	userPass string,
+) *resty.Response {
+	client.SetRedirectPolicy(resty.FlexibleRedirectPolicy(5))
+	resp, err := client.R().Get(reqAddress)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body()))
+	Expect(err).NotTo(HaveOccurred())
+
+	selection := doc.Find("#kc-register-form")
+	Expect(selection).ToNot(BeNil())
+
+	selection.Each(func(_ int, s *goquery.Selection) {
+		action, exists := s.Attr("action")
+		Expect(exists).To(BeTrue())
+
+		client.FormData.Add("username", userName)
+		client.FormData.Add("password", userPass)
+		client.FormData.Add("password-confirm", userPass)
+		client.FormData.Add("email", userName+"@"+userName+".com")
+		client.FormData.Add("firstName", userName)
+		client.FormData.Add("lastName", userName)
 		resp, err = client.R().Post(action)
 
 		Expect(err).NotTo(HaveOccurred())
@@ -221,12 +261,13 @@ var _ = Describe("Code Flow login/logout", func() {
 			"--skip-access-token-issuer-check=true",
 			"--enable-idp-session-check=false",
 			"--enable-default-deny=false",
-			"--resources=uri=/*|roles=uma_authorization,user",
+			"--resources=uri=/*|roles=uma_authorization,offline_access",
 			"--openid-provider-retry-count=30",
 			"--enable-refresh-tokens=true",
 			"--encryption-key=sdkljfalisujeoir",
 			"--secure-cookie=false",
 			"--post-login-redirect-path=" + postLoginRedirectPath,
+			"--enable-register-handler=true",
 			"--enable-encrypted-token=false",
 			"--enable-pkce=false",
 		}
@@ -338,6 +379,70 @@ var _ = Describe("Code Flow login/logout", func() {
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusForbidden))
+			},
+		)
+	})
+
+	When("Performing registration", func() {
+		It("should register/login and logout successfully",
+			Label("code_flow"),
+			Label("register_case"),
+			func(_ context.Context) {
+				var err error
+				rClient := resty.New()
+				reqAddress := proxyAddress + registerURI
+				resp := registerLogin(rClient, reqAddress, http.StatusOK, testRegisterUser, testRegisterPass)
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				body := resp.Body()
+				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+				jarURI, err := url.Parse(proxyAddress)
+				Expect(err).NotTo(HaveOccurred())
+				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
+
+				var accessCookieLogin string
+				for _, cook := range cookiesLogin {
+					if cook.Name == constant.AccessCookie {
+						accessCookieLogin = cook.Value
+					}
+				}
+
+				By("wait for access token expiration")
+				time.Sleep(32 * time.Second)
+				resp, err = rClient.R().Get(proxyAddress + anyURI)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				body = resp.Body()
+				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+				Expect(err).NotTo(HaveOccurred())
+				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
+
+				var accessCookieAfterRefresh string
+				for _, cook := range cookiesAfterRefresh {
+					if cook.Name == constant.AccessCookie {
+						accessCookieLogin = cook.Value
+					}
+				}
+
+				By("check if access token cookie has changed")
+				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
+
+				By("make another request with new access token")
+				resp, err = rClient.R().Get(proxyAddress + anyURI)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				body = resp.Body()
+				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+
+				By("log out")
+				resp, err = rClient.R().Get(proxyAddress + logoutURI)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+
+				rClient.SetRedirectPolicy(resty.NoRedirectPolicy())
+				resp, _ = rClient.R().Get(proxyAddress)
+				Expect(resp.StatusCode()).To(Equal(http.StatusSeeOther))
 			},
 		)
 	})
