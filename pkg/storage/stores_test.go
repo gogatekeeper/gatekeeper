@@ -16,23 +16,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package storage
+package storage_test
 
 import (
 	"testing"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateStorageRedis(t *testing.T) {
-	store, err := CreateStorage("redis://127.0.0.1")
+	store, err := storage.CreateStorage("redis://127.0.0.1")
 	assert.NotNil(t, store)
 	require.NoError(t, err)
 }
 
 func TestCreateStorageFail(t *testing.T) {
-	store, err := CreateStorage("not_there:///tmp/bolt")
+	store, err := storage.CreateStorage("not_there:///tmp/bolt")
 	assert.Nil(t, store)
 	require.Error(t, err)
 }

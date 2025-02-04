@@ -102,7 +102,7 @@ func (c *CertificationRotation) Watch() error {
 					// @metric inform of the rotation
 					(*c.rotationMetric).Inc()
 					// step: load the new certificate
-					_ = c.storeCertificate(certificate)
+					_ = c.StoreCertificate(certificate)
 					// step: print a debug message for us
 					c.log.Info("replacing the server certifacte with updated version")
 				}
@@ -115,8 +115,8 @@ func (c *CertificationRotation) Watch() error {
 	return nil
 }
 
-// storeCertificate provides entrypoint to update the certificate.
-func (c *CertificationRotation) storeCertificate(certifacte tls.Certificate) error {
+// StoreCertificate provides entrypoint to update the certificate.
+func (c *CertificationRotation) StoreCertificate(certifacte tls.Certificate) error {
 	c.Lock()
 	defer c.Unlock()
 	c.certificate = certifacte

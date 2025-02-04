@@ -1,4 +1,4 @@
-package testsuite
+package testsuite_test
 
 import (
 	"crypto/tls"

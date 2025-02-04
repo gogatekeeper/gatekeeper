@@ -41,5 +41,4 @@ linters:
     - gomnd
     # TODO: Revisit after the refactor
     - gocognit
-    - testpackage
     - nestif

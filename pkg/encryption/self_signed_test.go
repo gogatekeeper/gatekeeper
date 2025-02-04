@@ -17,42 +17,41 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package encryption
+package encryption_test
 
 import (
 	"crypto/tls"
 	"testing"
 	"time"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/encryption"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
 func TestNewSelfSignedCertificate(t *testing.T) {
-	c, err := NewSelfSignedCertificate([]string{"localhost"}, 5*time.Minute, zap.NewNop())
+	c, err := encryption.NewSelfSignedCertificate([]string{"localhost"}, 5*time.Minute, zap.NewNop())
 	require.NoError(t, err)
 	assert.NotNil(t, c)
-	c.close()
 }
 
 func TestSelfSignedNoHostnames(t *testing.T) {
-	c, err := NewSelfSignedCertificate([]string{}, 5*time.Minute, zap.NewNop())
+	c, err := encryption.NewSelfSignedCertificate([]string{}, 5*time.Minute, zap.NewNop())
 	require.Error(t, err)
 	assert.Nil(t, c)
 }
 
 func TestSelfSignedExpirationBad(t *testing.T) {
-	c, err := NewSelfSignedCertificate([]string{"localhost"}, 1*time.Minute, zap.NewNop())
+	c, err := encryption.NewSelfSignedCertificate([]string{"localhost"}, 1*time.Minute, zap.NewNop())
 	require.Error(t, err)
 	assert.Nil(t, c)
 }
 
 func TestSelfSignedGetCertificate(t *testing.T) {
-	c, err := NewSelfSignedCertificate([]string{"localhost"}, 5*time.Minute, zap.NewNop())
+	c, err := encryption.NewSelfSignedCertificate([]string{"localhost"}, 5*time.Minute, zap.NewNop())
 	require.NoError(t, err)
 	require.NotNil(t, c)
-	defer c.close()
 	cert, err := c.GetCertificate(&tls.ClientHelloInfo{})
 	require.NoError(t, err)
 	assert.NotNil(t, cert)

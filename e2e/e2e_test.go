@@ -27,7 +27,7 @@ import (
 	keycloakcore "github.com/gogatekeeper/gatekeeper/pkg/keycloak/proxy/core"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
-	"github.com/gogatekeeper/gatekeeper/pkg/testsuite"
+	testsuite_test "github.com/gogatekeeper/gatekeeper/pkg/testsuite"
 )
 
 const (
@@ -181,7 +181,7 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
+		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -243,7 +243,7 @@ var _ = Describe("Code Flow login/logout", func() {
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
+		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -355,12 +355,12 @@ var _ = Describe("Code Flow login/logout", func() {
 				Expect(err).NotTo(HaveOccurred())
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
-				tok := testsuite.NewTestToken("example")
+				tok := testsuite_test.NewTestToken("example")
 				tok.SetExpiration(time.Now().Add(-5 * time.Minute))
 				unsignedToken, err := tok.GetUnsignedToken()
 				Expect(err).NotTo(HaveOccurred())
 
-				badlySignedToken := unsignedToken + testsuite.FakeSignature
+				badlySignedToken := unsignedToken + testsuite_test.FakeSignature
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						cook.Value = badlySignedToken
@@ -454,7 +454,7 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
+		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -512,7 +512,7 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
+		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddressFirst = "http://127.0.0.1:" + portNum
@@ -614,7 +614,7 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
+		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum

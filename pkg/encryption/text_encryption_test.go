@@ -1,9 +1,10 @@
-package encryption
+package encryption_test
 
 import (
 	"bytes"
 	"testing"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/encryption"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,7 +40,7 @@ func TestEncryptDataBlock(t *testing.T) {
 	}
 
 	for i, test := range testCase {
-		_, err := EncryptDataBlock(bytes.NewBufferString(test.Text).Bytes(), bytes.NewBufferString(test.Key).Bytes())
+		_, err := encryption.EncryptDataBlock(bytes.NewBufferString(test.Text).Bytes(), bytes.NewBufferString(test.Key).Bytes())
 		if err != nil && test.Ok {
 			t.Errorf("test case: %d should not have failed, %s", i, err)
 		}
@@ -47,14 +48,14 @@ func TestEncryptDataBlock(t *testing.T) {
 }
 
 func TestEncodeText(t *testing.T) {
-	session, err := EncodeText("12245325632323263762", "1gjrlcjQ8RyKANngp9607txr5fF5fhf1")
+	session, err := encryption.EncodeText("12245325632323263762", "1gjrlcjQ8RyKANngp9607txr5fF5fhf1")
 	assert.NotEmpty(t, session)
 	require.NoError(t, err)
 }
 
 func BenchmarkEncryptDataBlock(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		_, _ = EncryptDataBlock(fakePlainText, fakeKey)
+		_, _ = encryption.EncryptDataBlock(fakePlainText, fakeKey)
 	}
 }
 
@@ -62,7 +63,7 @@ func BenchmarkEncodeText(b *testing.B) {
 	text := string(fakePlainText)
 	key := string(fakeKey)
 	for n := 0; n < b.N; n++ {
-		_, _ = EncodeText(text, key)
+		_, _ = encryption.EncodeText(text, key)
 	}
 }
 
@@ -70,7 +71,7 @@ func BenchmarkDecodeText(b *testing.B) {
 	t := string(fakeCipherText)
 	k := string(fakeKey)
 	for n := 0; n < b.N; n++ {
-		if _, err := DecodeText(t, k); err != nil {
+		if _, err := encryption.DecodeText(t, k); err != nil {
 			b.FailNow()
 		}
 	}
@@ -80,11 +81,11 @@ func TestDecodeText(t *testing.T) {
 	fakeKey := "HYLNt2JSzD7Lpz0djTRudmlOpbwx1oHB"
 	fakeText := "12245325632323263762"
 
-	encrypted, err := EncodeText(fakeText, fakeKey)
+	encrypted, err := encryption.EncodeText(fakeText, fakeKey)
 	require.NoError(t, err)
 	assert.NotEmpty(t, encrypted)
 
-	decoded, _ := DecodeText(encrypted, fakeKey)
+	decoded, _ := encryption.DecodeText(encrypted, fakeKey)
 	assert.NotNil(t, decoded, "the session should not have been nil")
 	assert.Equal(t, decoded, fakeText, "the decoded text is not the same")
 }
@@ -108,7 +109,7 @@ func TestDecryptDataBlock(t *testing.T) {
 	}
 
 	for idx, test := range testCase {
-		cipher, err := EncryptDataBlock(
+		cipher, err := encryption.EncryptDataBlock(
 			bytes.NewBufferString(test.Text).Bytes(),
 			bytes.NewBufferString(test.Key).Bytes(),
 		)
@@ -116,7 +117,7 @@ func TestDecryptDataBlock(t *testing.T) {
 			t.Errorf("test case: %d should not have failed, %s", idx, err)
 		}
 
-		plain, err := DecryptDataBlock(
+		plain, err := encryption.DecryptDataBlock(
 			cipher,
 			bytes.NewBufferString(test.Key).Bytes(),
 		)

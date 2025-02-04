@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package utils
+package utils_test
 
 import (
 	"crypto/tls"
@@ -31,6 +31,7 @@ import (
 	uuid "github.com/gofrs/uuid"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/cookie"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -74,7 +75,7 @@ func TestDecodeKeyPairs(t *testing.T) {
 	}
 
 	for idx, testCase := range testCases {
-		keyPair, err := DecodeKeyPairs(testCase.List)
+		keyPair, err := utils.DecodeKeyPairs(testCase.List)
 		if err != nil && testCase.Ok {
 			t.Errorf("test case %d should not have failed", idx)
 			continue
@@ -141,7 +142,7 @@ func TestGetRequestHostURL(t *testing.T) {
 			}
 		}
 
-		url := GetRequestHostURL(request)
+		url := utils.GetRequestHostURL(request)
 		assert.Equal(t, testCases[idx].Expected, url, "case %d, expected: %s, got: %s", idx, testCases[idx].Expected, url)
 	}
 }
@@ -174,7 +175,7 @@ func TestDefaultTo(t *testing.T) {
 		},
 	}
 	for _, testCases := range testCases {
-		assert.Equal(t, testCases.Expected, DefaultTo(testCases.Value, testCases.Default))
+		assert.Equal(t, testCases.Expected, utils.DefaultTo(testCases.Value, testCases.Default))
 	}
 }
 
@@ -249,7 +250,7 @@ func TestHasAccessOK(t *testing.T) {
 	for idx, testCase := range testCases {
 		assert.True(
 			t,
-			HasAccess(testCase.Need, testCase.Have, testCase.Required),
+			utils.HasAccess(testCase.Need, testCase.Have, testCase.Required),
 			"case: %d should be true, have: %v, need: %v, require: %t ",
 			idx,
 			testCase.Have,
@@ -294,7 +295,7 @@ func TestHasAccessBad(t *testing.T) {
 	for idx, testCase := range testCases {
 		assert.False(
 			t,
-			HasAccess(testCase.Need, testCase.Have, testCase.Required),
+			utils.HasAccess(testCase.Need, testCase.Have, testCase.Required),
 			"case: %d should be false, have: %v, need: %v, require: %t ",
 			idx,
 			testCase.Have,
@@ -305,42 +306,42 @@ func TestHasAccessBad(t *testing.T) {
 }
 
 func TestContainedIn(t *testing.T) {
-	assert.False(t, ContainedIn("1", []string{"2", "3", "4"}))
-	assert.True(t, ContainedIn("1", []string{"1", "2", "3", "4"}))
+	assert.False(t, utils.ContainedIn("1", []string{"2", "3", "4"}))
+	assert.True(t, utils.ContainedIn("1", []string{"1", "2", "3", "4"}))
 }
 
 func TestContainsSubString(t *testing.T) {
-	assert.False(t, ContainsSubString("bar.com", []string{"foo.bar.com"}))
-	assert.True(t, ContainsSubString("www.foo.bar.com", []string{"foo.bar.com"}))
-	assert.True(t, ContainsSubString("foo.bar.com", []string{"bar.com"}))
-	assert.True(t, ContainsSubString("star.domain.com", []string{"domain.com", "domain1.com"}))
-	assert.True(t, ContainsSubString("star.domain1.com", []string{"domain.com", "domain1.com"}))
-	assert.True(t, ContainsSubString("test.test.svc.cluster.local", []string{"svc.cluster.local"}))
+	assert.False(t, utils.ContainsSubString("bar.com", []string{"foo.bar.com"}))
+	assert.True(t, utils.ContainsSubString("www.foo.bar.com", []string{"foo.bar.com"}))
+	assert.True(t, utils.ContainsSubString("foo.bar.com", []string{"bar.com"}))
+	assert.True(t, utils.ContainsSubString("star.domain.com", []string{"domain.com", "domain1.com"}))
+	assert.True(t, utils.ContainsSubString("star.domain1.com", []string{"domain.com", "domain1.com"}))
+	assert.True(t, utils.ContainsSubString("test.test.svc.cluster.local", []string{"svc.cluster.local"}))
 
-	assert.False(t, ContainsSubString("star.domain1.com", []string{"domain.com", "sub.domain1.com"}))
-	assert.False(t, ContainsSubString("svc.cluster.local", []string{"nginx.pr1.svc.cluster.local"}))
-	assert.False(t, ContainsSubString("cluster.local", []string{"nginx.pr1.svc.cluster.local"}))
-	assert.False(t, ContainsSubString("pr1", []string{"nginx.pr1.svc.cluster.local"}))
+	assert.False(t, utils.ContainsSubString("star.domain1.com", []string{"domain.com", "sub.domain1.com"}))
+	assert.False(t, utils.ContainsSubString("svc.cluster.local", []string{"nginx.pr1.svc.cluster.local"}))
+	assert.False(t, utils.ContainsSubString("cluster.local", []string{"nginx.pr1.svc.cluster.local"}))
+	assert.False(t, utils.ContainsSubString("pr1", []string{"nginx.pr1.svc.cluster.local"}))
 }
 
 func BenchmarkContainsSubString(t *testing.B) {
 	for range t.N {
-		ContainsSubString("svc.cluster.local", []string{"nginx.pr1.svc.cluster.local"})
+		utils.ContainsSubString("svc.cluster.local", []string{"nginx.pr1.svc.cluster.local"})
 	}
 }
 
 func TestDialAddress(t *testing.T) {
-	assert.Equal(t, "127.0.0.1:80", DialAddress(getFakeURL("http://127.0.0.1")))
-	assert.Equal(t, "127.0.0.1:443", DialAddress(getFakeURL("https://127.0.0.1")))
-	assert.Equal(t, "127.0.0.1:8080", DialAddress(getFakeURL("http://127.0.0.1:8080")))
+	assert.Equal(t, "127.0.0.1:80", utils.DialAddress(getFakeURL("http://127.0.0.1")))
+	assert.Equal(t, "127.0.0.1:443", utils.DialAddress(getFakeURL("https://127.0.0.1")))
+	assert.Equal(t, "127.0.0.1:8080", utils.DialAddress(getFakeURL("http://127.0.0.1:8080")))
 }
 
 func TestIsUpgradedConnection(t *testing.T) {
 	header := http.Header{}
 	header.Add(constant.HeaderUpgrade, "")
-	assert.False(t, IsUpgradedConnection(&http.Request{Header: header}))
+	assert.False(t, utils.IsUpgradedConnection(&http.Request{Header: header}))
 	header.Set(constant.HeaderUpgrade, "set")
-	assert.True(t, IsUpgradedConnection(&http.Request{Header: header}))
+	assert.True(t, utils.IsUpgradedConnection(&http.Request{Header: header}))
 }
 
 func TestIdValidHTTPMethod(t *testing.T) {
@@ -355,12 +356,12 @@ func TestIdValidHTTPMethod(t *testing.T) {
 		{Method: "PATCH", Ok: true},
 	}
 	for _, testCase := range testCases {
-		assert.Equal(t, testCase.Ok, IsValidHTTPMethod(testCase.Method))
+		assert.Equal(t, testCase.Ok, utils.IsValidHTTPMethod(testCase.Method))
 	}
 }
 
 func TestFileExists(t *testing.T) {
-	if FileExists("no_such_file_exsit_32323232") {
+	if utils.FileExists("no_such_file_exsit_32323232") {
 		t.Error("we should have received false")
 	}
 
@@ -375,7 +376,7 @@ func TestFileExists(t *testing.T) {
 
 	defer os.Remove(tmpfile.Name())
 
-	if !FileExists(tmpfile.Name()) {
+	if !utils.FileExists(tmpfile.Name()) {
 		t.Error("we should have received a true")
 	}
 }
@@ -401,7 +402,7 @@ func TestGetWithin(t *testing.T) {
 		assert.InDelta(
 			t,
 			testCase.Expected,
-			GetWithin(testCase.Expires, testCase.Percent),
+			utils.GetWithin(testCase.Expires, testCase.Percent),
 			1000000001,
 		)
 	}
@@ -429,11 +430,11 @@ func TestToHeader(t *testing.T) {
 		assert.Equal(
 			t,
 			testCase.Expected,
-			ToHeader(testCase.Word),
+			utils.ToHeader(testCase.Word),
 			"case %d, expected: %s but got: %s",
 			index,
 			testCase.Expected,
-			ToHeader(testCase.Word),
+			utils.ToHeader(testCase.Word),
 		)
 	}
 }
@@ -460,11 +461,11 @@ func TestCapitalize(t *testing.T) {
 		assert.Equal(
 			t,
 			testCase.Expected,
-			Capitalize(testCase.Word),
+			utils.Capitalize(testCase.Word),
 			"case %d, expected: %s but got: %s",
 			index,
 			testCase.Expected,
-			Capitalize(testCase.Word),
+			utils.Capitalize(testCase.Word),
 		)
 	}
 }
@@ -491,7 +492,7 @@ func TestMergeMaps(t *testing.T) {
 		},
 	}
 	for index, testCase := range cases {
-		merged := MergeMaps(testCase.Dest, testCase.Source)
+		merged := utils.MergeMaps(testCase.Dest, testCase.Source)
 		if !reflect.DeepEqual(testCase.Expected, merged) {
 			t.Errorf(
 				"case %d, expected: %v but got: %v",

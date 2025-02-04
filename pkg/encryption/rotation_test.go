@@ -16,12 +16,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package encryption
+package encryption_test
 
 import (
 	"crypto/tls"
 	"testing"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/encryption"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,7 +34,7 @@ const (
 	testPrivateKeyFile  = "../../tests/proxy-key.pem"
 )
 
-func newTestCertificateRotator(t *testing.T) *CertificationRotation {
+func newTestCertificateRotator(t *testing.T) *encryption.CertificationRotation {
 	t.Helper()
 	counter := prometheus.NewCounter(
 		prometheus.CounterOpts{
@@ -41,10 +42,8 @@ func newTestCertificateRotator(t *testing.T) *CertificationRotation {
 			Help: "The total amount of times the certificate has been rotated",
 		},
 	)
-	rotation, err := NewCertificateRotator(testCertificateFile, testPrivateKeyFile, zap.NewNop(), &counter)
+	rotation, err := encryption.NewCertificateRotator(testCertificateFile, testPrivateKeyFile, zap.NewNop(), &counter)
 	assert.NotNil(t, rotation)
-	assert.Equal(t, testCertificateFile, rotation.certificateFile)
-	assert.Equal(t, testPrivateKeyFile, rotation.privateKeyFile)
 	require.NoError(t, err, "unable to create the certificate rotator")
 
 	return rotation
@@ -57,7 +56,7 @@ func TestNewCeritifacteRotator(t *testing.T) {
 			Help: "The total amount of times the certificate has been rotated",
 		},
 	)
-	c, err := NewCertificateRotator(testCertificateFile, testPrivateKeyFile, zap.NewNop(), &counter)
+	c, err := encryption.NewCertificateRotator(testCertificateFile, testPrivateKeyFile, zap.NewNop(), &counter)
 	assert.NotNil(t, c)
 	require.NoError(t, err)
 }
@@ -69,14 +68,13 @@ func TestNewCeritifacteRotatorFailure(t *testing.T) {
 			Help: "The total amount of times the certificate has been rotated",
 		},
 	)
-	c, err := NewCertificateRotator("./tests/does_not_exist", testPrivateKeyFile, zap.NewNop(), &counter)
+	c, err := encryption.NewCertificateRotator("./tests/does_not_exist", testPrivateKeyFile, zap.NewNop(), &counter)
 	assert.Nil(t, c)
 	require.Error(t, err)
 }
 
 func TestGetCertificate(t *testing.T) {
 	c := newTestCertificateRotator(t)
-	assert.NotEmpty(t, c.certificate)
 	crt, err := c.GetCertificate(nil)
 	require.NoError(t, err)
 	assert.NotEmpty(t, crt)
@@ -84,9 +82,11 @@ func TestGetCertificate(t *testing.T) {
 
 func TestLoadCertificate(t *testing.T) {
 	c := newTestCertificateRotator(t)
-	assert.NotEmpty(t, c.certificate)
-	_ = c.storeCertificate(tls.Certificate{})
 	crt, err := c.GetCertificate(nil)
+	require.NoError(t, err)
+	assert.NotEmpty(t, crt)
+	_ = c.StoreCertificate(tls.Certificate{})
+	crt, err = c.GetCertificate(nil)
 	require.NoError(t, err)
 	assert.Equal(t, &tls.Certificate{}, crt)
 }

@@ -135,12 +135,6 @@ func (c *SelfSignedCertificate) rotate(ctx context.Context) error {
 	return nil
 }
 
-// Deprecated:unused
-// close is used to shutdown resources.
-func (c *SelfSignedCertificate) close() {
-	c.cancel()
-}
-
 // updateCertificate is responsible for update the certificate.
 func (c *SelfSignedCertificate) updateCertificate(cert tls.Certificate) {
 	c.Lock()

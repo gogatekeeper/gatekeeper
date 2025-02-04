@@ -1,4 +1,4 @@
-package session
+package session_test
 
 import (
 	"net/http"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
+	"github.com/gogatekeeper/gatekeeper/pkg/proxy/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -50,7 +51,7 @@ func TestGetRefreshTokenFromCookie(t *testing.T) {
 			},
 		}
 		req.AddCookie(testCase.Cookies)
-		token, err := GetRefreshTokenFromCookie(req, constant.RefreshCookie)
+		token, err := session.GetRefreshTokenFromCookie(req, constant.RefreshCookie)
 		switch testCase.Ok {
 		case true:
 			require.NoError(t, err)

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
-	"github.com/gogatekeeper/gatekeeper/pkg/testsuite"
+	testsuite_test "github.com/gogatekeeper/gatekeeper/pkg/testsuite"
 	. "github.com/onsi/ginkgo/v2" //nolint:revive //we want to use it for ginkgo
 	. "github.com/onsi/gomega"    //nolint:revive //we want to use it for gomega
 
@@ -23,7 +23,7 @@ var _ = Describe("UMA Code Flow authorization", func() {
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
+		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -120,7 +120,7 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
+		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -186,7 +186,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
+		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		fwdPortNum, err = generateRandomPort()
@@ -273,7 +273,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite.FakeUpstreamService{})
+		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		fwdPortNum, err = generateRandomPort()
