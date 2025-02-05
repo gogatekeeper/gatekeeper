@@ -657,27 +657,21 @@ func (r *Config) isForwardingGrantValid() error {
 
 func (r *Config) isSecurityFilterValid() error {
 	if !r.EnableSecurityFilter {
-		if r.EnableHTTPSRedirect {
+		switch {
+		case r.EnableHTTPSRedirect:
 			return apperrors.ErrSecFilterDisabledForHTTPSRedirect
-		}
-
-		if r.EnableBrowserXSSFilter {
+		case r.EnableBrowserXSSFilter:
 			return apperrors.ErrSecFilterDisabledForXSSFilter
-		}
-
-		if r.EnableFrameDeny {
+		case r.EnableFrameDeny:
 			return apperrors.ErrSecFilterDisabledForFrameDenyFilter
-		}
-
-		if r.ContentSecurityPolicy != "" {
+		case r.ContentSecurityPolicy != "":
 			return apperrors.ErrSecFilterDisabledForCSPFilter
-		}
-
-		if len(r.Hostnames) > 0 {
+		case len(r.Hostnames) > 0:
 			return apperrors.ErrSecFilterDisabledForHostnames
+		default:
+			return nil
 		}
 	}
-
 	return nil
 }
 

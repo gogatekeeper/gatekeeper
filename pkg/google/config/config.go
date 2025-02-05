@@ -638,40 +638,21 @@ func (r *Config) isForwardingGrantValid() error {
 
 func (r *Config) isSecurityFilterValid() error {
 	if !r.EnableSecurityFilter {
-		if r.EnableHTTPSRedirect {
-			return errors.New(
-				"the security filter must be switch on for this feature: http-redirect",
-			)
-		}
-
-		if r.EnableBrowserXSSFilter {
-			return errors.New(
-				"the security filter must be switch on " +
-					"for this feature: brower-xss-filter",
-			)
-		}
-
-		if r.EnableFrameDeny {
-			return errors.New(
-				"the security filter must be switch on " +
-					"for this feature: frame-deny-filter",
-			)
-		}
-
-		if r.ContentSecurityPolicy != "" {
-			return errors.New(
-				"the security filter must be switch on " +
-					"for this feature: content-security-policy",
-			)
-		}
-
-		if len(r.Hostnames) > 0 {
-			return errors.New(
-				"the security filter must be switch on for this feature: hostnames",
-			)
+		switch {
+		case r.EnableHTTPSRedirect:
+			return apperrors.ErrSecFilterDisabledForHTTPSRedirect
+		case r.EnableBrowserXSSFilter:
+			return apperrors.ErrSecFilterDisabledForXSSFilter
+		case r.EnableFrameDeny:
+			return apperrors.ErrSecFilterDisabledForFrameDenyFilter
+		case r.ContentSecurityPolicy != "":
+			return apperrors.ErrSecFilterDisabledForCSPFilter
+		case len(r.Hostnames) > 0:
+			return apperrors.ErrSecFilterDisabledForHostnames
+		default:
+			return nil
 		}
 	}
-
 	return nil
 }
 
