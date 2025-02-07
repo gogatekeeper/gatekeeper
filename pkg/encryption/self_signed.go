@@ -52,7 +52,11 @@ type SelfSignedCertificate struct {
 }
 
 // newSelfSignedCertificate creates and returns a self signed certificate manager.
-func NewSelfSignedCertificate(hostnames []string, expiry time.Duration, log *zap.Logger) (*SelfSignedCertificate, error) {
+func NewSelfSignedCertificate(
+	hostnames []string,
+	expiry time.Duration,
+	log *zap.Logger,
+) (*SelfSignedCertificate, error) {
 	if len(hostnames) == 0 {
 		return nil, apperrors.ErrCertSelfNoHostname
 	}

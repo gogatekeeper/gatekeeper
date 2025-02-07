@@ -588,7 +588,13 @@ func (f *fakeProxy) performUserLogin(reqCfg *fakeRequest) error {
 	return nil
 }
 
-func setRequestAuthentication(cfg *config.Config, client *resty.Client, request *resty.Request, c *fakeRequest, token string) {
+func setRequestAuthentication(
+	cfg *config.Config,
+	client *resty.Client,
+	request *resty.Request,
+	c *fakeRequest,
+	token string,
+) {
 	switch c.HasCookieToken {
 	case true:
 		cookies := client.Cookies

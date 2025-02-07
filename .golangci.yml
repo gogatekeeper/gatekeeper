@@ -32,13 +32,10 @@ linters:
     - tagliatelle
     - unparam
     - err113
-    - lll
     - gochecknoinits
     - gochecknoglobals
     - dupl
     - wsl
-    - godox
-    - gomnd
     # TODO: Revisit after the refactor
     - gocognit
     - nestif

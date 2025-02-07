@@ -14,6 +14,7 @@ var (
 	JxkaNpboZ6hnrMytlw5kf0biF7dLTU885uHIGkUIRy75hx6BaTEEhbN36qVTxediEHd6xeBPS3qpJ7riO6J
 	EeaQr1rroDL0LvmDyB6Zds4LdVQEmtUueusc7jkBz7gJ12vnTHIxviZM5rzcq4tyCbZO7Kb37RqZg5kbYGK
 	PfErhUwUIin7jsNVE7coB`)
+	//nolint:lll
 	fakeCipherText = []byte("lfQPTa6jwMTABaJhcrfVkoqcdyMVAettMsqgKXIALSKG5UpoYKbT/WgZjOiuCmEI0E/7piP8VATLOAHKDBNF2WrQOKSYF+gdHkh4NLv0cW0NZ2qyZeWhknywE6063ylhCYjJOrJA1z12i2bHHbjZZGfqkwfzyxxFLTv6jSbalpZ4oZcUcNY/DrtVk/K01qZw6o4l1f0FUL6UZVSirn+B3YDWLeVQ0FGr6jlhCpN203Rf688nqdBvhw4bUEQiykCMxWm2/rJBNWm2SzZgw65kb4W0ph1qjcoUjXBwNakK+E0Lw/fwi8+bUC1lkT8+hJpMLKZkzb07rbGAnmljQo0NkqJh4kl+aycsEhm9bZj+b6w0r795YugyNsyca5CnUvkB1Dg")
 	fakeKey        = []byte("u3K0eKsmGl76jY1buzexwYoRRLLQrQck")
 )
@@ -39,10 +40,13 @@ func TestEncryptDataBlock(t *testing.T) {
 		},
 	}
 
-	for i, test := range testCase {
-		_, err := encryption.EncryptDataBlock(bytes.NewBufferString(test.Text).Bytes(), bytes.NewBufferString(test.Key).Bytes())
+	for idx, test := range testCase {
+		_, err := encryption.EncryptDataBlock(
+			bytes.NewBufferString(test.Text).Bytes(),
+			bytes.NewBufferString(test.Key).Bytes(),
+		)
 		if err != nil && test.Ok {
-			t.Errorf("test case: %d should not have failed, %s", i, err)
+			t.Errorf("test case: %d should not have failed, %s", idx, err)
 		}
 	}
 }

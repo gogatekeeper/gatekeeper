@@ -654,7 +654,7 @@ func TestLogoutHandlerGood(t *testing.T) {
 			ProxySettings: func(_ *config.Config) {},
 			ExecutionSettings: []fakeRequest{
 				{
-					URI:              utils.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LogoutURL) + "?redirect=http://example.com",
+					URI:              logoutURL + "?redirect=http://example.com",
 					HasToken:         true,
 					ExpectedCode:     http.StatusSeeOther,
 					ExpectedLocation: "http://example.com",
@@ -668,7 +668,7 @@ func TestLogoutHandlerGood(t *testing.T) {
 			},
 			ExecutionSettings: []fakeRequest{
 				{
-					URI:              utils.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LogoutURL),
+					URI:              logoutURL,
 					HasToken:         true,
 					ExpectedCode:     http.StatusSeeOther,
 					ExpectedLocation: "http://127.0.0.1",
@@ -682,7 +682,7 @@ func TestLogoutHandlerGood(t *testing.T) {
 			},
 			ExecutionSettings: []fakeRequest{
 				{
-					URI:          utils.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LogoutURL) + "?redirect=",
+					URI:          logoutURL + "?redirect=",
 					HasToken:     true,
 					ExpectedCode: http.StatusSeeOther,
 				},

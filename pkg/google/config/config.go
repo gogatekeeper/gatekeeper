@@ -37,7 +37,7 @@ import (
 
 // Config is the configuration for the proxy
 //
-//nolint:tagalign
+//nolint:tagalign,lll
 type Config struct {
 	Scopes                          []string                  `json:"scopes" usage:"list of scopes requested when authenticating the user" yaml:"scopes"`
 	Resources                       []*authorization.Resource `json:"resources" usage:"list of resources 'uri=/admin*|methods=GET,PUT|roles=role1,role2'" yaml:"resources"`

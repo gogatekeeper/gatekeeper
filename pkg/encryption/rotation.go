@@ -41,7 +41,12 @@ type CertificationRotation struct {
 }
 
 // newCertificateRotator creates a new certificate.
-func NewCertificateRotator(cert, key string, log *zap.Logger, metric *prometheus.Counter) (*CertificationRotation, error) {
+func NewCertificateRotator(
+	cert,
+	key string,
+	log *zap.Logger,
+	metric *prometheus.Counter,
+) (*CertificationRotation, error) {
 	// step: attempt to load the certificate
 	certificate, err := tls.LoadX509KeyPair(cert, key)
 

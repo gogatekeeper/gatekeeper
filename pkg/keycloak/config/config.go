@@ -37,7 +37,7 @@ import (
 
 var _ core.Configs = &Config{}
 
-//nolint:tagalign
+//nolint:tagalign,lll
 type Config struct {
 	CommonConfig                    core.CommonConfig
 	Scopes                          []string                  `json:"scopes" usage:"list of scopes requested when authenticating the user" yaml:"scopes"`

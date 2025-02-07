@@ -427,7 +427,9 @@ func TestPreserveURLEncoding(t *testing.T) {
 			Redirects:    false,
 		},
 		{ // See KEYCLOAK-10864
-			URI:                     "/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/",
+			//nolint:lll
+			URI: "/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/",
+			//nolint:lll
 			ExpectedContentContains: `"uri":"/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/"`,
 			HasToken:                true,
 			Roles:                   []string{"user"},
@@ -1513,13 +1515,15 @@ func TestRefreshToken(t *testing.T) {
 			},
 			ExecutionSettings: []fakeRequest{
 				{
-					URI:                           FakeAuthAllURL,
-					HasLogin:                      true,
-					Redirects:                     true,
-					OnResponse:                    delay,
-					ExpectedProxy:                 true,
-					ExpectedCode:                  http.StatusOK,
-					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{cfg.CookieRefreshName: checkRefreshTokenEncryption},
+					URI:           FakeAuthAllURL,
+					HasLogin:      true,
+					Redirects:     true,
+					OnResponse:    delay,
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+						cfg.CookieRefreshName: checkRefreshTokenEncryption,
+					},
 				},
 				{
 					URI:           FakeAuthAllURL,
@@ -1542,13 +1546,15 @@ func TestRefreshToken(t *testing.T) {
 			},
 			ExecutionSettings: []fakeRequest{
 				{
-					URI:                           FakeAuthAllURL,
-					HasLogin:                      true,
-					Redirects:                     true,
-					OnResponse:                    delay,
-					ExpectedProxy:                 true,
-					ExpectedCode:                  http.StatusOK,
-					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{cfg.CookieRefreshName: checkRefreshTokenEncryption},
+					URI:           FakeAuthAllURL,
+					HasLogin:      true,
+					Redirects:     true,
+					OnResponse:    delay,
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+						cfg.CookieRefreshName: checkRefreshTokenEncryption,
+					},
 				},
 				{
 					URI:           FakeAuthAllURL,
@@ -1572,13 +1578,15 @@ func TestRefreshToken(t *testing.T) {
 			},
 			ExecutionSettings: []fakeRequest{
 				{
-					URI:                           FakeAuthAllURL,
-					HasLogin:                      true,
-					Redirects:                     true,
-					OnResponse:                    delay,
-					ExpectedProxy:                 true,
-					ExpectedCode:                  http.StatusOK,
-					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{cfg.CookieRefreshName: checkRefreshTokenEncryption},
+					URI:           FakeAuthAllURL,
+					HasLogin:      true,
+					Redirects:     true,
+					OnResponse:    delay,
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+						cfg.CookieRefreshName: checkRefreshTokenEncryption,
+					},
 				},
 				{
 					URI:           FakeAuthAllURL,
@@ -1607,9 +1615,11 @@ func TestRefreshToken(t *testing.T) {
 					OnResponse: func(int, *resty.Request, *resty.Response) {
 						<-time.After(time.Duration(int64(3200)) * time.Millisecond)
 					},
-					ExpectedProxy:                 true,
-					ExpectedCode:                  http.StatusOK,
-					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{cfg.CookieRefreshName: checkRefreshTokenEncryption},
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+						cfg.CookieRefreshName: checkRefreshTokenEncryption,
+					},
 				},
 				{
 					URI:           FakeAuthAllURL,
@@ -1710,17 +1720,21 @@ func TestAccessTokenEncryption(t *testing.T) {
 					OnResponse: func(int, *resty.Request, *resty.Response) {
 						<-time.After(time.Duration(int64(2500)) * time.Millisecond)
 					},
-					ExpectedProxy:                 true,
-					ExpectedCode:                  http.StatusOK,
-					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{cfg.CookieAccessName: checkAccessTokenEncryption},
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+						cfg.CookieAccessName: checkAccessTokenEncryption,
+					},
 				},
 				{
-					URI:                      FakeAuthAllURL,
-					Redirects:                false,
-					ExpectedProxy:            true,
-					ExpectedCode:             http.StatusOK,
-					ExpectedCookies:          map[string]string{cfg.CookieAccessName: ""},
-					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{cfg.CookieAccessName: checkAccessTokenEncryption},
+					URI:             FakeAuthAllURL,
+					Redirects:       false,
+					ExpectedProxy:   true,
+					ExpectedCode:    http.StatusOK,
+					ExpectedCookies: map[string]string{cfg.CookieAccessName: ""},
+					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+						cfg.CookieAccessName: checkAccessTokenEncryption,
+					},
 				},
 			},
 		},
@@ -1741,17 +1755,21 @@ func TestAccessTokenEncryption(t *testing.T) {
 					OnResponse: func(int, *resty.Request, *resty.Response) {
 						<-time.After(time.Duration(int64(2500)) * time.Millisecond)
 					},
-					ExpectedProxy:                 true,
-					ExpectedCode:                  http.StatusOK,
-					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{cfg.CookieAccessName: checkAccessTokenEncryption},
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+						cfg.CookieAccessName: checkAccessTokenEncryption,
+					},
 				},
 				{
-					URI:                      FakeAuthAllURL,
-					Redirects:                false,
-					ExpectedProxy:            true,
-					ExpectedCode:             http.StatusOK,
-					ExpectedCookies:          map[string]string{cfg.CookieAccessName: ""},
-					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{cfg.CookieAccessName: checkAccessTokenEncryption},
+					URI:             FakeAuthAllURL,
+					Redirects:       false,
+					ExpectedProxy:   true,
+					ExpectedCode:    http.StatusOK,
+					ExpectedCookies: map[string]string{cfg.CookieAccessName: ""},
+					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+						cfg.CookieAccessName: checkAccessTokenEncryption,
+					},
 				},
 			},
 		},
@@ -1773,17 +1791,21 @@ func TestAccessTokenEncryption(t *testing.T) {
 					OnResponse: func(int, *resty.Request, *resty.Response) {
 						<-time.After(time.Duration(int64(2500)) * time.Millisecond)
 					},
-					ExpectedProxy:                 true,
-					ExpectedCode:                  http.StatusOK,
-					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{cfg.CookieAccessName: checkAccessTokenEncryption},
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+						cfg.CookieAccessName: checkAccessTokenEncryption,
+					},
 				},
 				{
-					URI:                      FakeAuthAllURL,
-					Redirects:                false,
-					ExpectedProxy:            true,
-					ExpectedCode:             http.StatusOK,
-					ExpectedCookies:          map[string]string{cfg.CookieAccessName: ""},
-					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{cfg.CookieAccessName: checkAccessTokenEncryption},
+					URI:             FakeAuthAllURL,
+					Redirects:       false,
+					ExpectedProxy:   true,
+					ExpectedCode:    http.StatusOK,
+					ExpectedCookies: map[string]string{cfg.CookieAccessName: ""},
+					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+						cfg.CookieAccessName: checkAccessTokenEncryption,
+					},
 				},
 			},
 		},

@@ -158,22 +158,42 @@ func (cm *Manager) dropCookieWithChunks(
 }
 
 // dropAccessTokenCookie drops a access token cookie.
-func (cm *Manager) DropAccessTokenCookie(req *http.Request, w http.ResponseWriter, value string, duration time.Duration) {
+func (cm *Manager) DropAccessTokenCookie(
+	req *http.Request,
+	w http.ResponseWriter,
+	value string,
+	duration time.Duration,
+) {
 	cm.dropCookieWithChunks(req, w, cm.CookieAccessName, value, duration)
 }
 
 // DropRefreshTokenCookie drops a refresh token cookie.
-func (cm *Manager) DropRefreshTokenCookie(req *http.Request, w http.ResponseWriter, value string, duration time.Duration) {
+func (cm *Manager) DropRefreshTokenCookie(
+	req *http.Request,
+	w http.ResponseWriter,
+	value string,
+	duration time.Duration,
+) {
 	cm.dropCookieWithChunks(req, w, cm.CookieRefreshName, value, duration)
 }
 
 // dropIdTokenCookie drops a id token cookie.
-func (cm *Manager) DropIDTokenCookie(req *http.Request, w http.ResponseWriter, value string, duration time.Duration) {
+func (cm *Manager) DropIDTokenCookie(
+	req *http.Request,
+	w http.ResponseWriter,
+	value string,
+	duration time.Duration,
+) {
 	cm.dropCookieWithChunks(req, w, cm.CookieIDTokenName, value, duration)
 }
 
 // dropUMATokenCookie drops a uma token cookie.
-func (cm *Manager) DropUMATokenCookie(req *http.Request, w http.ResponseWriter, value string, duration time.Duration) {
+func (cm *Manager) DropUMATokenCookie(
+	req *http.Request,
+	w http.ResponseWriter,
+	value string,
+	duration time.Duration,
+) {
 	cm.dropCookieWithChunks(req, w, cm.CookieUMAName, value, duration)
 }
 

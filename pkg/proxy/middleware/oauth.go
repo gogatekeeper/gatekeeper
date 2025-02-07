@@ -187,7 +187,12 @@ func AuthenticationMiddleware(
 						zap.String("refresh token", refresh),
 					)
 
-					newAccToken, newRawAccToken, newRefreshToken, accessExpiresAt, refreshExpiresIn, err := utils.GetRefreshedToken(ctx, conf, httpClient, refresh)
+					newAccToken, newRawAccToken, newRefreshToken, accessExpiresAt, refreshExpiresIn, err := utils.GetRefreshedToken(
+						ctx,
+						conf,
+						httpClient,
+						refresh,
+					)
 					if err != nil {
 						switch {
 						case errors.Is(err, apperrors.ErrRefreshTokenExpired):

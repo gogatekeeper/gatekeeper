@@ -334,7 +334,8 @@ func ProxyMiddleware(
 				req.Header.Set(k, v)
 			}
 
-			// @note: by default goproxy only provides a forwarding proxy, thus all requests have to be absolute and we must update the host headers
+			// @note: by default goproxy only provides a forwarding proxy,
+			// thus all requests have to be absolute and we must update the host headers
 			req.URL.Host = endpoint.Host
 			req.URL.Scheme = endpoint.Scheme
 			// Restore the unprocessed original path, so that we pass upstream exactly what we received

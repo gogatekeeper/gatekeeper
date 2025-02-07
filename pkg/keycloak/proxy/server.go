@@ -203,7 +203,10 @@ func createLogger(config *config.Config) (*zap.Logger, error) {
 }
 
 // useDefaultStack sets the default middleware stack for router.
-func (r *OauthProxy) useDefaultStack(engine chi.Router, accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context) {
+func (r *OauthProxy) useDefaultStack(
+	engine chi.Router,
+	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
+) {
 	engine.NotFound(handlers.EmptyHandler)
 
 	if r.Config.EnableDefaultDeny || r.Config.EnableDefaultDenyStrict {

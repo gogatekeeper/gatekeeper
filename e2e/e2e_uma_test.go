@@ -151,30 +151,32 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 	})
 
 	When("Accessing resource, where user is allowed to access and then not allowed resource", func() {
-		It("should login with user/password, don't access forbidden resource and logout successfully", func(_ context.Context) {
-			var err error
-			rClient := resty.New()
-			resp := codeFlowLogin(rClient, proxyAddress+umaMethodAllowedPath, http.StatusOK, testUser, testPass)
-			Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+		It(
+			"should login with user/password, don't access forbidden resource and logout successfully",
+			func(_ context.Context) {
+				var err error
+				rClient := resty.New()
+				resp := codeFlowLogin(rClient, proxyAddress+umaMethodAllowedPath, http.StatusOK, testUser, testPass)
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 
-			body := resp.Body()
-			Expect(strings.Contains(string(body), umaCookieName)).To(BeTrue())
+				body := resp.Body()
+				Expect(strings.Contains(string(body), umaCookieName)).To(BeTrue())
 
-			By("Accessing not allowed method")
-			resp, err = rClient.R().Post(proxyAddress + umaMethodAllowedPath)
-			body = resp.Body()
-			Expect(err).NotTo(HaveOccurred())
-			Expect(resp.StatusCode()).To(Equal(http.StatusForbidden))
-			Expect(strings.Contains(string(body), umaCookieName)).To(BeFalse())
+				By("Accessing not allowed method")
+				resp, err = rClient.R().Post(proxyAddress + umaMethodAllowedPath)
+				body = resp.Body()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.StatusCode()).To(Equal(http.StatusForbidden))
+				Expect(strings.Contains(string(body), umaCookieName)).To(BeFalse())
 
-			resp, err = rClient.R().Get(proxyAddress + logoutURI)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+				resp, err = rClient.R().Get(proxyAddress + logoutURI)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 
-			rClient.SetRedirectPolicy(resty.NoRedirectPolicy())
-			resp, _ = rClient.R().Get(proxyAddress + umaAllowedPath)
-			Expect(resp.StatusCode()).To(Equal(http.StatusSeeOther))
-		})
+				rClient.SetRedirectPolicy(resty.NoRedirectPolicy())
+				resp, _ = rClient.R().Get(proxyAddress + umaAllowedPath)
+				Expect(resp.StatusCode()).To(Equal(http.StatusSeeOther))
+			})
 	})
 })
 
