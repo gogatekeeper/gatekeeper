@@ -70,7 +70,7 @@ const (
 	postLoginRedirectPath = "/post/login/path"
 	pkceCookieName        = "TESTPKCECOOKIE"
 	umaCookieName         = "TESTUMACOOKIE"
-	idpRealmURI           = idpURI + "/realms/%s" + testRealm
+	idpRealmURI           = idpURI + "/realms/" + testRealm
 )
 
 func generateRandomPort() (string, error) {
