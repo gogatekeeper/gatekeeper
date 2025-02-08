@@ -42,7 +42,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/session"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
-	opaserver "github.com/open-policy-agent/opa/server"
+	opaserver "github.com/open-policy-agent/opa/v1/server"
 	"github.com/rs/cors"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -2648,7 +2648,7 @@ func TestEnableOpa(t *testing.T) {
 
 			default allow := false
 
-			allow {
+			allow if {
 				input.method = "POST"
 				input.path = FakeTestURL
 				contains(input.body, "Whatever")
@@ -2682,7 +2682,7 @@ func TestEnableOpa(t *testing.T) {
 
 			default allow := false
 
-			allow {
+			allow if {
 				input.method = "GETTT"
 				input.path = FakeTestURL
 			}
@@ -2826,7 +2826,7 @@ func TestEnableOpa(t *testing.T) {
 
 			default allow := false
 
-			allow {
+			allow if {
 				input.method = "GET"
 				input.path = FakeTestURL
 			}

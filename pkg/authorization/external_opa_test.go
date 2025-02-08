@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
-	opaserver "github.com/open-policy-agent/opa/server"
+	opaserver "github.com/open-policy-agent/opa/v1/server"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 )
@@ -59,7 +59,7 @@ func TestExternalOpa(t *testing.T) {
 			default allow := false
 
 			body := json.unmarshal(input.body)
-			allow {
+			allow if {
 				body.name = "Test"
 			}
 			`,
@@ -94,7 +94,7 @@ func TestExternalOpa(t *testing.T) {
 			default allow := false
 
 			body := json.unmarshal(input.body)
-			allow {
+			allow if {
 				body.name = "Tester"
 			}
 			`,
@@ -183,7 +183,7 @@ func TestExternalOpa(t *testing.T) {
 			default allow := false
 
 			body := yaml.unmarshal(input.body)
-			allow {
+			allow if {
 				body.name = "Test"
 			}
 			`,
@@ -219,7 +219,7 @@ func TestExternalOpa(t *testing.T) {
 			default allow := false
 		
 			body := yaml.unmarshal(input.body)
-			allow {
+			allow if {
 				body.name = "Test"
 				input.headers["X-Custom"][0] = "TESTVALUE"
 			}
