@@ -34,7 +34,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 )
 
-var (
+const (
 	fakeAdminRoleURL      = "/admin*"
 	fakeAdminRole         = "role:admin"
 	fakeTestAdminRolesURL = "/test_admin_roles"

@@ -139,6 +139,7 @@ func getCommandLineOptions(cfg core.Configs) []cli.Flag {
 
 		optName := field.Tag.Get("yaml")
 
+		//nolint:exhaustive
 		switch fType := field.Type; fType.Kind() {
 		case reflect.Bool:
 			dv := reflect.ValueOf(cfg).Elem().FieldByName(field.Name).Bool()
@@ -214,6 +215,7 @@ func parseCLIOptions(cliCtx *cli.Context, config core.Configs) error {
 		}
 
 		if cliCtx.IsSet(name) {
+			//nolint:exhaustive
 			switch field.Type.Kind() {
 			case reflect.Bool:
 				reflect.ValueOf(config).Elem().FieldByName(field.Name).SetBool(cliCtx.Bool(name))

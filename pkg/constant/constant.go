@@ -114,4 +114,5 @@ const (
 	TLS12 = "tlsv1.2"
 )
 
+//nolint:gochecknoglobals
 var SignatureAlgs = [3]jose.SignatureAlgorithm{jose.RS256, jose.HS256, jose.HS512}

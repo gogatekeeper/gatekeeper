@@ -13,6 +13,7 @@ type (
 	GoogleProvider   string
 )
 
+//nolint:gochecknoglobals
 var (
 	release  = ""
 	gitsha   = "no gitsha provided"

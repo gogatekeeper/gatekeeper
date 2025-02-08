@@ -225,11 +225,10 @@ func TestIsValid(t *testing.T) {
 	}
 }
 
-var expectedRoles = []string{"1", "2", "3"}
-
 const rolesList = "1,2,3"
 
 func TestResourceString(t *testing.T) {
+	expectedRoles := []string{"1", "2", "3"}
 	resource := &authorization.Resource{
 		Roles: expectedRoles,
 	}
@@ -239,6 +238,7 @@ func TestResourceString(t *testing.T) {
 }
 
 func TestGetRoles(t *testing.T) {
+	expectedRoles := []string{"1", "2", "3"}
 	resource := &authorization.Resource{
 		Roles: expectedRoles,
 	}

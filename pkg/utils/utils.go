@@ -41,6 +41,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+//nolint:gochecknoglobals
 var (
 	AllHTTPMethods = []string{
 		http.MethodDelete,

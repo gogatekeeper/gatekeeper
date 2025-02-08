@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"fmt"
 	"math/big"
 	"net"
 	"net/http"
@@ -71,9 +70,8 @@ const (
 	postLoginRedirectPath = "/post/login/path"
 	pkceCookieName        = "TESTPKCECOOKIE"
 	umaCookieName         = "TESTUMACOOKIE"
+	idpRealmURI           = idpURI + "/realms/%s" + testRealm
 )
-
-var idpRealmURI = fmt.Sprintf("%s/realms/%s", idpURI, testRealm)
 
 func generateRandomPort() (string, error) {
 	var minPort int64 = 1024

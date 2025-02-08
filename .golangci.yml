@@ -25,11 +25,9 @@ linters:
     - nlreturn
     - noctx
     - paralleltest
-    - exhaustive
     - exhaustruct
     - tagliatelle
     - err113
-    - gochecknoglobals
     - dupl
     - wsl
     # TODO: Revisit after the refactor

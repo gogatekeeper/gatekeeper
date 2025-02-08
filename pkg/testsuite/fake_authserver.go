@@ -59,6 +59,7 @@ type DefaultTestTokenClaims struct {
 	Authorization     models.Permissions   `json:"authorization"`
 }
 
+//nolint:gochecknoglobals
 var defTestTokenClaims = DefaultTestTokenClaims{
 	Aud:               "test",
 	Azp:               "clientid",
@@ -280,8 +281,6 @@ type fakeOidcDiscoveryResponse struct {
 	UserInfoURL string   `json:"userinfo_endpoint"`
 	Algorithms  []string `json:"id_token_signing_alg_values_supported"`
 }
-
-var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 type fakeAuthConfig struct {
 	DiscoveryURLPrefix        string
@@ -734,6 +733,7 @@ func (r *fakeAuthServer) PermissionTicketHandler(wrt http.ResponseWriter, _ *htt
 }
 
 func getRandomString(n int) (string, error) {
+	letterRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	runes := make([]rune, n)
 	for idx := range runes {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(n)))
