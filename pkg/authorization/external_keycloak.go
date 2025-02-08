@@ -66,7 +66,6 @@ func (p *KeycloakAuthorizationProvider) Authorize() (AuthzDecision, error) {
 		p.realm,
 		resourceParam,
 	)
-
 	if err != nil {
 		return DeniedAuthz, apperrors.ErrResourceRetrieve
 	}

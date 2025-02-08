@@ -14,13 +14,11 @@ import (
 // encryptDataBlock encrypts the plaintext string with the key.
 func EncryptDataBlock(plaintext, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
-
 	if err != nil {
 		return []byte{}, err
 	}
 
 	gcm, err := cipher.NewGCM(block)
-
 	if err != nil {
 		return []byte{}, err
 	}
@@ -37,13 +35,11 @@ func EncryptDataBlock(plaintext, key []byte) ([]byte, error) {
 // decryptDataBlock decrypts some cipher text.
 func DecryptDataBlock(cipherText, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
-
 	if err != nil {
 		return []byte{}, err
 	}
 
 	gcm, err := cipher.NewGCM(block)
-
 	if err != nil {
 		return []byte{}, err
 	}
@@ -62,7 +58,6 @@ func DecryptDataBlock(cipherText, key []byte) ([]byte, error) {
 // encodeText encodes the session state information into a value for a cookie to consume.
 func EncodeText(plaintext string, key string) (string, error) {
 	cipherText, err := EncryptDataBlock([]byte(plaintext), []byte(key))
-
 	if err != nil {
 		return "", err
 	}
@@ -73,13 +68,11 @@ func EncodeText(plaintext string, key string) (string, error) {
 // decodeText decodes the session state cookie value.
 func DecodeText(state, key string) (string, error) {
 	cipherText, err := base64.RawStdEncoding.DecodeString(state)
-
 	if err != nil {
 		return "", err
 	}
 	// step: decrypt the cookie back in the expiration|token
 	encoded, err := DecryptDataBlock(cipherText, []byte(key))
-
 	if err != nil {
 		return "", apperrors.ErrInvalidSession
 	}

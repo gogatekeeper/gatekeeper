@@ -467,7 +467,6 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 							}
 
 							user, err := session.ExtractIdentity(token)
-
 							if err != nil {
 								return false
 							}
@@ -519,7 +518,6 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 							}
 
 							user, err := session.ExtractIdentity(token)
-
 							if err != nil {
 								return false
 							}

@@ -72,14 +72,12 @@ func NewSelfSignedCertificate(
 	)
 
 	_, key, err := ed25519.GenerateKey(rand.Reader)
-
 	if err != nil {
 		return nil, err
 	}
 
 	// @step: create an initial certificate
 	certificate, err := CreateCertificate(&key, hostnames, expiry)
-
 	if err != nil {
 		return nil, err
 	}
@@ -96,15 +94,13 @@ func NewSelfSignedCertificate(
 		cancel:      cancel,
 	}
 
-	if err := svc.rotate(ctx); err != nil {
-		return nil, err
-	}
+	svc.rotate(ctx)
 
 	return svc, nil
 }
 
 // rotate is responsible for rotation the certificate.
-func (c *SelfSignedCertificate) rotate(ctx context.Context) error {
+func (c *SelfSignedCertificate) rotate(ctx context.Context) {
 	go func() {
 		c.log.Info("starting the self-signed certificate rotation",
 			zap.Duration("expiration", c.expiration))
@@ -128,15 +124,16 @@ func (c *SelfSignedCertificate) rotate(ctx context.Context) error {
 			time.Sleep(time.Until(expires))
 
 			// @step: create a new certificate for us
-			cert, _ := CreateCertificate(c.privateKey, c.hostnames, c.expiration)
+			cert, err := CreateCertificate(c.privateKey, c.hostnames, c.expiration)
+			if err != nil {
+				c.log.Error("problem creating certificate", zap.Error(err))
+			}
 			c.log.Info("updating the certificate for server")
 
 			// @step: update the current certificate
 			c.updateCertificate(cert)
 		}
 	}()
-
-	return nil
 }
 
 // updateCertificate is responsible for update the certificate.
@@ -209,19 +206,16 @@ func CreateCertificate(key *ed25519.PrivateKey, hostnames []string, expire time.
 // loadCA loads the certificate authority.
 func LoadCA(cert, key string) (*tls.Certificate, error) {
 	caCert, err := os.ReadFile(cert)
-
 	if err != nil {
 		return nil, err
 	}
 
 	caKey, err := os.ReadFile(key)
-
 	if err != nil {
 		return nil, err
 	}
 
 	cAuthority, err := tls.X509KeyPair(caCert, caKey)
-
 	if err != nil {
 		return nil, err
 	}

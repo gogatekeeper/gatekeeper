@@ -49,7 +49,6 @@ func NewCertificateRotator(
 ) (*CertificationRotation, error) {
 	// step: attempt to load the certificate
 	certificate, err := tls.LoadX509KeyPair(cert, key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +97,6 @@ func (c *CertificationRotation) Watch() error {
 					}
 					// step: reload the certificate
 					certificate, err := tls.LoadX509KeyPair(c.certificateFile, c.privateKeyFile)
-
 					if err != nil {
 						c.log.Error("unable to load the updated certificate",
 							zap.String("filename", event.Name),

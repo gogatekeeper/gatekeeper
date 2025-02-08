@@ -23,11 +23,10 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/oauth2"
-
 	oidc3 "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 )
 
 func TestGetUserinfo(t *testing.T) {

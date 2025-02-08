@@ -40,7 +40,7 @@ func WriteFakeConfigFile(t *testing.T, content string) *os.File {
 	}
 	file.Close()
 
-	var perms fs.FileMode = 0600
+	var perms fs.FileMode = 0o600
 	if err := os.WriteFile(file.Name(), []byte(content), perms); err != nil {
 		t.Fatalf("unexpected error writing node label file: %v", err)
 	}

@@ -32,12 +32,8 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/go-resty/resty/v2"
-	"github.com/rs/cors"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/encryption"
@@ -46,10 +42,11 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/session"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
-
-	"github.com/go-jose/go-jose/v4/jwt"
-
 	opaserver "github.com/open-policy-agent/opa/server"
+	"github.com/rs/cors"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func TestMetricsMiddleware(t *testing.T) {
@@ -286,8 +283,7 @@ func TestAdminListener(t *testing.T) {
 
 				if certFile != "" {
 					fakeCertByte := []byte(fakeCert)
-					err := os.WriteFile(certFile, fakeCertByte, 0600)
-
+					err := os.WriteFile(certFile, fakeCertByte, 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing certificate %s", err)
 					}
@@ -296,8 +292,7 @@ func TestAdminListener(t *testing.T) {
 
 				if privFile != "" {
 					fakeKeyByte := []byte(fakePrivateKey)
-					err := os.WriteFile(privFile, fakeKeyByte, 0600)
-
+					err := os.WriteFile(privFile, fakeKeyByte, 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing privateKey %s", err)
 					}
@@ -306,8 +301,7 @@ func TestAdminListener(t *testing.T) {
 
 				if caFile != "" {
 					fakeCAByte := []byte(fakeCA)
-					err := os.WriteFile(caFile, fakeCAByte, 0600)
-
+					err := os.WriteFile(caFile, fakeCAByte, 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing cacertificate %s", err)
 					}
@@ -1655,19 +1649,16 @@ func delay(no int, _ *resty.Request, _ *resty.Response) {
 func checkAccessTokenEncryption(t *testing.T, cfg *config.Config, value string) bool {
 	t.Helper()
 	rawToken, err := encryption.DecodeText(value, cfg.EncryptionKey)
-
 	if err != nil {
 		return false
 	}
 
 	token, err := jwt.ParseSigned(rawToken, constant.SignatureAlgs[:])
-
 	if err != nil {
 		return false
 	}
 
 	user, err := session.ExtractIdentity(token)
-
 	if err != nil {
 		return false
 	}
@@ -1677,7 +1668,6 @@ func checkAccessTokenEncryption(t *testing.T, cfg *config.Config, value string) 
 
 func checkRefreshTokenEncryption(_ *testing.T, cfg *config.Config, value string) bool {
 	rawToken, err := encryption.DecodeText(value, cfg.EncryptionKey)
-
 	if err != nil {
 		return false
 	}
@@ -1690,7 +1680,6 @@ func checkRefreshTokenEncryption(_ *testing.T, cfg *config.Config, value string)
 func TestAccessTokenEncryption(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	redisServer, err := miniredis.Run()
-
 	if err != nil {
 		t.Fatalf("Starting redis failed %s", err)
 	}
@@ -2870,7 +2859,6 @@ func TestEnableOpa(t *testing.T) {
 					"v1/data/authz/allow",
 				)
 				authzURL, err := url.ParseRequestURI(authzURI)
-
 				if err != nil {
 					t.Fatalf("problem parsing authzURL")
 				}

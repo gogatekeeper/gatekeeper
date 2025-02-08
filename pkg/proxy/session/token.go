@@ -183,14 +183,12 @@ func ExtractIdentity(token *jwt.JSONWebToken) (*models.UserContext, error) {
 	customClaims := models.CustClaims{}
 
 	err := token.UnsafeClaimsWithoutVerification(stdClaims, &customClaims)
-
 	if err != nil {
 		return nil, err
 	}
 
 	jsonMap := make(map[string]interface{})
 	err = token.UnsafeClaimsWithoutVerification(&jsonMap)
-
 	if err != nil {
 		return nil, err
 	}

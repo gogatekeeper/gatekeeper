@@ -149,14 +149,12 @@ func (t *FakeToken) GetUnsignedToken() (string, error) {
 	alg := jose2.SignatureAlgorithm("RS256")
 	privKey := &jose2.JSONWebKey{Key: priv, Algorithm: string(alg), KeyID: ""}
 	signer, err := jose2.NewSigner(jose2.SigningKey{Algorithm: alg, Key: privKey}, nil)
-
 	if err != nil {
 		return "", err
 	}
 
 	b := jwt.Signed(signer).Claims(&t.Claims)
 	jwt, err := b.Serialize()
-
 	if err != nil {
 		return "", err
 	}
@@ -300,7 +298,6 @@ func newFakeAuthServer(config *fakeAuthConfig) *fakeAuthServer {
 
 	var cert *x509.Certificate
 	cert, err := x509.ParseCertificate(certBlock.Bytes)
-
 	if err != nil {
 		panic("failed to parse certificate from block, error: " + err.Error())
 	}
@@ -388,9 +385,8 @@ func (r *fakeAuthServer) getRevocationURL() string {
 	)
 }
 
-func (r *fakeAuthServer) setTokenExpiration(tm time.Duration) *fakeAuthServer {
+func (r *fakeAuthServer) setTokenExpiration(tm time.Duration) {
 	r.expiration = tm
-	return r
 }
 
 func (r *fakeAuthServer) discoveryHandler(wrt http.ResponseWriter, _ *http.Request) {
@@ -441,7 +437,6 @@ func (r *fakeAuthServer) authHandler(wrt http.ResponseWriter, req *http.Request)
 	}
 
 	randString, err := getRandomString(OAuthCodeLength)
-
 	if err != nil {
 		wrt.WriteHeader(http.StatusInternalServerError)
 		return
@@ -477,14 +472,12 @@ func (r *fakeAuthServer) userInfoHandler(wrt http.ResponseWriter, req *http.Requ
 	}
 
 	token, err := jwt.ParseSigned(items[1], constant.SignatureAlgs[:])
-
 	if err != nil {
 		wrt.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	user, err := session.ExtractIdentity(token)
-
 	if err != nil {
 		wrt.WriteHeader(http.StatusUnauthorized)
 		return
@@ -609,7 +602,6 @@ func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Requ
 		})
 	case configcore.GrantTypeRefreshToken:
 		oldRefreshToken, err := jwt.ParseSigned(req.FormValue("refresh_token"), constant.SignatureAlgs[:])
-
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
@@ -618,7 +610,6 @@ func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Requ
 		stdClaims := &jwt.Claims{}
 
 		err = oldRefreshToken.UnsafeClaimsWithoutVerification(stdClaims)
-
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
@@ -634,7 +625,6 @@ func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Requ
 
 			expRefresh := ExpiredRefresh{"invalid_grant", "Token is not active"}
 			respBody, err := json.Marshal(expRefresh)
-
 			if err != nil {
 				writer.WriteHeader(http.StatusInternalServerError)
 				return
@@ -728,7 +718,6 @@ func (r *fakeAuthServer) ResourceHandler(wrt http.ResponseWriter, _ *http.Reques
 func (r *fakeAuthServer) PermissionTicketHandler(wrt http.ResponseWriter, _ *http.Request) {
 	token := NewTestToken(r.getLocation())
 	acc, err := token.GetToken()
-
 	if err != nil {
 		wrt.WriteHeader(http.StatusInternalServerError)
 		return
@@ -748,7 +737,6 @@ func getRandomString(n int) (string, error) {
 	runes := make([]rune, n)
 	for idx := range runes {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(n)))
-
 		if err != nil {
 			return "", err
 		}

@@ -17,17 +17,16 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-jose/go-jose/v4/jwt"
-	. "github.com/onsi/ginkgo/v2" //nolint:revive //we want to use it for ginkgo
-	. "github.com/onsi/gomega"    //nolint:revive //we want to use it for gomega
-	"github.com/pquerna/otp/totp"
-	"golang.org/x/oauth2/clientcredentials"
-
 	resty "github.com/go-resty/resty/v2"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	keycloakcore "github.com/gogatekeeper/gatekeeper/pkg/keycloak/proxy/core"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 	testsuite_test "github.com/gogatekeeper/gatekeeper/pkg/testsuite"
+	. "github.com/onsi/ginkgo/v2" //nolint:revive //we want to use it for ginkgo
+	. "github.com/onsi/gomega"    //nolint:revive //we want to use it for gomega
+	"github.com/pquerna/otp/totp"
+	"golang.org/x/oauth2/clientcredentials"
 )
 
 const (
@@ -71,6 +70,7 @@ const (
 	otpSecret             = "NE4VKZJYKVDDSYTIK5CVOOLVOFDFE2DC"
 	postLoginRedirectPath = "/post/login/path"
 	pkceCookieName        = "TESTPKCECOOKIE"
+	umaCookieName         = "TESTUMACOOKIE"
 )
 
 var idpRealmURI = fmt.Sprintf("%s/realms/%s", idpURI, testRealm)

@@ -29,7 +29,6 @@ func CreateStorage(location string) (Storage, error) {
 	var err error
 
 	uri, err := url.Parse(location)
-
 	if err != nil {
 		return nil, err
 	}

@@ -145,7 +145,6 @@ func StartOpaServer(
 		WithStore(store)
 
 	mgr, err := plugins.New([]byte{}, "test", store)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,7 +157,6 @@ func StartOpaServer(
 
 	txn := opastorage.NewTransactionOrDie(ctx, store, opastorage.WriteParams)
 	err = store.UpsertPolicy(ctx, txn, "test", []byte(authzPolicy))
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +166,6 @@ func StartOpaServer(
 	}
 
 	server, err = server.Init(ctx)
-
 	if err != nil {
 		t.Fatal(err)
 	}

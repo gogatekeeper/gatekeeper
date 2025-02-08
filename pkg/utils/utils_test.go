@@ -123,7 +123,8 @@ func TestGetRequestHostURL(t *testing.T) {
 			Expected: "https://www.override.com",
 			Headers: map[string]string{
 				constant.HeaderXForwardedHost:  "www.override.com",
-				constant.HeaderXForwardedProto: "https"},
+				constant.HeaderXForwardedProto: "https",
+			},
 			Hostname: "www.override.com",
 		},
 	}
@@ -369,7 +370,6 @@ func TestFileExists(t *testing.T) {
 		os.TempDir()+"",
 		fmt.Sprintf("test_file_%d", os.Getpid()),
 	)
-
 	if err != nil {
 		t.Fatalf("failed to create the temporary file, %s", err)
 	}

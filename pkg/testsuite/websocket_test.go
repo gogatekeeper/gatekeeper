@@ -90,7 +90,7 @@ func TestWebSocket(t *testing.T) {
 	err = websocket.Message.Send(wsock, request)
 	require.NoError(t, err)
 
-	var responseData = make([]byte, 1024)
+	responseData := make([]byte, 1024)
 	err = websocket.Message.Receive(wsock, &responseData)
 	require.NoError(t, err)
 

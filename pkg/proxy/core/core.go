@@ -8,8 +8,10 @@ import (
 	"time"
 )
 
-type KeycloakProvider string
-type GoogleProvider string
+type (
+	KeycloakProvider string
+	GoogleProvider   string
+)
 
 var (
 	release  = ""

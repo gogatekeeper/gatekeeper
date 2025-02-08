@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-
 	"net/http"
 	"net/url"
 	"strings"
@@ -624,7 +623,6 @@ func loginHandler(
 
 			return http.StatusOK, nil
 		}(ctx)
-
 		if err != nil {
 			scope.Logger.Error(err.Error(),
 				zap.String("remote_addr", req.RemoteAddr),

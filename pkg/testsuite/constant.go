@@ -34,6 +34,8 @@ const (
 	OAuthCodeLength              = 32
 )
 
-var ErrCreateFakeProxy = errors.New("failed to create fake proxy service")
-var ErrRunHTTPServer = errors.New("failed to run http server")
-var ErrShutHTTPServer = errors.New("failed to shutdown http server")
+var (
+	ErrCreateFakeProxy = errors.New("failed to create fake proxy service")
+	ErrRunHTTPServer   = errors.New("failed to run http server")
+	ErrShutHTTPServer  = errors.New("failed to shutdown http server")
+)

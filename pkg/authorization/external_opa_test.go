@@ -250,13 +250,11 @@ func TestExternalOpa(t *testing.T) {
 					"v1/data/authz/allow",
 				)
 				authzURL, err := url.ParseRequestURI(authzURI)
-
 				if err != nil {
 					t.Fatalf("problem parsing authzURL")
 				}
 
 				req, err := testCase.FakeRequest()
-
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -277,7 +275,6 @@ func TestExternalOpa(t *testing.T) {
 
 				if testCase.StartOpa {
 					err = server.Shutdown(ctx)
-
 					if err != nil {
 						t.Fatal(err)
 					}

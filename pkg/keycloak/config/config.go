@@ -282,7 +282,6 @@ func (r *Config) GetDefaultAllowedQueryParams() map[string]string {
 // readConfigFile reads and parses the configuration file.
 func (r *Config) ReadConfigFile(filename string) error {
 	content, err := os.ReadFile(filename)
-
 	if err != nil {
 		return err
 	}
@@ -378,7 +377,6 @@ func (r *Config) isListenAdminSchemeValid() error {
 func (r *Config) isOpenIDProviderProxyValid() error {
 	if r.OpenIDProviderProxy != "" {
 		_, err := url.ParseRequestURI(r.OpenIDProviderProxy)
-
 		if err != nil {
 			return apperrors.ErrInvalidIdpProviderProxyURI
 		}
@@ -773,7 +771,6 @@ func (r *Config) isExternalAuthzValid() error {
 		}
 	} else if r.EnableOpa {
 		authzURL, err := url.ParseRequestURI(r.OpaAuthzURI)
-
 		if err != nil {
 			return fmt.Errorf("not valid OPA authz URL, %w", err)
 		}
@@ -800,7 +797,6 @@ func (r *Config) updateDiscoveryURI() error {
 	)
 
 	uri, err := url.ParseRequestURI(r.DiscoveryURL)
-
 	if err != nil {
 		return fmt.Errorf(
 			"failed to parse discovery url: %w",

@@ -200,7 +200,6 @@ func (cm *Manager) DropUMATokenCookie(
 // DropStateParameterCookie sets a state parameter cookie into the response.
 func (cm *Manager) DropStateParameterCookie(req *http.Request, wrt http.ResponseWriter) string {
 	uuid, err := uuid.NewV4()
-
 	if err != nil {
 		wrt.WriteHeader(http.StatusInternalServerError)
 	}
@@ -239,7 +238,9 @@ func (cm *Manager) ClearCookie(req *http.Request, wrt http.ResponseWriter, name 
 
 	// clear divided cookies.
 	for idx := 1; idx < 600; idx++ {
-		var _, err = req.Cookie(name + "-" + strconv.Itoa(idx))
+		_, err := req.Cookie(
+			name + "-" + strconv.Itoa(idx),
+		)
 
 		if err == nil {
 			cm.DropCookie(

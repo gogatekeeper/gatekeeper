@@ -120,7 +120,6 @@ func RetrieveIDToken(
 	var encrypted string
 
 	token, err = session.GetTokenInCookie(req, cookieIDTokenName)
-
 	if err != nil {
 		return token, "", err
 	}
@@ -147,7 +146,6 @@ func DiscoveryHandler(
 		}
 
 		respBody, err := json.Marshal(resp)
-
 		if err != nil {
 			logger.Error(
 				apperrors.ErrMarshallDiscoveryResp.Error(),
@@ -161,7 +159,6 @@ func DiscoveryHandler(
 		wrt.Header().Set(constant.HeaderContentType, "application/json")
 		wrt.WriteHeader(http.StatusOK)
 		_, err = wrt.Write(respBody)
-
 		if err != nil {
 			logger.Error(
 				apperrors.ErrDiscoveryResponseWrite.Error(),

@@ -156,7 +156,6 @@ func refreshPAT(
 		defer cancel()
 		box := backoff.WithContext(bom, boCtx)
 		err := backoff.RetryNotify(operation, box, notify)
-
 		if err != nil {
 			return err
 		}

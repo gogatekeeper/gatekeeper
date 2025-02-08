@@ -8,18 +8,16 @@ import (
 	"strings"
 	"time"
 
+	resty "github.com/go-resty/resty/v2"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	testsuite_test "github.com/gogatekeeper/gatekeeper/pkg/testsuite"
 	. "github.com/onsi/ginkgo/v2" //nolint:revive //we want to use it for ginkgo
 	. "github.com/onsi/gomega"    //nolint:revive //we want to use it for gomega
-
-	resty "github.com/go-resty/resty/v2"
 )
 
 var _ = Describe("UMA Code Flow authorization", func() {
 	var portNum string
 	var proxyAddress string
-	var umaCookieName = "TESTUMACOOKIE"
 
 	BeforeEach(func() {
 		var err error
@@ -116,7 +114,6 @@ var _ = Describe("UMA Code Flow authorization", func() {
 var _ = Describe("UMA Code Flow authorization with method scope", func() {
 	var portNum string
 	var proxyAddress string
-	var umaCookieName = "TESTUMACOOKIE"
 
 	BeforeEach(func() {
 		var err error
@@ -375,7 +372,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func() {
 	var portNum string
 	var proxyAddress string
-	var umaCookieName = "TESTUMACOOKIE"
+	umaCookieName := "TESTUMACOOKIE"
 	// server := httptest.NewServer(&testsuite.FakeUpstreamService{})
 
 	BeforeEach(func() {

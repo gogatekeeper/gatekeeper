@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	httplog "log"
 	"net"
 	"net/http"
 	"net/url"
@@ -31,15 +32,6 @@ import (
 	"runtime"
 	"strings"
 	"time"
-
-	"golang.org/x/net/http/httpproxy"
-	"golang.org/x/sync/errgroup"
-
-	"go.uber.org/zap/zapcore"
-
-	"golang.org/x/crypto/acme/autocert"
-
-	httplog "log"
 
 	"github.com/Nerzal/gocloak/v13"
 	proxyproto "github.com/armon/go-proxyproto"
@@ -64,11 +56,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
-
 	_ "go.uber.org/automaxprocs" // fixes golang cgroup issue
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"golang.org/x/crypto/acme/autocert"
+	"golang.org/x/net/http/httpproxy"
+	"golang.org/x/sync/errgroup"
 )
 
+//nolint:gochecknoinits
 func init() {
 	_, _ = time.LoadLocation("UTC")      // ensure all time is in UTC [NOTE(fredbi): no this does just nothing]
 	runtime.GOMAXPROCS(runtime.NumCPU()) // set the core
@@ -884,7 +880,6 @@ func (r *OauthProxy) createForwardingProxy() error {
 	// setup the tls configuration
 	if r.Config.TLSCaCertificate != "" && r.Config.TLSCaPrivateKey != "" {
 		cAuthority, err := encryption.LoadCA(r.Config.TLSCaCertificate, r.Config.TLSCaPrivateKey)
-
 		if err != nil {
 			return fmt.Errorf("unable to load certificate authority, error: %w", err)
 		}
@@ -1285,7 +1280,6 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 				r.Config.SelfSignedTLSExpiration,
 				r.Log,
 			)
-
 			if err != nil {
 				return nil, err
 			}
@@ -1306,7 +1300,6 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 				r.Log,
 				&metrics.CertificateRotationMetric,
 			)
-
 			if err != nil {
 				return nil, err
 			}
@@ -1334,7 +1327,6 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 		// @check if we doing mutual tls
 		if config.clientCert != "" {
 			caCert, err := os.ReadFile(config.clientCert)
-
 			if err != nil {
 				return nil, err
 			}
@@ -1381,7 +1373,6 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 	// case of update the http transport settings - Also we to place this go-routine?
 	if r.Config.TLSClientCertificate != "" {
 		cert, err := os.ReadFile(r.Config.TLSClientCertificate)
-
 		if err != nil {
 			r.Log.Error(
 				"unable to read client certificate",
@@ -1406,7 +1397,6 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 			)
 
 			cAuthority, err := os.ReadFile(r.Config.UpstreamCA)
-
 			if err != nil {
 				return err
 			}
@@ -1607,7 +1597,6 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 		uint64(r.Config.OpenIDProviderRetryCount),
 	)
 	err = backoff.RetryNotify(operation, bo, notify)
-
 	if err != nil {
 		return nil,
 			nil,

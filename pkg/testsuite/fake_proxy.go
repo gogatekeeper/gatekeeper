@@ -171,7 +171,6 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 			client.SetTransport(&http.Transport{
 				Dial: func(_, addr string) (net.Conn, error) {
 					conn, err := net.Dial("tcp", addr)
-
 					if err != nil {
 						return nil, err
 					}
@@ -340,7 +339,6 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 
 			if loc.Query().Get("state") != "" {
 				state, err := uuid.FromString(loc.Query().Get("state"))
-
 				if err != nil {
 					assert.Fail(
 						t,
@@ -641,7 +639,6 @@ func newTestProxyService(config *config.Config) (*proxy.OauthProxy, *fakeAuthSer
 	config.Verbose = false
 	config.EnableLogging = false
 	err := config.Update()
-
 	if err != nil {
 		panic(errors.Join(ErrCreateFakeProxy, err).Error())
 	}
@@ -663,6 +660,7 @@ func newTestProxyService(config *config.Config) (*proxy.OauthProxy, *fakeAuthSer
 	return proxy, auth, service.URL
 }
 
+//nolint:unparam
 func newFakeHTTPRequest(method, path string) *http.Request {
 	return &http.Request{
 		Method: method,
@@ -743,7 +741,6 @@ func makeTestCodeFlowLogin(location string, xforwarded bool) (*http.Response, []
 	flowCookies := make([]*http.Cookie, 0)
 
 	uri, err := url.Parse(location)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -780,7 +777,6 @@ func makeTestCodeFlowLogin(location string, xforwarded bool) (*http.Response, []
 		}
 
 		resp, err = transport.RoundTrip(req)
-
 		if err != nil {
 			return nil, nil, err
 		}

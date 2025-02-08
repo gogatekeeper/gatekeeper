@@ -91,7 +91,6 @@ func (r *Resource) Parse(resource string) (*Resource, error) {
 			}
 		case "require-any-role":
 			val, err := strconv.ParseBool(keyPair[1])
-
 			if err != nil {
 				return nil, err
 			}
@@ -109,7 +108,6 @@ func (r *Resource) Parse(resource string) (*Resource, error) {
 			r.Groups = strings.Split(keyPair[1], ",")
 		case "white-listed":
 			value, err := strconv.ParseBool(keyPair[1])
-
 			if err != nil {
 				return nil, errors.New(
 					"the value of whitelisted must be " +
