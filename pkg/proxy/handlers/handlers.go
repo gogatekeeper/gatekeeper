@@ -224,11 +224,17 @@ func GetRedirectionURL(
 
 // ExpirationHandler checks if the token has expired.
 func ExpirationHandler(
-	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (*models.UserContext, error),
+	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, error),
 	cookieAccessName string,
 ) func(wrt http.ResponseWriter, req *http.Request) {
 	return func(wrt http.ResponseWriter, req *http.Request) {
-		user, err := getIdentity(req, cookieAccessName, "")
+		token, err := getIdentity(req, cookieAccessName, "")
+		if err != nil {
+			wrt.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		user, err := session.ExtractIdentity(token)
 		if err != nil {
 			wrt.WriteHeader(http.StatusUnauthorized)
 			return
@@ -245,18 +251,18 @@ func ExpirationHandler(
 
 // TokenHandler display access token to screen.
 func TokenHandler(
-	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (*models.UserContext, error),
+	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, error),
 	cookieAccessName string,
 	accessError func(wrt http.ResponseWriter, req *http.Request) context.Context,
 ) func(wrt http.ResponseWriter, req *http.Request) {
 	return func(wrt http.ResponseWriter, req *http.Request) {
-		user, err := getIdentity(req, cookieAccessName, "")
+		rawToken, err := getIdentity(req, cookieAccessName, "")
 		if err != nil {
 			accessError(wrt, req)
 			return
 		}
 
-		token, err := jwt.ParseSigned(user.RawToken, constant.SignatureAlgs[:])
+		token, err := jwt.ParseSigned(rawToken, constant.SignatureAlgs[:])
 		if err != nil {
 			accessError(wrt, req)
 			return
