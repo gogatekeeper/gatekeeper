@@ -148,23 +148,25 @@ func AuthenticationMiddleware(
 					return
 				}
 
-				var stdRefreshClaims *jwt.Claims
-				stdRefreshClaims, err = utils.ParseRefreshToken(refresh)
-				if err != nil {
-					lLog.Error(
-						apperrors.ErrParseRefreshToken.Error(),
-						zap.Error(err),
-					)
-					accessForbidden(wrt, req)
-					return
-				}
-				if user.ID != stdRefreshClaims.Subject {
-					lLog.Error(
-						apperrors.ErrAccRefreshTokenMismatch.Error(),
-						zap.Error(err),
-					)
-					accessForbidden(wrt, req)
-					return
+				if encryptionKey != "" {
+					var stdRefreshClaims *jwt.Claims
+					stdRefreshClaims, err = utils.ParseRefreshToken(refresh)
+					if err != nil {
+						lLog.Error(
+							apperrors.ErrParseRefreshToken.Error(),
+							zap.Error(err),
+						)
+						accessForbidden(wrt, req)
+						return
+					}
+					if user.ID != stdRefreshClaims.Subject {
+						lLog.Error(
+							apperrors.ErrAccRefreshTokenMismatch.Error(),
+							zap.Error(err),
+						)
+						accessForbidden(wrt, req)
+						return
+					}
 				}
 
 				scope.Identity = user
@@ -178,7 +180,6 @@ func AuthenticationMiddleware(
 				// exp: expiration of the access token
 				// expiresIn: expiration of the ID token
 				conf := newOAuth2Config(redirectionURL)
-
 				lLog.Debug(
 					"issuing refresh token request",
 					zap.String("current access token", user.RawToken),
@@ -327,6 +328,7 @@ func AuthenticationMiddleware(
 				tokenSource := oauth2.StaticTokenSource(
 					&oauth2.Token{AccessToken: scope.Identity.RawToken},
 				)
+
 				_, err := provider.UserInfo(oidcLibCtx, tokenSource)
 				if err != nil {
 					scope.Logger.Error(err.Error())
