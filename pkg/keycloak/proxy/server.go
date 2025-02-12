@@ -560,7 +560,16 @@ func (r *OauthProxy) CreateReverseProxy() error {
 				eng.HandleFunc(constant.RegistrationURL, oauthRegistrationHand)
 			}
 			eng.Get(constant.CallbackURL, oauthCallbackHand)
-			eng.Get(constant.ExpiredURL, handlers.ExpirationHandler(getIdentity, r.Config.CookieAccessName))
+			eng.Get(constant.ExpiredURL, handlers.ExpirationHandler(
+				r.Log,
+				r.Provider,
+				r.Config.ClientID,
+				r.Config.SkipAccessTokenClientIDCheck,
+				r.Config.SkipAccessTokenIssuerCheck,
+				getIdentity,
+				r.Config.CookieAccessName,
+			),
+			)
 			eng.With(authMid, authFailMiddleware).Get(constant.LogoutURL, logoutHand)
 			eng.With(authMid, authFailMiddleware).Get(
 				constant.TokenURL,

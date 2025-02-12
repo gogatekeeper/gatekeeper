@@ -162,13 +162,6 @@ func ExtractIdentity(rawToken string) (*models.UserContext, error) {
 		return nil, err
 	}
 
-	// logger.Debug("found the user identity",
-	// 	zap.String("id", user.ID),
-	// 	zap.String("name", user.Name),
-	// 	zap.String("email", user.Email),
-	// 	zap.String("roles", strings.Join(user.Roles, ",")),
-	// 	zap.String("groups", strings.Join(user.Groups, ",")))
-
 	stdClaims := &jwt.Claims{}
 	customClaims := models.CustClaims{}
 

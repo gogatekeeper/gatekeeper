@@ -128,8 +128,6 @@ func AuthenticationMiddleware(
 					zap.String("roles", strings.Join(user.Roles, ",")),
 					zap.String("groups", strings.Join(user.Groups, ",")))
 
-				scope.Identity = user
-
 				lLog.Info("accces token for user has expired, attemping to refresh the token")
 
 				// step: check if the user has refresh token
@@ -168,6 +166,8 @@ func AuthenticationMiddleware(
 					accessForbidden(wrt, req)
 					return
 				}
+
+				scope.Identity = user
 
 				// attempt to refresh the access token, possibly with a renewed refresh token
 				//

@@ -501,7 +501,7 @@ func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Requ
 	token.SetExpiration(expires)
 	refreshToken := NewTestToken(r.getLocation())
 	refreshToken.SetExpiration(refreshExpires)
-	refreshToken.Claims.Aud = r.getLocation()
+	refreshToken.Claims.Aud = defTestTokenClaims.Aud
 	codeVerifier := ""
 
 	if req.FormValue("grant_type") == configcore.GrantTypeUmaTicket {
