@@ -61,6 +61,7 @@ enable-refresh-tokens: true
 forbidden-page: templates/forbidden.html.tmpl
 error-page: templates/error.html.tmpl
 sign-in-page: sign_in.html.tmpl
+register-page: register.html.tmpl
 # the location of a certificate you wish the proxy to use for TLS support
 tls-cert:
 # the location of a private key for TLS
@@ -232,7 +233,7 @@ Frontend server-side applications can be protected by Authorization Code Flow (a
 steps take place. For protecting APIs you can use Client Credentials Grant to avoid redirections steps
 involved in authorization code flow you have to use `--no-redirects=true`.
 
-From version 3.1.0 gatekeeper also supports both Authorization Code Flow and "API" mode to be configured
+From version 3.2.0 gatekeeper also supports both Authorization Code Flow and "API" mode to be configured
 on same gatekeeper, example:
 
 ```yaml
@@ -514,7 +515,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:3.1.0
+  image: quay.io/gogatekeeper/gatekeeper:3.2.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -541,7 +542,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:3.1.0
+  image: quay.io/gogatekeeper/gatekeeper:3.2.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -1147,6 +1148,8 @@ UNIX socket, `--upstream-url unix://path/to/the/file.sock`.
 
   - **/oauth/authorize** is authentication endpoint which will generate
     the OpenID redirect to the provider
+  
+  - **/oauth/register** is endpoint which redirects to registration page of provider, if enabled
 
   - **/oauth/callback** is provider OpenID callback endpoint
 

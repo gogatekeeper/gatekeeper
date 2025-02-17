@@ -459,6 +459,13 @@ func loginHandler(
 					errors.Join(apperrors.ErrExtractIdentityFromAccessToken, err)
 			}
 
+			logger.Debug("found the user identity",
+				zap.String("id", identity.ID),
+				zap.String("name", identity.Name),
+				zap.String("email", identity.Email),
+				zap.String("roles", strings.Join(identity.Roles, ",")),
+				zap.String("groups", strings.Join(identity.Groups, ",")))
+
 			writer.Header().Set(constant.HeaderContentType, "application/json")
 			idToken, assertOk := token.Extra("id_token").(string)
 			if !assertOk {
