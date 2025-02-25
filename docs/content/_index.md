@@ -233,7 +233,7 @@ Frontend server-side applications can be protected by Authorization Code Flow (a
 steps take place. For protecting APIs you can use Client Credentials Grant to avoid redirections steps
 involved in authorization code flow you have to use `--no-redirects=true`.
 
-From version 3.2.0 gatekeeper also supports both Authorization Code Flow and "API" mode to be configured
+From version 3.2.1 gatekeeper also supports both Authorization Code Flow and "API" mode to be configured
 on same gatekeeper, example:
 
 ```yaml
@@ -515,7 +515,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:3.2.0
+  image: quay.io/gogatekeeper/gatekeeper:3.2.1
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -542,7 +542,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:3.2.0
+  image: quay.io/gogatekeeper/gatekeeper:3.2.1
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
