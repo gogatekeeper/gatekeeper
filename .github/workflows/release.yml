@@ -24,7 +24,7 @@ jobs:
           curl -Lo $RUNNER_TEMP/sbom-tool https://github.com/microsoft/sbom-tool/releases/download/v1.2.0/sbom-tool-linux-x64
           chmod +x $RUNNER_TEMP/sbom-tool
           $RUNNER_TEMP/sbom-tool generate -b . -bc . -pn $ -pv 1.0.0 -ps "Pavol Ipoth" -nsb https://github.com/gogatekeeper -V Verbose
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: sbom
           path: _manifest/spdx_2.2
