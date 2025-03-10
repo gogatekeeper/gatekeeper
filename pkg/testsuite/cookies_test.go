@@ -108,6 +108,25 @@ func TestCookieDomain(t *testing.T) {
 	assert.Equal(t, "domain.com", cookie.Domain)
 }
 
+func TestCookiePath(t *testing.T) {
+	p, _, svc := newTestProxyService(nil)
+	p.Cm.CookiePath = FakeAdminURL
+	resp, _, err := makeTestCodeFlowLogin(svc+FakeAdminURL, false)
+	require.NoError(t, err)
+	assert.NotNil(t, resp)
+
+	var cookie *http.Cookie
+	for _, c := range resp.Cookies() {
+		if c.Path == FakeAdminURL {
+			cookie = c
+		}
+	}
+	defer resp.Body.Close()
+
+	assert.NotNil(t, cookie)
+	assert.Equal(t, FakeAdminURL, cookie.Path)
+}
+
 func TestDropCookie(t *testing.T) {
 	proxy, _, _ := newTestProxyService(nil)
 

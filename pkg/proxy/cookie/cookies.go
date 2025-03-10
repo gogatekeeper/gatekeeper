@@ -28,6 +28,7 @@ import (
 
 type Manager struct {
 	CookieDomain         string
+	CookiePath           string
 	BaseURI              string
 	SameSiteCookie       string
 	CookieAccessName     string
@@ -57,9 +58,12 @@ func (cm *Manager) DropCookie(
 		domain = cm.CookieDomain
 	}
 
-	path := cm.BaseURI
-	if path == "" {
-		path = "/"
+	path := "/"
+	switch {
+	case cm.CookiePath != "":
+		path = cm.CookiePath
+	case cm.BaseURI != "":
+		path = cm.BaseURI
 	}
 
 	cookie := &http.Cookie{

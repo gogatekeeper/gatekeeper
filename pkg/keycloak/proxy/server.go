@@ -304,6 +304,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 	WithOAuthURI := utils.WithOAuthURI(r.Config.BaseURI, r.Config.OAuthURI)
 	r.Cm = &cookie.Manager{
 		CookieDomain:         r.Config.CookieDomain,
+		CookiePath:           r.Config.CookiePath,
 		BaseURI:              r.Config.BaseURI,
 		HTTPOnlyCookie:       r.Config.HTTPOnlyCookie,
 		SecureCookie:         r.Config.SecureCookie,

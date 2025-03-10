@@ -70,6 +70,7 @@ type Config struct {
 	ContentSecurityPolicy           string                    `env:"CONTENT_SECURITY_POLICY" json:"content-security-policy" usage:"specify the content security policy" yaml:"content-security-policy"`
 	OpaAuthzURI                     string                    `env:"OPA_AUTHZ_URI" json:"opa-authz-uri" usage:"OPA endpoint address with path"                                                                 yaml:"opa-authz-uri"`
 	CookieDomain                    string                    `env:"COOKIE_DOMAIN" json:"cookie-domain" usage:"domain the access cookie is available to, defaults host header" yaml:"cookie-domain"`
+	CookiePath                      string                    `env:"COOKIE_PATH" json:"cookie-path" usage:"path for which cookie is valid" yaml:"cookie-path"`
 	CookieAccessName                string                    `env:"COOKIE_ACCESS_NAME" json:"cookie-access-name" usage:"name of the cookie used to hold the access token" yaml:"cookie-access-name"`
 	CookieIDTokenName               string                    `env:"COOKIE_ID_TOKEN_NAME" json:"cookie-id-token-name" usage:"name of the cookie used to hold id token" yaml:"cookie-id-token-name"`
 	CookieRefreshName               string                    `env:"COOKIE_REFRESH_NAME" json:"cookie-refresh-name" usage:"name of the cookie used to hold the encrypted refresh token" yaml:"cookie-refresh-name"`
