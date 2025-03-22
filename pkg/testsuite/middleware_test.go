@@ -725,56 +725,256 @@ func TestStrangeAdminRequests(t *testing.T) {
 	}
 }
 
+//nolint:funlen
 func TestWhiteListedRequests(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
-	cfg.NoRedirects = true
 	cfg.Resources = []*authorization.Resource{
 		{
 			URL:     "/*",
 			Methods: utils.AllHTTPMethods,
-			Roles:   []string{FakeTestRole},
+			Roles:   []string{"default"}, // this role is in our fakeauth server
 		},
 		{
 			URL:         "/whitelist*",
 			WhiteListed: true,
 			Methods:     utils.AllHTTPMethods,
 		},
-	}
-	requests := []fakeRequest{
-		{ // check whitelisted is passed
-			URI:           "/whitelist",
-			ExpectedCode:  http.StatusOK,
-			ExpectedProxy: true,
-			Redirects:     false,
-		},
-		{ // check whitelisted is passed
-			URI:           "/whitelist/test",
-			ExpectedCode:  http.StatusOK,
-			ExpectedProxy: true,
-			Redirects:     false,
-		},
 		{
-			URI:          FakeTestURL,
-			HasToken:     true,
-			Roles:        []string{"nothing"},
-			ExpectedCode: http.StatusForbidden,
-			Redirects:    false,
-		},
-		{
-			URI:          "/",
-			ExpectedCode: http.StatusUnauthorized,
-			Redirects:    false,
-		},
-		{
-			URI:           "/",
-			HasToken:      true,
-			ExpectedProxy: true,
-			Roles:         []string{FakeTestRole},
-			ExpectedCode:  http.StatusOK,
-			Redirects:     false,
+			URL:             "/whitelistanon*",
+			WhiteListedAnon: true,
+			Methods:         utils.AllHTTPMethods,
+			Roles:           []string{"default"},
 		},
 	}
-	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
+
+	testCases := []struct {
+		Name              string
+		ProxySettings     func(c *config.Config)
+		ExecutionSettings []fakeRequest
+	}{
+		{
+			Name: "TestWhiteListingNoRedirects",
+			ProxySettings: func(conf *config.Config) {
+				conf.NoRedirects = true
+			},
+			ExecutionSettings: []fakeRequest{
+				{ // check whitelisted is passed
+					URI:           "/whitelist",
+					ExpectedCode:  http.StatusOK,
+					ExpectedProxy: true,
+					Redirects:     false,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "whitelist")
+						assert.Contains(t, body, "method")
+					},
+				},
+				{ // check whitelisted is passed
+					URI:           "/whitelist/test",
+					ExpectedCode:  http.StatusOK,
+					ExpectedProxy: true,
+					Redirects:     false,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "test")
+						assert.Contains(t, body, "method")
+					},
+				},
+				{
+					URI:          FakeTestURL,
+					HasToken:     true,
+					Roles:        []string{"nothing"},
+					ExpectedCode: http.StatusForbidden,
+					Redirects:    false,
+				},
+				{
+					URI:          "/",
+					ExpectedCode: http.StatusUnauthorized,
+					Redirects:    false,
+				},
+				{
+					URI:           "/",
+					HasToken:      true,
+					ExpectedProxy: true,
+					Roles:         []string{"default"},
+					ExpectedCode:  http.StatusOK,
+					Redirects:     false,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "method")
+					},
+				},
+				{
+					URI:           "/whitelistanon",
+					ExpectedCode:  http.StatusOK,
+					ExpectedProxy: true,
+					Redirects:     false,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "whitelistanon")
+						assert.Contains(t, body, "method")
+					},
+				},
+				{
+					URI:           "/whitelistanon/test",
+					ExpectedCode:  http.StatusOK,
+					ExpectedProxy: true,
+					Redirects:     false,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "test")
+						assert.Contains(t, body, "method")
+					},
+				},
+				{
+					URI:           "/whitelistanon",
+					HasToken:      true,
+					Roles:         []string{FakeAdminRole},
+					ExpectedCode:  http.StatusForbidden,
+					ExpectedProxy: false,
+					Redirects:     false,
+				},
+				{
+					URI:           "/whitelistanon",
+					HasToken:      true,
+					Roles:         []string{"default"},
+					ExpectedCode:  http.StatusOK,
+					ExpectedProxy: true,
+					Redirects:     false,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "whitelistanon")
+						assert.Contains(t, body, "method")
+					},
+				},
+			},
+		},
+		{
+			Name: "TestWhiteListingRedirects",
+			ProxySettings: func(conf *config.Config) {
+				conf.NoRedirects = false
+				conf.EnableRefreshTokens = true
+				conf.EnableEncryptedToken = false // we don't have encrypt token functionality in our fake
+				conf.Verbose = true
+				conf.EnableLogging = true
+				conf.EncryptionKey = testEncryptionKey
+			},
+			ExecutionSettings: []fakeRequest{
+				{ // check whitelisted is passed
+					URI:           "/whitelist",
+					ExpectedCode:  http.StatusOK,
+					ExpectedProxy: true,
+					Redirects:     true,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "whitelist")
+						assert.Contains(t, body, "method")
+					},
+				},
+				{ // check whitelisted is passed
+					URI:           "/whitelist/test",
+					ExpectedCode:  http.StatusOK,
+					ExpectedProxy: true,
+					Redirects:     true,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "test")
+						assert.Contains(t, body, "method")
+					},
+				},
+				{
+					URI:            FakeTestURL,
+					HasToken:       true,
+					HasCookieToken: true,
+					Roles:          []string{"nothing"},
+					ExpectedCode:   http.StatusForbidden,
+					Redirects:      true,
+				},
+				{
+					URI:          "/",
+					ExpectedCode: http.StatusSeeOther,
+					Redirects:    true,
+				},
+				{
+					URI:           "/whitelistanon",
+					ExpectedCode:  http.StatusOK,
+					ExpectedProxy: true,
+					Redirects:     true,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "whitelistanon")
+						assert.Contains(t, body, "method")
+					},
+				},
+				{
+					URI:           "/whitelistanon/test",
+					ExpectedCode:  http.StatusOK,
+					ExpectedProxy: true,
+					Redirects:     true,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "test")
+						assert.Contains(t, body, "method")
+					},
+				},
+				{
+					URI:            "/whitelistanon",
+					HasToken:       true,
+					HasCookieToken: true,
+					OnResponse:     delay,
+					Roles:          []string{FakeAdminRole},
+					ExpectedCode:   http.StatusForbidden,
+					ExpectedProxy:  false,
+					Redirects:      true,
+				},
+				// this request will login and save cookies in our fakeproxy
+				// and next request will use already saved cookies
+				{
+					URI:           "/",
+					HasLogin:      true,
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					Redirects:     true,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "method")
+					},
+					ExpectedProxyHeaders: map[string]string{
+						"X-Auth-Email":    defTestTokenClaims.Email,
+						"X-Auth-Username": defTestTokenClaims.PreferredUsername,
+					},
+				},
+				{
+					URI:           "/whitelistanon",
+					ExpectedCode:  http.StatusOK,
+					ExpectedProxy: true,
+					Redirects:     true,
+					ExpectedProxyHeaders: map[string]string{
+						"X-Auth-Email":    defTestTokenClaims.Email,
+						"X-Auth-Username": defTestTokenClaims.PreferredUsername,
+					},
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "whitelistanon")
+						assert.Contains(t, body, "method")
+					},
+				},
+				{
+					URI:            "/whitelistanon",
+					HasToken:       true,
+					HasCookieToken: true,
+					ExpectedCode:   http.StatusOK,
+					ExpectedProxy:  true,
+					Redirects:      true,
+					ExpectedProxyHeaders: map[string]string{
+						"X-Auth-Email":    defTestTokenClaims.Email,
+						"X-Auth-Username": defTestTokenClaims.PreferredUsername,
+					},
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		cfgCopy := *cfg
+		c := &cfgCopy
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				testCase.ProxySettings(c)
+				p := newFakeProxy(c, &fakeAuthConfig{})
+				p.RunTests(t, testCase.ExecutionSettings)
+			},
+		)
+	}
 }
 
 func TestRequireAnyRoles(t *testing.T) {

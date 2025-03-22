@@ -116,6 +116,15 @@ func TestResourceParseOk(t *testing.T) {
 			Ok: true,
 		},
 		{
+			Option: "uri=/allow_me_anon|white-listed-anon=true",
+			Resource: &authorization.Resource{
+				URL:             "/allow_me_anon",
+				WhiteListedAnon: true,
+				Methods:         utils.AllHTTPMethods,
+			},
+			Ok: true,
+		},
+		{
 			Option: "uri=/*|methods=any",
 			Resource: &authorization.Resource{
 				URL:     "/*",

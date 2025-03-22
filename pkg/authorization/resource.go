@@ -33,6 +33,8 @@ type Resource struct {
 	Methods []string `json:"methods" yaml:"methods"`
 	// WhiteListed permits the prefix through
 	WhiteListed bool `json:"white-listed" yaml:"white-listed"`
+	// WhiteListedAnon permits access for requests without token
+	WhiteListedAnon bool `json:"white-listed-anon" yaml:"white-listed-anon"`
 	// NoRedirect overrides global no-redirect setting
 	NoRedirect bool `json:"no-redirect" yaml:"no-redirect"`
 	// RequireAnyRole indicates that ANY of the roles are required, the default is all
@@ -116,6 +118,16 @@ func (r *Resource) Parse(resource string) (*Resource, error) {
 			}
 
 			r.WhiteListed = value
+		case "white-listed-anon":
+			value, err := strconv.ParseBool(keyPair[1])
+			if err != nil {
+				return nil, errors.New(
+					"the value of whitelisted must be " +
+						"true|TRUE|T or it's false equivalent",
+				)
+			}
+
+			r.WhiteListedAnon = value
 		case "no-redirect":
 			value, err := strconv.ParseBool(keyPair[1])
 			if err != nil {
@@ -157,6 +169,12 @@ func (r *Resource) Valid() error {
 		return errors.New("resource does not have url")
 	}
 
+	if r.WhiteListed && r.WhiteListedAnon {
+		return fmt.Errorf(
+			"you cannot enable white-listed and white-listed-anon at the same time: %s",
+			r.URL,
+		)
+	}
 	if strings.HasSuffix(r.URL, "/") && !r.WhiteListed {
 		if r.URL != "/" {
 			return fmt.Errorf(
@@ -200,6 +218,10 @@ func (r Resource) GetHeaders() string {
 func (r Resource) String() string {
 	if r.WhiteListed {
 		return fmt.Sprintf("uri: %s, white-listed", r.URL)
+	}
+
+	if r.WhiteListedAnon {
+		return fmt.Sprintf("uri: %s, white-listed-anon", r.URL)
 	}
 
 	roles := "authentication only"

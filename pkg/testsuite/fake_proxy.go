@@ -165,7 +165,7 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 			client.SetTLSClientConfig(&tls.Config{MaxVersion: reqCfg.TLSMax})
 		}
 
-		request := client.SetRedirectPolicy(resty.NoRedirectPolicy()).R()
+		client.SetRedirectPolicy(resty.NoRedirectPolicy())
 
 		if reqCfg.ProxyProtocol != "" {
 			client.SetTransport(&http.Transport{
@@ -208,20 +208,16 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 			}
 		}
 
-		if reqCfg.ExpectedProxy {
-			request.SetResult(&upstream)
-		}
-
 		if reqCfg.ProxyRequest {
 			client.SetProxy(f.getServiceURL())
 		}
 
 		if reqCfg.BasicAuth {
-			request.SetBasicAuth(reqCfg.Username, reqCfg.Password)
+			client.SetBasicAuth(reqCfg.Username, reqCfg.Password)
 		}
 
 		if reqCfg.RawToken != "" {
-			setRequestAuthentication(f.config, client, request, &reqCfg, reqCfg.RawToken)
+			setRequestAuthentication(f.config, client, &reqCfg, reqCfg.RawToken)
 		}
 
 		if len(reqCfg.Cookies) > 0 {
@@ -229,11 +225,11 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 		}
 
 		if len(reqCfg.Headers) > 0 {
-			request.SetHeaders(reqCfg.Headers)
+			client.SetHeaders(reqCfg.Headers)
 		}
 
 		if reqCfg.FormValues != nil {
-			request.SetFormData(reqCfg.FormValues)
+			client.SetFormData(reqCfg.FormValues)
 		}
 
 		if reqCfg.HasToken {
@@ -269,12 +265,18 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 			if reqCfg.NotSigned {
 				authToken, err := token.GetUnsignedToken()
 				require.NoError(t, err)
-				setRequestAuthentication(f.config, client, request, &reqCfg, authToken)
+				setRequestAuthentication(f.config, client, &reqCfg, authToken)
 			} else {
 				authToken, err := token.GetToken()
 				require.NoError(t, err)
-				setRequestAuthentication(f.config, client, request, &reqCfg, authToken)
+				setRequestAuthentication(f.config, client, &reqCfg, authToken)
 			}
+		}
+
+		request := client.R()
+
+		if reqCfg.ExpectedProxy {
+			request.SetResult(&upstream)
 		}
 
 		// step: execute the request
@@ -589,7 +591,6 @@ func (f *fakeProxy) performUserLogin(reqCfg *fakeRequest) error {
 func setRequestAuthentication(
 	cfg *config.Config,
 	client *resty.Client,
-	request *resty.Request,
 	c *fakeRequest,
 	token string,
 ) {
@@ -613,7 +614,7 @@ func setRequestAuthentication(
 			})
 		}
 	default:
-		request.SetAuthToken(token)
+		client.SetAuthToken(token)
 	}
 }
 
