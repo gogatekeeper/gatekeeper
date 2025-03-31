@@ -57,7 +57,7 @@ jobs:
         uses: golangci/golangci-lint-action@v7
         with:
           version: v2.0.2
-          args: "--out-${NO_FUTURE}format colored-line-number --timeout=3m"
+          args: "--timeout=3m"
           github-token: "${{ secrets.GITHUB_TOKEN }}"
       - name: Check Golang sources with Aligo
         uses: essentialkaos/aligo-action@v2
