@@ -18,7 +18,6 @@ package testsuite_test
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -1044,7 +1043,7 @@ func TestHeaderPermissionsMiddleware(t *testing.T) {
 					HasToken:      true,
 					ExpectedCode:  http.StatusForbidden,
 					ExpectedContent: func(body string, _ int) {
-						assert.Equal(t, "", body)
+						assert.Empty(t, body)
 					},
 				},
 			},
@@ -1101,7 +1100,7 @@ func TestHeaderPermissionsMiddleware(t *testing.T) {
 					HasToken:      true,
 					ExpectedCode:  http.StatusForbidden,
 					ExpectedContent: func(body string, _ int) {
-						assert.Equal(t, "", body)
+						assert.Empty(t, body)
 					},
 				},
 			},
@@ -1132,7 +1131,7 @@ func TestHeaderPermissionsMiddleware(t *testing.T) {
 					},
 					ExpectedCode: http.StatusForbidden,
 					ExpectedContent: func(body string, _ int) {
-						assert.Equal(t, "", body)
+						assert.Empty(t, body)
 					},
 				},
 			},
@@ -1191,7 +1190,7 @@ func TestHeaderPermissionsMiddleware(t *testing.T) {
 					HasToken:      true,
 					ExpectedCode:  http.StatusForbidden,
 					ExpectedContent: func(body string, _ int) {
-						assert.Equal(t, "", body)
+						assert.Empty(t, body)
 					},
 				},
 			},
@@ -1224,7 +1223,7 @@ func TestHeaderPermissionsMiddleware(t *testing.T) {
 					},
 					ExpectedCode: http.StatusOK,
 					ExpectedContent: func(body string, _ int) {
-						assert.Equal(t, "", body)
+						assert.Empty(t, body)
 					},
 				},
 			},
@@ -2094,7 +2093,7 @@ func TestCustomHeadersHandlerNoProxyNoRedirects(t *testing.T) {
 				},
 				ExpectedCode: http.StatusOK,
 				ExpectedContent: func(body string, _ int) {
-					assert.Equal(t, "", body)
+					assert.Empty(t, body)
 				},
 			},
 		},
@@ -2122,7 +2121,7 @@ func TestCustomHeadersHandlerNoProxyNoRedirects(t *testing.T) {
 				},
 				ExpectedCode: http.StatusOK,
 				ExpectedContent: func(body string, _ int) {
-					assert.Equal(t, "", body)
+					assert.Empty(t, body)
 				},
 			},
 		},
@@ -2544,7 +2543,7 @@ func TestEnableUma(t *testing.T) {
 					Redirects:     false,
 					ExpectedCode:  http.StatusUnauthorized,
 					ExpectedContent: func(body string, _ int) {
-						assert.Equal(t, "", body)
+						assert.Empty(t, body)
 					},
 				},
 			},
@@ -2868,7 +2867,7 @@ func TestEnableOpa(t *testing.T) {
 					Redirects:     false,
 					ExpectedCode:  http.StatusForbidden,
 					ExpectedContent: func(body string, _ int) {
-						assert.Equal(t, "", body)
+						assert.Empty(t, body)
 					},
 				},
 			},
@@ -2901,7 +2900,7 @@ func TestEnableOpa(t *testing.T) {
 					Redirects:     false,
 					ExpectedCode:  http.StatusForbidden,
 					ExpectedContent: func(body string, _ int) {
-						assert.Equal(t, "", body)
+						assert.Empty(t, body)
 					},
 				},
 			},
@@ -2925,7 +2924,7 @@ func TestEnableOpa(t *testing.T) {
 					Redirects:     false,
 					ExpectedCode:  http.StatusForbidden,
 					ExpectedContent: func(body string, _ int) {
-						assert.Equal(t, "", body)
+						assert.Empty(t, body)
 					},
 				},
 			},
@@ -2949,7 +2948,7 @@ func TestEnableOpa(t *testing.T) {
 					Redirects:     true,
 					ExpectedCode:  http.StatusForbidden,
 					ExpectedContent: func(body string, _ int) {
-						assert.Equal(t, "", body)
+						assert.Empty(t, body)
 					},
 				},
 			},
@@ -3037,7 +3036,7 @@ func TestEnableOpa(t *testing.T) {
 				cfg := newFakeKeycloakConfig()
 				testCase.ProxySettings(cfg)
 
-				ctx := context.Background()
+				ctx := t.Context()
 				authzPolicy := testCase.AuthzPolicy
 				opaAddress := ""
 				var server *opaserver.Server

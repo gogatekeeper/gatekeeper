@@ -2,7 +2,6 @@ package authorization_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -233,7 +232,7 @@ func TestExternalOpa(t *testing.T) {
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
-				ctx := context.Background()
+				ctx := t.Context()
 				authzPolicy := testCase.AuthzPolicy
 				opaAddress := ""
 				var server *opaserver.Server

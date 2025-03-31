@@ -64,7 +64,7 @@ func (r *Resource) Parse(resource string) (*Resource, error) {
 		return nil, errors.New("the resource has no options")
 	}
 
-	for _, x := range strings.Split(resource, "|") {
+	for x := range strings.SplitSeq(resource, "|") {
 		keyPair := strings.Split(x, "=")
 
 		keyPairMembers := 2
@@ -200,22 +200,22 @@ func (r *Resource) Valid() error {
 }
 
 // GetRoles returns a list of roles for this resource.
-func (r Resource) GetRoles() string {
+func (r *Resource) GetRoles() string {
 	return strings.Join(r.Roles, ",")
 }
 
 // GetAcr returns a list of authentication levels for this resource.
-func (r Resource) GetAcr() string {
+func (r *Resource) GetAcr() string {
 	return strings.Join(r.Acr, ",")
 }
 
 // GetHeaders returns a list of headers for this resource.
-func (r Resource) GetHeaders() string {
+func (r *Resource) GetHeaders() string {
 	return strings.Join(r.Headers, ",")
 }
 
 // String returns a string representation of the resource.
-func (r Resource) String() string {
+func (r *Resource) String() string {
 	if r.WhiteListed {
 		return fmt.Sprintf("uri: %s, white-listed", r.URL)
 	}

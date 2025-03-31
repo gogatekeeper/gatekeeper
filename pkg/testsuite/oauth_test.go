@@ -37,7 +37,7 @@ func TestGetUserinfo(t *testing.T) {
 		&oauth2.Token{AccessToken: token},
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), proxy.Config.OpenIDProviderTimeout)
+	ctx, cancel := context.WithTimeout(t.Context(), proxy.Config.OpenIDProviderTimeout)
 	defer cancel()
 
 	userInfo, err := proxy.Provider.UserInfo(ctx, tokenSource)
@@ -79,7 +79,7 @@ func TestTokenExpired(t *testing.T) {
 				SkipClientIDCheck: true,
 			},
 		)
-		_, err = verifier.Verify(context.Background(), jwt)
+		_, err = verifier.Verify(t.Context(), jwt)
 
 		if testCase.OK && err != nil {
 			t.Errorf("case %d, expected: %t got error: %s", idx, testCase.OK, err)

@@ -294,6 +294,7 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 			if !strings.Contains(err.Error(), reqCfg.ExpectedRequestError) {
 				assert.Fail(
 					t,
+					"result error does not match expected",
 					"case %d, expected error %s, got error: %s",
 					idx,
 					reqCfg.ExpectedRequestError,
@@ -329,12 +330,10 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 
 		if reqCfg.ExpectedLocation != "" {
 			loc, _ := url.Parse(resp.Header().Get("Location"))
-			assert.True(
+			assert.Contains(
 				t,
-				strings.Contains(
-					loc.String(),
-					reqCfg.ExpectedLocation,
-				),
+				loc.String(),
+				reqCfg.ExpectedLocation,
 				"expected location to contain %s",
 				loc.String(),
 			)
@@ -344,7 +343,8 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 				if err != nil {
 					assert.Fail(
 						t,
-						"expected state parameter with valid UUID, got: %s with error %s",
+						"expected state parameter with valid UUID",
+						"got: %s with error %s",
 						state.String(),
 						err,
 					)
@@ -772,7 +772,7 @@ func makeTestCodeFlowLogin(location string, xforwarded bool) (*http.Response, []
 		// step: make the request
 		transport := &http.Transport{
 			TLSClientConfig: &tls.Config{
-				//nolint:gas
+				//nolint:gas,gosec
 				InsecureSkipVerify: true,
 			},
 		}

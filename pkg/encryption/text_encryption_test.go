@@ -59,7 +59,7 @@ func TestEncodeText(t *testing.T) {
 }
 
 func BenchmarkEncryptDataBlock(b *testing.B) {
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		_, _ = encryption.EncryptDataBlock(fakePlainText, fakeKey)
 	}
 }
@@ -67,7 +67,7 @@ func BenchmarkEncryptDataBlock(b *testing.B) {
 func BenchmarkEncodeText(b *testing.B) {
 	text := string(fakePlainText)
 	key := string(fakeKey)
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		_, _ = encryption.EncodeText(text, key)
 	}
 }
@@ -75,7 +75,7 @@ func BenchmarkEncodeText(b *testing.B) {
 func BenchmarkDecodeText(b *testing.B) {
 	t := string(fakeCipherText)
 	k := string(fakeKey)
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		if _, err := encryption.DecodeText(t, k); err != nil {
 			b.FailNow()
 		}

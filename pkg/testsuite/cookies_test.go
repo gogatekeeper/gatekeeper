@@ -42,7 +42,7 @@ func TestCookieDomainHostHeader(t *testing.T) {
 	defer resp.Body.Close()
 
 	assert.NotNil(t, cookie)
-	assert.Equal(t, "", cookie.Domain)
+	assert.Empty(t, cookie.Domain)
 }
 
 func TestCookieBasePath(t *testing.T) {
@@ -340,7 +340,7 @@ func TestCustomCookieNames(t *testing.T) {
 					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						customStateName: func(t *testing.T, _ *config.Config, value string) bool {
 							t.Helper()
-							return assert.NotEqual(t, "", value)
+							return assert.NotEmpty(t, value)
 						},
 					},
 				},
@@ -364,7 +364,7 @@ func TestCustomCookieNames(t *testing.T) {
 					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						customAccessName: func(t *testing.T, _ *config.Config, value string) bool {
 							t.Helper()
-							return assert.NotEqual(t, "", value)
+							return assert.NotEmpty(t, value)
 						},
 					},
 				},
@@ -390,7 +390,7 @@ func TestCustomCookieNames(t *testing.T) {
 					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						customRefreshName: func(t *testing.T, _ *config.Config, value string) bool {
 							t.Helper()
-							return assert.NotEqual(t, "", value)
+							return assert.NotEmpty(t, value)
 						},
 					},
 				},
@@ -415,7 +415,7 @@ func TestCustomCookieNames(t *testing.T) {
 					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						customRedirectName: func(t *testing.T, _ *config.Config, value string) bool {
 							t.Helper()
-							return assert.NotEqual(t, "", value)
+							return assert.NotEmpty(t, value)
 						},
 					},
 				},
@@ -442,7 +442,7 @@ func TestCustomCookieNames(t *testing.T) {
 					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						customPKCEName: func(t *testing.T, _ *config.Config, value string) bool {
 							t.Helper()
-							return assert.NotEqual(t, "", value)
+							return assert.NotEmpty(t, value)
 						},
 					},
 				},
@@ -470,7 +470,7 @@ func TestCustomCookieNames(t *testing.T) {
 					ExpectedLoginCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						customIDTokenName: func(t *testing.T, _ *config.Config, value string) bool {
 							t.Helper()
-							return assert.NotEqual(t, "", value)
+							return assert.NotEmpty(t, value)
 						},
 					},
 				},

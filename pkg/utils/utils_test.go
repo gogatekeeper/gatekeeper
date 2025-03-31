@@ -149,7 +149,7 @@ func TestGetRequestHostURL(t *testing.T) {
 }
 
 func BenchmarkUUID(b *testing.B) {
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		s, err := uuid.NewV1()
 		if err != nil {
 			b.Errorf("test case should not have failed")
