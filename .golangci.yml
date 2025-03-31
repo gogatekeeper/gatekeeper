@@ -1,31 +1,52 @@
-linters-settings:
-  gocyclo:
-    min-complexity: 64
-  dupl:
-    threshold: 100
-  goconst:
-    min-len: 2
-    min-occurrences: 2
-  # TODO: Revisit after the refactor
-  funlen:
-    lines: 220
-    statements: 120
-
+version: "2"
 linters:
-  enable-all: true
+  default: all
   disable:
     - depguard
+    - dupl
+    - err113
+    - exhaustruct
+    - gocognit
     - ireturn
     - maintidx
-    - wrapcheck
+    - nestif
     - nlreturn
     - noctx
     - paralleltest
-    - exhaustruct
     - tagliatelle
-    - err113
-    - dupl
+    - wrapcheck
     - wsl
-    # TODO: Revisit after the refactor
-    - gocognit
-    - nestif
+  settings:
+    dupl:
+      threshold: 100
+    funlen:
+      lines: 220
+      statements: 120
+    goconst:
+      min-len: 2
+      min-occurrences: 2
+    gocyclo:
+      min-complexity: 64
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
