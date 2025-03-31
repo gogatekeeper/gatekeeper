@@ -515,7 +515,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:3.2.1
+  image: quay.io/gogatekeeper/gatekeeper:3.3.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -542,7 +542,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:3.2.1
+  image: quay.io/gogatekeeper/gatekeeper:3.3.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -1024,6 +1024,12 @@ Or on the command line
   --resources "uri=/*"  # requires authentication on the rest
   --resources "uri=/admin*|roles=admin,superuser|methods=POST,DELETE"
 ```
+
+From version 3.3.0 there is new option in resources: `white-listed-anon`.
+This option enables to allow anonymous access on resource (means no access token/bearer token present in request)
+and also allows in same time authenticated access on same resource (means for requests containing token it will validate it and request will go through whole authentication/authorization stack).
+This feature might be usefull e.g. in case you have public and private pages, but you would
+like to return private pages list only in case request was authenticated.
 
 ## PKCE (Proof Key for Code Exchange)
 
