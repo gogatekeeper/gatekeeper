@@ -1,4 +1,65 @@
 apiVersion: v1
+kind: Secret
+metadata:
+  name: tls
+type: kubernetes.io/tls
+data:
+  tls.crt: |
+    LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURYakNDQWthZ0F3SUJBZ0lVVlVOK0NRV3Y0
+    YWZhTHdXeUJZQTNoellVSzFVd0RRWUpLb1pJaHZjTkFRRUwKQlFBd1JURUxNQWtHQTFVRUJoTUNR
+    VlV4RXpBUkJnTlZCQWdNQ2xOdmJXVXRVM1JoZEdVeElUQWZCZ05WQkFvTQpHRWx1ZEdWeWJtVjBJ
+    RmRwWkdkcGRITWdVSFI1SUV4MFpEQWVGdzB5TVRBek1UY3lNelUyTkRGYUZ3MDBNVEF6Ck1USXlN
+    elUyTkRGYU1IZ3hDekFKQmdOVkJBWVRBbGhZTVF3d0NnWURWUVFJREFOT0wwRXhEREFLQmdOVkJB
+    Y00KQTA0dlFURWdNQjRHQTFVRUNnd1hVMlZzWmkxemFXZHVaV1FnWTJWeWRHbG1hV05oZEdVeEt6
+    QXBCZ05WQkFNTQpJakV5TUM0d0xqQXVNVG9nVTJWc1ppMXphV2R1WldRZ1kyVnlkR2xtYVdOaGRH
+    VXdnZ0VpTUEwR0NTcUdTSWIzCkRRRUJBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRQzBFMmN4ZTFuRExD
+    RTdVNGszWnZkNG5NaUFIcUtaQnhDUHVBRGIKelIxNUljT2xjTFRxQkJQTkNwd2dYU1p3b2JnZUVs
+    MWFEaTlmQXNFS1haTlBVMkdiSVBtdzVuQkhmRS9SWjVKbQpVMkdYZEVtMlIySXJud3BpOGtrOGhI
+    V1BLNEVUTjgrNnlrNHFLRjFQeGtvSElpbG0zN1Q4eldvcXpZdEl1ajMvCk9icWkzSW82N3B2S1lD
+    c0ExcU1SM1JSbEk5SWVnVUFjM1dITXJLSUxZUVNoRW82NnBnOGNUYjdRL0xkZ2FTeFIKM0tMaTll
+    b3gwdlRFNzJBbVZRb0JabFovZWo3c0pwd1BLS21rc3pYVUFNUEdmMXMzSHgvbGdEdE0zTXh0SGsw
+    cAp4TEJIZ1ArUDVpNzdkRjllZFc5aGMvZk1pcmRPbUNwWVpib294M0xySUdvVmNKb2RBZ01CQUFH
+    akV6QVJNQThHCkExVWRFUVFJTUFhSEJIOEFBQUV3RFFZSktvWklodmNOQVFFTEJRQURnZ0VCQUl5
+    SkRTd05IY3I2eHN0a2x1L0sKSHlwYWl2QUZhOTVlQUkxUXJDc0pGMVYvbW05TEVFR2VzL2lIYnZr
+    cEZKSFFLaEprTzZhb1FtZWs4ekYyd0tjLwozUmhueHJSMzIvdWpIZXRKRmthL0x0dnl0VmhYb1Nx
+    a1VXZWFYT2ZCT0NSL1hyd1R3Ukh6YmJDTkpwVXNldFhyCjlhZUR2U3J0dUIvQWFSVTJ0QmxROUdS
+    MUgrQ2NvQmdEbUQzSXB1S0NpZXZ2SmJtVStLenVXOUFVZzZkMHlMTlAKMlZ0WlVBLzlKcEY5UFpP
+    TVB3K2lPaG1qaFRxZlJEMlF2YmtSN2UzNGQrMW1MQm41MjRLSWM4WTJVM09NcER1RwpCZlZIT1E1
+    SmhUTkduOWFvZ3hwekYzTDlvTVVaK2ZDYm9iVnlITU15RTZiODJIOEZVcG0xRkRKcFphSUxJNWtU
+    CmlzZz0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+  tls.key: |
+    LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2Z0lCQURBTkJna3Foa2lHOXcwQkFRRUZB
+    QVNDQktnd2dnU2tBZ0VBQW9JQkFRQzBFMmN4ZTFuRExDRTcKVTRrM1p2ZDRuTWlBSHFLWkJ4Q1B1
+    QURielIxNUljT2xjTFRxQkJQTkNwd2dYU1p3b2JnZUVsMWFEaTlmQXNFSwpYWk5QVTJHYklQbXc1
+    bkJIZkUvUlo1Sm1VMkdYZEVtMlIySXJud3BpOGtrOGhIV1BLNEVUTjgrNnlrNHFLRjFQCnhrb0hJ
+    aWxtMzdUOHpXb3F6WXRJdWozL09icWkzSW82N3B2S1lDc0ExcU1SM1JSbEk5SWVnVUFjM1dITXJL
+    SUwKWVFTaEVvNjZwZzhjVGI3US9MZGdhU3hSM0tMaTllb3gwdlRFNzJBbVZRb0JabFovZWo3c0pw
+    d1BLS21rc3pYVQpBTVBHZjFzM0h4L2xnRHRNM014dEhrMHB4TEJIZ1ArUDVpNzdkRjllZFc5aGMv
+    Zk1pcmRPbUNwWVpib294M0xyCklHb1ZjSm9kQWdNQkFBRUNnZ0VBYWhYNE9FVjBCekFyVDdrUjRH
+    cXZwZ1d2ZFJNWE5WSGRKdDMrMjM3R08wTngKOERncXpLYWtSNnBWZWhlR2V0bzdEclJBL0xuWW5I
+    K1IzQnB1bTFBQzg1SUVwM3ZLYjhMRGZ4a21QVlFuN1VMYgozaC9Gck84Zi9sVEFZbitpaGpyWjZz
+    bDVmcENLWmZtcnAwQ3BBZlRWTVQ3ZmNBTlA1WEY3K2RlR2lLS28yaUpXCmcxTzhaZmxpaEVEY2xQ
+    dHFCQUJwUmpCZWpSaXYrN1lVUi84SGVxTlVqbUxFV0d3QUhFcXJzRndNejkyQ3ZKZCsKTjlVMDND
+    czFMdnBYa0lYSEc4NFNVdmJEUVJ1eXhvT05YS2F1YXNZcjAxa01GcUJUak9jODZ4WFNOc01XQ3p1
+    NApVYVdCMVp0TXVnTmp5TU5kVlFVU0x6MUVBQkk0YVFoV3B0bUp1ZDRMd1FLQmdRRHVxM0wzZ09F
+    YUNtaTQrNDZCCnZuSGR1MGo2c2hVTERkanhiNHI4eFk0dGY0VDhjKy80TG0vc2lNMitGYitnMDFP
+    RUNWUlBWUWxGZDBpbm9UeSsKajhBUnZldVJ2cnJHekFTNUNCMXRsK1BpTEo1SGJkbHR6VHJWM1pV
+    Yjk5ZnZibkhBaTd1cDdkYVpnOUlCZmMxbgpBQldUQTFwZE96SzgyZzhxRGVGQk1TQ0pVUUtCZ1FE
+    QkpzVnZiaGVLTDJ4ZEt5SXpkMmplM2d3SW5rWXBBVXFhClM5elM2aDV3cEc4VHFGdDkwT1l2bWF3
+    eXZUd3NwZ3AzblVVSFR2OVo1RkNoRlBndG9aSkpPLzBPWXQ2RGpwVXMKT2hnM0RodGhHNXE2Zkcr
+    a1MyekdHSHhRU0N6UUI2Q3ZLZGVaNWlNTy9MMGFyS3M5VXVJZExWL1NOZk1kS202dgo4dGRjWUNk
+    UkRRS0JnUUM1Y0N6YmNSOTFCREZweU1wb3RIZjBOOWYwTVBsNHBVR3lGV0NBRlY3cXF2SEExTFBX
+    CnVQM3RZajI1TzF5d3NJRnJUWFJjVDAzczAwbDROU2JsU1B1S3pXMkN5QmFHNzIyYjlsb25GS1RT
+    enFnTUI2V3cKVW8wc0xnWDB2UlRoeTRaR2ZFdExOS2hRanNOVXRWSXFmVDVHQTR6cWMxeHdyMXlv
+    NkMva1h5OVFnUUtCZ1FDWApWaDU1MldPZVJOdjkvKzdUTG1zL3UvRG55OE1qRzd6dE9pVnlLRGZq
+    Z0NMNzN2eVlqdFhjVSthazlyb3dMWVNrCkJkaHhDb2R1VWtLT2c1U1VoRFRQSnE1MjJDYUtJMnhq
+    ODd6SFhrazdnOXB1NVZMQUFzemVSWThaaEFPQWw0bGgKMVVIMWRtamZ0RTBpbWttdFNjU2FvZE9q
+    Szl3cGJQYSs2MkdzSWphTC9RS0JnRmR3eVJUcDdHemJURHNROTRiQQp1Nk1vRlQ3TG4ySTQ4emFB
+    MDdHNzZyOXQzb09Bc084ZG9FRCtoZFN3bHpBN1J5TTJsNmpPa0psaStOWG1WQTFHCmVKTjlMVTZj
+    dnJnc3l3MlhGNTRaaStzUmRYYjFMVTlwVkhjSU5JT3dZN3pOTXZZUkFrU3RreGhQWFVEQmlueG8K
+    d3FWemgzR0JCelB4QWIzYU04VHUwVysxCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K
+---
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: keycloak-config
@@ -2841,20 +2902,23 @@ spec:
     spec:
       containers:
         - name: keycloak
-          image: quay.io/keycloak/keycloak:26.0.2
+          image: quay.io/keycloak/keycloak:26.2.3
           command: 
             - /opt/keycloak/bin/kc.sh
             - start-dev
             - --features=preview
             - --import-realm
+            - --proxy-headers=xforwarded
+            # - --https-certificate-file=/etc/ssl/tls.crt
+            # - --https-certificate-key-file=/etc/ssl/tls.key
           env:
             - name: KEYCLOAK_USER
               value: admin
             - name: KEYCLOAK_PASSWORD
               value: admin
-            - name: KEYCLOAK_ADMIN
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
               value: admin
-            - name: KEYCLOAK_ADMIN_PASSWORD
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
               value: admin
             - name: JAVA_OPTS
               value: >-
@@ -2886,11 +2950,10 @@ spec:
               port: keycloak
             failureThreshold: 30
             periodSeconds: 10
-          # volumeMounts:
-          #   - name: ca
-          #     mountPath: "/etc/ssl/certs"
-          #     readOnly: true
           volumeMounts:
+            # - name: tls
+            #   mountPath: "/etc/ssl"
+            #   readOnly: true
             - name: keycloak-config
               mountPath: /opt/keycloak/data/import/test.json
               subPath: test.json
@@ -2898,12 +2961,9 @@ spec:
         - name: keycloak-config
           configMap:
             name: keycloak-config
-        # - name: ca
+        # - name: tls
         #   secret:
-        #     secretName: ca-secret
-        #     items:
-        #       - key: caca
-        #         path: ca-certificates.crt
+        #     secretName: tls
 ---
 apiVersion: v1
 kind: Service
@@ -2940,10 +3000,15 @@ kind: Ingress
 metadata:
   name: nginx
   annotations:
-    ingress.kubernetes.io/ssl-redirect: "false"
+    ingress.kubernetes.io/ssl-redirect: "true"
 spec:
+  tls:
+  - hosts:
+      - localhost
+    secretName: tls
   rules:
-  - http:
+  - host: localhost
+    http:
       paths:
       - path: /
         pathType: Prefix
@@ -2959,3 +3024,14 @@ spec:
             name: mock
             port:
               number: 4010
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    additionalArguments:
+      - "--entryPoints.web.proxyProtocol.insecure"
+      - "--entryPoints.web.forwardedHeaders.insecure"

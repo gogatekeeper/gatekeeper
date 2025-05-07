@@ -2,6 +2,7 @@ package e2e_test
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -29,11 +30,13 @@ var _ = Describe("UMA Code Flow authorization", func() {
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=120s",
+			"--skip-openid-provider-tls-verify=true",
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + umaTestClient,
 			"--client-secret=" + umaTestClientSecret,
 			"--upstream-url=" + server.URL,
 			"--no-redirects=false",
+			"--verbose=true",
 			"--enable-uma=true",
 			"--cookie-uma-name=" + umaCookieName,
 			"--skip-access-token-clientid-check=true",
@@ -42,6 +45,9 @@ var _ = Describe("UMA Code Flow authorization", func() {
 			"--secure-cookie=false",
 			"--enable-encrypted-token=false",
 			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--tls-ca-certificate=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -52,6 +58,7 @@ var _ = Describe("UMA Code Flow authorization", func() {
 		It("should login with user/password and logout successfully", func(_ context.Context) {
 			var err error
 			rClient := resty.New()
+			rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 			resp := codeFlowLogin(rClient, proxyAddress+umaAllowedPath, http.StatusOK, testUser, testPass)
 			Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 
@@ -78,6 +85,7 @@ var _ = Describe("UMA Code Flow authorization", func() {
 	When("Accessing resource, which does not exist", func() {
 		It("should be forbidden without permission ticket", func(_ context.Context) {
 			rClient := resty.New()
+			rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 			resp := codeFlowLogin(rClient, proxyAddress+umaNonExistentPath, http.StatusForbidden, testUser, testPass)
 
 			body := resp.Body()
@@ -89,6 +97,7 @@ var _ = Describe("UMA Code Flow authorization", func() {
 		It("should be forbidden and then allowed", func(_ context.Context) {
 			var err error
 			rClient := resty.New()
+			rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 			resp := codeFlowLogin(rClient, proxyAddress+umaForbiddenPath, http.StatusForbidden, testUser, testPass)
 
 			body := resp.Body()
@@ -125,6 +134,7 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=120s",
+			"--skip-openid-provider-tls-verify=true",
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + umaTestClient,
 			"--client-secret=" + umaTestClientSecret,
@@ -141,6 +151,9 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 			"--enable-logging=true",
 			"--enable-encrypted-token=false",
 			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--tls-ca-certificate=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -153,6 +166,7 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 				resp := codeFlowLogin(rClient, proxyAddress+umaMethodAllowedPath, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 
@@ -190,6 +204,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 		Expect(err).NotTo(HaveOccurred())
 		fwdPortNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+		localURI := "http://localhost:"
 		proxyAddress = localURI + portNum
 		fwdProxyAddress = localURI + fwdPortNum
 		osArgs := []string{os.Args[0]}
@@ -197,6 +212,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=120s",
+			"--skip-openid-provider-tls-verify=true",
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + umaTestClient,
 			"--client-secret=" + umaTestClientSecret,
@@ -215,6 +231,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 		fwdProxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=120s",
+			"--skip-openid-provider-tls-verify=true",
 			"--listen=" + allInterfaces + fwdPortNum,
 			"--client-id=" + testClient,
 			"--client-secret=" + testClientSecret,
@@ -277,6 +294,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 		Expect(err).NotTo(HaveOccurred())
 		fwdPortNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+		localURI := "http://localhost:"
 		proxyAddress = localURI + portNum
 		fwdProxyAddress = localURI + fwdPortNum
 		osArgs := []string{os.Args[0]}
@@ -284,6 +302,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=120s",
+			"--skip-openid-provider-tls-verify=true",
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + umaTestClient,
 			"--client-secret=" + umaTestClientSecret,
@@ -303,6 +322,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 		fwdProxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=120s",
+			"--skip-openid-provider-tls-verify=true",
 			"--listen=" + allInterfaces + fwdPortNum,
 			"--client-id=" + testClient,
 			"--client-secret=" + testClientSecret,
@@ -384,6 +404,7 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=120s",
+			"--skip-openid-provider-tls-verify=true",
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + umaTestClient,
 			"--client-secret=" + umaTestClientSecret,
@@ -400,6 +421,9 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 			"--enable-logging=true",
 			"--enable-encrypted-token=false",
 			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--tls-ca-certificate=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -410,8 +434,9 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 		It("should be allowed and logout successfully", func(_ context.Context) {
 			var err error
 			rClient := resty.New()
+			rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 			rClient.SetHeaders(map[string]string{
-				constant.HeaderXForwardedProto:  "http",
+				constant.HeaderXForwardedProto:  "https",
 				constant.HeaderXForwardedHost:   strings.Split(proxyAddress, "//")[1],
 				constant.HeaderXForwardedURI:    umaMethodAllowedPath,
 				constant.HeaderXForwardedMethod: "GET",
@@ -432,8 +457,9 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 	When("Accessing not allowed resource", func() {
 		It("should be forbidden", func(_ context.Context) {
 			rClient := resty.New()
+			rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 			rClient.SetHeaders(map[string]string{
-				constant.HeaderXForwardedProto:  "http",
+				constant.HeaderXForwardedProto:  "https",
 				constant.HeaderXForwardedHost:   strings.Split(proxyAddress, "//")[1],
 				constant.HeaderXForwardedURI:    umaMethodAllowedPath,
 				constant.HeaderXForwardedMethod: "POST",
@@ -446,8 +472,9 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 	When("Accessing resource without X-Forwarded headers", func() {
 		It("should be forbidden", func(_ context.Context) {
 			rClient := resty.New()
+			rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 			rClient.SetHeaders(map[string]string{
-				constant.HeaderXForwardedProto: "http",
+				constant.HeaderXForwardedProto: "https",
 				constant.HeaderXForwardedHost:  strings.Split(proxyAddress, "//")[1],
 				constant.HeaderXForwardedURI:   umaMethodAllowedPath,
 			})

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/tls"
 	"math/big"
 	"net"
 	"net/http"
@@ -25,6 +26,7 @@ import (
 	. "github.com/onsi/ginkgo/v2" //nolint:revive //we want to use it for ginkgo
 	. "github.com/onsi/gomega"    //nolint:revive //we want to use it for gomega
 	"github.com/pquerna/otp/totp"
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
@@ -43,8 +45,8 @@ const (
 	//nolint:gosec
 	loaTestClientSecret     = "4z9PoOooXNFmSCPZx0xHXaUxX4eYGFO0"
 	timeout                 = time.Second * 300
-	idpURI                  = "http://localhost:8081"
-	localURI                = "http://localhost:"
+	idpURI                  = "https://localhost:8443"
+	localURI                = "https://localhost:"
 	logoutURI               = "/oauth" + constant.LogoutURL
 	registerURI             = "/oauth" + constant.RegistrationURL
 	allInterfaces           = "0.0.0.0:"
@@ -188,6 +190,7 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=120s",
+			"--skip-openid-provider-tls-verify=true",
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + testClient,
 			"--client-secret=" + testClientSecret,
@@ -199,6 +202,9 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 			"--openid-provider-retry-count=30",
 			"--enable-encrypted-token=false",
 			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--tls-ca-certificate=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -217,16 +223,26 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 					TokenURL:     idpRealmURI + constant.IdpTokenURI,
 				}
 
-				respToken, err := conf.Token(ctx)
+				rClient := resty.New()
+				hClient := rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}).GetClient()
+				oidcLibCtx := context.WithValue(ctx, oauth2.HTTPClient, hClient)
+
+				respToken, err := conf.Token(oidcLibCtx)
 				Expect(err).NotTo(HaveOccurred())
 
-				request := resty.New().SetRedirectPolicy(
+				rClient = resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+
+				request := rClient.SetRedirectPolicy(
 					resty.NoRedirectPolicy()).R().SetAuthToken(respToken.AccessToken)
 				resp, err := request.Get(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 
-				request = resty.New().R().SetAuthToken(respToken.AccessToken)
+				rClient = resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+
+				request = rClient.R().SetAuthToken(respToken.AccessToken)
 				resp, err = request.Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
@@ -250,6 +266,7 @@ var _ = Describe("Code Flow login/logout", func() {
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=120s",
+			"--skip-openid-provider-tls-verify=true",
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + testClient,
 			"--client-secret=" + testClientSecret,
@@ -268,6 +285,9 @@ var _ = Describe("Code Flow login/logout", func() {
 			"--enable-register-handler=true",
 			"--enable-encrypted-token=false",
 			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--tls-ca-certificate=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -281,6 +301,7 @@ var _ = Describe("Code Flow login/logout", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
@@ -345,6 +366,7 @@ var _ = Describe("Code Flow login/logout", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
@@ -388,6 +410,7 @@ var _ = Describe("Code Flow login/logout", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 				reqAddress := proxyAddress + registerURI
 				resp := registerLogin(rClient, reqAddress, http.StatusOK, testRegisterUser, testRegisterPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -460,6 +483,7 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=120s",
+			"--skip-openid-provider-tls-verify=true",
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + pkceTestClient,
 			"--client-secret=" + pkceTestClientSecret,
@@ -472,6 +496,9 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 			"--enable-pkce=true",
 			"--cookie-pkce-name=" + pkceCookieName,
 			"--enable-encrypted-token=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--tls-ca-certificate=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -485,6 +512,8 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 
@@ -513,12 +542,13 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
-		proxyAddressFirst = "http://127.0.0.1:" + portNum
+		proxyAddressFirst = "https://127.0.0.1:" + portNum
 
 		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=120s",
+			"--skip-openid-provider-tls-verify=true",
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + testClient,
 			"--client-secret=" + testClientSecret,
@@ -534,6 +564,9 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 			"--post-logout-redirect-uri=http://google.com",
 			"--enable-encrypted-token=false",
 			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--tls-ca-certificate=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -546,6 +579,7 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 		proxyArgs = []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=120s",
+			"--skip-openid-provider-tls-verify=true",
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + pkceTestClient,
 			"--client-secret=" + pkceTestClientSecret,
@@ -562,6 +596,9 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 			"--enable-id-token-cookie=true",
 			"--post-logout-redirect-uri=http://google.com",
 			"--enable-encrypted-token=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--tls-ca-certificate=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -572,6 +609,7 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 		It("should logout on both successfully", func(_ context.Context) {
 			var err error
 			rClient := resty.New()
+			rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 			resp := codeFlowLogin(rClient, proxyAddressFirst, http.StatusOK, testUser, testPass)
 			Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 			resp = codeFlowLogin(rClient, proxyAddressSec, http.StatusOK, testUser, testPass)
@@ -621,6 +659,7 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=120s",
+			"--skip-openid-provider-tls-verify=true",
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + loaTestClient,
 			"--client-secret=" + loaTestClientSecret,
@@ -641,6 +680,9 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 			"--post-login-redirect-path=" + postLoginRedirectPath,
 			"--enable-encrypted-token=false",
 			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--tls-ca-certificate=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -655,6 +697,7 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testLoAUser, testLoAPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
@@ -728,6 +771,7 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testLoAUser, testLoAPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()

@@ -106,7 +106,7 @@ func NewTestToken(issuer string) *FakeToken {
 
 func (t *FakeToken) GetToken() (string, error) {
 	input := []byte("")
-	block, _ := pem.Decode([]byte(fakePrivateKey))
+	block, _ := pem.Decode([]byte(FakePrivateKey))
 	if block != nil {
 		input = block.Bytes
 	}
@@ -135,7 +135,7 @@ func (t *FakeToken) GetToken() (string, error) {
 
 func (t *FakeToken) GetUnsignedToken() (string, error) {
 	input := []byte("")
-	block, _ := pem.Decode([]byte(fakePrivateKey))
+	block, _ := pem.Decode([]byte(FakePrivateKey))
 	if block != nil {
 		input = block.Bytes
 	}
@@ -194,7 +194,7 @@ type fakeAuthServer struct {
 	pkceChallenge             string
 }
 
-const fakePrivateKey = `
+const FakePrivateKey = `
 -----BEGIN PRIVATE KEY-----
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC0E2cxe1nDLCE7
 U4k3Zvd4nMiAHqKZBxCPuADbzR15IcOlcLTqBBPNCpwgXSZwobgeEl1aDi9fAsEK
@@ -225,7 +225,7 @@ wqVzh3GBBzPxAb3aM8Tu0W+1
 -----END PRIVATE KEY-----
 `
 
-const fakeCert = `
+const FakeCert = `
 -----BEGIN CERTIFICATE-----
 MIIDXjCCAkagAwIBAgIUVUN+CQWv4afaLwWyBYA3hzYUK1UwDQYJKoZIhvcNAQEL
 BQAwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
@@ -249,7 +249,7 @@ isg=
 -----END CERTIFICATE-----
 `
 
-const fakeCA = `
+const FakeCA = `
 -----BEGIN CERTIFICATE-----
 MIIDazCCAlOgAwIBAgIUCDok30ZdCF+fn3KuK/odxYyqJR0wDQYJKoZIhvcNAQEL
 BQAwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
@@ -293,7 +293,7 @@ type fakeAuthConfig struct {
 
 // newFakeAuthServer simulates a oauth service.
 func newFakeAuthServer(config *fakeAuthConfig) *fakeAuthServer {
-	certBlock, _ := pem.Decode([]byte(fakeCert))
+	certBlock, _ := pem.Decode([]byte(FakeCert))
 
 	var cert *x509.Certificate
 	cert, err := x509.ParseCertificate(certBlock.Bytes)
