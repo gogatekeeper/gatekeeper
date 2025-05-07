@@ -21,7 +21,7 @@ var tlsPrivateKey = os.TempDir() + testsuite_test.FakePrivFilePrefix + strconv.I
 //nolint:gosec, gochecknoglobals
 var tlsCaCertificate = os.TempDir() + testsuite_test.FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
 
-//nolint:gosec, gochecknoglobals
+//nolint:gochecknoglobals
 var caPool *x509.CertPool
 
 var _ = ginkgo.BeforeSuite(func(_ context.Context) {
