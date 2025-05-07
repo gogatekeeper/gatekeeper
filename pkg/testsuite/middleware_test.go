@@ -204,13 +204,13 @@ func TestAdminListener(t *testing.T) {
 					Redirects:               true,
 					ExpectedCode:            http.StatusOK,
 					ExpectedContentContains: "OK",
-					RequestCA:               FakeCA,
+					RequestCA:               fakeCA,
 				},
 				{
 					URL:          "https://127.0.0.1:12301/oauth/metrics",
 					Redirects:    true,
 					ExpectedCode: http.StatusOK,
-					RequestCA:    FakeCA,
+					RequestCA:    fakeCA,
 				},
 			},
 		},
@@ -233,13 +233,13 @@ func TestAdminListener(t *testing.T) {
 					Redirects:               true,
 					ExpectedCode:            http.StatusOK,
 					ExpectedContentContains: "OK",
-					RequestCA:               FakeCA,
+					RequestCA:               fakeCA,
 				},
 				{
 					URL:          "https://127.0.0.1:12302/oauth/metrics",
 					Redirects:    true,
 					ExpectedCode: http.StatusOK,
-					RequestCA:    FakeCA,
+					RequestCA:    fakeCA,
 				},
 			},
 		},
@@ -281,7 +281,7 @@ func TestAdminListener(t *testing.T) {
 				}
 
 				if certFile != "" {
-					fakeCertByte := []byte(FakeCert)
+					fakeCertByte := []byte(fakeCert)
 					err := os.WriteFile(certFile, fakeCertByte, 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing certificate %s", err)
@@ -290,7 +290,7 @@ func TestAdminListener(t *testing.T) {
 				}
 
 				if privFile != "" {
-					fakeKeyByte := []byte(FakePrivateKey)
+					fakeKeyByte := []byte(fakePrivateKey)
 					err := os.WriteFile(privFile, fakeKeyByte, 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing privateKey %s", err)
@@ -299,7 +299,7 @@ func TestAdminListener(t *testing.T) {
 				}
 
 				if caFile != "" {
-					fakeCAByte := []byte(FakeCA)
+					fakeCAByte := []byte(fakeCA)
 					err := os.WriteFile(caFile, fakeCAByte, 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing cacertificate %s", err)

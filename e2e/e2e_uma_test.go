@@ -58,7 +58,7 @@ var _ = Describe("UMA Code Flow authorization", func() {
 		It("should login with user/password and logout successfully", func(_ context.Context) {
 			var err error
 			rClient := resty.New()
-			rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
 			resp := codeFlowLogin(rClient, proxyAddress+umaAllowedPath, http.StatusOK, testUser, testPass)
 			Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 
@@ -85,7 +85,7 @@ var _ = Describe("UMA Code Flow authorization", func() {
 	When("Accessing resource, which does not exist", func() {
 		It("should be forbidden without permission ticket", func(_ context.Context) {
 			rClient := resty.New()
-			rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
 			resp := codeFlowLogin(rClient, proxyAddress+umaNonExistentPath, http.StatusForbidden, testUser, testPass)
 
 			body := resp.Body()
@@ -97,7 +97,7 @@ var _ = Describe("UMA Code Flow authorization", func() {
 		It("should be forbidden and then allowed", func(_ context.Context) {
 			var err error
 			rClient := resty.New()
-			rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
 			resp := codeFlowLogin(rClient, proxyAddress+umaForbiddenPath, http.StatusForbidden, testUser, testPass)
 
 			body := resp.Body()
@@ -166,7 +166,7 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
-				rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
 				resp := codeFlowLogin(rClient, proxyAddress+umaMethodAllowedPath, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 
@@ -204,9 +204,8 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 		Expect(err).NotTo(HaveOccurred())
 		fwdPortNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
-		localURI := "http://localhost:"
-		proxyAddress = localURI + portNum
-		fwdProxyAddress = localURI + fwdPortNum
+		proxyAddress = httpLocalURI + portNum
+		fwdProxyAddress = httpLocalURI + fwdPortNum
 		osArgs := []string{os.Args[0]}
 		fwdOsArgs := []string{os.Args[0]}
 		proxyArgs := []string{
@@ -294,9 +293,8 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 		Expect(err).NotTo(HaveOccurred())
 		fwdPortNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
-		localURI := "http://localhost:"
-		proxyAddress = localURI + portNum
-		fwdProxyAddress = localURI + fwdPortNum
+		proxyAddress = httpLocalURI + portNum
+		fwdProxyAddress = httpLocalURI + fwdPortNum
 		osArgs := []string{os.Args[0]}
 		fwdOsArgs := []string{os.Args[0]}
 		proxyArgs := []string{
@@ -434,7 +432,7 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 		It("should be allowed and logout successfully", func(_ context.Context) {
 			var err error
 			rClient := resty.New()
-			rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
 			rClient.SetHeaders(map[string]string{
 				constant.HeaderXForwardedProto:  "https",
 				constant.HeaderXForwardedHost:   strings.Split(proxyAddress, "//")[1],
@@ -457,7 +455,7 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 	When("Accessing not allowed resource", func() {
 		It("should be forbidden", func(_ context.Context) {
 			rClient := resty.New()
-			rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
 			rClient.SetHeaders(map[string]string{
 				constant.HeaderXForwardedProto:  "https",
 				constant.HeaderXForwardedHost:   strings.Split(proxyAddress, "//")[1],
@@ -472,7 +470,7 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 	When("Accessing resource without X-Forwarded headers", func() {
 		It("should be forbidden", func(_ context.Context) {
 			rClient := resty.New()
-			rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
 			rClient.SetHeaders(map[string]string{
 				constant.HeaderXForwardedProto: "https",
 				constant.HeaderXForwardedHost:  strings.Split(proxyAddress, "//")[1],

@@ -2,6 +2,7 @@ package e2e_test
 
 import (
 	"context"
+	"crypto/x509"
 	"math/rand"
 	"os"
 	"strconv"
@@ -11,25 +12,30 @@ import (
 	. "github.com/onsi/gomega" //nolint:revive //we want to use it for gomega
 )
 
-//nolint:gosec
+//nolint:gosec, gochecknoglobals
 var tlsCertificate = os.TempDir() + testsuite_test.FakeCertFilePrefix + strconv.Itoa(rand.Intn(10000))
 
-//nolint:gosec
+//nolint:gosec, gochecknoglobals
 var tlsPrivateKey = os.TempDir() + testsuite_test.FakePrivFilePrefix + strconv.Itoa(rand.Intn(10000))
 
-//nolint:gosec
+//nolint:gosec, gochecknoglobals
 var tlsCaCertificate = os.TempDir() + testsuite_test.FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
 
+var caPool *x509.CertPool
+
 var _ = ginkgo.BeforeSuite(func(_ context.Context) {
-	fakeCertByte := []byte(testsuite_test.FakeCert)
+	caPool = x509.NewCertPool()
+	caPool.AppendCertsFromPEM([]byte(fakeCA))
+
+	fakeCertByte := []byte(fakeCert)
 	err := os.WriteFile(tlsCertificate, fakeCertByte, 0o600)
 	Expect(err).NotTo(HaveOccurred())
 
-	fakeKeyByte := []byte(testsuite_test.FakePrivateKey)
+	fakeKeyByte := []byte(fakePrivateKey)
 	err = os.WriteFile(tlsPrivateKey, fakeKeyByte, 0o600)
 	Expect(err).NotTo(HaveOccurred())
 
-	fakeCAByte := []byte(testsuite_test.FakeCA)
+	fakeCAByte := []byte(fakeCA)
 	err = os.WriteFile(tlsCaCertificate, fakeCAByte, 0o600)
 	Expect(err).NotTo(HaveOccurred())
 })

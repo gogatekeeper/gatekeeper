@@ -1941,7 +1941,7 @@ func TestTLS(t *testing.T) {
 				{
 					URL:          fmt.Sprintf("https://%s/test", testProxyAddr),
 					ExpectedCode: http.StatusUnauthorized,
-					RequestCA:    FakeCA,
+					RequestCA:    fakeCA,
 					Redirects:    false,
 				},
 			},
@@ -1964,7 +1964,7 @@ func TestTLS(t *testing.T) {
 				{
 					URL:          fmt.Sprintf("https://%s/test", testProxyAddr),
 					ExpectedCode: http.StatusUnauthorized,
-					RequestCA:    FakeCA,
+					RequestCA:    fakeCA,
 					TLSMin:       tls.VersionTLS13,
 					Redirects:    false,
 				},
@@ -1988,7 +1988,7 @@ func TestTLS(t *testing.T) {
 				{
 					URL:          fmt.Sprintf("https://%s/test", testProxyAddr),
 					ExpectedCode: http.StatusUnauthorized,
-					RequestCA:    FakeCA,
+					RequestCA:    fakeCA,
 					TLSMin:       tls.VersionTLS13,
 					Redirects:    false,
 				},
@@ -2011,7 +2011,7 @@ func TestTLS(t *testing.T) {
 				{
 					URL:                  fmt.Sprintf("https://%s/test", testProxyAddr),
 					ExpectedRequestError: "tls: protocol version not supported",
-					RequestCA:            FakeCA,
+					RequestCA:            fakeCA,
 					TLSMax:               tls.VersionTLS12,
 				},
 			},
@@ -2042,7 +2042,7 @@ func TestTLS(t *testing.T) {
 				}
 
 				if certFile != "" {
-					fakeCertByte := []byte(FakeCert)
+					fakeCertByte := []byte(fakeCert)
 					err := os.WriteFile(certFile, fakeCertByte, 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing certificate %s", err)
@@ -2051,7 +2051,7 @@ func TestTLS(t *testing.T) {
 				}
 
 				if privFile != "" {
-					fakeKeyByte := []byte(FakePrivateKey)
+					fakeKeyByte := []byte(fakePrivateKey)
 					err := os.WriteFile(privFile, fakeKeyByte, 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing privateKey %s", err)
@@ -2060,7 +2060,7 @@ func TestTLS(t *testing.T) {
 				}
 
 				if caFile != "" {
-					fakeCAByte := []byte(FakeCA)
+					fakeCAByte := []byte(fakeCA)
 					err := os.WriteFile(caFile, fakeCAByte, 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing cacertificate %s", err)
