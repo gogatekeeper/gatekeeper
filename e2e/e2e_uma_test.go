@@ -58,7 +58,7 @@ var _ = Describe("UMA Code Flow authorization", func() {
 		It("should login with user/password and logout successfully", func(_ context.Context) {
 			var err error
 			rClient := resty.New()
-			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 			resp := codeFlowLogin(rClient, proxyAddress+umaAllowedPath, http.StatusOK, testUser, testPass)
 			Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 
@@ -85,7 +85,7 @@ var _ = Describe("UMA Code Flow authorization", func() {
 	When("Accessing resource, which does not exist", func() {
 		It("should be forbidden without permission ticket", func(_ context.Context) {
 			rClient := resty.New()
-			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 			resp := codeFlowLogin(rClient, proxyAddress+umaNonExistentPath, http.StatusForbidden, testUser, testPass)
 
 			body := resp.Body()
@@ -97,7 +97,7 @@ var _ = Describe("UMA Code Flow authorization", func() {
 		It("should be forbidden and then allowed", func(_ context.Context) {
 			var err error
 			rClient := resty.New()
-			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 			resp := codeFlowLogin(rClient, proxyAddress+umaForbiddenPath, http.StatusForbidden, testUser, testPass)
 
 			body := resp.Body()
@@ -166,7 +166,7 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
-				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress+umaMethodAllowedPath, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 
@@ -432,7 +432,7 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 		It("should be allowed and logout successfully", func(_ context.Context) {
 			var err error
 			rClient := resty.New()
-			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 			rClient.SetHeaders(map[string]string{
 				constant.HeaderXForwardedProto:  "https",
 				constant.HeaderXForwardedHost:   strings.Split(proxyAddress, "//")[1],
@@ -455,7 +455,7 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 	When("Accessing not allowed resource", func() {
 		It("should be forbidden", func(_ context.Context) {
 			rClient := resty.New()
-			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 			rClient.SetHeaders(map[string]string{
 				constant.HeaderXForwardedProto:  "https",
 				constant.HeaderXForwardedHost:   strings.Split(proxyAddress, "//")[1],
@@ -470,7 +470,7 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 	When("Accessing resource without X-Forwarded headers", func() {
 		It("should be forbidden", func(_ context.Context) {
 			rClient := resty.New()
-			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 			rClient.SetHeaders(map[string]string{
 				constant.HeaderXForwardedProto: "https",
 				constant.HeaderXForwardedHost:  strings.Split(proxyAddress, "//")[1],

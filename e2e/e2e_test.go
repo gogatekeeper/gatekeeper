@@ -74,7 +74,8 @@ const (
 	pkceCookieName        = "TESTPKCECOOKIE"
 	umaCookieName         = "TESTUMACOOKIE"
 	idpRealmURI           = idpURI + "/realms/" + testRealm
-	fakePrivateKey        = `
+	//nolint:gosec
+	fakePrivateKey = `
 -----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIA0wan+Hp0gsbyyZnN/Q8PzaQirGJYBA9g0UT9WIbnl/oAoGCCqGSM49
 AwEHoUQDQgAEzYuh8kValY9VN7IGdf1o3u7nt57SFCkpgTx7Dt6s/5FxLBih7Z8v
@@ -268,14 +269,15 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 				}
 
 				rClient := resty.New()
-				hClient := rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool}).GetClient()
+				hClient := rClient.SetTLSClientConfig(
+					&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13}).GetClient()
 				oidcLibCtx := context.WithValue(ctx, oauth2.HTTPClient, hClient)
 
 				respToken, err := conf.Token(oidcLibCtx)
 				Expect(err).NotTo(HaveOccurred())
 
 				rClient = resty.New()
-				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 
 				request := rClient.SetRedirectPolicy(
 					resty.NoRedirectPolicy()).R().SetAuthToken(respToken.AccessToken)
@@ -284,7 +286,7 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 
 				rClient = resty.New()
-				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 
 				request = rClient.R().SetAuthToken(respToken.AccessToken)
 				resp, err = request.Get(proxyAddress + logoutURI)
@@ -345,7 +347,7 @@ var _ = Describe("Code Flow login/logout", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
-				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
@@ -410,7 +412,7 @@ var _ = Describe("Code Flow login/logout", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
-				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
@@ -454,7 +456,7 @@ var _ = Describe("Code Flow login/logout", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
-				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				reqAddress := proxyAddress + registerURI
 				resp := registerLogin(rClient, reqAddress, http.StatusOK, testRegisterUser, testRegisterPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -556,7 +558,7 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
-				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -653,7 +655,7 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 		It("should logout on both successfully", func(_ context.Context) {
 			var err error
 			rClient := resty.New()
-			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 			resp := codeFlowLogin(rClient, proxyAddressFirst, http.StatusOK, testUser, testPass)
 			Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 			resp = codeFlowLogin(rClient, proxyAddressSec, http.StatusOK, testUser, testPass)
@@ -741,7 +743,7 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
-				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testLoAUser, testLoAPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
@@ -815,7 +817,7 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
-				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool})
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testLoAUser, testLoAPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
