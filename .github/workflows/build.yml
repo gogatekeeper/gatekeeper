@@ -29,11 +29,12 @@ jobs:
         with:
           cluster-name: "testcluster"
           args: >-
-            -p "8443:80@loadbalancer"
+            -p "8443:443@loadbalancer"
       - name: "Run Tests"
         run: |
           k3d kubeconfig merge testcluster --kubeconfig-switch-context
-          KUBECONFIG=~/.k3d/kubeconfig-testcluster.yaml kubectl apply -f ./e2e/k8s/manifest.yml
+          export KUBECONFIG=~/.k3d/kubeconfig-testcluster.yaml
+          kubectl apply -f ./e2e/k8s/manifest.yml
           go test -v -timeout=30m -race -coverprofile=profile.cov ./...
       # Run Go benchmarks
       - name: Benchmark
