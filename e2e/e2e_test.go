@@ -122,6 +122,7 @@ JaPa7l4CIHss0X1752ReND8FY/NI11GkPVWZaE1HPuJ10SbOog+3
 -----END CERTIFICATE-----
 `
 
+	//nolint:gosec
 	fakeCAKey = `
 -----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIKt826IYxvbYqE6h/d9CBEVHs4nmFK0KX8ZH+q4OWcZpoAoGCCqGSM49
@@ -232,6 +233,7 @@ func registerLogin(
 }
 
 func startAndWaitTestUpstream(errGroup *errgroup.Group) (*http.Server, string) {
+	//nolint:gosec
 	listener, err := net.Listen("tcp", "0.0.0.0:0")
 	Expect(err).NotTo(HaveOccurred())
 
@@ -246,6 +248,7 @@ func startAndWaitTestUpstream(errGroup *errgroup.Group) (*http.Server, string) {
 	}
 
 	listener = tls.NewListener(listener, tlsConfig)
+	//nolint:gosec
 	server := &http.Server{
 		Addr:      listener.Addr().String(),
 		Handler:   &testsuite_test.FakeUpstreamService{},
@@ -264,7 +267,7 @@ func startAndWaitTestUpstream(errGroup *errgroup.Group) (*http.Server, string) {
 	port := netParts[len(netParts)-1]
 	Eventually(func(_ Gomega) error {
 		ctx, cancel := context.WithTimeout(context.Background(), tlsTimeout)
-		d := tls.Dialer{
+		dialer := tls.Dialer{
 			Config: &tls.Config{
 				ServerName: "localhost",
 				RootCAs:    caPool,
@@ -272,7 +275,7 @@ func startAndWaitTestUpstream(errGroup *errgroup.Group) (*http.Server, string) {
 			},
 		}
 
-		conn, err := d.DialContext(ctx, "tcp", ":"+port)
+		conn, err := dialer.DialContext(ctx, "tcp", ":"+port)
 		cancel()
 		Expect(err).NotTo(HaveOccurred())
 
