@@ -232,7 +232,7 @@ func NewDefaultConfig() *Config {
 		ServerReadTimeout:             constant.DefaultServerReadTimeout,
 		ServerWriteTimeout:            constant.DefaultServerWriteTimeout,
 		SkipOpenIDProviderTLSVerify:   false,
-		SkipUpstreamTLSVerify:         true,
+		SkipUpstreamTLSVerify:         false,
 		SkipAccessTokenIssuerCheck:    true,
 		SkipAccessTokenClientIDCheck:  true,
 		Tags:                          make(map[string]string),
