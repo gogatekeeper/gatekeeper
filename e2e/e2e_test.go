@@ -5,10 +5,10 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/tls"
+	"errors"
 	"math/big"
 	"net"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"os"
 	"strconv"
@@ -28,6 +28,7 @@ import (
 	"github.com/pquerna/otp/totp"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -45,6 +46,7 @@ const (
 	//nolint:gosec
 	loaTestClientSecret     = "4z9PoOooXNFmSCPZx0xHXaUxX4eYGFO0"
 	timeout                 = time.Second * 300
+	tlsTimeout              = 10 * time.Second
 	idpURI                  = "https://localhost:8443"
 	localURI                = "https://localhost:"
 	httpLocalURI            = "http://localhost:"
@@ -77,46 +79,55 @@ const (
 	//nolint:gosec
 	fakePrivateKey = `
 -----BEGIN EC PRIVATE KEY-----
-MHcCAQEEIA0wan+Hp0gsbyyZnN/Q8PzaQirGJYBA9g0UT9WIbnl/oAoGCCqGSM49
-AwEHoUQDQgAEzYuh8kValY9VN7IGdf1o3u7nt57SFCkpgTx7Dt6s/5FxLBih7Z8v
-/6xWYMy1DZ/ftmKhzLdWGBw3/KFTZFW/uQ==
+MHcCAQEEIKnVV+DiZkHS27mwMpGaS0On7QRLZN6DFhvwoldID56uoAoGCCqGSM49
+AwEHoUQDQgAErEquBkfJw5/MPdYb7efTB6DAFkWoH65h3rJyK1wI15qLhIcHD0x+
+sO3cojzu4CHrOFhaZIawaMklc2gb5DilQw==
 -----END EC PRIVATE KEY-----
 `
 
 	fakeCert = `
 -----BEGIN CERTIFICATE-----
-MIIChzCCAi6gAwIBAgIUdNo4UjE80CwFpuB9OabwJfdQx20wCgYIKoZIzj0EAwIw
+MIICiTCCAi6gAwIBAgIUOgcbgQVCFOq3jEHFz40Psc+iYEMwCgYIKoZIzj0EAwIw
 eDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWExFjAUBgNVBAcTDVNh
 biBGcmFuY2lzY28xHzAdBgNVBAoTFkludGVybmV0IFdpZGdldHMsIEluYy4xDDAK
-BgNVBAsTA1dXVzENMAsGA1UEAxMEdGVzdDAeFw0yNTA1MDcyMTUwMDBaFw0zNTA1
-MDUyMTUwMDBaMFUxCzAJBgNVBAYTAlVTMQ4wDAYDVQQIEwVUZXhhczEPMA0GA1UE
+BgNVBAsTA1dXVzENMAsGA1UEAxMEdGVzdDAeFw0yNTA1MTEyMDEzMDBaFw0zNTA1
+MDkyMDEzMDBaMFUxCzAJBgNVBAYTAlVTMQ4wDAYDVQQIEwVUZXhhczEPMA0GA1UE
 BxMGRGFsbGFzMRcwFQYDVQQKEw5NeSBDZXJ0aWZpY2F0ZTEMMAoGA1UECxMDV1dX
-MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEzYuh8kValY9VN7IGdf1o3u7nt57S
-FCkpgTx7Dt6s/5FxLBih7Z8v/6xWYMy1DZ/ftmKhzLdWGBw3/KFTZFW/uaOBuDCB
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAErEquBkfJw5/MPdYb7efTB6DAFkWo
+H65h3rJyK1wI15qLhIcHD0x+sO3cojzu4CHrOFhaZIawaMklc2gb5DilQ6OBuDCB
 tTAOBgNVHQ8BAf8EBAMCBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDAYDVR0TAQH/
-BAIwADAdBgNVHQ4EFgQUzzldhD3SVHdF5+pfWKNV7d725sYwHwYDVR0jBBgwFoAU
-bpJPTaf4qmNj18IVY2FOVtI78ZkwQAYDVR0RBDkwN4IJbG9jYWxob3N0hwR/AAAB
+BAIwADAdBgNVHQ4EFgQUUmyldm+mF5as262PcbpSSHFgwCkwHwYDVR0jBBgwFoAU
+Ik96cIatFSAZ3PWXFukSlp+97dcwQAYDVR0RBDkwN4IJbG9jYWxob3N0hwR/AAAB
 hhFodHRwczovL2xvY2FsaG9zdIYRaHR0cHM6Ly8xMjcuMC4wLjEwCgYIKoZIzj0E
-AwIDRwAwRAIgE+uhmpQTVryDefftx7mwqJWEDB+UcVchBCj5HEKDq9ACIA/DVtH5
-sehNk++XHkJ51nMKkNNyMMcTnuut3DHL8JrB
+AwIDSQAwRgIhANqOuOvXipYx93Lukry5nU/9GoFcJsW0yFu4gxH0Eq72AiEA6lfL
+P7LIaNssByJ7rPmroMwMbgsw/0ww165HYPjQpr8=
 -----END CERTIFICATE-----
+
 `
 
 	fakeCA = `
 -----BEGIN CERTIFICATE-----
-MIICNTCCAdqgAwIBAgIUVJeIpDwfTA7KEvk0D67mbLKebN0wCgYIKoZIzj0EAwIw
+MIICMzCCAdqgAwIBAgIUSwrxz3yTG2X2vz2rsUBbP/chsnYwCgYIKoZIzj0EAwIw
 eDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWExFjAUBgNVBAcTDVNh
 biBGcmFuY2lzY28xHzAdBgNVBAoTFkludGVybmV0IFdpZGdldHMsIEluYy4xDDAK
-BgNVBAsTA1dXVzENMAsGA1UEAxMEdGVzdDAeFw0yNTA1MDcyMTUwMDBaFw0zNTA1
-MDUyMTUwMDBaMHgxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpDYWxpZm9ybmlhMRYw
+BgNVBAsTA1dXVzENMAsGA1UEAxMEdGVzdDAeFw0yNTA1MTEyMDEzMDBaFw0zNTA1
+MDkyMDEzMDBaMHgxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpDYWxpZm9ybmlhMRYw
 FAYDVQQHEw1TYW4gRnJhbmNpc2NvMR8wHQYDVQQKExZJbnRlcm5ldCBXaWRnZXRz
 LCBJbmMuMQwwCgYDVQQLEwNXV1cxDTALBgNVBAMTBHRlc3QwWTATBgcqhkjOPQIB
-BggqhkjOPQMBBwNCAAShk6FOk8ELcojDxVTk/nS2ptKHxtfUPOBVVnxDPgTsSbgU
-i76r16K/GMbQxZ9uLxThdyBE/+zhkEsWZsS7u8roo0IwQDAOBgNVHQ8BAf8EBAMC
-AQYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUbpJPTaf4qmNj18IVY2FOVtI7
-8ZkwCgYIKoZIzj0EAwIDSQAwRgIhAPvq07H/TSu1O6+v4rQR2fBnAoDsGive2scI
-OXGLqAOiAiEA6lFfgFB7AhvaYy1VL5vN10FGBvqg2VWBWdAyIcFlP7k=
+BggqhkjOPQMBBwNCAASEoZEf9zyroblM3zEa6uNB1QCgZ5QNE3Xhr47xkkXS91TE
+h03dbIctEYu8K0tbC9YRFxjeLI2JEpSZiNTBLQ8to0IwQDAOBgNVHQ8BAf8EBAMC
+AQYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUIk96cIatFSAZ3PWXFukSlp+9
+7dcwCgYIKoZIzj0EAwIDRwAwRAIgVO5FhzGJWEG+vaqEGHvVPFPKRx2pWyIMYdJl
+JaPa7l4CIHss0X1752ReND8FY/NI11GkPVWZaE1HPuJ10SbOog+3
 -----END CERTIFICATE-----
+`
+
+	fakeCAKey = `
+-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIKt826IYxvbYqE6h/d9CBEVHs4nmFK0KX8ZH+q4OWcZpoAoGCCqGSM49
+AwEHoUQDQgAEhKGRH/c8q6G5TN8xGurjQdUAoGeUDRN14a+O8ZJF0vdUxIdN3WyH
+LRGLvCtLWwvWERcY3iyNiRKUmYjUwS0PLQ==
+-----END EC PRIVATE KEY-----
 `
 )
 
@@ -220,13 +231,80 @@ func registerLogin(
 	return resp
 }
 
+func startAndWaitTestUpstream(errGroup *errgroup.Group) (*http.Server, string) {
+	listener, err := net.Listen("tcp", "0.0.0.0:0")
+	Expect(err).NotTo(HaveOccurred())
+
+	tlsCert, err := tls.LoadX509KeyPair(tlsCertificate, tlsPrivateKey)
+	Expect(err).NotTo(HaveOccurred())
+
+	tlsConfig := &tls.Config{
+		Certificates:             []tls.Certificate{tlsCert},
+		PreferServerCipherSuites: true,
+		NextProtos:               []string{"h2", "http/1.1"},
+		MinVersion:               tls.VersionTLS13,
+	}
+
+	listener = tls.NewListener(listener, tlsConfig)
+	server := &http.Server{
+		Addr:      listener.Addr().String(),
+		Handler:   &testsuite_test.FakeUpstreamService{},
+		TLSConfig: tlsConfig,
+	}
+
+	errGroup.Go(func() error {
+		err = server.Serve(listener)
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return err
+		}
+		return nil
+	})
+
+	netParts := strings.Split(listener.Addr().String(), ":")
+	port := netParts[len(netParts)-1]
+	Eventually(func(_ Gomega) error {
+		ctx, cancel := context.WithTimeout(context.Background(), tlsTimeout)
+		d := tls.Dialer{
+			Config: &tls.Config{
+				ServerName: "localhost",
+				RootCAs:    caPool,
+				MinVersion: tls.VersionTLS13,
+			},
+		}
+
+		conn, err := d.DialContext(ctx, "tcp", ":"+port)
+		cancel()
+		Expect(err).NotTo(HaveOccurred())
+
+		conn.Close()
+		return nil
+	}, timeout, tlsTimeout).Should(Succeed())
+
+	return server, port
+}
+
 var _ = Describe("NoRedirects Simple login/logout", func() {
 	var portNum string
 	var proxyAddress string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server *http.Server
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
+		var upstreamSvcPort string
+
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -239,7 +317,7 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + testClient,
 			"--client-secret=" + testClientSecret,
-			"--upstream-url=" + server.URL,
+			"--upstream-url=" + localURI + upstreamSvcPort,
 			"--no-redirects=true",
 			"--enable-default-deny=false",
 			"--skip-access-token-clientid-check=true",
@@ -249,7 +327,7 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 			"--enable-pkce=false",
 			"--tls-cert=" + tlsCertificate,
 			"--tls-private-key=" + tlsPrivateKey,
-			"--tls-ca-certificate=" + tlsCaCertificate,
+			"--upstream-ca=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -300,10 +378,25 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 var _ = Describe("Code Flow login/logout", func() {
 	var portNum string
 	var proxyAddress string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server *http.Server
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
+		var upstreamSvcPort string
+
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -316,7 +409,7 @@ var _ = Describe("Code Flow login/logout", func() {
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + testClient,
 			"--client-secret=" + testClientSecret,
-			"--upstream-url=" + server.URL,
+			"--upstream-url=" + localURI + upstreamSvcPort,
 			"--no-redirects=false",
 			"--skip-access-token-clientid-check=true",
 			"--skip-access-token-issuer-check=true",
@@ -333,7 +426,7 @@ var _ = Describe("Code Flow login/logout", func() {
 			"--enable-pkce=false",
 			"--tls-cert=" + tlsCertificate,
 			"--tls-private-key=" + tlsPrivateKey,
-			"--tls-ca-certificate=" + tlsCaCertificate,
+			"--upstream-ca=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -518,10 +611,25 @@ var _ = Describe("Code Flow login/logout", func() {
 var _ = Describe("Code Flow PKCE login/logout", func() {
 	var portNum string
 	var proxyAddress string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server *http.Server
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
+		var upstreamSvcPort string
+
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -533,7 +641,7 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + pkceTestClient,
 			"--client-secret=" + pkceTestClientSecret,
-			"--upstream-url=" + server.URL,
+			"--upstream-url=" + localURI + upstreamSvcPort,
 			"--no-redirects=false",
 			"--skip-access-token-clientid-check=true",
 			"--skip-access-token-issuer-check=true",
@@ -545,6 +653,7 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 			"--tls-cert=" + tlsCertificate,
 			"--tls-private-key=" + tlsPrivateKey,
 			"--tls-ca-certificate=" + tlsCaCertificate,
+			"--upstream-ca=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -582,10 +691,25 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 	var portNum string
 	var proxyAddressFirst string
 	var proxyAddressSec string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server *http.Server
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
+		var upstreamSvcPort string
+
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddressFirst = "https://127.0.0.1:" + portNum
@@ -598,7 +722,7 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + testClient,
 			"--client-secret=" + testClientSecret,
-			"--upstream-url=" + server.URL,
+			"--upstream-url=" + localURI + upstreamSvcPort,
 			"--no-redirects=false",
 			"--skip-access-token-clientid-check=true",
 			"--skip-access-token-issuer-check=true",
@@ -612,7 +736,7 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 			"--enable-pkce=false",
 			"--tls-cert=" + tlsCertificate,
 			"--tls-private-key=" + tlsPrivateKey,
-			"--tls-ca-certificate=" + tlsCaCertificate,
+			"--upstream-ca=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -629,7 +753,7 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + pkceTestClient,
 			"--client-secret=" + pkceTestClientSecret,
-			"--upstream-url=" + server.URL,
+			"--upstream-url=" + localURI + upstreamSvcPort,
 			"--no-redirects=false",
 			"--skip-access-token-clientid-check=true",
 			"--skip-access-token-issuer-check=true",
@@ -644,7 +768,7 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 			"--enable-encrypted-token=false",
 			"--tls-cert=" + tlsCertificate,
 			"--tls-private-key=" + tlsPrivateKey,
-			"--tls-ca-certificate=" + tlsCaCertificate,
+			"--upstream-ca=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -693,10 +817,25 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 	var portNum string
 	var proxyAddress string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server *http.Server
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
+		var upstreamSvcPort string
+
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -709,7 +848,7 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + loaTestClient,
 			"--client-secret=" + loaTestClientSecret,
-			"--upstream-url=" + server.URL,
+			"--upstream-url=" + localURI + upstreamSvcPort,
 			"--no-redirects=false",
 			"--skip-access-token-clientid-check=true",
 			"--skip-access-token-issuer-check=true",
@@ -728,7 +867,7 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 			"--enable-pkce=false",
 			"--tls-cert=" + tlsCertificate,
 			"--tls-private-key=" + tlsPrivateKey,
-			"--tls-ca-certificate=" + tlsCaCertificate,
+			"--upstream-ca=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)

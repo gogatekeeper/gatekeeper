@@ -4,25 +4,39 @@ import (
 	"context"
 	"crypto/tls"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"strings"
 	"time"
 
 	resty "github.com/go-resty/resty/v2"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
-	testsuite_test "github.com/gogatekeeper/gatekeeper/pkg/testsuite"
 	. "github.com/onsi/ginkgo/v2" //nolint:revive //we want to use it for ginkgo
 	. "github.com/onsi/gomega"    //nolint:revive //we want to use it for gomega
+	"golang.org/x/sync/errgroup"
 )
 
 var _ = Describe("UMA Code Flow authorization", func() {
 	var portNum string
 	var proxyAddress string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server *http.Server
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
+		var upstreamSvcPort string
+
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -34,7 +48,7 @@ var _ = Describe("UMA Code Flow authorization", func() {
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + umaTestClient,
 			"--client-secret=" + umaTestClientSecret,
-			"--upstream-url=" + server.URL,
+			"--upstream-url=" + localURI + upstreamSvcPort,
 			"--no-redirects=false",
 			"--verbose=true",
 			"--enable-uma=true",
@@ -47,7 +61,7 @@ var _ = Describe("UMA Code Flow authorization", func() {
 			"--enable-pkce=false",
 			"--tls-cert=" + tlsCertificate,
 			"--tls-private-key=" + tlsPrivateKey,
-			"--tls-ca-certificate=" + tlsCaCertificate,
+			"--upstream-ca=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -123,10 +137,25 @@ var _ = Describe("UMA Code Flow authorization", func() {
 var _ = Describe("UMA Code Flow authorization with method scope", func() {
 	var portNum string
 	var proxyAddress string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server *http.Server
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
+		var upstreamSvcPort string
+
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -138,7 +167,7 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + umaTestClient,
 			"--client-secret=" + umaTestClientSecret,
-			"--upstream-url=" + server.URL,
+			"--upstream-url=" + localURI + upstreamSvcPort,
 			"--no-redirects=false",
 			"--enable-uma=true",
 			"--enable-uma-method-scope=true",
@@ -153,7 +182,7 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 			"--enable-pkce=false",
 			"--tls-cert=" + tlsCertificate,
 			"--tls-private-key=" + tlsPrivateKey,
-			"--tls-ca-certificate=" + tlsCaCertificate,
+			"--upstream-ca=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -196,15 +225,30 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 	var proxyAddress string
 	var fwdPortNum string
 	var fwdProxyAddress string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server *http.Server
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
+		var upstreamSvcPort string
+
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		fwdPortNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
-		proxyAddress = httpLocalURI + portNum
+		proxyAddress = localURI + portNum
 		fwdProxyAddress = httpLocalURI + fwdPortNum
 		osArgs := []string{os.Args[0]}
 		fwdOsArgs := []string{os.Args[0]}
@@ -215,7 +259,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + umaTestClient,
 			"--client-secret=" + umaTestClientSecret,
-			"--upstream-url=" + server.URL,
+			"--upstream-url=" + localURI + upstreamSvcPort,
 			"--no-redirects=true",
 			"--enable-uma=true",
 			"--enable-uma-method-scope=true",
@@ -225,6 +269,9 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 			"--enable-idp-session-check=false",
 			"--enable-encrypted-token=false",
 			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--upstream-ca=" + tlsCaCertificate,
 		}
 
 		fwdProxyArgs := []string{
@@ -244,6 +291,9 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 			"--openid-provider-retry-count=30",
 			"--enable-encrypted-token=false",
 			"--enable-pkce=false",
+			"--tls-ca-certificate=" + tlsCaCertificate,
+			"--tls-ca-key=" + tlsCaKey,
+			"--upstream-ca=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -255,6 +305,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 	When("Accessing resource, where user is allowed to access and then not allowed resource", func() {
 		It("should login with client secret, don't access forbidden resource", func(_ context.Context) {
 			rClient := resty.New().SetRedirectPolicy(resty.NoRedirectPolicy())
+			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 			rClient.SetProxy(fwdProxyAddress)
 			resp, err := rClient.R().Get(proxyAddress + umaFwdMethodAllowedPath)
 			Expect(err).NotTo(HaveOccurred())
@@ -285,15 +336,30 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 	var proxyAddress string
 	var fwdPortNum string
 	var fwdProxyAddress string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server *http.Server
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
 
 	BeforeEach(func() {
 		var err error
-		server := httptest.NewServer(&testsuite_test.FakeUpstreamService{})
+		var upstreamSvcPort string
+
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		fwdPortNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
-		proxyAddress = httpLocalURI + portNum
+		proxyAddress = localURI + portNum
 		fwdProxyAddress = httpLocalURI + fwdPortNum
 		osArgs := []string{os.Args[0]}
 		fwdOsArgs := []string{os.Args[0]}
@@ -304,7 +370,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 			"--listen=" + allInterfaces + portNum,
 			"--client-id=" + umaTestClient,
 			"--client-secret=" + umaTestClientSecret,
-			"--upstream-url=" + server.URL,
+			"--upstream-url=" + localURI + upstreamSvcPort,
 			"--no-redirects=true",
 			"--enable-uma=true",
 			"--enable-uma-method-scope=true",
@@ -315,6 +381,9 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 			"--enable-idp-session-check=false",
 			"--enable-encrypted-token=false",
 			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--upstream-ca=" + tlsCaCertificate,
 		}
 
 		fwdProxyArgs := []string{
@@ -335,6 +404,9 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 			"--openid-provider-retry-count=30",
 			"--enable-encrypted-token=false",
 			"--enable-pkce=false",
+			"--tls-ca-certificate=" + tlsCaCertificate,
+			"--tls-ca-key=" + tlsCaKey,
+			"--upstream-ca=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -346,6 +418,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 	When("Accessing resource, where user is allowed to access and then not allowed resource", func() {
 		It("should login with user/password, don't access forbidden resource", func(_ context.Context) {
 			rClient := resty.New().SetRedirectPolicy(resty.NoRedirectPolicy())
+			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 			rClient.SetProxy(fwdProxyAddress)
 			resp, err := rClient.R().Get(proxyAddress + umaMethodAllowedPath)
 			Expect(err).NotTo(HaveOccurred())
@@ -421,7 +494,6 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 			"--enable-pkce=false",
 			"--tls-cert=" + tlsCertificate,
 			"--tls-private-key=" + tlsPrivateKey,
-			"--tls-ca-certificate=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)

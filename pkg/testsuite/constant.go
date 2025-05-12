@@ -26,6 +26,7 @@ const (
 	FakeCertFilePrefix           = "/gateadmin_crt_"
 	FakePrivFilePrefix           = "/gateadmin_priv_"
 	FakeCaFilePrefix             = "/gateadmin_ca_"
+	FakeCaKeyFilePrefix          = "/gateadmin_ca_priv_"
 	TestProxyHeaderKey           = "X-GoProxy"
 	TestSetCookieHeader          = "Set-Cookie"
 	TestProxyHeaderVal           = "yxorPoG-X"
