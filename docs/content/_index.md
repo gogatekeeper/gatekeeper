@@ -39,6 +39,8 @@ options. Here is a list of options.
 ``` yaml
 # is the URL for retrieve the OpenID configuration
 discovery-url: <DISCOVERY URL>
+# path to your CA certificate/s in PEM format
+openid-provider-ca: /etc/ssl/ca.pem
 # Indicates we should deny by default all requests and explicitly specify what is permitted, default true
 # this is equivalent of --resource=/*|methods
 enable-default-deny: true
@@ -133,6 +135,8 @@ client-secret: <CLIENT_SECRET> # require for access_type: confidential
 # Note the redirection-url is optional, it will default to the the URL scheme and host, 
 # only in case of forward auth it will use X-Forwarded-Proto / X-Forwarded-Host, please see forward-auth section
 discovery-url: https://keycloak.example.com/realms/<REALM_NAME>
+# path to your CA certificate/s in PEM format
+openid-provider-ca: /etc/ssl/ca.pem
 # Indicates we should deny by default all requests and explicitly specify what is permitted, default true,
 # you cannot specify enable-default-deny:true together with defining resource=uri=/*
 enable-default-deny: true
@@ -184,6 +188,7 @@ command line options, such as in this example.
 ``` bash
 bin/gatekeeper \
     --discovery-url=https://keycloak.example.com/realms/<REALM_NAME> \
+    --openid-provider-ca=/etc/ssl/ca.pem \
     --client-id=<CLIENT_ID> \
     --client-secret=<SECRET> \
     --listen=127.0.0.1:3000 \ # unix sockets format unix://path

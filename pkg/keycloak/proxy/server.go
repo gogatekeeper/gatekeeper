@@ -1404,7 +1404,7 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 		// @check if we have a upstream ca to verify the upstream
 		if r.Config.UpstreamCA != "" {
 			r.Log.Info(
-				"loading the upstream ca",
+				"loading the upstream CA",
 				zap.String("path", r.Config.UpstreamCA),
 			)
 
@@ -1554,19 +1554,34 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 	)
 
 	client := gocloak.NewClient(host)
+	tlsConfig := &tls.Config{
+		//nolint:gosec
+		InsecureSkipVerify: r.Config.SkipOpenIDProviderTLSVerify,
+	}
 
 	if r.Config.IsDiscoverURILegacy {
 		gocloak.SetLegacyWildFlySupport()(client)
 	}
 
+	if r.Config.OpenIDProviderCA != "" {
+		r.Log.Info(
+			"loading the IDP CA",
+			zap.String("path", r.Config.OpenIDProviderCA),
+		)
+
+		cAuthority, err := os.ReadFile(r.Config.OpenIDProviderCA)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		pool := x509.NewCertPool()
+		pool.AppendCertsFromPEM(cAuthority)
+		tlsConfig.RootCAs = pool
+	}
+
 	restyClient := client.RestyClient()
 	restyClient.SetTimeout(r.Config.OpenIDProviderTimeout)
-	restyClient.SetTLSClientConfig(
-		&tls.Config{
-			//nolint:gosec
-			InsecureSkipVerify: r.Config.SkipOpenIDProviderTLSVerify,
-		},
-	)
+	restyClient.SetTLSClientConfig(tlsConfig)
 
 	if r.Config.OpenIDProviderProxy != "" {
 		restyClient.SetProxy(r.Config.OpenIDProviderProxy)

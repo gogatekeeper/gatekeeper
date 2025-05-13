@@ -97,6 +97,7 @@ var (
 	ErrMissingListenInterface     = errors.New("you have not specified the listening interface")
 	ErrAdminListenerScheme        = errors.New("scheme for admin listener must be one of [http, https]")
 	ErrInvalidIdpProviderProxyURI = errors.New("invalid proxy address for IDP provider proxy")
+	ErrIDPCAandSkipTLS            = errors.New("you have supplied IDP CA and at the same time skip openid tls verify")
 	ErrInvalidMaxIdleConnections  = errors.New("max-idle-connections must be a number > 0")
 	ErrInvalidMaxIdleConnsPerHost = errors.New(
 		"maxi-idle-connections-per-host must be a " +

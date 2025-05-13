@@ -383,6 +383,14 @@ func TestIsOpenIDProviderProxyValid(t *testing.T) {
 			},
 			Valid: true,
 		},
+		{
+			Name: "InValidSkipOpenIDProviderTLSVerifyWithIDPCA",
+			Config: &Config{
+				OpenIDProviderCA:            "somefile",
+				SkipOpenIDProviderTLSVerify: true,
+			},
+			Valid: false,
+		},
 	}
 
 	for _, testCase := range testCases {

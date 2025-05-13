@@ -104,6 +104,7 @@ type Config struct {
 	ForwardingUsername              string                    `env:"FORWARDING_USERNAME" json:"forwarding-username" usage:"username to use when logging into the openid provider" yaml:"forwarding-username"`
 	ForwardingPassword              string                    `env:"FORWARDING_PASSWORD" json:"forwarding-password" usage:"password to use when logging into the openid provider" yaml:"forwarding-password"`
 	Realm                           string
+	OpenIDProviderCA                string            `env:"OPENID_PROVIDER_CA" json:"openid-provider-ca" usage:"path to the ca certificate for IDP" yaml:"openid-provider-ca"`
 	OpenIDProviderTimeout           time.Duration     `env:"OPENID_PROVIDER_TIMEOUT" json:"openid-provider-timeout" usage:"timeout for openid configuration on .well-known/openid-configuration" yaml:"openid-provider-timeout"`
 	OpenIDProviderRetryCount        int               `env:"OPENID_PROVIDER_RETRY_COUNT" json:"openid-provider-retry-count" usage:"number of retries for retrieving openid configuration" yaml:"openid-provider-retry-count"`
 	OpenIDProviderHeaders           map[string]string `json:"openid-provider-headers" usage:"http headers sent to idp provider" yaml:"openid-provider-headers"`
@@ -376,6 +377,10 @@ func (r *Config) isListenAdminSchemeValid() error {
 }
 
 func (r *Config) isOpenIDProviderProxyValid() error {
+	if r.OpenIDProviderCA != "" && r.SkipOpenIDProviderTLSVerify {
+		return apperrors.ErrIDPCAandSkipTLS
+	}
+
 	if r.OpenIDProviderProxy != "" {
 		_, err := url.ParseRequestURI(r.OpenIDProviderProxy)
 		if err != nil {
