@@ -58,7 +58,7 @@ jobs:
         with:
           cluster-name: "testcluster"
           args: >-
-            -p "8081:80@loadbalancer"
+            -p "8443:443@loadbalancer"
       - name: "Run Tests"
         run: |
           k3d kubeconfig merge testcluster --kubeconfig-switch-context
