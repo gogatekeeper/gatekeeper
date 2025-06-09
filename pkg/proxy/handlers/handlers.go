@@ -214,10 +214,14 @@ func GetRedirectionURL(
 
 		state, _ := req.Cookie(cookieOAuthStateName)
 
-		if state != nil && req.URL.Query().Get("state") != state.Value {
-			logger.Error("state parameter mismatch")
-			wrt.WriteHeader(http.StatusForbidden)
-			return ""
+		const loginFullPath = "/oauth" + constant.LoginURL
+		isLoginEndpoint := req.Method == http.MethodPost && req.URL.Path == loginFullPath
+		if !isLoginEndpoint {
+			if state != nil && req.URL.Query().Get("state") != state.Value {
+				logger.Error("state parameter mismatch")
+				wrt.WriteHeader(http.StatusForbidden)
+				return ""
+			}
 		}
 
 		return fmt.Sprintf("%s%s", redirect, withOAuthURI(constant.CallbackURL))
