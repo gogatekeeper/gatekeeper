@@ -344,6 +344,18 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.SecureCookie,
 		r.Config.CookieOAuthStateName,
 		WithOAuthURI,
+		false,
+	)
+
+	loginGetRedirectionURL := handlers.GetRedirectionURL(
+		r.Log,
+		r.Config.RedirectionURL,
+		r.Config.NoProxy,
+		r.Config.NoRedirects,
+		r.Config.SecureCookie,
+		r.Config.CookieOAuthStateName,
+		WithOAuthURI,
+		true,
 	)
 
 	if r.Config.EnableHmac {
@@ -437,7 +449,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.IdpClient.RestyClient().GetClient(),
 		r.Config.EnableLoginHandler,
 		newOAuth2Config,
-		getRedirectionURL,
+		loginGetRedirectionURL,
 		r.Config.EnableEncryptedToken,
 		r.Config.ForceEncryptedCookie,
 		r.Config.EncryptionKey,

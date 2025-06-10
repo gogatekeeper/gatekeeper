@@ -170,7 +170,9 @@ func DiscoveryHandler(
 	}
 }
 
-// getRedirectionURL returns the redirectionURL for the oauth flow.
+// GetRedirectionURL returns the redirectionURL for the oauth flow.
+//
+//nolint:cyclop
 func GetRedirectionURL(
 	logger *zap.Logger,
 	redirectionURL string,
@@ -179,6 +181,7 @@ func GetRedirectionURL(
 	secureCookie bool,
 	cookieOAuthStateName string,
 	withOAuthURI func(string) string,
+	noState bool,
 ) func(wrt http.ResponseWriter, req *http.Request) string {
 	return func(wrt http.ResponseWriter, req *http.Request) string {
 		var redirect string
@@ -212,12 +215,14 @@ func GetRedirectionURL(
 			redirect = redirectionURL
 		}
 
-		state, _ := req.Cookie(cookieOAuthStateName)
+		if !noState {
+			state, _ := req.Cookie(cookieOAuthStateName)
 
-		if state != nil && req.URL.Query().Get("state") != state.Value {
-			logger.Error("state parameter mismatch")
-			wrt.WriteHeader(http.StatusForbidden)
-			return ""
+			if state != nil && req.URL.Query().Get("state") != state.Value {
+				logger.Error("state parameter mismatch")
+				wrt.WriteHeader(http.StatusForbidden)
+				return ""
+			}
 		}
 
 		return fmt.Sprintf("%s%s", redirect, withOAuthURI(constant.CallbackURL))
