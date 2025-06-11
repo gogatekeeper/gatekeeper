@@ -26,6 +26,8 @@ import (
 	. "github.com/onsi/ginkgo/v2" //nolint:revive //we want to use it for ginkgo
 	. "github.com/onsi/gomega"    //nolint:revive //we want to use it for gomega
 	"github.com/pquerna/otp/totp"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -352,6 +354,98 @@ func startAndWaitTestUpstream(errGroup *errgroup.Group) (*http.Server, string) {
 
 	return server, port
 }
+
+var _ = Describe("NoRedirects Simple login/logout", func() {
+	var portNum string
+	var proxyAddress string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server *http.Server
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
+
+	BeforeEach(func() {
+		var err error
+		var upstreamSvcPort string
+
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
+		proxyAddress = localURI + portNum
+
+		osArgs := []string{os.Args[0]}
+		proxyArgs := []string{
+			"--discovery-url=" + idpRealmURI,
+			"--openid-provider-timeout=300s",
+			"--skip-openid-provider-tls-verify=true",
+			"--listen=" + allInterfaces + portNum,
+			"--client-id=" + testClient,
+			"--client-secret=" + testClientSecret,
+			"--upstream-url=" + localURI + upstreamSvcPort,
+			"--no-redirects=true",
+			"--enable-default-deny=false",
+			"--skip-access-token-clientid-check=true",
+			"--skip-access-token-issuer-check=true",
+			"--openid-provider-retry-count=30",
+			"--enable-encrypted-token=false",
+			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--upstream-ca=" + tlsCaCertificate,
+		}
+
+		osArgs = append(osArgs, proxyArgs...)
+		startAndWait(portNum, osArgs)
+	})
+
+	When("Performing standard login", func() {
+		It("should login with service account and logout successfully",
+			Label("api_flow"),
+			Label("basic_case"),
+			func(ctx context.Context) {
+				conf := &clientcredentials.Config{
+					ClientID:     testClient,
+					ClientSecret: testClientSecret,
+					Scopes:       []string{"email", "openid"},
+					TokenURL:     idpRealmURI + constant.IdpTokenURI,
+				}
+
+				rClient := resty.New()
+				hClient := rClient.SetTLSClientConfig(
+					&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13}).GetClient()
+				oidcLibCtx := context.WithValue(ctx, oauth2.HTTPClient, hClient)
+
+				respToken, err := conf.Token(oidcLibCtx)
+				Expect(err).NotTo(HaveOccurred())
+
+				rClient = resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
+
+				request := rClient.SetRedirectPolicy(
+					resty.NoRedirectPolicy()).R().SetAuthToken(respToken.AccessToken)
+				resp, err := request.Get(proxyAddress)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+
+				rClient = resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
+
+				request = rClient.R().SetAuthToken(respToken.AccessToken)
+				resp, err = request.Get(proxyAddress + logoutURI)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+			},
+		)
+	})
+})
 
 var _ = Describe("Code Flow login/logout", func() {
 	var portNum string
