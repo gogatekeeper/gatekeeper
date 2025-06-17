@@ -653,19 +653,11 @@ func logoutHandler(
 		if postLogoutRedirectURI != "" {
 			redirectURL = postLogoutRedirectURI
 		} else {
-			for k := range req.URL.Query() {
-				if k == "redirect" {
-					redirectURL = req.URL.Query().Get("redirect")
-
-					if redirectURL == "" {
-						// then we can default to redirection url
-						redirectURL = strings.TrimSuffix(
-							redirectionURL,
-							"/oauth/callback",
-						)
-					}
-				}
-			}
+			// then we can default to redirection url
+			redirectURL = strings.TrimSuffix(
+				redirectionURL,
+				"/oauth/callback",
+			)
 		}
 
 		scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
