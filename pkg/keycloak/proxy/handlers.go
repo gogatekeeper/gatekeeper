@@ -672,7 +672,6 @@ func logoutHandler(
 		// step: can either use the access token or the refresh token
 		identityToken := user.RawToken
 
-		//nolint:vetshadow
 		if refresh, _, err := session.RetrieveRefreshToken(
 			store,
 			cookieRefreshName,

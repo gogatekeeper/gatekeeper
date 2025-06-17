@@ -168,7 +168,7 @@ func TryDialEndpoint(location *url.URL) (net.Conn, error) {
 	default:
 		return tls.Dial("tcp", dialAddress, &tls.Config{
 			Rand: cryptorand.Reader,
-			//nolint:gas,gosec
+			//nolint:gosec
 			InsecureSkipVerify: true,
 		})
 	}

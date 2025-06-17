@@ -660,7 +660,7 @@ func TestSkipOpenIDProviderTLSVerifyLogoutHandler(t *testing.T) {
 			URI:              logoutURL,
 			HasToken:         true,
 			ExpectedCode:     http.StatusSeeOther,
-			ExpectedLocation: "http://example.com",
+			ExpectedLocation: cfg.PostLogoutRedirectURI,
 		},
 	}
 	newFakeProxy(cfg, &fakeAuthConfig{EnableTLS: true}).RunTests(t, requests)

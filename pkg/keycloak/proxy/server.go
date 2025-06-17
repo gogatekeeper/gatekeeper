@@ -1402,7 +1402,7 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 		upstream.Scheme = constant.UnsecureScheme
 	}
 	// create the upstream tls configure
-	//nolint:gas,gosec
+	//nolint:gosec
 	tlsConfig := &tls.Config{InsecureSkipVerify: r.Config.SkipUpstreamTLSVerify}
 
 	// are we using a client certificate

@@ -772,7 +772,7 @@ func makeTestCodeFlowLogin(location string, xforwarded bool) (*http.Response, []
 		// step: make the request
 		transport := &http.Transport{
 			TLSClientConfig: &tls.Config{
-				//nolint:gas,gosec
+				//nolint:gosec
 				InsecureSkipVerify: true,
 			},
 		}
