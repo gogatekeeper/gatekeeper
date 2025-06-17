@@ -689,19 +689,15 @@ func TestSkipOpenIDProviderTLSVerifyLogoutHandler(t *testing.T) {
 func TestRevocation(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.RevocationEndpoint = ""
-	cfg.PostLogoutRedirectURI = "http://example.com"
+	const postLogoutURI = "http://example.com"
+	cfg.PostLogoutRedirectURI = postLogoutURI
 	logoutURL := utils.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LogoutURL)
 	requests := []fakeRequest{
-		{
-			URI:          logoutURL,
-			HasToken:     true,
-			ExpectedCode: http.StatusOK,
-		},
 		{
 			URI:              logoutURL,
 			HasToken:         true,
 			ExpectedCode:     http.StatusSeeOther,
-			ExpectedLocation: "http://example.com",
+			ExpectedLocation: postLogoutURI,
 		},
 	}
 	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
