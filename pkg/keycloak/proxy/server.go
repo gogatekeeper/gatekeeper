@@ -67,7 +67,6 @@ import (
 
 //nolint:gochecknoinits
 func init() {
-	_, _ = time.LoadLocation("UTC") // ensure all time is in UTC [NOTE(fredbi): no this does just nothing]
 	_, err := memlimit.SetGoMemLimitWithOpts(
 		memlimit.WithProvider(
 			memlimit.ApplyFallback(
