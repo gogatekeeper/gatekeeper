@@ -24,10 +24,7 @@ type Storage interface {
 }
 
 // createStorage creates the store client for use.
-func CreateStorage(location string) (Storage, error) {
-	var store Storage
-	var err error
-
+func CreateStorage(location string, highAvail bool) (Storage, error) {
 	uri, err := url.Parse(location)
 	if err != nil {
 		return nil, err
@@ -35,10 +32,22 @@ func CreateStorage(location string) (Storage, error) {
 
 	switch uri.Scheme {
 	case "redis":
-		store, err = newRedisStore(location)
+		if highAvail {
+			builder, err := newRedisStoreBuilder(location, true)
+			if err != nil {
+				return nil, err
+			}
+
+			return builder.Build(), nil
+		}
+
+		builder, err := newRedisStoreBuilder(location, false)
+		if err != nil {
+			return nil, err
+		}
+
+		return builder.Build(), nil
 	default:
 		return nil, fmt.Errorf("unsupport store: %s", uri.Scheme)
 	}
-
-	return store, err
 }

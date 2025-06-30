@@ -17,6 +17,8 @@ package storage
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"time"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
@@ -24,24 +26,65 @@ import (
 	redis "github.com/redis/go-redis/v9"
 )
 
-var _ Storage = (*RedisStore)(nil)
-
-type RedisStore struct {
-	Client *redis.Client
+type BasicRedis interface {
+	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
+	Exists(ctx context.Context, key ...string) *redis.IntCmd
+	Get(ctx context.Context, key string) *redis.StringCmd
+	Del(ctx context.Context, key ...string) *redis.IntCmd
+	Close() error
 }
 
-// newRedisStore creates a new redis store.
-func newRedisStore(url string) (Storage, error) {
+var (
+	_ Storage = (*RedisStore[*redis.Client])(nil)
+	_ Storage = (*RedisStore[*redis.ClusterClient])(nil)
+)
+
+type RedisStore[T BasicRedis] struct {
+	Client BasicRedis
+}
+
+type RedisStoreBuilder struct {
+	opts          *redis.Options
+	clusteredOpts *redis.ClusterOptions
+}
+
+func newRedisStoreBuilder(url string, clustered bool) (*RedisStoreBuilder, error) {
+	if clustered {
+		opts, err := redis.ParseClusterURL(url)
+		if err != nil {
+			return nil, err
+		}
+
+		return &RedisStoreBuilder{clusteredOpts: opts}, nil
+	}
+
 	opts, err := redis.ParseURL(url)
 	if err != nil {
 		return nil, err
 	}
-	client := redis.NewClient(opts)
-	return RedisStore{Client: client}, nil
+
+	return &RedisStoreBuilder{opts: opts}, nil
+}
+
+func (b *RedisStoreBuilder) WithCACert(caPool *x509.CertPool) *RedisStoreBuilder {
+	b.opts.TLSConfig.RootCAs = caPool
+	return b
+}
+
+func (b *RedisStoreBuilder) WithClientCert(tlsCert *tls.Certificate) *RedisStoreBuilder {
+	b.opts.TLSConfig.Certificates = []tls.Certificate{*tlsCert}
+	return b
+}
+
+func (b *RedisStoreBuilder) Build() Storage {
+	if b.clusteredOpts != nil {
+		return &RedisStore[*redis.ClusterClient]{redis.NewClusterClient(b.clusteredOpts)}
+	}
+	return &RedisStore[*redis.Client]{redis.NewClient(b.opts)}
 }
 
 // Set adds a token to the store.
-func (r RedisStore) Set(ctx context.Context, key, value string, expiration time.Duration) error {
+func (r *RedisStore[T]) Set(ctx context.Context, key, value string, expiration time.Duration) error {
 	if err := r.Client.Set(ctx, key, value, expiration); err.Err() != nil {
 		return err.Err()
 	}
@@ -50,7 +93,7 @@ func (r RedisStore) Set(ctx context.Context, key, value string, expiration time.
 }
 
 // Checks if key exists in store.
-func (r RedisStore) Exists(ctx context.Context, key string) (bool, error) {
+func (r *RedisStore[T]) Exists(ctx context.Context, key string) (bool, error) {
 	val, err := r.Client.Exists(ctx, key).Result()
 	if err != nil {
 		return false, err
@@ -60,7 +103,7 @@ func (r RedisStore) Exists(ctx context.Context, key string) (bool, error) {
 }
 
 // Get retrieves a token from the store.
-func (r RedisStore) Get(ctx context.Context, key string) (string, error) {
+func (r *RedisStore[T]) Get(ctx context.Context, key string) (string, error) {
 	result := r.Client.Get(ctx, key)
 	if result.Err() != nil {
 		return "", result.Err()
@@ -70,12 +113,12 @@ func (r RedisStore) Get(ctx context.Context, key string) (string, error) {
 }
 
 // Delete remove the key.
-func (r RedisStore) Delete(ctx context.Context, key string) error {
+func (r *RedisStore[T]) Delete(ctx context.Context, key string) error {
 	return r.Client.Del(ctx, key).Err()
 }
 
 // Close closes of any open resources.
-func (r RedisStore) Close() error {
+func (r *RedisStore[T]) Close() error {
 	if r.Client != nil {
 		return r.Client.Close()
 	}
@@ -84,7 +127,7 @@ func (r RedisStore) Close() error {
 }
 
 // Get retrieves a token from the store, the key we are using here is the access token.
-func (r RedisStore) GetRefreshTokenFromStore(
+func (r *RedisStore[T]) GetRefreshTokenFromStore(
 	ctx context.Context,
 	token string,
 ) (string, error) {
