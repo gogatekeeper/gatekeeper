@@ -71,8 +71,13 @@ const (
 	loaStepUpPath           = "/level2"
 	loaDefaultLevel         = "level1"
 	loaStepUpLevel          = "level2"
+
 	//nolint:gosec
-	otpSecret             = "NE4VKZJYKVDDSYTIK5CVOOLVOFDFE2DC"
+	otpSecret = "NE4VKZJYKVDDSYTIK5CVOOLVOFDFE2DC"
+	redisUser = "default"
+	//nolint:gosec
+	redisPass             = "FYIueRjWqQ"
+	redisMasterPort       = "6380"
 	postLoginRedirectPath = "/post/login/path"
 	pkceCookieName        = "TESTPKCECOOKIE"
 	umaCookieName         = "TESTUMACOOKIE"
@@ -153,6 +158,17 @@ func startAndWait(portNum string, osArgs []string) {
 		Expect(app.Run(osArgs)).To(Succeed())
 	}()
 
+	Eventually(func(_ Gomega) error {
+		conn, err := net.Dial("tcp", ":"+portNum)
+		if err != nil {
+			return err
+		}
+		conn.Close()
+		return nil
+	}, timeout, 15*time.Second).Should(Succeed())
+}
+
+func waitForPort(portNum string) {
 	Eventually(func(_ Gomega) error {
 		conn, err := net.Dial("tcp", ":"+portNum)
 		if err != nil {
@@ -736,6 +752,88 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 		It("should login with user/password and logout successfully",
 			Label("code_flow"),
 			Label("pkce"),
+			func(_ context.Context) {
+				var err error
+				rClient := resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
+
+				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+
+				body := resp.Body()
+				Expect(strings.Contains(string(body), pkceCookieName)).To(BeTrue())
+
+				resp, err = rClient.R().Get(proxyAddress + logoutURI)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+
+				rClient.SetRedirectPolicy(resty.NoRedirectPolicy())
+				resp, _ = rClient.R().Get(proxyAddress)
+				Expect(resp.StatusCode()).To(Equal(http.StatusSeeOther))
+			},
+		)
+	})
+})
+
+var _ = Describe("Code Flow PKCE login/logout with REDIS", func() {
+	var portNum string
+	var proxyAddress string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server *http.Server
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
+
+	BeforeEach(func() {
+		var err error
+		var upstreamSvcPort string
+
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
+		proxyAddress = localURI + portNum
+		osArgs := []string{os.Args[0]}
+		proxyArgs := []string{
+			"--discovery-url=" + idpRealmURI,
+			"--openid-provider-timeout=300s",
+			"--openid-provider-ca=" + tlsCaCertificate,
+			"--listen=" + allInterfaces + portNum,
+			"--client-id=" + pkceTestClient,
+			"--client-secret=" + pkceTestClientSecret,
+			"--upstream-url=" + localURI + upstreamSvcPort,
+			"--no-redirects=false",
+			"--skip-access-token-clientid-check=true",
+			"--skip-access-token-issuer-check=true",
+			"--openid-provider-retry-count=30",
+			"--secure-cookie=false",
+			"--enable-pkce=true",
+			"--cookie-pkce-name=" + pkceCookieName,
+			"--enable-encrypted-token=false",
+			"--enable-refresh-tokens=true",
+			"--encryption-key=sdkljfalisujeoir",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--tls-ca-certificate=" + tlsCaCertificate,
+			"--upstream-ca=" + tlsCaCertificate,
+			"--store-url=redis://" + redisUser + ":" + redisPass + "@localhost:" + redisMasterPort + "/0",
+		}
+
+		osArgs = append(osArgs, proxyArgs...)
+		startAndWait(portNum, osArgs)
+		waitForPort(redisMasterPort)
+	})
+
+	When("Peforming standard login", func() {
+		It("should login with user/password and logout successfully",
+			Label("code_flow", "pkce", "redis"),
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()

@@ -30,11 +30,26 @@ jobs:
           cluster-name: "testcluster"
           args: >-
             -p "8443:443@loadbalancer"
-      - name: "Run Tests"
+      - name: "Deploy keycloak"
         run: |
           k3d kubeconfig merge testcluster --kubeconfig-switch-context
           export KUBECONFIG=~/.k3d/kubeconfig-testcluster.yaml
           kubectl apply -f ./e2e/k8s/manifest.yml
+      - name: "Deploy Redis"
+        uses: WyriHaximus/github-action-helm3@v3
+        with:
+          exec: |
+            /usr/local/bin/helm install my-release oci://registry-1.docker.io/bitnamicharts/redis \
+              --wait --atomic \
+              --set 'master.containerSecurityContext.privileged=true' \
+              --set 'master.containerSecurityContext.allowPrivilegeEscalation=true' \
+              --set 'replica.containerSecurityContext.privileged=true' \
+              --set 'replica.containerSecurityContext.allowPrivilegeEscalation=true' \
+              --set 'auth.password=FYIueRjWqQ'
+          overrule_existing_kubeconfig: ~/.k3d/kubeconfig-testcluster.yaml
+      - name: "Run Tests"
+        run: |
+          kubectl port-forward svc/my-release-redis-master 6380:6379 &
           go test -v -timeout=30m -race -coverprofile=profile.cov ./...
       # Run Go benchmarks
       - name: Benchmark
