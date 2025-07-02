@@ -105,6 +105,9 @@ jobs:
         run: |
           kubectl port-forward svc/my-release-redis-master 6380:6379 &
           go test -v -timeout=30m -race -coverprofile=profile.cov ./...
+          pkill redis-server
+          sleep 3
+          rm -rf e2e/redis/redis-*/{dump*,append*,node*}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v3
         with:
