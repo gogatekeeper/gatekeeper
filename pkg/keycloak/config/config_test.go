@@ -1793,6 +1793,22 @@ func TestIsStoreURLValid(t *testing.T) {
 			},
 			Valid: false,
 		},
+		{
+			Name: "StoreURLMissing",
+			Config: &Config{
+				StoreURL:      "",
+				EnableStoreHA: true,
+			},
+			Valid: false,
+		},
+		{
+			Name: "ValidEnableHA",
+			Config: &Config{
+				StoreURL:      "redis://user:secret@localhost:6379/4?protocol=3",
+				EnableStoreHA: true,
+			},
+			Valid: true,
+		},
 	}
 
 	for _, testCase := range testCases {

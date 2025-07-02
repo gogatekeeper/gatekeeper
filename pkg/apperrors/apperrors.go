@@ -179,4 +179,7 @@ var (
 	ErrHijackerMethodMissing      = errors.New("writer does not implement http.Hijacker method")
 	ErrInvalidOriginWithCreds     = errors.New("origin cannot be set to * together with AllowedCredentials true")
 	ErrInvalidCookiePath          = errors.New("cookie path must begin with /")
+	ErrMissingStoreURL            = errors.New("missing store url")
+	ErrInvalidStoreURL            = errors.New("store url is invalid for non-HA client")
+	ErrInvalidHAStoreURL          = errors.New("store url is invalid for HA client")
 )

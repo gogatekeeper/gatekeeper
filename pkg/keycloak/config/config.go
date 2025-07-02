@@ -17,6 +17,7 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -183,6 +184,7 @@ type Config struct {
 	UseLetsEncrypt                  bool `env:"USE_LETS_ENCRYPT" json:"use-letsencrypt" usage:"use letsencrypt for certificates" yaml:"use-letsencrypt"`
 	DisableAllLogging               bool `env:"DISABLE_ALL_LOGGING" json:"disable-all-logging" usage:"disables all logging to stdout and stderr" yaml:"disable-all-logging"`
 	EnableLoA                       bool `env:"ENABLE_LOA" json:"enable-loa" usage:"enables level of authentication" yaml:"enable-loa"`
+	EnableStoreHA                   bool `env:"ENABLE_STORE_HA" json:"enable-store-ha" usage:"enable store high availability client, currently only redis-cluster supported" yaml:"enable-store-ha"`
 	IsDiscoverURILegacy             bool
 }
 
@@ -710,9 +712,19 @@ func (r *Config) isSecureCookieValid() error {
 
 func (r *Config) isStoreURLValid() error {
 	if r.StoreURL != "" {
-		if _, err := redis.ParseURL(r.StoreURL); err != nil {
-			return fmt.Errorf("the store url is invalid, error: %w", err)
+		if r.EnableStoreHA {
+			if _, err := redis.ParseClusterURL(r.StoreURL); err != nil {
+				return errors.Join(apperrors.ErrInvalidHAStoreURL, err)
+			}
+		} else {
+			if _, err := redis.ParseURL(r.StoreURL); err != nil {
+				return errors.Join(apperrors.ErrInvalidStoreURL, err)
+			}
 		}
+	}
+
+	if r.StoreURL == "" && r.EnableStoreHA {
+		return apperrors.ErrMissingStoreURL
 	}
 
 	return nil

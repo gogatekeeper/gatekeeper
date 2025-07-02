@@ -126,7 +126,7 @@ func NewProxy(config *config.Config, log *zap.Logger, upstream core.ReverseProxy
 
 	// initialize the store if any
 	if config.StoreURL != "" {
-		if svc.Store, err = storage.CreateStorage(config.StoreURL, false); err != nil {
+		if svc.Store, err = storage.CreateStorage(config.StoreURL, config.EnableStoreHA); err != nil {
 			return nil, err
 		}
 	}
