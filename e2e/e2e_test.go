@@ -76,12 +76,17 @@ const (
 	otpSecret = "NE4VKZJYKVDDSYTIK5CVOOLVOFDFE2DC"
 	redisUser = "default"
 	//nolint:gosec
-	redisPass             = "FYIueRjWqQ"
-	redisMasterPort       = "6380"
-	postLoginRedirectPath = "/post/login/path"
-	pkceCookieName        = "TESTPKCECOOKIE"
-	umaCookieName         = "TESTUMACOOKIE"
-	idpRealmURI           = idpURI + "/realms/" + testRealm
+	redisPass = "FYIueRjWqQ"
+	//nolint:gosec
+	redisClusterPass        = "2aD6FgewLV"
+	redisMasterPort         = "6380"
+	redisClusterMaster1Port = "7000"
+	redisClusterMaster2Port = "7001"
+	redisClusterMaster3Port = "7002"
+	postLoginRedirectPath   = "/post/login/path"
+	pkceCookieName          = "TESTPKCECOOKIE"
+	umaCookieName           = "TESTUMACOOKIE"
+	idpRealmURI             = idpURI + "/realms/" + testRealm
 	//nolint:gosec
 	fakePrivateKey = `
 -----BEGIN EC PRIVATE KEY-----
@@ -834,6 +839,95 @@ var _ = Describe("Code Flow PKCE login/logout with REDIS", func() {
 	When("Peforming standard login", func() {
 		It("should login with user/password and logout successfully",
 			Label("code_flow", "pkce", "redis"),
+			func(_ context.Context) {
+				var err error
+				rClient := resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
+
+				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+
+				body := resp.Body()
+				Expect(strings.Contains(string(body), pkceCookieName)).To(BeTrue())
+
+				resp, err = rClient.R().Get(proxyAddress + logoutURI)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+
+				rClient.SetRedirectPolicy(resty.NoRedirectPolicy())
+				resp, _ = rClient.R().Get(proxyAddress)
+				Expect(resp.StatusCode()).To(Equal(http.StatusSeeOther))
+			},
+		)
+	})
+})
+
+var _ = Describe("Code Flow PKCE login/logout with REDIS CLUSTER", func() {
+	var portNum string
+	var proxyAddress string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server *http.Server
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
+
+	BeforeEach(func() {
+		var err error
+		var upstreamSvcPort string
+
+		redisClusterURL := "redis://" + redisUser + ":" + redisClusterPass + "@127.0.0.1:" + redisClusterMaster1Port
+		redisClusterURL += "?dial_timeout=3&read_timeout=6s&addr=127.0.0.1:" + redisClusterMaster2Port
+		redisClusterURL += "&addr=127.0.0.1:" + redisClusterMaster3Port
+
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
+		proxyAddress = localURI + portNum
+		osArgs := []string{os.Args[0]}
+		proxyArgs := []string{
+			"--discovery-url=" + idpRealmURI,
+			"--openid-provider-timeout=300s",
+			"--openid-provider-ca=" + tlsCaCertificate,
+			"--listen=" + allInterfaces + portNum,
+			"--client-id=" + pkceTestClient,
+			"--client-secret=" + pkceTestClientSecret,
+			"--upstream-url=" + localURI + upstreamSvcPort,
+			"--no-redirects=false",
+			"--skip-access-token-clientid-check=true",
+			"--skip-access-token-issuer-check=true",
+			"--openid-provider-retry-count=30",
+			"--secure-cookie=false",
+			"--enable-pkce=true",
+			"--cookie-pkce-name=" + pkceCookieName,
+			"--enable-encrypted-token=false",
+			"--enable-refresh-tokens=true",
+			"--encryption-key=sdkljfalisujeoir",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--tls-ca-certificate=" + tlsCaCertificate,
+			"--upstream-ca=" + tlsCaCertificate,
+			"--store-url=" + redisClusterURL,
+			"--enable-store-ha=true",
+		}
+
+		osArgs = append(osArgs, proxyArgs...)
+		startAndWait(portNum, osArgs)
+		waitForPort(redisClusterMaster1Port)
+		waitForPort(redisClusterMaster2Port)
+		waitForPort(redisClusterMaster3Port)
+	})
+
+	When("Peforming standard login", func() {
+		It("should login with user/password and logout successfully",
+			Label("code_flow", "pkce", "redis_cluster"),
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()

@@ -1167,9 +1167,11 @@ func (r *OauthProxy) Shutdown() error {
 	}
 
 	r.Log.Debug("waiting for goroutines to finish")
-	if routineErr := r.ErrGroup.Wait(); routineErr != nil {
-		if !errors.Is(routineErr, http.ErrServerClosed) {
-			err = errors.Join(err, routineErr)
+	if r.ErrGroup != nil {
+		if routineErr := r.ErrGroup.Wait(); routineErr != nil {
+			if !errors.Is(routineErr, http.ErrServerClosed) {
+				err = errors.Join(err, routineErr)
+			}
 		}
 	}
 
