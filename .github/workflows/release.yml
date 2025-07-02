@@ -59,11 +59,52 @@ jobs:
           cluster-name: "testcluster"
           args: >-
             -p "8443:443@loadbalancer"
-      - name: "Run Tests"
+      - name: "Deploy keycloak"
         run: |
           k3d kubeconfig merge testcluster --kubeconfig-switch-context
-          KUBECONFIG=~/.k3d/kubeconfig-testcluster.yaml kubectl apply -f ./e2e/k8s/manifest.yml
-          go test -v -race ./...
+          export KUBECONFIG=~/.k3d/kubeconfig-testcluster.yaml
+          kubectl apply -f ./e2e/k8s/manifest.yml
+      - name: "Deploy Redis"
+        uses: WyriHaximus/github-action-helm3@v3
+        with:
+          exec: |
+            /usr/local/bin/helm install my-release oci://registry-1.docker.io/bitnamicharts/redis \
+              --wait --atomic \
+              --set 'master.containerSecurityContext.privileged=true' \
+              --set 'master.containerSecurityContext.allowPrivilegeEscalation=true' \
+              --set 'replica.containerSecurityContext.privileged=true' \
+              --set 'replica.containerSecurityContext.allowPrivilegeEscalation=true' \
+              --set 'auth.password=FYIueRjWqQ'
+          overrule_existing_kubeconfig: ~/.k3d/kubeconfig-testcluster.yaml
+      - name: "Setup Redis Cluster"
+        run: |
+          sudo apt install -y redis
+          for NODE_TYPE in master replica
+          do
+              for NODE_NUM in {1..3}
+              do
+                  pushd e2e/redis/redis-$NODE_TYPE-$NODE_NUM
+                  redis-server ./redis.conf &
+                  popd
+              done
+          done
+
+          sleep 3
+
+          redis-cli --cluster create \
+              127.0.0.1:7000 \
+              127.0.0.1:7001 \
+              127.0.0.1:7002 \
+              127.0.0.1:7003 \
+              127.0.0.1:7004 \
+              127.0.0.1:7005 \
+              --cluster-replicas 1 \
+              --cluster-yes \
+              -a 2aD6FgewLV
+      - name: "Run Tests"
+        run: |
+          kubectl port-forward svc/my-release-redis-master 6380:6379 &
+          go test -v -timeout=30m -race -coverprofile=profile.cov ./...
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v3
         with:
