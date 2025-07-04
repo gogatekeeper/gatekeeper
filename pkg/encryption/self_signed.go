@@ -203,24 +203,38 @@ func CreateCertificate(key *ed25519.PrivateKey, hostnames []string, expire time.
 	return tls.X509KeyPair(certPEM, keyPEM)
 }
 
-// loadCA loads the certificate authority.
-func LoadCA(cert, key string) (*tls.Certificate, error) {
-	caCert, err := os.ReadFile(cert)
+// loadKeyPair loads the tls key pair.
+func LoadKeyPair(certPath, keyPath string) (*tls.Certificate, error) {
+	cert, err := os.ReadFile(certPath)
 	if err != nil {
 		return nil, err
 	}
 
-	caKey, err := os.ReadFile(key)
+	key, err := os.ReadFile(keyPath)
 	if err != nil {
 		return nil, err
 	}
 
-	cAuthority, err := tls.X509KeyPair(caCert, caKey)
+	certPair, err := tls.X509KeyPair(cert, key)
 	if err != nil {
 		return nil, err
 	}
 
-	cAuthority.Leaf, err = x509.ParseCertificate(cAuthority.Certificate[0])
+	certPair.Leaf, err = x509.ParseCertificate(certPair.Certificate[0])
 
-	return &cAuthority, err
+	return &certPair, err
+}
+
+func LoadCert(certPath string) (*x509.CertPool, error) {
+	cert, err := os.ReadFile(certPath)
+	if err != nil {
+		return nil, err
+	}
+
+	certPool := x509.NewCertPool()
+	if ok := certPool.AppendCertsFromPEM(cert); !ok {
+		return nil, apperrors.ErrFailedToParseCert
+	}
+
+	return certPool, nil
 }

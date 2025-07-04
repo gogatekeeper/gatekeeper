@@ -19,6 +19,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"time"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
@@ -31,6 +32,7 @@ type BasicRedis interface {
 	Exists(ctx context.Context, key ...string) *redis.IntCmd
 	Get(ctx context.Context, key string) *redis.StringCmd
 	Del(ctx context.Context, key ...string) *redis.IntCmd
+	Ping(ctx context.Context) *redis.StatusCmd
 	Close() error
 }
 
@@ -67,12 +69,42 @@ func newRedisStoreBuilder(url string, clustered bool) (*RedisStoreBuilder, error
 }
 
 func (b *RedisStoreBuilder) WithCACert(caPool *x509.CertPool) *RedisStoreBuilder {
+	if b.clusteredOpts != nil {
+		if b.clusteredOpts.TLSConfig == nil {
+			b.clusteredOpts.TLSConfig = &tls.Config{MinVersion: tls.VersionTLS12}
+		}
+
+		b.clusteredOpts.TLSConfig.RootCAs = caPool
+
+		return b
+	}
+
+	if b.opts.TLSConfig == nil {
+		b.opts.TLSConfig = &tls.Config{MinVersion: tls.VersionTLS12}
+	}
+
 	b.opts.TLSConfig.RootCAs = caPool
+
 	return b
 }
 
 func (b *RedisStoreBuilder) WithClientCert(tlsCert *tls.Certificate) *RedisStoreBuilder {
+	if b.clusteredOpts != nil {
+		if b.clusteredOpts.TLSConfig == nil {
+			b.clusteredOpts.TLSConfig = &tls.Config{MinVersion: tls.VersionTLS12}
+		}
+
+		b.clusteredOpts.TLSConfig.Certificates = []tls.Certificate{*tlsCert}
+
+		return b
+	}
+
+	if b.opts.TLSConfig == nil {
+		b.opts.TLSConfig = &tls.Config{MinVersion: tls.VersionTLS12}
+	}
+
 	b.opts.TLSConfig.Certificates = []tls.Certificate{*tlsCert}
+
 	return b
 }
 
@@ -121,6 +153,21 @@ func (r *RedisStore[T]) Delete(ctx context.Context, key string) error {
 func (r *RedisStore[T]) Close() error {
 	if r.Client != nil {
 		return r.Client.Close()
+	}
+
+	return nil
+}
+
+// Test connection to store.
+func (r *RedisStore[T]) Test(ctx context.Context) error {
+	result := r.Client.Ping(ctx)
+
+	if result.Err() != nil {
+		return errors.Join(apperrors.ErrRedisConnection, result.Err())
+	}
+
+	if result.Val() != "PONG" {
+		return apperrors.ErrConnectionTestFailed
 	}
 
 	return nil

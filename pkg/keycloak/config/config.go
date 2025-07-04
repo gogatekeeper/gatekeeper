@@ -94,6 +94,7 @@ type Config struct {
 	TLSAdminPrivateKey              string                    `env:"TLS_ADMIN_PRIVATE_KEY" json:"tls-admin-private-key" usage:"path to the private key for TLS" yaml:"tls-admin-private-key"`
 	TLSAdminCaCertificate           string                    `env:"TLS_ADMIN_CA_CERTIFICATE" json:"tls-admin-ca-certificate" usage:"path to the ca certificate used for signing requests" yaml:"tls-admin-ca-certificate"`
 	TLSAdminClientCertificate       string                    `env:"TLS_ADMIN_CLIENT_CERTIFICATE" json:"tls-admin-client-certificate" usage:"path to the client certificate for outbound connections in reverse and forwarding proxy modes" yaml:"tls-admin-client-certificate"`
+	TLSStoreCaCertificate           string                    `env:"TLS_STORE_CA_CERTIFICATE" json:"tls-store-ca-certificate" usage:"path to the ca certificate used for verifying trusted server certificates" yaml:"tls-store-ca-certificate"`
 	StoreURL                        string                    `env:"STORE_URL" json:"store-url" usage:"url for the storage subsystem, e.g redis://user:secret@localhost:6379/0?protocol=3, only supported is redis usig redis uri spec" yaml:"store-url"`
 	EncryptionKey                   string                    `env:"ENCRYPTION_KEY" json:"encryption-key" usage:"encryption key used to encryption the session state" yaml:"encryption-key"`
 	LetsEncryptCacheDir             string                    `env:"LETS_ENCRYPT_CACHE_DIR" json:"letsencrypt-cache-dir" usage:"path where cached letsencrypt certificates are stored" yaml:"letsencrypt-cache-dir"`
@@ -444,6 +445,13 @@ func (r *Config) isTLSFilesValid() error {
 		)
 	}
 
+	if r.TLSStoreCaCertificate != "" && !utils.FileExists(r.TLSStoreCaCertificate) {
+		return fmt.Errorf(
+			"the tls store ca certificate file %s does not exist",
+			r.TLSStoreCaCertificate,
+		)
+	}
+
 	return nil
 }
 
@@ -710,8 +718,17 @@ func (r *Config) isSecureCookieValid() error {
 	return nil
 }
 
+//nolint:cyclop
 func (r *Config) isStoreURLValid() error {
 	if r.StoreURL != "" {
+		if strings.HasPrefix(r.StoreURL, constant.TLSRedisScheme+"://") && r.TLSStoreCaCertificate == "" {
+			return apperrors.ErrTLSStoreURLCAMissing
+		}
+
+		if strings.HasPrefix(r.StoreURL, constant.RedisScheme+"://") && r.TLSStoreCaCertificate != "" {
+			return apperrors.ErrCATLSStoreURLMissing
+		}
+
 		if r.EnableStoreHA {
 			if _, err := redis.ParseClusterURL(r.StoreURL); err != nil {
 				return errors.Join(apperrors.ErrInvalidHAStoreURL, err)

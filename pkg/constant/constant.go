@@ -112,6 +112,9 @@ const (
 
 	TLS13 = "tlsv1.3"
 	TLS12 = "tlsv1.2"
+
+	TLSRedisScheme = "rediss"
+	RedisScheme    = "redis"
 )
 
 //nolint:gochecknoglobals

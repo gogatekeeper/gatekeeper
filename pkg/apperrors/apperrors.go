@@ -5,6 +5,7 @@ import (
 )
 
 var (
+	ErrFailedToParseCert               = errors.New("failed to parse certificates")
 	ErrAssertionFailed                 = errors.New("assertion failed")
 	ErrPermissionNotInToken            = errors.New("permissions missing in token")
 	ErrResourceRetrieve                = errors.New("problem getting resources from IDP")
@@ -86,6 +87,9 @@ var (
 	ErrStartMainHTTP     = errors.New("failed to start main http service")
 	ErrStartRedirectHTTP = errors.New("failed to start http redirect service")
 	ErrStartAdminHTTP    = errors.New("failed to start admin service")
+
+	ErrRedisConnection      = errors.New("failed connection to redis")
+	ErrConnectionTestFailed = errors.New("connection test failed")
 
 	// config errors.
 
@@ -182,4 +186,6 @@ var (
 	ErrMissingStoreURL            = errors.New("missing store url")
 	ErrInvalidStoreURL            = errors.New("store url is invalid for non-HA client")
 	ErrInvalidHAStoreURL          = errors.New("store url is invalid for HA client")
+	ErrTLSStoreURLCAMissing       = errors.New("store url is TLS but CA missing")
+	ErrCATLSStoreURLMissing       = errors.New("CA present, store url non-TLS")
 )

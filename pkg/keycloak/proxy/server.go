@@ -126,7 +126,28 @@ func NewProxy(config *config.Config, log *zap.Logger, upstream core.ReverseProxy
 
 	// initialize the store if any
 	if config.StoreURL != "" {
-		if svc.Store, err = storage.CreateStorage(config.StoreURL, config.EnableStoreHA); err != nil {
+		log.Info("enabling store")
+		var certPool *x509.CertPool
+		if config.TLSStoreCaCertificate != "" {
+			if certPool, err = encryption.LoadCert(config.TLSStoreCaCertificate); err != nil {
+				svc.Log.Error("failed to load store ca", zap.Error(err))
+				return nil, err
+			}
+		}
+
+		svc.Store, err = storage.CreateStorage(
+			config.StoreURL,
+			config.EnableStoreHA,
+			certPool,
+		)
+		if err != nil {
+			svc.Log.Error("failed to create store", zap.Error(err))
+			return nil, err
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), config.OpenIDProviderTimeout)
+		defer cancel()
+		if err := svc.Store.Test(ctx); err != nil {
 			return nil, err
 		}
 	}
@@ -915,7 +936,7 @@ func (r *OauthProxy) createForwardingProxy() error {
 
 	// setup the tls configuration
 	if r.Config.TLSCaCertificate != "" && r.Config.TLSCaPrivateKey != "" {
-		cAuthority, err := encryption.LoadCA(r.Config.TLSCaCertificate, r.Config.TLSCaPrivateKey)
+		cAuthority, err := encryption.LoadKeyPair(r.Config.TLSCaCertificate, r.Config.TLSCaPrivateKey)
 		if err != nil {
 			return fmt.Errorf("unable to load certificate authority, error: %w", err)
 		}

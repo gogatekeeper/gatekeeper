@@ -48,6 +48,8 @@ cat << EOF > /tmp/csr.json
 }
 EOF
 
+# IMPORTANT: we have also client auth in server profile because redis needs multipurpose certificates, otherwise even
+# server side TLS doesn't work
 cat << EOF > /tmp/config.json 
 {
   "signing": {
@@ -56,7 +58,7 @@ cat << EOF > /tmp/config.json
     },
     "profiles": {
       "server": {
-        "usages": ["signing", "key encipherment", "digital signature", "server auth"],
+        "usages": ["signing", "key encipherment", "digital signature", "server auth", "client auth"],
         "expiry": "87600h"
       },
       "client": {

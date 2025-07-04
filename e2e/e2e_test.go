@@ -90,30 +90,30 @@ const (
 	//nolint:gosec
 	fakePrivateKey = `
 -----BEGIN EC PRIVATE KEY-----
-MHcCAQEEIKnVV+DiZkHS27mwMpGaS0On7QRLZN6DFhvwoldID56uoAoGCCqGSM49
-AwEHoUQDQgAErEquBkfJw5/MPdYb7efTB6DAFkWoH65h3rJyK1wI15qLhIcHD0x+
-sO3cojzu4CHrOFhaZIawaMklc2gb5DilQw==
+MHcCAQEEIHiHlMGv5dYD1sz60W5AljpbWFbMK11Of/vIpSohwgkdoAoGCCqGSM49
+AwEHoUQDQgAEdEq2/CakOBb++B5i/G4+W6sVgz7mKoeDhgq+H0S5gviI56ws5k/M
+YPYdwLooCrNBBg9NsW+EcHHDrYmQoMKudw==
 -----END EC PRIVATE KEY-----
 `
 
+	// we are using dual purpose cert, means we can use it as server side cert and also for client side auth.
 	fakeCert = `
 -----BEGIN CERTIFICATE-----
-MIICiTCCAi6gAwIBAgIUOgcbgQVCFOq3jEHFz40Psc+iYEMwCgYIKoZIzj0EAwIw
+MIICkjCCAjigAwIBAgIUE2cox1P7KJoMeyUl6vG65gm/zR0wCgYIKoZIzj0EAwIw
 eDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWExFjAUBgNVBAcTDVNh
 biBGcmFuY2lzY28xHzAdBgNVBAoTFkludGVybmV0IFdpZGdldHMsIEluYy4xDDAK
-BgNVBAsTA1dXVzENMAsGA1UEAxMEdGVzdDAeFw0yNTA1MTEyMDEzMDBaFw0zNTA1
-MDkyMDEzMDBaMFUxCzAJBgNVBAYTAlVTMQ4wDAYDVQQIEwVUZXhhczEPMA0GA1UE
+BgNVBAsTA1dXVzENMAsGA1UEAxMEdGVzdDAeFw0yNTA3MDMyMTA4MDBaFw0zNTA3
+MDEyMTA4MDBaMFUxCzAJBgNVBAYTAlVTMQ4wDAYDVQQIEwVUZXhhczEPMA0GA1UE
 BxMGRGFsbGFzMRcwFQYDVQQKEw5NeSBDZXJ0aWZpY2F0ZTEMMAoGA1UECxMDV1dX
-MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAErEquBkfJw5/MPdYb7efTB6DAFkWo
-H65h3rJyK1wI15qLhIcHD0x+sO3cojzu4CHrOFhaZIawaMklc2gb5DilQ6OBuDCB
-tTAOBgNVHQ8BAf8EBAMCBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDAYDVR0TAQH/
-BAIwADAdBgNVHQ4EFgQUUmyldm+mF5as262PcbpSSHFgwCkwHwYDVR0jBBgwFoAU
-Ik96cIatFSAZ3PWXFukSlp+97dcwQAYDVR0RBDkwN4IJbG9jYWxob3N0hwR/AAAB
-hhFodHRwczovL2xvY2FsaG9zdIYRaHR0cHM6Ly8xMjcuMC4wLjEwCgYIKoZIzj0E
-AwIDSQAwRgIhANqOuOvXipYx93Lukry5nU/9GoFcJsW0yFu4gxH0Eq72AiEA6lfL
-P7LIaNssByJ7rPmroMwMbgsw/0ww165HYPjQpr8=
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEdEq2/CakOBb++B5i/G4+W6sVgz7m
+KoeDhgq+H0S5gviI56ws5k/MYPYdwLooCrNBBg9NsW+EcHHDrYmQoMKud6OBwjCB
+vzAOBgNVHQ8BAf8EBAMCBaAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMC
+MAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFNRjGKNJPJeFgaGKA2ByZvJfrsA7MB8G
+A1UdIwQYMBaAFCJPenCGrRUgGdz1lxbpEpafve3XMEAGA1UdEQQ5MDeCCWxvY2Fs
+aG9zdIcEfwAAAYYRaHR0cHM6Ly9sb2NhbGhvc3SGEWh0dHBzOi8vMTI3LjAuMC4x
+MAoGCCqGSM49BAMCA0gAMEUCICcv3wTbpuBGY5OeFM85rmskeBAehxbF5OU2SGhO
+NyMvAiEA8ZqATZ3Z8hyiUYPhGDNbDAlFGdSnzW7FwC7cWSJL1A8=
 -----END CERTIFICATE-----
-
 `
 
 	fakeCA = `
@@ -828,7 +828,8 @@ var _ = Describe("Code Flow PKCE login/logout with REDIS", func() {
 			"--tls-private-key=" + tlsPrivateKey,
 			"--tls-ca-certificate=" + tlsCaCertificate,
 			"--upstream-ca=" + tlsCaCertificate,
-			"--store-url=redis://" + redisUser + ":" + redisPass + "@localhost:" + redisMasterPort + "/0",
+			"--store-url=rediss://" + redisUser + ":" + redisPass + "@localhost:" + redisMasterPort + "/0",
+			"--tls-store-ca-certificate=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -883,7 +884,7 @@ var _ = Describe("Code Flow PKCE login/logout with REDIS CLUSTER", func() {
 		var err error
 		var upstreamSvcPort string
 
-		redisClusterURL := "redis://" + redisUser + ":" + redisClusterPass + "@127.0.0.1:" + redisClusterMaster1Port
+		redisClusterURL := "rediss://" + redisUser + ":" + redisClusterPass + "@127.0.0.1:" + redisClusterMaster1Port
 		redisClusterURL += "?dial_timeout=3&read_timeout=6s&addr=127.0.0.1:" + redisClusterMaster2Port
 		redisClusterURL += "&addr=127.0.0.1:" + redisClusterMaster3Port
 
@@ -916,6 +917,7 @@ var _ = Describe("Code Flow PKCE login/logout with REDIS CLUSTER", func() {
 			"--upstream-ca=" + tlsCaCertificate,
 			"--store-url=" + redisClusterURL,
 			"--enable-store-ha=true",
+			"--tls-store-ca-certificate=" + tlsCaCertificate,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)

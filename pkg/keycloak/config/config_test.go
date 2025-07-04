@@ -1809,6 +1809,22 @@ func TestIsStoreURLValid(t *testing.T) {
 			},
 			Valid: true,
 		},
+		{
+			Name: "TLSStoreURLMissingCAPresent",
+			Config: &Config{
+				StoreURL:              "redis://127.0.0.1:6450",
+				TLSStoreCaCertificate: "pathtoca.pem",
+			},
+			Valid: false,
+		},
+		{
+			Name: "TLSStoreURLPresentCAMissing",
+			Config: &Config{
+				StoreURL:              "rediss://127.0.0.1:6450",
+				TLSStoreCaCertificate: "",
+			},
+			Valid: false,
+		},
 	}
 
 	for _, testCase := range testCases {
