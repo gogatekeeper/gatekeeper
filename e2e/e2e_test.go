@@ -780,7 +780,7 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 	})
 })
 
-var _ = Describe("Code Flow PKCE login/logout with REDIS", func() {
+var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS", func() {
 	var portNum string
 	var proxyAddress string
 	errGroup, _ := errgroup.WithContext(context.Background())
@@ -830,6 +830,8 @@ var _ = Describe("Code Flow PKCE login/logout with REDIS", func() {
 			"--upstream-ca=" + tlsCaCertificate,
 			"--store-url=rediss://" + redisUser + ":" + redisPass + "@localhost:" + redisMasterPort + "/0",
 			"--tls-store-ca-certificate=" + tlsCaCertificate,
+			"--tls-store-client-certificate=" + tlsCertificate,
+			"--tls-store-client-private-key=" + tlsPrivateKey,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -863,7 +865,7 @@ var _ = Describe("Code Flow PKCE login/logout with REDIS", func() {
 	})
 })
 
-var _ = Describe("Code Flow PKCE login/logout with REDIS CLUSTER", func() {
+var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS CLUSTER", func() {
 	var portNum string
 	var proxyAddress string
 	errGroup, _ := errgroup.WithContext(context.Background())
@@ -918,6 +920,8 @@ var _ = Describe("Code Flow PKCE login/logout with REDIS CLUSTER", func() {
 			"--store-url=" + redisClusterURL,
 			"--enable-store-ha=true",
 			"--tls-store-ca-certificate=" + tlsCaCertificate,
+			"--tls-store-client-certificate=" + tlsCertificate,
+			"--tls-store-client-private-key=" + tlsPrivateKey,
 		}
 
 		osArgs = append(osArgs, proxyArgs...)

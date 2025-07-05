@@ -167,7 +167,7 @@ func (r *RedisStore[T]) Test(ctx context.Context) error {
 	}
 
 	if result.Val() != "PONG" {
-		return apperrors.ErrConnectionTestFailed
+		return apperrors.ErrRedisConnectionTestFailed
 	}
 
 	return nil

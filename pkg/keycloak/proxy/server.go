@@ -127,27 +127,17 @@ func NewProxy(config *config.Config, log *zap.Logger, upstream core.ReverseProxy
 	// initialize the store if any
 	if config.StoreURL != "" {
 		log.Info("enabling store")
-		var certPool *x509.CertPool
-		if config.TLSStoreCaCertificate != "" {
-			if certPool, err = encryption.LoadCert(config.TLSStoreCaCertificate); err != nil {
-				svc.Log.Error("failed to load store ca", zap.Error(err))
-				return nil, err
-			}
-		}
 
-		svc.Store, err = storage.CreateStorage(
+		svc.Store, err = setupStore(
 			config.StoreURL,
 			config.EnableStoreHA,
-			certPool,
+			config.TLSStoreCaCertificate,
+			config.TLSStoreClientCertificate,
+			config.TLSStoreClientPrivateKey,
+			config.OpenIDProviderTimeout,
 		)
 		if err != nil {
-			svc.Log.Error("failed to create store", zap.Error(err))
-			return nil, err
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), config.OpenIDProviderTimeout)
-		defer cancel()
-		if err := svc.Store.Test(ctx); err != nil {
+			svc.Log.Error("failed to setup store", zap.Error(err))
 			return nil, err
 		}
 	}
@@ -192,6 +182,53 @@ func NewProxy(config *config.Config, log *zap.Logger, upstream core.ReverseProxy
 	}
 
 	return svc, nil
+}
+
+func setupStore(
+	storeURL string,
+	enableStoreHA bool,
+	tlsStoreCaCertificate string,
+	tlsStoreClientCertificate string,
+	tlsStoreClientPrivateKey string,
+	timeout time.Duration,
+) (storage.Storage, error) {
+	var certPool *x509.CertPool
+	var keyPair *tls.Certificate
+	var err error
+
+	if tlsStoreCaCertificate != "" {
+		if certPool, err = encryption.LoadCert(tlsStoreCaCertificate); err != nil {
+			return nil, errors.Join(apperrors.ErrLoadStoreCA, err)
+		}
+	}
+
+	if tlsStoreClientCertificate != "" && tlsStoreClientPrivateKey != "" {
+		keyPair, err = encryption.LoadKeyPair(
+			tlsStoreClientCertificate,
+			tlsStoreClientPrivateKey,
+		)
+		if err != nil {
+			return nil, errors.Join(apperrors.ErrLoadStoreClientPair, err)
+		}
+	}
+
+	store, err := storage.CreateStorage(
+		storeURL,
+		enableStoreHA,
+		certPool,
+		keyPair,
+	)
+	if err != nil {
+		return nil, errors.Join(apperrors.ErrCreateStore, err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if err := store.Test(ctx); err != nil {
+		return nil, err
+	}
+
+	return store, nil
 }
 
 // createLogger is responsible for creating the service logger.

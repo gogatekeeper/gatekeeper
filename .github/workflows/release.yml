@@ -98,6 +98,8 @@ jobs:
               --cluster-yes \
               --tls \
               --cacert e2e/redis/ca.crt \
+              --key e2e/redis/redis.key \
+              --cert e2e/redis/redis.crt \
               -a 2aD6FgewLV
       - name: "Run Tests"
         run: |

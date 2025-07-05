@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"net/url"
@@ -28,7 +29,7 @@ type Storage interface {
 }
 
 // createStorage creates the store client for use.
-func CreateStorage(location string, highAvail bool, caPool *x509.CertPool) (Storage, error) {
+func CreateStorage(location string, highAvail bool, caPool *x509.CertPool, keyPair *tls.Certificate) (Storage, error) {
 	uri, err := url.Parse(location)
 	if err != nil {
 		return nil, err
@@ -52,8 +53,12 @@ func CreateStorage(location string, highAvail bool, caPool *x509.CertPool) (Stor
 			builder.WithCACert(caPool)
 		}
 
+		if keyPair != nil {
+			builder.WithClientCert(keyPair)
+		}
+
 		return builder.Build(), nil
 	default:
-		return nil, fmt.Errorf("unsupport store: %s", uri.Scheme)
+		return nil, fmt.Errorf("unsupported store: %s", uri.Scheme)
 	}
 }

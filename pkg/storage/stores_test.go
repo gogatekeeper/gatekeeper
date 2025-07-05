@@ -27,13 +27,13 @@ import (
 )
 
 func TestCreateStorageRedis(t *testing.T) {
-	store, err := storage.CreateStorage("redis://127.0.0.1", false, nil)
+	store, err := storage.CreateStorage("redis://127.0.0.1", false, nil, nil)
 	assert.NotNil(t, store)
 	require.NoError(t, err)
 }
 
 func TestCreateStorageFail(t *testing.T) {
-	store, err := storage.CreateStorage("not_there:///tmp/bolt", false, nil)
+	store, err := storage.CreateStorage("not_there:///tmp/bolt", false, nil, nil)
 	assert.Nil(t, store)
 	require.Error(t, err)
 }

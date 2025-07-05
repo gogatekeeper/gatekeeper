@@ -532,16 +532,18 @@ func TestIsSameSiteValid(t *testing.T) {
 	}
 }
 
-//nolint:cyclop
+//nolint:cyclop, funlen
 func TestIsTLSFilesValid(t *testing.T) {
 	testCases := []struct {
-		Name                       string
-		Config                     *Config
-		Valid                      bool
-		TLSCertificateExists       bool
-		TLSClientCertificateExists bool
-		TLSPrivateKeyExists        bool
-		TLSCaCertificateExists     bool
+		Name                            string
+		Config                          *Config
+		Valid                           bool
+		TLSCertificateExists            bool
+		TLSClientCertificateExists      bool
+		TLSPrivateKeyExists             bool
+		TLSCaCertificateExists          bool
+		TLSStoreClientCertificateExists bool
+		TLSStorePrivateKeyExists        bool
 	}{
 		{
 			Name: "ValidPrivateAndCertificate",
@@ -673,6 +675,56 @@ func TestIsTLSFilesValid(t *testing.T) {
 			TLSPrivateKeyExists:        false,
 			TLSCaCertificateExists:     false,
 		},
+		{
+			Name: "InvalidValidMissingStoreClientCertificate",
+			Config: &Config{
+				//nolint:gosec
+				TLSStoreClientCertificate: fmt.Sprintf(os.TempDir()+"/gateconfig_client_%d", rand.IntN(10000)),
+			},
+			Valid:                      false,
+			TLSCertificateExists:       false,
+			TLSClientCertificateExists: false,
+			TLSPrivateKeyExists:        false,
+			TLSCaCertificateExists:     false,
+		},
+		{
+			Name: "InvalidValidMissingStoreClientPrivateKey",
+			Config: &Config{
+				//nolint:gosec
+				TLSStoreClientPrivateKey: fmt.Sprintf(os.TempDir()+"/gateconfig_client_%d", rand.IntN(10000)),
+			},
+			Valid:                      false,
+			TLSCertificateExists:       false,
+			TLSClientCertificateExists: false,
+			TLSPrivateKeyExists:        false,
+			TLSCaCertificateExists:     false,
+		},
+		{
+			Name: "ValidStoreClientCertificate",
+			Config: &Config{
+				//nolint:gosec
+				TLSStoreClientCertificate: fmt.Sprintf(os.TempDir()+"/gateconfig_client_%d", rand.IntN(10000)),
+			},
+			Valid:                           false,
+			TLSCertificateExists:            false,
+			TLSClientCertificateExists:      false,
+			TLSPrivateKeyExists:             false,
+			TLSCaCertificateExists:          false,
+			TLSStoreClientCertificateExists: true,
+		},
+		{
+			Name: "ValidStoreClientPrivateKey",
+			Config: &Config{
+				//nolint:gosec
+				TLSStoreClientPrivateKey: fmt.Sprintf(os.TempDir()+"/gateconfig_client_%d", rand.IntN(10000)),
+			},
+			Valid:                      false,
+			TLSCertificateExists:       false,
+			TLSClientCertificateExists: false,
+			TLSPrivateKeyExists:        false,
+			TLSCaCertificateExists:     false,
+			TLSStorePrivateKeyExists:   true,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -683,6 +735,9 @@ func TestIsTLSFilesValid(t *testing.T) {
 				clientCertFile := ""
 				privFile := ""
 				caFile := ""
+				storeClientCertFile := ""
+				storeClientPrivFile := ""
+
 				cfg := testCase.Config
 
 				if cfg.TLSCertificate != "" {
@@ -699,6 +754,14 @@ func TestIsTLSFilesValid(t *testing.T) {
 
 				if cfg.TLSCaCertificate != "" {
 					caFile = cfg.TLSCaCertificate
+				}
+
+				if cfg.TLSStoreClientCertificate != "" {
+					storeClientCertFile = cfg.TLSStoreClientCertificate
+				}
+
+				if cfg.TLSStoreClientPrivateKey != "" {
+					storeClientPrivFile = cfg.TLSStoreClientPrivateKey
 				}
 
 				if certFile != "" && testCase.TLSCertificateExists {
@@ -735,6 +798,22 @@ func TestIsTLSFilesValid(t *testing.T) {
 						t.Fatalf("Problem writing cacertificate %s", err)
 					}
 					defer os.Remove(caFile)
+				}
+
+				if storeClientCertFile != "" && testCase.TLSStoreClientCertificateExists {
+					err := os.WriteFile(storeClientCertFile, []byte(""), 0o600)
+					if err != nil {
+						t.Fatalf("Problem writing store client certificate %s", err)
+					}
+					defer os.Remove(storeClientCertFile)
+				}
+
+				if storeClientPrivFile != "" && testCase.TLSStorePrivateKeyExists {
+					err := os.WriteFile(storeClientPrivFile, []byte(""), 0o600)
+					if err != nil {
+						t.Fatalf("Problem writing store client privateKey %s", err)
+					}
+					defer os.Remove(storeClientPrivFile)
 				}
 
 				err := testCase.Config.isTLSFilesValid()
@@ -1824,6 +1903,25 @@ func TestIsStoreURLValid(t *testing.T) {
 				TLSStoreCaCertificate: "",
 			},
 			Valid: false,
+		},
+		{
+			Name: "TLSStoreURLMissingClientPairPresent",
+			Config: &Config{
+				StoreURL:                  "redis://127.0.0.1:6450",
+				TLSStoreClientCertificate: "pathtocert",
+				TLSStoreClientPrivateKey:  "pathtokey",
+			},
+			Valid: false,
+		},
+		{
+			Name: "ValidTLSStoreURLClientPair",
+			Config: &Config{
+				StoreURL:                  "rediss://127.0.0.1:6450",
+				TLSStoreClientCertificate: "pathtocert",
+				TLSStoreClientPrivateKey:  "pathtokey",
+				TLSStoreCaCertificate:     "pathtoca.pem",
+			},
+			Valid: true,
 		},
 	}
 

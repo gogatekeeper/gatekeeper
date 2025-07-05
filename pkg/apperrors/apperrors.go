@@ -88,8 +88,11 @@ var (
 	ErrStartRedirectHTTP = errors.New("failed to start http redirect service")
 	ErrStartAdminHTTP    = errors.New("failed to start admin service")
 
-	ErrRedisConnection      = errors.New("failed connection to redis")
-	ErrConnectionTestFailed = errors.New("connection test failed")
+	ErrRedisConnection           = errors.New("failed connection to redis")
+	ErrRedisConnectionTestFailed = errors.New("connection test to redis failed")
+	ErrLoadStoreCA               = errors.New("problem loading store CA certificate")
+	ErrLoadStoreClientPair       = errors.New("problem loading store client certificate/key pair")
+	ErrCreateStore               = errors.New("problem creating store")
 
 	// config errors.
 
@@ -179,13 +182,20 @@ var (
 	ErrCertSelfNoHostname    = errors.New("no hostnames specified")
 	ErrCertSelfLowExpiration = errors.New("expiration must be greater then 5 minutes")
 
-	ErrLetsEncryptMissingCacheDir = errors.New("letsencrypt cache dir has not been set")
-	ErrHijackerMethodMissing      = errors.New("writer does not implement http.Hijacker method")
-	ErrInvalidOriginWithCreds     = errors.New("origin cannot be set to * together with AllowedCredentials true")
-	ErrInvalidCookiePath          = errors.New("cookie path must begin with /")
-	ErrMissingStoreURL            = errors.New("missing store url")
-	ErrInvalidStoreURL            = errors.New("store url is invalid for non-HA client")
-	ErrInvalidHAStoreURL          = errors.New("store url is invalid for HA client")
-	ErrTLSStoreURLCAMissing       = errors.New("store url is TLS but CA missing")
-	ErrCATLSStoreURLMissing       = errors.New("CA present, store url non-TLS")
+	ErrLetsEncryptMissingCacheDir         = errors.New("letsencrypt cache dir has not been set")
+	ErrHijackerMethodMissing              = errors.New("writer does not implement http.Hijacker method")
+	ErrInvalidOriginWithCreds             = errors.New("origin cannot be set to * together with AllowedCredentials true")
+	ErrInvalidCookiePath                  = errors.New("cookie path must begin with /")
+	ErrMissingStoreURL                    = errors.New("missing store url")
+	ErrInvalidStoreURL                    = errors.New("store url is invalid for non-HA client")
+	ErrInvalidHAStoreURL                  = errors.New("store url is invalid for HA client")
+	ErrTLSStoreURLCAMissing               = errors.New("store url is TLS but CA missing")
+	ErrCATLSStoreURLMissing               = errors.New("CA present, store url non-TLS")
+	ErrClientCertTLSStoreURLMissing       = errors.New("store client certificate present, store url non-TLS")
+	ErrClientPrivKeuyTLSStoreURLMissing   = errors.New("store client private key present, store url non-TLS")
+	ErrTLSStoreCACertificateNotExists     = errors.New("tls store ca certificate file does not exist")
+	ErrTLSStoreClientCertificateNotExists = errors.New("tls store client certificate file does not exist")
+	ErrTLSStoreClientPrivateKeyNotExists  = errors.New("tls store client private key file does not exist")
+	ErrTLSStoreClientPairMissing          = errors.New("tls store, you must supply both client private key " +
+		"and client certificate for client authentication")
 )
