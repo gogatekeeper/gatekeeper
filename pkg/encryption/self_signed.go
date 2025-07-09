@@ -215,14 +215,14 @@ func LoadKeyPair(certPath, keyPath string) (*tls.Certificate, error) {
 		return nil, err
 	}
 
-	certPair, err := tls.X509KeyPair(cert, key)
+	pair, err := tls.X509KeyPair(cert, key)
 	if err != nil {
 		return nil, err
 	}
 
-	certPair.Leaf, err = x509.ParseCertificate(certPair.Certificate[0])
+	pair.Leaf, err = x509.ParseCertificate(pair.Certificate[0])
 
-	return &certPair, err
+	return &pair, err
 }
 
 func LoadCert(certPath string) (*x509.CertPool, error) {

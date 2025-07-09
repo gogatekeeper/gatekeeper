@@ -1933,7 +1933,7 @@ func TestTLS(t *testing.T) {
 				//nolint:gosec
 				conf.TLSPrivateKey = os.TempDir() + FakePrivFilePrefix + strconv.Itoa(rand.Intn(10000))
 				//nolint:gosec
-				conf.TLSCaCertificate = os.TempDir() + FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
+				conf.TLSClientCertificate = os.TempDir() + FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
 				conf.Listen = testProxyAddr
 				conf.NoRedirects = true
 			},
@@ -1955,7 +1955,7 @@ func TestTLS(t *testing.T) {
 				//nolint:gosec
 				conf.TLSPrivateKey = os.TempDir() + FakePrivFilePrefix + strconv.Itoa(rand.Intn(10000))
 				//nolint:gosec
-				conf.TLSCaCertificate = os.TempDir() + FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
+				conf.TLSClientCertificate = os.TempDir() + FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
 				conf.Listen = testProxyAddr
 				conf.TLSMinVersion = constant.TLS13
 				conf.NoRedirects = true
@@ -1979,7 +1979,7 @@ func TestTLS(t *testing.T) {
 				//nolint:gosec
 				conf.TLSPrivateKey = os.TempDir() + FakePrivFilePrefix + strconv.Itoa(rand.Intn(10000))
 				//nolint:gosec
-				conf.TLSCaCertificate = os.TempDir() + FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
+				conf.TLSClientCertificate = os.TempDir() + FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
 				conf.Listen = testProxyAddr
 				conf.TLSMinVersion = constant.TLS12
 				conf.NoRedirects = true
@@ -2003,7 +2003,7 @@ func TestTLS(t *testing.T) {
 				//nolint:gosec
 				conf.TLSPrivateKey = os.TempDir() + FakePrivFilePrefix + strconv.Itoa(rand.Intn(10000))
 				//nolint:gosec
-				conf.TLSCaCertificate = os.TempDir() + FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
+				conf.TLSClientCertificate = os.TempDir() + FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
 				conf.Listen = testProxyAddr
 				conf.TLSMinVersion = constant.TLS13
 			},
@@ -2037,8 +2037,8 @@ func TestTLS(t *testing.T) {
 					privFile = cfg.TLSPrivateKey
 				}
 
-				if cfg.TLSCaCertificate != "" {
-					caFile = cfg.TLSCaCertificate
+				if cfg.TLSClientCertificate != "" {
+					caFile = cfg.TLSClientCertificate
 				}
 
 				if certFile != "" {

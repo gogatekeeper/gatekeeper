@@ -972,18 +972,42 @@ func (r *OauthProxy) createForwardingProxy() error {
 	r.Router = proxy
 
 	// setup the tls configuration
-	if r.Config.TLSCaCertificate != "" && r.Config.TLSCaPrivateKey != "" {
-		cAuthority, err := encryption.LoadKeyPair(r.Config.TLSCaCertificate, r.Config.TLSCaPrivateKey)
+	if r.Config.TLSForwardingCACertificate != "" && r.Config.TLSForwardingCAPrivateKey != "" {
+		r.Log.Info("enabling generating server certificate from CA")
+
+		cAuthority, err := encryption.LoadKeyPair(r.Config.TLSForwardingCACertificate, r.Config.TLSForwardingCAPrivateKey)
 		if err != nil {
-			return fmt.Errorf("unable to load certificate authority, error: %w", err)
+			return fmt.Errorf("unable to load certificate/private key pair for CA, error: %w", err)
+		}
+
+		var clientCA *x509.CertPool
+		if r.Config.TLSClientCACertificate != "" {
+			r.Log.Info("enabling tls client authentication")
+
+			clientCA, err = encryption.LoadCert(r.Config.TLSClientCACertificate)
+			if err != nil {
+				return err
+			}
 		}
 
 		// implement the goproxy connect method
 		proxy.OnRequest().HandleConnectFunc(
 			func(host string, _ *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
+				tlsConfig := goproxy.TLSConfigFromCA(cAuthority)
+				tlsFunc := tlsConfig
+
+				if r.Config.TLSClientCACertificate != "" {
+					tlsFunc = func(host string, ctx *goproxy.ProxyCtx) (*tls.Config, error) {
+						cfg, err := tlsConfig(host, ctx)
+						cfg.ClientAuth = tls.RequireAndVerifyClientCert
+						cfg.ClientCAs = clientCA
+						return cfg, err
+					}
+				}
+
 				return &goproxy.ConnectAction{
 					Action:    goproxy.ConnectMitm,
-					TLSConfig: goproxy.TLSConfigFromCA(cAuthority),
+					TLSConfig: tlsFunc,
 				}, host
 			},
 		)
@@ -1165,11 +1189,8 @@ func (r *OauthProxy) Run() (context.Context, error) {
 				adminListenerConfig.certificate = r.Config.TLSAdminCertificate
 				adminListenerConfig.privateKey = r.Config.TLSAdminPrivateKey
 			}
-			if r.Config.TLSAdminCaCertificate != "" {
-				adminListenerConfig.ca = r.Config.TLSAdminCaCertificate
-			}
-			if r.Config.TLSAdminClientCertificate != "" {
-				adminListenerConfig.clientCert = r.Config.TLSAdminClientCertificate
+			if r.Config.TLSAdminClientCACertificate != "" {
+				adminListenerConfig.clientCACert = r.Config.TLSAdminClientCACertificate
 			}
 
 			adminListener, err = r.createHTTPListener(adminListenerConfig)
@@ -1239,9 +1260,8 @@ func (r *OauthProxy) Shutdown() error {
 // listenerConfig encapsulate listener options.
 type listenerConfig struct {
 	hostnames           []string // list of hostnames the service will respond to
-	ca                  string   // the path to a certificate authority
 	certificate         string   // the path to the certificate if any
-	clientCert          string   // the path to a client certificate to use for mutual tls
+	clientCACert        string   // the path to a CA certificate used to verify clients, mutual tls
 	letsEncryptCacheDir string   // the path to cache letsencrypt certificates
 	listen              string   // the interface to bind the listener to
 	privateKey          string   // the path to the private key if any
@@ -1275,9 +1295,8 @@ func makeListenerConfig(config *config.Config) listenerConfig {
 		// TLS settings
 		useFileTLS:        config.TLSPrivateKey != "" && config.TLSCertificate != "",
 		privateKey:        config.TLSPrivateKey,
-		ca:                config.TLSCaCertificate,
 		certificate:       config.TLSCertificate,
-		clientCert:        config.TLSClientCertificate,
+		clientCACert:      config.TLSClientCACertificate,
 		useLetsEncryptTLS: config.UseLetsEncrypt,
 		useSelfSignedTLS:  config.EnabledSelfSignedTLS,
 		minTLSVersion:     minTLSVersion,
@@ -1421,8 +1440,8 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 		listener = tls.NewListener(listener, tlsConfig)
 
 		// @check if we doing mutual tls
-		if config.clientCert != "" {
-			caCert, err := os.ReadFile(config.clientCert)
+		if config.clientCACert != "" {
+			caCert, err := os.ReadFile(config.clientCACert)
 			if err != nil {
 				return nil, err
 			}
@@ -1438,6 +1457,8 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 }
 
 // createUpstreamProxy create a reverse http proxy from the upstream.
+//
+//nolint:cyclop
 func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 	dialer := (&net.Dialer{
 		KeepAlive: r.Config.UpstreamKeepaliveTimeout,
@@ -1464,43 +1485,36 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 	//nolint:gosec
 	tlsConfig := &tls.Config{InsecureSkipVerify: r.Config.SkipUpstreamTLSVerify}
 
-	// are we using a client certificate
-	// @TODO provide a means of reload on the client certificate when it expires. I'm not sure if it's just a
-	// case of update the http transport settings - Also we to place this go-routine?
-	if r.Config.TLSClientCertificate != "" {
-		cert, err := os.ReadFile(r.Config.TLSClientCertificate)
+	// @check if we have a upstream ca to verify the upstream
+	if r.Config.UpstreamCA != "" {
+		r.Log.Info(
+			"loading upstream CA",
+			zap.String("path", r.Config.UpstreamCA),
+		)
+
+		cAuthority, err := os.ReadFile(r.Config.UpstreamCA)
 		if err != nil {
-			r.Log.Error(
-				"unable to read client certificate",
-				zap.String("path", r.Config.TLSClientCertificate),
-				zap.Error(err),
-			)
 			return err
 		}
 
 		pool := x509.NewCertPool()
-		pool.AppendCertsFromPEM(cert)
-		tlsConfig.ClientCAs = pool
-		tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+		pool.AppendCertsFromPEM(cAuthority)
+		tlsConfig.RootCAs = pool
 	}
 
-	{
-		// @check if we have a upstream ca to verify the upstream
-		if r.Config.UpstreamCA != "" {
-			r.Log.Info(
-				"loading the upstream CA",
-				zap.String("path", r.Config.UpstreamCA),
-			)
+	if r.Config.TLSClientCertificate != "" && r.Config.TLSClientPrivateKey != "" {
+		r.Log.Info(
+			"loading upstream client certificate and private key",
+			zap.String("client cert path", r.Config.TLSClientCertificate),
+			zap.String("client key path", r.Config.TLSClientPrivateKey),
+		)
 
-			cAuthority, err := os.ReadFile(r.Config.UpstreamCA)
-			if err != nil {
-				return err
-			}
-
-			pool := x509.NewCertPool()
-			pool.AppendCertsFromPEM(cAuthority)
-			tlsConfig.RootCAs = pool
+		clientPair, err := encryption.LoadKeyPair(r.Config.TLSClientCertificate, r.Config.TLSClientPrivateKey)
+		if err != nil {
+			return fmt.Errorf("unable to load certificate/private client key pair error: %w", err)
 		}
+
+		tlsConfig.Certificates = []tls.Certificate{*clientPair}
 	}
 
 	// create the forwarding proxy

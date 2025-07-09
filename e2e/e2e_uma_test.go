@@ -36,7 +36,7 @@ var _ = Describe("UMA Code Flow authorization", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -155,7 +155,7 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -243,7 +243,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		fwdPortNum, err = generateRandomPort()
@@ -291,8 +291,8 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 			"--openid-provider-retry-count=30",
 			"--enable-encrypted-token=false",
 			"--enable-pkce=false",
-			"--tls-ca-certificate=" + tlsCaCertificate,
-			"--tls-ca-key=" + tlsCaKey,
+			"--tls-forwarding-ca-certificate=" + tlsCaCertificate,
+			"--tls-forwarding-ca-private-key=" + tlsCaKey,
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
@@ -354,7 +354,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		fwdPortNum, err = generateRandomPort()
@@ -404,8 +404,8 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 			"--openid-provider-retry-count=30",
 			"--enable-encrypted-token=false",
 			"--enable-pkce=false",
-			"--tls-ca-certificate=" + tlsCaCertificate,
-			"--tls-ca-key=" + tlsCaKey,
+			"--tls-forwarding-ca-certificate=" + tlsCaCertificate,
+			"--tls-forwarding-ca-private-key=" + tlsCaKey,
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 

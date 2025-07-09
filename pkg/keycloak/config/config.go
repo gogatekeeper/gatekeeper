@@ -86,14 +86,16 @@ type Config struct {
 	SameSiteCookie                  string                    `env:"SAME_SITE_COOKIE" json:"same-site-cookie" usage:"enforces cookies to be send only to same site requests according to the policy (can be Strict|Lax|None)" yaml:"same-site-cookie"`
 	TLSCertificate                  string                    `env:"TLS_CERTIFICATE" json:"tls-cert" usage:"path to ths TLS certificate" yaml:"tls-cert"`
 	TLSPrivateKey                   string                    `env:"TLS_PRIVATE_KEY" json:"tls-private-key" usage:"path to the private key for TLS" yaml:"tls-private-key"`
-	TLSCaCertificate                string                    `env:"TLS_CA_CERTIFICATE" json:"tls-ca-certificate" usage:"path to the ca certificate used for signing requests" yaml:"tls-ca-certificate"`
-	TLSCaPrivateKey                 string                    `env:"TLS_CA_PRIVATE_KEY" json:"tls-ca-key" usage:"path the ca private key, used by the forward signing proxy" yaml:"tls-ca-key"`
-	TLSClientCertificate            string                    `env:"TLS_CLIENT_CERTIFICATE" json:"tls-client-certificate" usage:"path to the client certificate for outbound connections in reverse and forwarding proxy modes" yaml:"tls-client-certificate"`
+	TLSClientCertificate            string                    `env:"TLS_CLIENT_CERTIFICATE" json:"tls-client-certificate" usage:"path to the client certificate used for signing requests" yaml:"tls-client-certificate"`
+	TLSClientPrivateKey             string                    `env:"TLS_CLIENT_PRIVATE_KEY" json:"tls-client-private-key" usage:"path to the client private key, used by the forward signing proxy" yaml:"tls-client-private-key"`
+	TLSClientCACertificate          string                    `env:"TLS_CLIENT_CA_CERTIFICATE" json:"tls-client-ca-certificate" usage:"path to the client CA certificate, used for verifying client certificates" yaml:"tls-client-ca-certificate"`
+	TLSForwardingCACertificate      string                    `env:"TLS_FORWARDING_CA_CERTIFICATE" json:"tls-forwarding-ca-certificate" usage:"path to the CA certificate, used for generating server cert for forwarding-proxy" yaml:"tls-forwarding-ca-certificate"`
+	TLSForwardingCAPrivateKey       string                    `env:"TLS_FORWARDING_CA_PRIVATE_KEY" json:"tls-forwarding-ca-private-key" usage:"path to the CA private key, used for generating server cert for forwarding proxy" yaml:"tls-forwarding-ca-private-key"`
 	TLSMinVersion                   string                    `env:"TLS_MIN_VERSION" json:"tls-min-version" usage:"specify server minimal TLS version one of tlsv1.2,tlsv1.3" yaml:"tls-min-version"`
 	TLSAdminCertificate             string                    `env:"TLS_ADMIN_CERTIFICATE" json:"tls-admin-cert" usage:"path to ths TLS certificate" yaml:"tls-admin-cert"`
 	TLSAdminPrivateKey              string                    `env:"TLS_ADMIN_PRIVATE_KEY" json:"tls-admin-private-key" usage:"path to the private key for TLS" yaml:"tls-admin-private-key"`
 	TLSAdminCaCertificate           string                    `env:"TLS_ADMIN_CA_CERTIFICATE" json:"tls-admin-ca-certificate" usage:"path to the ca certificate used for signing requests" yaml:"tls-admin-ca-certificate"`
-	TLSAdminClientCertificate       string                    `env:"TLS_ADMIN_CLIENT_CERTIFICATE" json:"tls-admin-client-certificate" usage:"path to the client certificate for outbound connections in reverse and forwarding proxy modes" yaml:"tls-admin-client-certificate"`
+	TLSAdminClientCACertificate     string                    `env:"TLS_ADMIN_CLIENT_CA_CERTIFICATE" json:"tls-admin-client-ca-certificate" usage:"path to the CA certificate for outbound connections in reverse and forwarding proxy modes" yaml:"tls-admin-client-certificate"`
 	TLSStoreCaCertificate           string                    `env:"TLS_STORE_CA_CERTIFICATE" json:"tls-store-ca-certificate" usage:"path to the ca certificate used for verifying trusted server certificates" yaml:"tls-store-ca-certificate"`
 	TLSStoreClientCertificate       string                    `env:"TLS_STORE_CLIENT_CERTIFICATE" json:"tls-store-client-certificate" usage:"path to the client certificate, used for authenticating to store" yaml:"tls-store-client-certificate"`
 	TLSStoreClientPrivateKey        string                    `env:"TLS_STORE_CLIENT_PRIVATE_KEY" json:"tls-store-client-private-key" usage:"path to the client private key, used for authenticating to store" yaml:"tls-store-client-private-key"`
@@ -426,25 +428,31 @@ func (r *Config) isTLSFilesValid() error {
 	}
 
 	if r.TLSCertificate != "" && !utils.FileExists(r.TLSCertificate) {
-		return fmt.Errorf("the tls certificate %s does not exist", r.TLSCertificate)
+		return apperrors.ErrTLSCertificateNotExists
 	}
 
 	if r.TLSPrivateKey != "" && !utils.FileExists(r.TLSPrivateKey) {
-		return fmt.Errorf("the tls private key %s does not exist", r.TLSPrivateKey)
-	}
-
-	if r.TLSCaCertificate != "" && !utils.FileExists(r.TLSCaCertificate) {
-		return fmt.Errorf(
-			"the tls ca certificate %s file does not exist",
-			r.TLSCaCertificate,
-		)
+		return apperrors.ErrTLSPrivateKeyNotExists
 	}
 
 	if r.TLSClientCertificate != "" && !utils.FileExists(r.TLSClientCertificate) {
-		return fmt.Errorf(
-			"the tls client certificate %s does not exist",
-			r.TLSClientCertificate,
-		)
+		return apperrors.ErrTLSClientCertificateNotExists
+	}
+
+	if r.TLSClientPrivateKey != "" && !utils.FileExists(r.TLSClientPrivateKey) {
+		return apperrors.ErrTLSClientPrivateKeyNotExists
+	}
+
+	if r.TLSClientCACertificate != "" && !utils.FileExists(r.TLSClientCACertificate) {
+		return apperrors.ErrTLSClientCACertificateNotExists
+	}
+
+	if r.TLSForwardingCACertificate != "" && !utils.FileExists(r.TLSForwardingCACertificate) {
+		return apperrors.ErrTLSForwardingCACertificateNotExists
+	}
+
+	if r.TLSForwardingCAPrivateKey != "" && !utils.FileExists(r.TLSForwardingCAPrivateKey) {
+		return apperrors.ErrTLSForwardingCAPrivateKeyNotExists
 	}
 
 	if r.TLSStoreCaCertificate != "" && !utils.FileExists(r.TLSStoreCaCertificate) {
@@ -457,6 +465,20 @@ func (r *Config) isTLSFilesValid() error {
 
 	if r.TLSStoreClientPrivateKey != "" && !utils.FileExists(r.TLSStoreClientPrivateKey) {
 		return apperrors.ErrTLSStoreClientPrivateKeyNotExists
+	}
+
+	clientPrivMiss := r.TLSClientPrivateKey == "" && r.TLSClientCertificate != ""
+	clientCertMiss := r.TLSClientPrivateKey != "" && r.TLSClientCertificate == ""
+
+	if clientPrivMiss || clientCertMiss {
+		return apperrors.ErrTLSClientPairMissing
+	}
+
+	forwardingCAPrivMiss := r.TLSForwardingCAPrivateKey == "" && r.TLSForwardingCACertificate != ""
+	forwardingCACertMiss := r.TLSForwardingCAPrivateKey != "" && r.TLSForwardingCACertificate == ""
+
+	if forwardingCAPrivMiss || forwardingCACertMiss {
+		return apperrors.ErrTLSForwardingCAPairMissing
 	}
 
 	storeClientPrivMiss := r.TLSStoreClientPrivateKey == "" && r.TLSStoreClientCertificate != ""
@@ -500,10 +522,10 @@ func (r *Config) isAdminTLSFilesValid() error {
 		)
 	}
 
-	if r.TLSAdminClientCertificate != "" && !utils.FileExists(r.TLSAdminClientCertificate) {
+	if r.TLSAdminClientCACertificate != "" && !utils.FileExists(r.TLSAdminClientCACertificate) {
 		return fmt.Errorf(
-			"the tls client certificate %s does not exist for admin endpoint",
-			r.TLSAdminClientCertificate,
+			"the tls client CA certificate %s does not exist for admin endpoint",
+			r.TLSAdminClientCACertificate,
 		)
 	}
 
@@ -750,7 +772,7 @@ func (r *Config) isStoreURLValid() error {
 		}
 
 		if hasPlainRedisScheme && r.TLSStoreClientPrivateKey != "" {
-			return apperrors.ErrClientPrivKeuyTLSStoreURLMissing
+			return apperrors.ErrClientPrivKeyTLSStoreURLMissing
 		}
 
 		if r.EnableStoreHA {
