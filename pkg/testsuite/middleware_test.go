@@ -196,7 +196,7 @@ func TestAdminListener(t *testing.T) {
 				//nolint:gosec
 				conf.TLSAdminPrivateKey = os.TempDir() + FakePrivFilePrefix + strconv.Itoa(rand.Intn(10000))
 				//nolint:gosec
-				conf.TLSAdminCaCertificate = os.TempDir() + FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
+				conf.TLSAdminCACertificate = os.TempDir() + FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
 			},
 			ExecutionSettings: []fakeRequest{
 				{
@@ -272,8 +272,8 @@ func TestAdminListener(t *testing.T) {
 					privFile = cfg.TLSPrivateKey
 				}
 
-				if cfg.TLSAdminCaCertificate != "" {
-					caFile = cfg.TLSAdminCaCertificate
+				if cfg.TLSAdminCACertificate != "" {
+					caFile = cfg.TLSAdminCACertificate
 				}
 
 				if cfg.TLSClientCertificate != "" {

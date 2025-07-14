@@ -386,8 +386,8 @@ func TestIsOpenIDProviderProxyValid(t *testing.T) {
 		{
 			Name: "InValidSkipOpenIDProviderTLSVerifyWithIDPCA",
 			Config: &Config{
-				OpenIDProviderCA:            "somefile",
-				SkipOpenIDProviderTLSVerify: true,
+				TLSOpenIDProviderCACertificate: "somefile",
+				SkipOpenIDProviderTLSVerify:    true,
 			},
 			Valid: false,
 		},
@@ -952,7 +952,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 		TLSAdminCertificateExists       bool
 		TLSAdminClientCertificateExists bool
 		TLSAdminPrivateKeyExists        bool
-		TLSAdminCaCertificateExists     bool
+		TLSAdminCACertificateExists     bool
 	}{
 		{
 			Name: "ValidPrivateAndCertificate",
@@ -966,7 +966,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       true,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        true,
-			TLSAdminCaCertificateExists:     false,
+			TLSAdminCACertificateExists:     false,
 		},
 		{
 			Name: "InValidMissingPrivateFile",
@@ -980,7 +980,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       true,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        false,
-			TLSAdminCaCertificateExists:     false,
+			TLSAdminCACertificateExists:     false,
 		},
 		{
 			Name: "InValidMissingPrivate",
@@ -993,7 +993,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       true,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        false,
-			TLSAdminCaCertificateExists:     false,
+			TLSAdminCACertificateExists:     false,
 		},
 		{
 			Name: "InValidMissingCertificateFile",
@@ -1007,7 +1007,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       false,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        true,
-			TLSAdminCaCertificateExists:     false,
+			TLSAdminCACertificateExists:     false,
 		},
 		{
 			Name: "InValidMissingCertificate",
@@ -1020,7 +1020,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       false,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        true,
-			TLSAdminCaCertificateExists:     false,
+			TLSAdminCACertificateExists:     false,
 		},
 		{
 			Name: "InValidMissingPrivateAndCertificateFile",
@@ -1034,31 +1034,31 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       false,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        false,
-			TLSAdminCaCertificateExists:     false,
+			TLSAdminCACertificateExists:     false,
 		},
 		{
 			Name: "ValidCaCertificate",
 			Config: &Config{
 				//nolint:gosec
-				TLSAdminCaCertificate: fmt.Sprintf(os.TempDir()+"/gateadminconfig_ca_%d", rand.IntN(10000)),
+				TLSAdminCACertificate: fmt.Sprintf(os.TempDir()+"/gateadminconfig_ca_%d", rand.IntN(10000)),
 			},
 			Valid:                           true,
 			TLSAdminCertificateExists:       false,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        false,
-			TLSAdminCaCertificateExists:     true,
+			TLSAdminCACertificateExists:     true,
 		},
 		{
-			Name: "InValidMissingCaCertificateFile",
+			Name: "InValidMissingCACertificateFile",
 			Config: &Config{
 				//nolint:gosec
-				TLSAdminCaCertificate: fmt.Sprintf(os.TempDir()+"/gateadminconfig_ca_%d", rand.IntN(10000)),
+				TLSAdminCACertificate: fmt.Sprintf(os.TempDir()+"/gateadminconfig_ca_%d", rand.IntN(10000)),
 			},
 			Valid:                           false,
 			TLSAdminCertificateExists:       false,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        false,
-			TLSAdminCaCertificateExists:     false,
+			TLSAdminCACertificateExists:     false,
 		},
 		{
 			Name: "ValidClientCACertificate",
@@ -1070,7 +1070,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       false,
 			TLSAdminClientCertificateExists: true,
 			TLSAdminPrivateKeyExists:        false,
-			TLSAdminCaCertificateExists:     false,
+			TLSAdminCACertificateExists:     false,
 		},
 		{
 			Name: "InvalidValidMissingClientCertificate",
@@ -1082,7 +1082,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       false,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        false,
-			TLSAdminCaCertificateExists:     false,
+			TLSAdminCACertificateExists:     false,
 		},
 	}
 
@@ -1108,8 +1108,8 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 					privFile = cfg.TLSAdminPrivateKey
 				}
 
-				if cfg.TLSAdminCaCertificate != "" {
-					caFile = cfg.TLSAdminCaCertificate
+				if cfg.TLSAdminCACertificate != "" {
+					caFile = cfg.TLSAdminCACertificate
 				}
 
 				if certFile != "" && testCase.TLSAdminCertificateExists {
@@ -1136,7 +1136,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 					defer os.Remove(privFile)
 				}
 
-				if caFile != "" && testCase.TLSAdminCaCertificateExists {
+				if caFile != "" && testCase.TLSAdminCACertificateExists {
 					err := os.WriteFile(caFile, []byte(""), 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing cacertificate %s", err)
@@ -2005,7 +2005,7 @@ func TestIsStoreURLValid(t *testing.T) {
 			Name: "TLSStoreURLMissingCAPresent",
 			Config: &Config{
 				StoreURL:              "redis://127.0.0.1:6450",
-				TLSStoreCaCertificate: "pathtoca.pem",
+				TLSStoreCACertificate: "pathtoca.pem",
 			},
 			Valid: false,
 		},
@@ -2013,7 +2013,7 @@ func TestIsStoreURLValid(t *testing.T) {
 			Name: "TLSStoreURLPresentCAMissing",
 			Config: &Config{
 				StoreURL:              "rediss://127.0.0.1:6450",
-				TLSStoreCaCertificate: "",
+				TLSStoreCACertificate: "",
 			},
 			Valid: false,
 		},
@@ -2032,7 +2032,7 @@ func TestIsStoreURLValid(t *testing.T) {
 				StoreURL:                  "rediss://127.0.0.1:6450",
 				TLSStoreClientCertificate: "pathtocert",
 				TLSStoreClientPrivateKey:  "pathtokey",
-				TLSStoreCaCertificate:     "pathtoca.pem",
+				TLSStoreCACertificate:     "pathtoca.pem",
 			},
 			Valid: true,
 		},

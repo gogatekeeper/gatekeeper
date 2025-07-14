@@ -93,6 +93,8 @@ var (
 	ErrLoadStoreCA               = errors.New("problem loading store CA certificate")
 	ErrLoadStoreClientPair       = errors.New("problem loading store client certificate/key pair")
 	ErrCreateStore               = errors.New("problem creating store")
+	ErrLoadIDPCA                 = errors.New("problem loading IDP CA certificate")
+	ErrLoadIDPClientKeyPair      = errors.New("problem loading IDP client key pair")
 
 	// config errors.
 
@@ -208,5 +210,10 @@ var (
 	ErrTLSStoreClientCertificateNotExists = errors.New("tls store client certificate file does not exist")
 	ErrTLSStoreClientPrivateKeyNotExists  = errors.New("tls store client private key file does not exist")
 	ErrTLSStoreClientPairMissing          = errors.New("tls store, you must supply both client private key " +
+		"and client certificate for client authentication")
+	ErrTLSOpenIDPCACertificateNotExists     = errors.New("tls openidp ca certificate, file does not exist")
+	ErrTLSOpenIDPClientCertificateNotExists = errors.New("tls openidp client certificate file does not exist")
+	ErrTLSOpenIDPClientPrivateKeyNotExists  = errors.New("tls openidp client private key file does not exist")
+	ErrTLSOpenIDPClientPairMissing          = errors.New("tls openidp, you must supply both client private key " +
 		"and client certificate for client authentication")
 )

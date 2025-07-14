@@ -131,7 +131,7 @@ func NewProxy(config *config.Config, log *zap.Logger, upstream core.ReverseProxy
 		svc.Store, err = setupStore(
 			config.StoreURL,
 			config.EnableStoreHA,
-			config.TLSStoreCaCertificate,
+			config.TLSStoreCACertificate,
 			config.TLSStoreClientCertificate,
 			config.TLSStoreClientPrivateKey,
 			config.OpenIDProviderTimeout,
@@ -1644,6 +1644,8 @@ func (r OpenIDRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 
 // newOpenIDProvider initializes the openID configuration, note: the redirection url is deliberately left blank
 // in order to retrieve it from the host header on request.
+//
+//nolint:cyclop
 func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, error) {
 	host := fmt.Sprintf(
 		"%s://%s",
@@ -1661,20 +1663,35 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 		gocloak.SetLegacyWildFlySupport()(client)
 	}
 
-	if r.Config.OpenIDProviderCA != "" {
+	if r.Config.TLSOpenIDProviderCACertificate != "" {
 		r.Log.Info(
 			"loading the IDP CA",
-			zap.String("path", r.Config.OpenIDProviderCA),
+			zap.String("path", r.Config.TLSOpenIDProviderCACertificate),
 		)
 
-		cAuthority, err := os.ReadFile(r.Config.OpenIDProviderCA)
+		pool, err := encryption.LoadCert(r.Config.TLSOpenIDProviderCACertificate)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, errors.Join(apperrors.ErrLoadIDPCA, err)
+		}
+		tlsConfig.RootCAs = pool
+	}
+
+	if r.Config.TLSOpenIDProviderClientCertificate != "" && r.Config.TLSOpenIDProviderClientPrivateKey != "" {
+		r.Log.Info(
+			"loading the IDP client key pair",
+			zap.String("client_cert", r.Config.TLSOpenIDProviderClientCertificate),
+			zap.String("client_key", r.Config.TLSOpenIDProviderClientPrivateKey),
+		)
+
+		clientKeyPair, err := encryption.LoadKeyPair(
+			r.Config.TLSOpenIDProviderClientCertificate,
+			r.Config.TLSOpenIDProviderClientPrivateKey,
+		)
+		if err != nil {
+			return nil, nil, errors.Join(apperrors.ErrLoadIDPClientKeyPair, err)
 		}
 
-		pool := x509.NewCertPool()
-		pool.AppendCertsFromPEM(cAuthority)
-		tlsConfig.RootCAs = pool
+		tlsConfig.Certificates = []tls.Certificate{*clientKeyPair}
 	}
 
 	restyClient := client.RestyClient()
