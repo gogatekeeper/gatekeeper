@@ -156,7 +156,7 @@ jobs:
         id: meta_fips
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-fips
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Build and push Docker FIPS image
         uses: docker/build-push-action@v5
@@ -165,6 +165,6 @@ jobs:
           push: true
           build-args: |
             FIPS=v1.0.0
-          tags: ${{ steps.meta_fips.outputs.tags }}
+          tags: ${{ steps.meta_fips.outputs.tags }}-fips
           labels: ${{ steps.meta_fips.outputs.labels }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
