@@ -136,3 +136,24 @@ archives:
     # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
     wrap_in_directory: true
     format: zip
+  - id: nix-fips
+    builds: [macos-fips, linux-fips]
+    # Generate the compresed files based on the following templates
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- if eq .Os "darwin" }}macOS{{- else }}{{ .Os }}{{ end }}_
+      {{- .Arch }}{{- .Arm }}_fips
+    # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
+    wrap_in_directory: true
+    format: tar.gz
+  - id: windows-fips
+    builds: [windows-fips]
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      windows_
+      {{- .Arch }}{{- .Arm }}_fips
+    # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
+    wrap_in_directory: true
+    format: zip
