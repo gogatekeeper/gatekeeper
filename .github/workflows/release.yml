@@ -151,3 +151,20 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
+
+      - name: Extract metadata (tags, labels) for Docker FIPS
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-fips
+
+      - name: Build and push Docker FIPS image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          build-args:
+            - FIPS=v1.0.0
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64,linux/arm/v7

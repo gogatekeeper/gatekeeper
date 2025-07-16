@@ -17,6 +17,7 @@ package proxy
 
 import (
 	"context"
+	"crypto/fips140"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -118,6 +119,8 @@ func NewProxy(config *config.Config, log *zap.Logger, upstream core.ReverseProxy
 		metricsHandler: promhttp.Handler(),
 		pat:            &PAT{},
 	}
+
+	log.Info("FIPS status", zap.Bool("fips", fips140.Enabled()))
 
 	// parse the upstream endpoint
 	if svc.Endpoint, err = url.Parse(config.Upstream); err != nil {
