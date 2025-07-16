@@ -166,6 +166,6 @@ jobs:
           build-args: |
             FIPS=v1.0.0
           tags: |
-            ${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-fips
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-fips
           labels: ${{ steps.meta_fips.outputs.labels }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
