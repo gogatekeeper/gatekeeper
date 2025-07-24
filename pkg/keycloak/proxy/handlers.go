@@ -141,7 +141,7 @@ func oauthAuthorizationHandler(
 			"incoming authorization request from client address",
 			zap.Any("access_type", accessType),
 			zap.String("client_ip", clientIP),
-			zap.String("remote_addr", req.RemoteAddr),
+			//zap.String("remote_addr", req.RemoteAddr),
 		)
 
 		// step: if we have a custom sign in page, lets display that

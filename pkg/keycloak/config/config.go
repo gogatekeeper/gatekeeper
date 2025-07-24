@@ -193,6 +193,7 @@ type Config struct {
 	EnableLoA                          bool `env:"ENABLE_LOA" json:"enable-loa" usage:"enables level of authentication" yaml:"enable-loa"`
 	EnableStoreHA                      bool `env:"ENABLE_STORE_HA" json:"enable-store-ha" usage:"enable store high availability client, currently only redis-cluster supported" yaml:"enable-store-ha"`
 	IsDiscoverURILegacy                bool
+	UseIdentityFromBasicAuth        bool `env:"USE_IDENTITY_FROM_BASIC_AUTH" json:"use-identity-from-basic-auth" usage:"Extract identity from basic authentication header" yaml:"use-identity-from-basic-auth"`
 }
 
 func NewDefaultConfig() *Config {

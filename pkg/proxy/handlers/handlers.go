@@ -40,6 +40,16 @@ import (
 // EmptyHandler is responsible for doing nothing.
 func EmptyHandler(_ http.ResponseWriter, _ *http.Request) {}
 
+func NotSoEmptyHandler(
+	logger *zap.Logger,
+) func(wrt http.ResponseWriter, req *http.Request) {
+	return func(wrt http.ResponseWriter, req *http.Request) {
+		if !strings.Contains(req.URL.Path, "api") {
+			logger.Debug("Inside not so empty handler", zap.String("method", req.Method), zap.String("url", req.URL.String()))
+		}
+	}
+}
+
 // HealthHandler is a health check handler for the service.
 func HealthHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set(constant.VersionHeader, proxycore.GetVersion())

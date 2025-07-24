@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"github.com/gogatekeeper/gatekeeper/pkg/proxy/core"
 	"net/http"
 	"regexp"
 	"strings"
@@ -106,6 +107,7 @@ func AdmissionMiddleware(
 	matchClaims map[string]string,
 	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
 ) func(http.Handler) http.Handler {
+
 	claimMatches := make(map[string]*regexp.Regexp)
 	for k, v := range matchClaims {
 		claimMatches[k] = regexp.MustCompile(v)
@@ -114,6 +116,11 @@ func AdmissionMiddleware(
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
 			// we don't need to continue is a decision has been made
+			if core.CheckGITAccess(resource, req, logger) {
+				next.ServeHTTP(wrt, req)
+				return
+			}
+
 			scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
 			if !assertOk {
 				logger.Error(apperrors.ErrAssertionFailed.Error())
@@ -139,9 +146,12 @@ func AdmissionMiddleware(
 				return
 			}
 
+			//scope.Logger.Debug("before checking headers", zap.String("headers", resource.GetHeaders()))
+
 			if len(resource.Headers) > 0 {
 				var reqHeaders []string
 				for _, resVal := range resource.Headers {
+					lLog.Debug("Checking header", zap.String(":", resVal))
 					resVals := strings.Split(resVal, ":")
 					name := resVals[0]
 					canonName := http.CanonicalHeaderKey(name)
@@ -169,6 +179,10 @@ func AdmissionMiddleware(
 						zap.String("headers", resource.GetHeaders()))
 					accessForbidden(wrt, req)
 					return
+				} else {
+					lLog.Debug("access granted, correct headers",
+						zap.String("headers", resource.GetHeaders()))
+					scope.Logger.Debug("granted headers", zap.String("headers", resource.GetHeaders()))
 				}
 			}
 

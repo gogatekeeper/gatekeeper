@@ -131,27 +131,60 @@ func GetIdentity(
 	enableEncryptedToken bool,
 	forceEncryptedCookie bool,
 	encKey string,
+	useIdentityFromBasicAuth bool,
 ) func(req *http.Request, tokenCookie string, tokenHeader string) (string, error) {
 	return func(req *http.Request, tokenCookie string, tokenHeader string) (string, error) {
-		var isBearer bool
 		// step: check for a bearer token or cookie with jwt token
-		token, isBearer, err := GetTokenInRequest(
-			req,
-			tokenCookie,
-			skipAuthorizationHeaderIdentity,
-			tokenHeader,
-		)
-		if err != nil {
-			return "", err
-		}
 
-		if enableEncryptedToken || forceEncryptedCookie && !isBearer {
-			if token, err = encryption.DecodeText(token, encKey); err != nil {
-				return "", apperrors.ErrDecryption
+		if useIdentityFromBasicAuth && (strings.Contains(strings.ToLower(req.UserAgent()), "git/") || strings.Contains(strings.ToLower(req.UserAgent()), "gitlab-runner")) && (strings.HasSuffix(strings.ToLower(req.URL.Path), "info/refs") || strings.HasSuffix(strings.ToLower(req.URL.Path), "git-upload-pack") || strings.HasSuffix(strings.ToLower(req.URL.Path), "git-receive-pack")) {
+			stdClaims := &jwt.Claims{}
+			customClaims := models.CustClaims{}
+			user := &models.UserContext{
+				Audiences:     stdClaims.Audience,
+				Email:         "office@group-cts.com",
+				ExpiresAt:     stdClaims.Expiry.Time(),
+				ID:            stdClaims.Subject,
+				Name:          "GIT client console user",
+				PreferredName: "GIT Client Console User",
+				Permissions:   customClaims.Authorization,
+				Groups:        []string{"ProxyAuth"},
 			}
-		}
 
-		return token, nil
+			authHeader := req.Header.Get(constant.AuthorizationHeader)
+			var rawToken string
+			if strings.Contains(authHeader, "Basic") {
+				rawToken = strings.ReplaceAll(authHeader, "Basic ", "")
+				user.BearerToken = false
+			} else if strings.Contains(authHeader, "Bearer") {
+				rawToken = strings.ReplaceAll(authHeader, "Bearer ", "")
+				user.BearerToken = true
+			}
+
+			user.RawToken = rawToken
+
+			user.SkipVerification = true
+			return rawToken, nil
+		} else {
+			var isBearer bool
+			// step: check for a bearer token or cookie with jwt token
+			token, isBearer, err := GetTokenInRequest(
+				req,
+				tokenCookie,
+				skipAuthorizationHeaderIdentity,
+				tokenHeader,
+			)
+			if err != nil {
+				return "", err
+			}
+
+			if enableEncryptedToken || forceEncryptedCookie && !isBearer {
+				if token, err = encryption.DecodeText(token, encKey); err != nil {
+					return "", apperrors.ErrDecryption
+				}
+			}
+
+			return token, nil
+		}
 	}
 }
 

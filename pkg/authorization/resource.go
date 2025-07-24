@@ -47,6 +47,10 @@ type Resource struct {
 	Groups []string `json:"groups" yaml:"groups"`
 	// Acr (Authentication Context Class Reference) is a list of allowed levels of authentication for user
 	Acr []string `json:"acr" yaml:"acr"`
+	// If true, the secured path has a Gitlab instance in the upstream
+	IsGitPath bool `json:"is-git-path" yaml:"is-git-path"`
+	// If basic auth is provided for GIT client authentication, which user is allowed
+	GitUserToExpect []string `json:"git-user-to-expect" yaml:"git-user-to-expect"`
 }
 
 func NewResource() *Resource {
@@ -118,6 +122,20 @@ func (r *Resource) Parse(resource string) (*Resource, error) {
 			}
 
 			r.WhiteListed = value
+		case "is-git-path":
+			value, err := strconv.ParseBool(keyPair[1])
+			if err != nil {
+				return nil, errors.New(
+					"the value of is-git-path must be " +
+						"true|TRUE|T or it's false equivalent",
+				)
+			}
+			r.IsGitPath = value
+		case "git-user-to-expect":
+			r.GitUserToExpect = strings.Split(keyPair[1], ",")
+			if len(r.GitUserToExpect) != 0 {
+				return nil, errors.New("empty git user not allowed")
+			}
 		case "white-listed-anon":
 			value, err := strconv.ParseBool(keyPair[1])
 			if err != nil {

@@ -17,9 +17,9 @@ WORKDIR /src/
 RUN mkdir -p bin && \
     GIT_SHA=$(git --no-pager describe --always --dirty) && \
     BUILD_TIME=$(date '+%s') && \
-    TAG=$(git describe --tags) && \
+    TAG=$(git describe --tags 2>/dev/null || echo "v3.5.0-int") && \ 
     NAME=gatekeeper && \
-    LFLAGS=" -X github.com/gogatekeeper/gatekeeper/pkg/proxy/core.release=$TAG -X github.com/gogatekeeper/gatekeeper/pkg/proxy/core.gitsha=$GIT_SHA -X github.com/gogatekeeper/gatekeeper/pkg/proxy/core.compiled=$BUILD_TIME" && \
+    LFLAGS=" -X github.com/secinto/gatekeeper/pkg/proxy/core.release=$TAG -X github.com/secinto/gatekeeper/pkg/proxy/core.gitsha=$GIT_SHA -X github.com/secinto/gatekeeper/pkg/proxy/core.compiled=$BUILD_TIME" && \
     CGO_ENABLED=0 go build -a -tags netgo -ldflags "-s -w ${LFLAGS}" -o bin/${NAME} cmd/keycloak/gatekeeper-keycloak.go
 
 WORKDIR ${HOMEDIR}
@@ -41,9 +41,9 @@ FROM scratch
 ARG HOMEDIR
 
 LABEL Name=gatekeeper \
-      Release=https://github.com/gogatekeeper/gatekeeper \
-      Url=https://github.com/gogatekeeper/gatekeeper \
-      Help=https://github.com/gogatekeeper/gatekeeper/issues
+      Release=https://github.com/secinto/gatekeeper \
+      Url=https://github.com/secinto/gatekeeper \
+      Help=https://github.com/secinto/gatekeeper/issues
 
 COPY --chown=1000:1000 --from=build-env ${HOMEDIR} ${HOMEDIR}
 COPY --from=build-env /etc/passwd /etc/passwd

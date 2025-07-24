@@ -77,4 +77,6 @@ type UserContext struct {
 	Claims map[string]interface{}
 	// permissions
 	Permissions Permissions
+	// skip verification because it is an internal token (not correctly signed)
+	SkipVerification bool
 }

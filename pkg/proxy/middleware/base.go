@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -49,6 +50,9 @@ func EntrypointMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 
 			resp := middleware.NewWrapResponseWriter(wrt, 1)
 			start := time.Now()
+
+			logger.Info("Incoming request", zap.String("incoming request-path", req.URL.Path), zap.String("from host", req.Host), zap.String("for host", req.URL.String()))
+
 			// All the processing, including forwarding the request upstream and getting the response,
 			// happens here in this chain.
 			next.ServeHTTP(resp, req.WithContext(context.WithValue(req.Context(), constant.ContextScopeName, scope)))
@@ -113,24 +117,29 @@ func LoggingMiddleware(
 			}
 
 			next.ServeHTTP(resp, req)
-
-			if req.URL.Path == req.URL.RawPath || req.URL.RawPath == "" {
-				scope.Logger.Info("client request",
-					zap.Duration("latency", time.Since(start)),
-					zap.Int("status", resp.Status()),
-					zap.Int("bytes", resp.BytesWritten()),
-					zap.String("remote_addr", req.RemoteAddr),
-					zap.String("method", req.Method),
-					zap.String("path", req.URL.Path))
-			} else {
-				scope.Logger.Info("client request",
-					zap.Duration("latency", time.Since(start)),
-					zap.Int("status", resp.Status()),
-					zap.Int("bytes", resp.BytesWritten()),
-					zap.String("remote_addr", req.RemoteAddr),
-					zap.String("method", req.Method),
-					zap.String("path", req.URL.Path),
-					zap.String("raw path", req.URL.RawPath))
+			if !strings.Contains(req.URL.Path, "api") {
+				if req.URL.Path == req.URL.RawPath || req.URL.RawPath == "" {
+					scope.Logger.Info("client request",
+						zap.Duration("latency", time.Since(start)),
+						zap.Int("status", resp.Status()),
+						//zap.Int("bytes", resp.BytesWritten()),
+						//zap.String("remote_addr", req.RemoteAddr),
+						zap.String("method", req.Method),
+						zap.String("path", req.URL.Path),
+						zap.String("host", req.Host),
+						zap.String("url", req.URL.String()))
+				} else {
+					scope.Logger.Info("client request",
+						zap.Duration("latency", time.Since(start)),
+						zap.Int("status", resp.Status()),
+						//zap.Int("bytes", resp.BytesWritten()),
+						//zap.String("remote_addr", req.RemoteAddr),
+						zap.String("method", req.Method),
+						zap.String("path", req.URL.Path),
+						zap.String("raw path", req.URL.RawPath),
+						zap.String("host", req.Host),
+						zap.String("url", req.URL.String()))
+				}
 			}
 		})
 	}
@@ -217,6 +226,7 @@ func IdentityHeadersMiddleware(
 	enableTokenHeader bool,
 	enableAuthzHeader bool,
 	enableAuthzCookies bool,
+	resource *authorization.Resource,
 ) func(http.Handler) http.Handler {
 	customClaims := make(map[string]string)
 	const minSliceLength int = 1
@@ -234,6 +244,12 @@ func IdentityHeadersMiddleware(
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
+
+			if core.CheckGITAccess(resource, req, logger) {
+				next.ServeHTTP(wrt, req)
+				return
+			}
+
 			scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
 			if !assertOk {
 				logger.Error(apperrors.ErrAssertionFailed.Error())
@@ -262,9 +278,16 @@ func IdentityHeadersMiddleware(
 				if enableTokenHeader {
 					headers.Set("X-Auth-Token", user.RawToken)
 				}
+
 				// add the authorization header if requested
-				if enableAuthzHeader {
-					headers.Set(constant.AuthorizationHeader, "Bearer "+user.RawToken)
+				if enableAuthzHeader && user.RawToken != "" {
+					logger.Debug("Adding authentication header", zap.Any("Bearer", user.RawToken))
+					if user.BearerToken {
+						headers.Set(constant.AuthorizationHeader, "Bearer "+user.RawToken)
+					}
+					/*else {
+						headers.Set(constant.AuthorizationHeader, "Basic "+user.RawToken)
+					}*/
 				}
 				// are we filtering out the cookies
 				if !enableAuthzCookies {
@@ -342,6 +365,12 @@ func ProxyMiddleware(
 			if scope != nil {
 				req.URL.Path = scope.Path
 				req.URL.RawPath = scope.RawPath
+				if !strings.Contains(req.URL.Path, "api") {
+					logger.Debug("updating paths",
+						zap.String("path", req.URL.Path),
+						zap.String("rawPath", req.URL.RawPath),
+					)
+				}
 			}
 			if v := req.Header.Get("Host"); v != "" {
 				req.Host = v
@@ -354,7 +383,7 @@ func ProxyMiddleware(
 				clientIP := utils.RealIP(req)
 				logger.Debug("upgrading the connnection",
 					zap.String("client_ip", clientIP),
-					zap.String("remote_addr", req.RemoteAddr),
+					//zap.String("remote_addr", req.RemoteAddr),
 				)
 				if err := utils.TryUpdateConnection(req, wrt, endpoint); err != nil {
 					logger.Error("failed to upgrade connection", zap.Error(err))
@@ -363,7 +392,17 @@ func ProxyMiddleware(
 				}
 				return
 			}
-
+			if !strings.Contains(req.URL.Path, "api") {
+				logger.Debug("forwarding request to upstream", zap.String("URL", req.URL.Path), zap.String("Host", req.Host))
+				/*logger.Debug("Request: ")
+				for key, val := range req.Header {
+					// Logic using key
+					// And val if you need it
+					for _, value := range val {
+						logger.Debug(key + ": " + value)
+					}
+				}*/
+			}
 			upstream.ServeHTTP(wrt, req)
 		})
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	"net/http"
 	"strings"
 	"time"
@@ -48,9 +49,15 @@ func AuthenticationMiddleware(
 	newOAuth2Config func(redirectionURL string) *oauth2.Config,
 	store storage.Storage,
 	accessTokenDuration time.Duration,
+	resource *authorization.Resource,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
+			if core.CheckGITAccess(resource, req, logger) {
+				next.ServeHTTP(wrt, req)
+				return
+			}
+
 			scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
 			if !assertOk {
 				logger.Error(apperrors.ErrAssertionFailed.Error())
@@ -355,9 +362,16 @@ func RedirectToAuthorizationMiddleware(
 	oAuthURI string,
 	allowedQueryParams map[string]string,
 	defaultAllowedQueryParams map[string]string,
+	resource *authorization.Resource,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
+
+			if core.CheckGITAccess(resource, req, logger) {
+				next.ServeHTTP(wrt, req)
+				return
+			}
+
 			scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
 			if !assertOk {
 				logger.Error(apperrors.ErrAssertionFailed.Error())
@@ -427,7 +441,7 @@ func RedirectToAuthorizationMiddleware(
 	}
 }
 
-// NoRedirectToAuthorizationMiddleware stops request after faild authentication, in no-redirects=true mode.
+// NoRedirectToAuthorizationMiddleware stops request after failed authentication, in no-redirects=true mode.
 func NoRedirectToAuthorizationMiddleware(
 	logger *zap.Logger,
 ) func(http.Handler) http.Handler {

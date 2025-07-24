@@ -2,7 +2,10 @@ package core
 
 import (
 	"context"
+	"encoding/base64"
+	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	"net/http"
+	"strings"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
@@ -69,4 +72,31 @@ func RevokeProxy(logger *zap.Logger, req *http.Request) context.Context {
 	scope.AccessDenied = true
 
 	return context.WithValue(req.Context(), constant.ContextScopeName, scope)
+}
+
+func CheckGITAccess(resource *authorization.Resource, req *http.Request, logger *zap.Logger) bool {
+	if resource != nil {
+		if resource.IsGitPath && (strings.Contains(strings.ToLower(req.UserAgent()), "git/") || strings.Contains(strings.ToLower(req.UserAgent()), "gitlab-runner")) {
+			authHeader := req.Header.Get(constant.AuthorizationHeader)
+			logger.Debug("Checking basic auth", zap.String("authHeader", authHeader))
+
+			if strings.Contains(authHeader, "Basic") {
+				parts := strings.Split(authHeader, " ")
+				if len(parts) == 2 {
+					data, err := base64.StdEncoding.DecodeString(parts[1])
+					logger.Debug("Auth header decoded", zap.String("header", string(data)))
+					if err == nil {
+						basicAuth := strings.Split(string(data), ":")
+						for _, user := range resource.GitUserToExpect {
+							logger.Debug("Checking user", zap.String("user", user), zap.String("authHeader", basicAuth[0]))
+							if strings.Trim(user, " ") == strings.Trim(basicAuth[0], " ") {
+								return true
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return false
 }
