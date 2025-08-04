@@ -160,6 +160,7 @@ type Config struct {
 	EnableRegisterHandler              bool `env:"ENABLE_REGISTER_HANDLER" json:"enable-register-handler" usage:"enables the register handler" yaml:"enable-register-handler"`
 	EnableTokenHeader                  bool `env:"ENABLE_TOKEN_HEADER" json:"enable-token-header" usage:"enables the token authentication header X-Auth-Token to upstream" yaml:"enable-token-header"`
 	EnableAuthorizationHeader          bool `env:"ENABLE_AUTHORIZATION_HEADER" json:"enable-authorization-header" usage:"adds the authorization header to the proxy request" yaml:"enable-authorization-header"`
+	EnableHeaderEncoding               bool `env:"ENABLE_HEADER_ENCODING" json:"enable-header-encoding" usage:"encodes header values according RFC 2047, in MIME B format" yaml:"enable-header-encoding"`
 	EnableAuthorizationCookies         bool `env:"ENABLE_AUTHORIZATION_COOKIES" json:"enable-authorization-cookies" usage:"adds the authorization cookies to the uptream proxy request" yaml:"enable-authorization-cookies"`
 	EnableHTTPSRedirect                bool `env:"ENABLE_HTTPS_REDIRECT" json:"enable-https-redirection" usage:"enable the http to https redirection on the http service" yaml:"enable-https-redirection"`
 	EnableProfiling                    bool `env:"ENABLE_PROFILING" json:"enable-profiling" usage:"switching on the golang profiling via pprof on /debug/pprof, /debug/pprof/heap etc" yaml:"enable-profiling"`

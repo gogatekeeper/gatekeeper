@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"mime"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -217,6 +218,7 @@ func IdentityHeadersMiddleware(
 	enableTokenHeader bool,
 	enableAuthzHeader bool,
 	enableAuthzCookies bool,
+	enableHeaderEncoding bool,
 ) func(http.Handler) http.Handler {
 	customClaims := make(map[string]string)
 	const minSliceLength int = 1
@@ -249,14 +251,26 @@ func IdentityHeadersMiddleware(
 
 			if scope.Identity != nil {
 				user := scope.Identity
-				headers.Set("X-Auth-Audience", strings.Join(user.Audiences, ","))
-				headers.Set("X-Auth-Email", user.Email)
-				headers.Set("X-Auth-Expiresin", user.ExpiresAt.String())
-				headers.Set("X-Auth-Groups", strings.Join(user.Groups, ","))
-				headers.Set("X-Auth-Roles", strings.Join(user.Roles, ","))
-				headers.Set("X-Auth-Subject", user.ID)
-				headers.Set("X-Auth-Userid", user.Name)
-				headers.Set("X-Auth-Username", user.Name)
+				const encoding = "UTF-8"
+				if enableHeaderEncoding {
+					headers.Set("X-Auth-Audience", mime.BEncoding.Encode(encoding, strings.Join(user.Audiences, ",")))
+					headers.Set("X-Auth-Email", mime.BEncoding.Encode(encoding, user.Email))
+					headers.Set("X-Auth-Expiresin", mime.BEncoding.Encode(encoding, user.ExpiresAt.String()))
+					headers.Set("X-Auth-Groups", mime.BEncoding.Encode(encoding, strings.Join(user.Groups, ",")))
+					headers.Set("X-Auth-Roles", mime.BEncoding.Encode(encoding, strings.Join(user.Roles, ",")))
+					headers.Set("X-Auth-Subject", mime.BEncoding.Encode(encoding, user.ID))
+					headers.Set("X-Auth-Userid", mime.BEncoding.Encode(encoding, user.Name))
+					headers.Set("X-Auth-Username", mime.BEncoding.Encode(encoding, user.Name))
+				} else {
+					headers.Set("X-Auth-Audience", strings.Join(user.Audiences, ","))
+					headers.Set("X-Auth-Email", user.Email)
+					headers.Set("X-Auth-Expiresin", user.ExpiresAt.String())
+					headers.Set("X-Auth-Groups", strings.Join(user.Groups, ","))
+					headers.Set("X-Auth-Roles", strings.Join(user.Roles, ","))
+					headers.Set("X-Auth-Subject", user.ID)
+					headers.Set("X-Auth-Userid", user.Name)
+					headers.Set("X-Auth-Username", user.Name)
+				}
 
 				// should we add the token header?
 				if enableTokenHeader {
@@ -273,7 +287,12 @@ func IdentityHeadersMiddleware(
 				// inject any custom claims
 				for claim, header := range customClaims {
 					if claim, found := user.Claims[claim]; found {
-						headers.Set(header, fmt.Sprintf("%v", claim))
+						val := fmt.Sprintf("%v", claim)
+						if enableHeaderEncoding {
+							val = mime.BEncoding.Encode(encoding, val)
+						}
+
+						headers.Set(header, val)
 					}
 				}
 			}

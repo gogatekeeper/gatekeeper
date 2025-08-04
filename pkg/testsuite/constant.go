@@ -9,6 +9,7 @@ const (
 	FakeAdminRole                = "role:admin"
 	FakeAdminURL                 = "/admin"
 	FakeAdminAllURL              = FakeAdminURL + "*"
+	FakeAdminTestURL             = "/auth_all/test"
 	FakeAuthAllURL               = "/auth_all/*"
 	FakeClientID                 = "test"
 	FakeSecret                   = "test"

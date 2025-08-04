@@ -65,7 +65,7 @@ var defTestTokenClaims = DefaultTestTokenClaims{
 	Azp:               "clientid",
 	ClientSession:     "f0105893-369a-46bc-9661-ad8c747b1a69",
 	Email:             "gambol99@gmail.com",
-	FamilyName:        "Jayawardene",
+	FamilyName:        "высййтныф六书", //nolint:gosmopolitan // test
 	GivenName:         "Rohith",
 	Username:          "Jayawardene",
 	Iat:               DefaultIat,
