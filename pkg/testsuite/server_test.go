@@ -84,7 +84,11 @@ func TestNewKeycloakProxyWithLegacyDiscoveryURI(t *testing.T) {
 }
 
 func TestReverseProxyHeaders(t *testing.T) {
-	proxy := newFakeProxy(nil, &fakeAuthConfig{})
+	cfg := newFakeKeycloakConfig()
+	cfg.AddClaims = []string{
+		"family_name",
+	}
+	proxy := newFakeProxy(cfg, &fakeAuthConfig{})
 	token := NewTestToken(proxy.idp.getLocation())
 	token.addRealmRoles([]string{FakeAdminRole})
 	jwt, _ := token.GetToken()
@@ -95,11 +99,50 @@ func TestReverseProxyHeaders(t *testing.T) {
 			RawToken:      jwt,
 			ExpectedProxy: true,
 			ExpectedProxyHeaders: map[string]string{
-				"X-Auth-Email":    "gambol99@gmail.com",
-				"X-Auth-Roles":    "role:admin,defaultclient:default",
-				"X-Auth-Subject":  token.Claims.Sub,
-				"X-Auth-Userid":   "rjayawardene",
-				"X-Auth-Username": "rjayawardene",
+				"X-Auth-Email":       "gambol99@gmail.com",
+				"X-Auth-Roles":       "role:admin,defaultclient:default",
+				"X-Auth-Subject":     token.Claims.Sub,
+				"X-Auth-Userid":      "rjayawardene",
+				"X-Auth-Username":    "rjayawardene",
+				"X-Auth-Family-Name": "высййтныф六书", //nolint:gosmopolitan // test
+			},
+			ExpectedProxyHeadersValidator: map[string]func(*testing.T, *config.Config, string){
+				"X-Auth-Token": func(t *testing.T, c *config.Config, value string) {
+					t.Helper()
+					assert.Equal(t, jwt, value)
+					assert.False(t, checkAccessTokenEncryption(t, c, value))
+				},
+			},
+			ExpectedCode:            http.StatusOK,
+			ExpectedContentContains: `"uri":"` + uri + `"`,
+		},
+	}
+	proxy.RunTests(t, requests)
+}
+
+func TestEncodedReverseProxyHeaders(t *testing.T) {
+	cfg := newFakeKeycloakConfig()
+	cfg.AddClaims = []string{
+		"family_name",
+	}
+	cfg.EnableHeaderEncoding = true
+	proxy := newFakeProxy(cfg, &fakeAuthConfig{})
+	token := NewTestToken(proxy.idp.getLocation())
+	token.addRealmRoles([]string{FakeAdminRole})
+	jwt, _ := token.GetToken()
+	uri := "/test"
+	requests := []fakeRequest{
+		{
+			URI:           uri,
+			RawToken:      jwt,
+			ExpectedProxy: true,
+			ExpectedProxyHeaders: map[string]string{
+				"X-Auth-Email":       "gambol99@gmail.com",
+				"X-Auth-Roles":       "role:admin,defaultclient:default",
+				"X-Auth-Subject":     token.Claims.Sub,
+				"X-Auth-Userid":      "rjayawardene",
+				"X-Auth-Username":    "rjayawardene",
+				"X-Auth-Family-Name": "=?UTF-8?b?0LLRi9GB0LnQudGC0L3Ri9GE5YWt5Lmm?=",
 			},
 			ExpectedProxyHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 				"X-Auth-Token": func(t *testing.T, c *config.Config, value string) {

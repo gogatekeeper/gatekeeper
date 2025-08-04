@@ -785,6 +785,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 			r.Config.EnableTokenHeader,
 			r.Config.EnableAuthorizationHeader,
 			r.Config.EnableAuthorizationCookies,
+			r.Config.EnableHeaderEncoding,
 		)
 
 		middlewares := []func(http.Handler) http.Handler{
