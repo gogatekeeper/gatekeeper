@@ -84,18 +84,17 @@ type Config struct {
 	CookiePKCEName                     string                    `env:"COOKIE_PKCE_NAME" json:"cookie-pkce-name" usage:"name of the cookie used to hold PKCE code verifier" yaml:"cookie-pkce-name"`
 	CookieUMAName                      string                    `env:"COOKIE_UMA_NAME" json:"cookie-uma-name" usage:"name of the cookie used to hold the UMA RPT token" yaml:"cookie-uma-name"`
 	SameSiteCookie                     string                    `env:"SAME_SITE_COOKIE" json:"same-site-cookie" usage:"enforces cookies to be send only to same site requests according to the policy (can be Strict|Lax|None)" yaml:"same-site-cookie"`
-	TLSCertificate                     string                    `env:"TLS_CERTIFICATE" json:"tls-cert" usage:"path to ths TLS certificate" yaml:"tls-cert"`
+	TLSCertificate                     string                    `env:"TLS_CERTIFICATE" json:"tls-cert" usage:"path to the TLS certificate" yaml:"tls-cert"`
 	TLSPrivateKey                      string                    `env:"TLS_PRIVATE_KEY" json:"tls-private-key" usage:"path to the private key for TLS" yaml:"tls-private-key"`
-	TLSClientCertificate               string                    `env:"TLS_CLIENT_CERTIFICATE" json:"tls-client-certificate" usage:"path to the client certificate used for signing requests" yaml:"tls-client-certificate"`
-	TLSClientPrivateKey                string                    `env:"TLS_CLIENT_PRIVATE_KEY" json:"tls-client-private-key" usage:"path to the client private key, used by the forward signing proxy" yaml:"tls-client-private-key"`
+	TLSClientCertificate               string                    `env:"TLS_CLIENT_CERTIFICATE" json:"tls-client-certificate" usage:"path to the client certificate used for authenticating to upstream" yaml:"tls-client-certificate"`
+	TLSClientPrivateKey                string                    `env:"TLS_CLIENT_PRIVATE_KEY" json:"tls-client-private-key" usage:"path to the client private key, used for authentication to upstream" yaml:"tls-client-private-key"`
 	TLSClientCACertificate             string                    `env:"TLS_CLIENT_CA_CERTIFICATE" json:"tls-client-ca-certificate" usage:"path to the client CA certificate, used for verifying client certificates" yaml:"tls-client-ca-certificate"`
 	TLSForwardingCACertificate         string                    `env:"TLS_FORWARDING_CA_CERTIFICATE" json:"tls-forwarding-ca-certificate" usage:"path to the CA certificate, used for generating server cert for forwarding-proxy" yaml:"tls-forwarding-ca-certificate"`
 	TLSForwardingCAPrivateKey          string                    `env:"TLS_FORWARDING_CA_PRIVATE_KEY" json:"tls-forwarding-ca-private-key" usage:"path to the CA private key, used for generating server cert for forwarding proxy" yaml:"tls-forwarding-ca-private-key"`
 	TLSMinVersion                      string                    `env:"TLS_MIN_VERSION" json:"tls-min-version" usage:"specify server minimal TLS version one of tlsv1.2,tlsv1.3" yaml:"tls-min-version"`
-	TLSAdminCertificate                string                    `env:"TLS_ADMIN_CERTIFICATE" json:"tls-admin-cert" usage:"path to ths TLS certificate" yaml:"tls-admin-cert"`
+	TLSAdminCertificate                string                    `env:"TLS_ADMIN_CERTIFICATE" json:"tls-admin-cert" usage:"path to the TLS certificate" yaml:"tls-admin-cert"`
 	TLSAdminPrivateKey                 string                    `env:"TLS_ADMIN_PRIVATE_KEY" json:"tls-admin-private-key" usage:"path to the private key for TLS" yaml:"tls-admin-private-key"`
-	TLSAdminCACertificate              string                    `env:"TLS_ADMIN_CA_CERTIFICATE" json:"tls-admin-ca-certificate" usage:"path to the ca certificate used for signing requests" yaml:"tls-admin-ca-certificate"`
-	TLSAdminClientCACertificate        string                    `env:"TLS_ADMIN_CLIENT_CA_CERTIFICATE" json:"tls-admin-client-ca-certificate" usage:"path to the CA certificate for outbound connections in reverse and forwarding proxy modes" yaml:"tls-admin-client-certificate"`
+	TLSAdminClientCACertificate        string                    `env:"TLS_ADMIN_CLIENT_CA_CERTIFICATE" json:"tls-admin-client-ca-certificate" usage:"path to the client CA certificate user for verifying client certificates" yaml:"tls-admin-client-certificate"`
 	TLSStoreCACertificate              string                    `env:"TLS_STORE_CA_CERTIFICATE" json:"tls-store-ca-certificate" usage:"path to the ca certificate used for verifying trusted server certificates" yaml:"tls-store-ca-certificate"`
 	TLSStoreClientCertificate          string                    `env:"TLS_STORE_CLIENT_CERTIFICATE" json:"tls-store-client-certificate" usage:"path to the client certificate, used for authenticating to store" yaml:"tls-store-client-certificate"`
 	TLSStoreClientPrivateKey           string                    `env:"TLS_STORE_CLIENT_PRIVATE_KEY" json:"tls-store-client-private-key" usage:"path to the client private key, used for authenticating to store" yaml:"tls-store-client-private-key"`
@@ -534,13 +533,6 @@ func (r *Config) isAdminTLSFilesValid() error {
 		return fmt.Errorf(
 			"the tls private key %s does not exist for admin endpoint",
 			r.TLSAdminPrivateKey,
-		)
-	}
-
-	if r.TLSAdminCACertificate != "" && !utils.FileExists(r.TLSAdminCACertificate) {
-		return fmt.Errorf(
-			"the tls ca certificate file %s does not exist for admin endpoint",
-			r.TLSAdminCACertificate,
 		)
 	}
 
