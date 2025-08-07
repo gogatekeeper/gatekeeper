@@ -18,7 +18,9 @@ weight: 2
 |    --post-login-redirect-path value        | post-login-redirect-path" usage:"path to which client is redirected after successful login, in case user access / | | PROXY_POST_LOGIN_REDIRECT_PATH
 |    --revocation-url value                  | url for the revocation endpoint to revoke refresh token | | PROXY_REVOCATION_URL
 |    --skip-openid-provider-tls-verify       | skip the verification of any TLS communication with the openid provider | false | PROXY_SKIP_OPENID_PROVIDER_TLSVERIFY
-|    --openid-provider-ca value              | path to the ca certificate for IDP | | PROXY_OPENID_PROVIDER_CA
+|    --tls-openid-provider-ca-certificate    | path to the ca certificate for IDP | | PROXY_TLS_OPENID_PROVIDER_CA_CERTIFICATE
+|    --tls-openid-provider-client-private-key | path to the client private key for IDP | | PROXY_TLS_OPENID_PROVIDER_CLIENT_PRIVATE_KEY
+|    --tls-openid-provider-client-certificate | path to the client certificate for IDP | | PROXY_TLS_OPENID_PROVIDER_CLIENT_CERTIFICATE
 |    --openid-provider-proxy value           | proxy for communication with the openid provider | | PROXY_OPENID_PROVIDER_PROXY
 |    --openid-provider-timeout value         | timeout for openid configuration on .well-known/openid-configuration | 30s | PROXY_OPENID_PROVIDER_TIMEOUT
 |    --openid-provider-retry-count value     | number of retries for retrieving openid configuration | 3 | PROXY_OPENID_PROVIDER_RETRY_COUNT
@@ -57,6 +59,7 @@ weight: 2
 |   --enable-register-handler               | enables the handling of registration       | false | PROXY_ENABLE_REGISTER_HANDLER
 |    --enable-token-header                   | enables the token authentication header X-Auth-Token to upstream | true |PROXY_ENABLE_TOKEN_HEADER
 |    --enable-authorization-header           | adds the authorization header to the proxy request | true | PROXY_ENABLE_AUTHORIZATION_HEADER
+|    --enable-header-encoding                | encodes header values according RFC 2047, in MIME B format | false | PROXY_ENABLE_HEADER_ENCODING
 |    --enable-authorization-cookies          | adds the authorization cookies to the uptream proxy request | true | PROXY_ENABLE_AUTHORIZATION_COOKIES
 |    --enable-https-redirection              | enable the http to https redirection on the http service | false | PROXY_ENABLE_HTTPS_REDIRECT
 |    --enable-profiling                      | switching on the golang profiling via pprof on /debug/pprof, /debug/pprof/heap etc | false | PROXY_ENABLE_PROFILING
@@ -91,16 +94,20 @@ weight: 2
 |    --add-claims value                      | extra claims from the token and inject into headers, e.g given_name -> X-Auth-Given-Name | |
 |    --enable-uma-method-scope               | enables passing request method as 'method:GET' scope to keycloak for authorization | false | PROXY_ENABLE_UMA_METHOD_SCOPE
 |    --tls-min-version                       | specify server minimal TLS version one of tlsv1.2,tlsv1.3 | | TLS_MIN_VERSION |
-|    --tls-cert value                        | path to ths TLS certificate | | PROXY_TLS_CERTIFICATE
-|    --tls-private-key value                 | path to the private key for TLS | | PROXY_TLS_PRIVATE_KEY
-|    --tls-ca-certificate value              | path to the ca certificate used for signing requests | | PROXY_TLS_CA_CERTIFICATE
-|    --tls-ca-key value                      | path the ca private key, used by the forward signing proxy | | PROXY_TLS_CA_PRIVATE_KEY
-|    --tls-client-certificate value          | path to the client certificate for outbound connections in reverse and forwarding proxy modes | | PROXY_TLS_CLIENT_CERTIFICATE
+|    --tls-cert                              | path to the TLS certificate | tls-cert | | PROXY_TLS_CERTIFICATE
+|    --tls-private-key                       | path to the private key for TLS | tls-private-key | | PROXY_TLS_PRIVATE_KEY
+|    --tls-client-certificate                | path to the client certificate used for authenticating to upstream | | PROXY_TLS_CLIENT_CERTIFICATE
+|    --tls-client-private-key                | path to the client private key, used for authentication to upstream | | PROXY_TLS_CLIENT_PRIVATE_KEY
+|    --tls-client-ca-certificate             | path to the client CA certificate, used for verifying client certificates | | PROXY_TLS_CLIENT_CA_CERTIFICATE
+|    --tls-forwarding-ca-certificate         | path to the CA certificate, used for generating server cert for forwarding-proxy | | PROXY_TLS_FORWARDING_CA_CERTIFICATE
+|    --tls-forwarding-ca-private-key         | path to the CA private key, used for generating server cert for forwarding proxy | | PROXY_TLS_FORWARDING_CA_PRIVATE_KEY
+|    --tls-store-ca-certificate              | path to the ca certificate used for verifying trusted server certificates | | PROXY_TLS_STORE_CA_CERTIFICATE
+|    --tls-store-client-certificate          | path to the client certificate, used for authenticating to store | | PROXY_TLS_STORE_CLIENT_CERTIFICATE
+|    --tls-store-client-private-key          | path to the client private key, used for authenticating to store | | PROXY_TLS_STORE_CLIENT_PRIVATE_KEY
 |    --skip-upstream-tls-verify              | skip the verification of any upstream TLS | false | PROXY_SKIP_UPSTREAM_TLS_VERIFY
 |    --tls-admin-cert value                  | path to ths TLS certificate | | PROXY_TLS_ADMIN_CERTIFICATE |
 |    --tls-admin-private-key value           | path to the private key for TLS | | PROXY_TLS_ADMIN_PRIVATE_KEY |
-|    --tls-admin-ca-certificate value        | path to the ca certificate used for signing requests | | PROXY_TLS_ADMIN_CA_CERTIFICATE |
-|    --tls-admin-client-certificate value    | path to the client certificate for outbound connections in reverse and forwarding proxy modes | | PROXY_TLS_ADMIN_CLIENT_CERTIFICATE |
+|    --tls-admin-client-ca-certificate value    | path to the client certificate for outbound connections in reverse and forwarding proxy modes | | PROXY_TLS_ADMIN_CLIENT_CERTIFICATE |
 |    --cors-origins value                    | origins to add to the CORE origins control (Access-Control-Allow-Origin) | |
 |    --cors-methods value                    | methods permitted in the access control (Access-Control-Allow-Methods) | |
 |    --cors-headers value                    | set of headers to add to the CORS access control (Access-Control-Allow-Headers) | |

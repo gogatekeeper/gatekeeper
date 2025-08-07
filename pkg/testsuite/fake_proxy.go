@@ -699,7 +699,7 @@ func newFakeKeycloakConfig() *config.Config {
 		ListenAdminScheme:           "http",
 		TLSAdminCertificate:         "",
 		TLSAdminPrivateKey:          "",
-		TLSAdminCACertificate:       "",
+		TLSAdminClientCACertificate: "",
 		OAuthURI:                    "/oauth",
 		OpenIDProviderTimeout:       DefaultOpenIDProviderTimeout,
 		SkipOpenIDProviderTLSVerify: false,

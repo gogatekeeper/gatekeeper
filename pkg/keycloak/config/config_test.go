@@ -952,7 +952,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 		TLSAdminCertificateExists       bool
 		TLSAdminClientCertificateExists bool
 		TLSAdminPrivateKeyExists        bool
-		TLSAdminCACertificateExists     bool
+		TLSAdminClientCACertificate     bool
 	}{
 		{
 			Name: "ValidPrivateAndCertificate",
@@ -966,7 +966,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       true,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        true,
-			TLSAdminCACertificateExists:     false,
+			TLSAdminClientCACertificate:     false,
 		},
 		{
 			Name: "InValidMissingPrivateFile",
@@ -980,7 +980,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       true,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        false,
-			TLSAdminCACertificateExists:     false,
+			TLSAdminClientCACertificate:     false,
 		},
 		{
 			Name: "InValidMissingPrivate",
@@ -993,7 +993,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       true,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        false,
-			TLSAdminCACertificateExists:     false,
+			TLSAdminClientCACertificate:     false,
 		},
 		{
 			Name: "InValidMissingCertificateFile",
@@ -1007,7 +1007,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       false,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        true,
-			TLSAdminCACertificateExists:     false,
+			TLSAdminClientCACertificate:     false,
 		},
 		{
 			Name: "InValidMissingCertificate",
@@ -1020,7 +1020,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       false,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        true,
-			TLSAdminCACertificateExists:     false,
+			TLSAdminClientCACertificate:     false,
 		},
 		{
 			Name: "InValidMissingPrivateAndCertificateFile",
@@ -1034,31 +1034,31 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       false,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        false,
-			TLSAdminCACertificateExists:     false,
+			TLSAdminClientCACertificate:     false,
 		},
 		{
 			Name: "ValidCaCertificate",
 			Config: &Config{
 				//nolint:gosec
-				TLSAdminCACertificate: fmt.Sprintf(os.TempDir()+"/gateadminconfig_ca_%d", rand.IntN(10000)),
+				TLSAdminClientCACertificate: fmt.Sprintf(os.TempDir()+"/gateadminconfig_ca_%d", rand.IntN(10000)),
 			},
 			Valid:                           true,
 			TLSAdminCertificateExists:       false,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        false,
-			TLSAdminCACertificateExists:     true,
+			TLSAdminClientCACertificate:     true,
 		},
 		{
 			Name: "InValidMissingCACertificateFile",
 			Config: &Config{
 				//nolint:gosec
-				TLSAdminCACertificate: fmt.Sprintf(os.TempDir()+"/gateadminconfig_ca_%d", rand.IntN(10000)),
+				TLSAdminClientCACertificate: fmt.Sprintf(os.TempDir()+"/gateadminconfig_ca_%d", rand.IntN(10000)),
 			},
 			Valid:                           false,
 			TLSAdminCertificateExists:       false,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        false,
-			TLSAdminCACertificateExists:     false,
+			TLSAdminClientCACertificate:     false,
 		},
 		{
 			Name: "ValidClientCACertificate",
@@ -1070,7 +1070,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       false,
 			TLSAdminClientCertificateExists: true,
 			TLSAdminPrivateKeyExists:        false,
-			TLSAdminCACertificateExists:     false,
+			TLSAdminClientCACertificate:     false,
 		},
 		{
 			Name: "InvalidValidMissingClientCertificate",
@@ -1082,7 +1082,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 			TLSAdminCertificateExists:       false,
 			TLSAdminClientCertificateExists: false,
 			TLSAdminPrivateKeyExists:        false,
-			TLSAdminCACertificateExists:     false,
+			TLSAdminClientCACertificate:     false,
 		},
 	}
 
@@ -1108,8 +1108,8 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 					privFile = cfg.TLSAdminPrivateKey
 				}
 
-				if cfg.TLSAdminCACertificate != "" {
-					caFile = cfg.TLSAdminCACertificate
+				if cfg.TLSAdminClientCACertificate != "" {
+					caFile = cfg.TLSAdminClientCACertificate
 				}
 
 				if certFile != "" && testCase.TLSAdminCertificateExists {
@@ -1136,7 +1136,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 					defer os.Remove(privFile)
 				}
 
-				if caFile != "" && testCase.TLSAdminCACertificateExists {
+				if caFile != "" && testCase.TLSAdminClientCACertificate {
 					err := os.WriteFile(caFile, []byte(""), 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing cacertificate %s", err)

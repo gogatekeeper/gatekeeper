@@ -40,10 +40,16 @@ options. Here is a list of options.
 # is the URL for retrieve the OpenID configuration
 discovery-url: <DISCOVERY URL>
 # path to your CA certificate/s in PEM format
-openid-provider-ca: /etc/ssl/ca.pem
+tls-openid-provider-ca-certificate: /etc/ssl/ca.pem
+# path to the client private key for IDP
+tls-openid-provider-client-private-key: /etc/ssl/provider-client-private-key.pem
+# path to the client certificate for IDP
+tls-openid-provider-client-certificate: /etc/ssl/provider-client-certificate.pem
 # Indicates we should deny by default all requests and explicitly specify what is permitted, default true
 # this is equivalent of --resource=/*|methods
 enable-default-deny: true
+# encodes header values according RFC 2047, in MIME B format, IMPORTANT: it only encodes values if they contain non-ASCII chars, otherwise not
+enable-header-encoding: false
 # the client id for the 'client' application
 client-id: <CLIENT_ID>
 # the secret associated to the 'client' application
@@ -64,14 +70,13 @@ forbidden-page: templates/forbidden.html.tmpl
 error-page: templates/error.html.tmpl
 sign-in-page: sign_in.html.tmpl
 register-page: register.html.tmpl
-# the location of a certificate you wish the proxy to use for TLS support
+# the location of server side certificate for gatekeeper
 tls-cert:
-# the location of a private key for TLS
+# the location of a server side private key for gatekeeper
 tls-private-key:
 # TLS options related to admin listener
 tls-admin-cert:
 tls-admin-private-key:
-tls-admin-ca-certificate:
 tls-admin-client-certificate:
 # the redirection URL, essentially the site URL, note: /oauth/callback is added at the end
 redirection-url: http://127.0.0.1:3000
@@ -136,7 +141,7 @@ client-secret: <CLIENT_SECRET> # require for access_type: confidential
 # only in case of forward auth it will use X-Forwarded-Proto / X-Forwarded-Host, please see forward-auth section
 discovery-url: https://keycloak.example.com/realms/<REALM_NAME>
 # path to your CA certificate/s in PEM format
-openid-provider-ca: /etc/ssl/ca.pem
+tls-openid-provider-ca-certificate: /etc/ssl/ca.pem
 # Indicates we should deny by default all requests and explicitly specify what is permitted, default true,
 # you cannot specify enable-default-deny:true together with defining resource=uri=/*
 enable-default-deny: true
@@ -520,7 +525,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:3.5.0
+  image: quay.io/gogatekeeper/gatekeeper:4.0.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -530,8 +535,8 @@ in Keycloak, providing granular role controls over issue tokens.
   - --client-id=xxxxxx
   - --client-secret=xxxx
   - --discovery-url=http://keycloak:8080/realms/master
-  - --tls-ca-certificate=/etc/secrets/ca.pem
-  - --tls-ca-key=/etc/secrets/ca-key.pem
+  - --tls-forwarding-ca-certificate=/etc/secrets/ca.pem
+  - --tls-forwarding-ca-private-key=/etc/secrets/ca-key.pem
   # Note: if you don't specify any forwarding domains, all domains will be signed; Also the code checks is the
   # domain 'contains' the value (it's not a regex) so if you wanted to sign all requests to svc.cluster.local, just use
   # svc.cluster.local
@@ -547,7 +552,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:3.5.0
+  image: quay.io/gogatekeeper/gatekeeper:4.0.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -555,8 +560,8 @@ Example setup client credentials grant:
   - --client-id=xxxxxx
   - --client-secret=xxxx
   - --discovery-url=http://keycloak:8080/realms/master
-  - --tls-ca-certificate=/etc/secrets/ca.pem
-  - --tls-ca-key=/etc/secrets/ca-key.pem
+  - --tls-forwarding-ca-certificate=/etc/secrets/ca.pem
+  - --tls-forwarding-ca-private-key=/etc/secrets/ca-key.pem
   - --forwarding-grant-type=client_credentials
   # Note: if you don't specify any forwarding domains, all domains will be signed; Also the code checks is the
   # domain 'contains' the value (it's not a regex) so if you wanted to sign all requests to svc.cluster.local, just use
@@ -582,11 +587,11 @@ request.
 ## Forwarding signed HTTPS connections
 
 Handling HTTPS requires a man-in-the-middle sort of TLS connection. By
-default, if no `--tls-ca-certificate` and `--tls-ca-key` are provided
+default, if no `--tls-forwarding-ca-certificate` and `--tls-forwarding-ca-private-key` are provided
 the proxy will use the default certificate. If you wish to verify the
 trust, you’ll need to generate a CA, for example.
 
-``` bash
+```bash
 $ openssl req -x509 -nodes -days 365 -newkey ed2551 -keyout ca.key -out ca.pem
 $ bin/gatekeeper \
   --enable-forwarding \
@@ -595,8 +600,8 @@ $ bin/gatekeeper \
   --client-id=CLIENT_ID \
   --client-secret=SECRET \
   --discovery-url=https://keycloak.example.com/realms/test \
-  --tls-ca-certificate=ca.pem \
-  --tls-ca-key=ca-key.pem
+  --tls-forwarding-ca-certificate=/etc/secrets/ca.pem \
+  --tls-forwarding-ca-private-key=/etc/secrets/ca-key.pem
 ```
 
 ## Forwarding with UMA token
@@ -609,7 +614,7 @@ The proxy supports an HTTP listener, so the only real requirement here
 is to perform an HTTP → HTTPS redirect. You can enable the option like
 this:
 
-``` bash
+```bash
 --listen-http=127.0.0.1:80
 --enable-security-filter=true  # is required for the https redirect
 --enable-https-redirection
@@ -1041,12 +1046,11 @@ like to return private pages list only in case request was authenticated.
 Gatekeeper supports PKCE with S256 code challenge method. It stores code verifier in cookie.
 You can set custom cookie name with `--cookie-pkce-name`.
 
-## Mutual TLS
+## TLS/mTLS
 
-The proxy support enforcing mutual TLS for the clients by adding the
-`--tls-ca-certificate` command line option or configuration file option.
-All clients connecting must present a certificate that was signed by
-the CA being used.
+On picture below we can see full mTLS setup with all options with description.
+
+![mTLS](images/TLS-gatekeeper.svg "Full mTLS setup")
 
 ## Certificate rotation
 
@@ -1065,9 +1069,15 @@ as an encrypted (`--encryption-key=KEY`) cookie **(cookie name:
 kc-state).** or a store **(still requires encryption key)**.
 
 To enable a local Redis store use `redis://user:secret@localhost:6379/0?protocol=3`.
-See [redis-uri](https://github.com/redis/redis-specifications/blob/master/uri/redis.txt) specification 
+See [redis-uri](https://github.com/redis/redis-specifications/blob/master/uri/redis.txt) specification.
+You can specify also connection options in redis URI e.g. `redis://user:password@localhost:6789/3?dial_timeout=3&db=1&read_timeout=6s&max_retries=2`
 In both cases, the refresh token is encrypted before being placed into
 the store.
+
+From version 4.0.0 gatekeeper also supports Redis Cluster HA client.
+Example of redis cluster URI e.g. `redis://user:password@localhost:6789?dial_timeout=3&read_timeout=6s&addr=localhost:6790&addr=localhost:6791`
+
+Both Redis and also RedisCluster connections support TLS/mTLS, see section [TLS/mTLS](#tlsmtls)
 
 ## Post Login Redirect
 
@@ -1150,9 +1160,11 @@ or via the command line:
 
 You can control the upstream endpoint via the `--upstream-url` option.
 Both HTTP and HTTPS are supported with TLS verification and keep-alive
-support configured via the `--skip-upstream-tls-verify` /
-`--upstream-keepalives` option. Note, the proxy can also upstream via a
-UNIX socket, `--upstream-url unix://path/to/the/file.sock`.
+support configured via the `--upstream-ca`, `--tls-client-certificate`,
+`--tls-client-private-key`, `--skip-upstream-tls-verify`, `--upstream-keepalives` option.
+Note, the proxy can also upstream via a UNIX socket, `--upstream-url unix://path/to/the/file.sock`.
+
+For more about tls setup see [TLS/mTLS](#tlsmtls).
 
 ## Endpoints
 
