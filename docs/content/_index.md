@@ -48,6 +48,11 @@ tls-openid-provider-client-certificate: /etc/ssl/provider-client-certificate.pem
 # Indicates we should deny by default all requests and explicitly specify what is permitted, default true
 # this is equivalent of --resource=/*|methods
 enable-default-deny: true
+# useful when you want to change base url e.g. you want to have http://somedomain/some/oauth/callback etc.. paths
+# please be aware that this setting also enforces Access/Refresh token cookies Path to this path,
+# if desired cookie path can be overriden with --cookie-path option
+# for multitenant deployments forward-auth should be better option see forward-auth section
+base-uri: /some
 # encodes header values according RFC 2047, in MIME B format, IMPORTANT: it only encodes values if they contain non-ASCII chars, otherwise not
 enable-header-encoding: false
 # the client id for the 'client' application
@@ -79,6 +84,9 @@ tls-admin-cert:
 tls-admin-private-key:
 tls-admin-client-certificate:
 # the redirection URL, essentially the site URL, note: /oauth/callback is added at the end
+# please note, when you change it and append custom path e.g. http://127.0.0.1:3000/mypath,
+# it will redirect to /mypath/oauth/callback, all /mypath/oauth/* paths must be white-listed (except health endpoint if you don't want to expose it) so you can directly white-list them
+# by resources or you can use base-uri: /mypath which will do the same without hassle.
 redirection-url: http://127.0.0.1:3000
 # the encryption key used to encode the session state
 encryption-key: <ENCRYPTION_KEY>
@@ -819,7 +827,7 @@ parameter available within the resource. Headers are implicitly
 required, such as `headers=x-some-header:somevalue,x-other-header:othervalue` where the request 
 MUST have headers 'x-some-header' with value 'somevalue' AND 'x-other-header', with value 'othervalue'.
 
-## Forward-auth
+## Forward-auth (suitable for MULTITENANT app deployments)
 
 Traefik, nginx ingress and other gateways usually have feature called forward-auth.
 This enables them to forward request to external auth/authz service which returns 2xx in case
@@ -1082,10 +1090,10 @@ Both Redis and also RedisCluster connections support TLS/mTLS, see section [TLS/
 ## Post Login Redirect
 
 Without this option if user comes to site protected by gatekeeper e.g. `http://somesite/somepath`, user
-will be redirected to login and after login back to `http://somesite/path`. If user comes to `/` before login
-he will be redirected back to `/`. Sometimes you want redirect user back not to `/` but some path. For this
-there is option `--post-login-redirect-path=/fallback/path` which enables you to define some path to which user will be redirected
-after login if user comes to root path `/`. 
+will be redirected to login and after login back to `http://somesite/somepath`. If user comes to `/` before login
+he will be redirected back to `/`. Sometimes you want redirect user back not to the path use came first time but some other path. For this
+there is option `--post-login-redirect-path=/other/path` which enables you to define some path to which user will be redirected
+after login. 
 
 ## Logout endpoint
 
