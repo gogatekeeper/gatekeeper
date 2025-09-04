@@ -2928,3 +2928,65 @@ func TestIsCookiePathValid(t *testing.T) {
 		)
 	}
 }
+
+func TestIsRedirectionURLValid(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidRedirectionURL",
+			Config: &Config{
+				RedirectionURL: "https://somehost",
+			},
+			Valid: true,
+		},
+		{
+			Name: "InvalidRedirectionURL",
+			Config: &Config{
+				RedirectionURL: "/path",
+			},
+			Valid: false,
+		},
+		{
+			Name: "MissingBaseURI",
+			Config: &Config{
+				RedirectionURL: "https://somehost/path",
+			},
+			Valid: false,
+		},
+		{
+			Name: "WithBaseURI",
+			Config: &Config{
+				RedirectionURL: "https://somehost/path",
+				BaseURI:        "/path",
+			},
+			Valid: true,
+		},
+		{
+			Name: "BaseURINotMatchingRedirectionURLPath",
+			Config: &Config{
+				RedirectionURL: "https://somehost/path",
+				BaseURI:        "/bad",
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isRedirectionURLValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}

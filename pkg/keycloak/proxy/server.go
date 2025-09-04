@@ -391,6 +391,13 @@ func (r *OauthProxy) CreateReverseProxy() error {
 	engine := chi.NewRouter()
 	r.useDefaultStack(engine, accessForbidden)
 
+	if r.Config.BaseURI != "" {
+		r.Log.Info(
+			"using base-uri, cookies path will be set to base-uri, to override use --cookie-path",
+			zap.String("base-uri", r.Config.BaseURI),
+		)
+	}
+
 	WithOAuthURI := utils.WithOAuthURI(r.Config.BaseURI, r.Config.OAuthURI)
 	r.Cm = &cookie.Manager{
 		CookieDomain:         r.Config.CookieDomain,

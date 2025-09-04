@@ -640,10 +640,7 @@ func (r *Config) isTokenVerificationSettingsValid() error {
 	validationRegistry := []func() error{
 		r.isClientIDValid,
 		r.isDiscoveryURLValid,
-		func() error {
-			r.RedirectionURL = strings.TrimSuffix(r.RedirectionURL, "/")
-			return nil
-		},
+		r.isRedirectionURLValid,
 		r.isSecurityFilterValid,
 		r.isTokenEncryptionValid,
 		r.isSecureCookieValid,
@@ -653,6 +650,27 @@ func (r *Config) isTokenVerificationSettingsValid() error {
 	for _, validationFunc := range validationRegistry {
 		if err := validationFunc(); err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *Config) isRedirectionURLValid() error {
+	r.RedirectionURL = strings.TrimSuffix(r.RedirectionURL, "/")
+
+	if r.RedirectionURL != "" {
+		uri, err := url.ParseRequestURI(r.RedirectionURL)
+		if err != nil {
+			return fmt.Errorf("the redirection url is invalid, %w", err)
+		}
+
+		if uri.Path != "" && r.BaseURI == "" {
+			return errors.New("you should set base-uri when redirection-url contains path")
+		}
+
+		if uri.Path != r.BaseURI {
+			return errors.New("base-uri and redirection-url path must be same")
 		}
 	}
 
