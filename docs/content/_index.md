@@ -84,9 +84,6 @@ tls-admin-cert:
 tls-admin-private-key:
 tls-admin-client-certificate:
 # the redirection URL, essentially the site URL, note: /oauth/callback is added at the end
-# please note, when you change it and append custom path e.g. http://127.0.0.1:3000/mypath,
-# it will redirect to /mypath/oauth/callback, all /mypath/oauth/* paths must be white-listed (except health endpoint if you don't want to expose it) so you can directly white-list them
-# by resources or you can use base-uri: /mypath which will do the same without hassle.
 redirection-url: http://127.0.0.1:3000
 # the encryption key used to encode the session state
 encryption-key: <ENCRYPTION_KEY>
