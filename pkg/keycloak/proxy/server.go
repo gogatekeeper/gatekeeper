@@ -20,6 +20,7 @@ import (
 	"crypto/fips140"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -112,6 +113,22 @@ func NewProxy(config *config.Config, log *zap.Logger, upstream core.ReverseProxy
 		zap.String("author", constant.Author),
 		zap.String("version", core.Version),
 	)
+
+	if config.Verbose {
+		dup := *config
+		dup.ClientSecret = ""
+		dup.EncryptionKey = ""
+		dup.ForwardingPassword = ""
+		out, err := json.Marshal(dup) //nolint:musttag
+		if err != nil {
+			return nil, err
+		}
+
+		log.Debug(
+			"displaying configuration",
+			zap.ByteString("configuration", out),
+		)
+	}
 
 	svc := &OauthProxy{
 		Config:         config,
