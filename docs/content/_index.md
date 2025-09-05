@@ -1086,11 +1086,18 @@ Both Redis and also RedisCluster connections support TLS/mTLS, see section [TLS/
 
 ## Post Login Redirect
 
-Without this option if user comes to site protected by gatekeeper e.g. `http://somesite/somepath`, user
+To illustrate its behaviour lets show it on example.
+
+Behaviour without this option:
+
+
+If user comes to site protected by gatekeeper e.g. `http://somesite/somepath`, user
 will be redirected to login and after login back to `http://somesite/somepath`. If user comes to `/` before login
-he will be redirected back to `/`. Sometimes you want redirect user back not to the path use came first time but some other path. For this
-there is option `--post-login-redirect-path=/other/path` which enables you to define some path to which user will be redirected
-after login. 
+he will be redirected back to `/`.
+
+Option `--post-login-redirect-path` changes above example mentioned behaviour in that way that if you come to `/` it will
+redirect you to value set in `--post-login-redirect-path`. So we can say it is kind of rewrite of root path `/` to the value set
+in `--post-login-redirect-path`.
 
 ## Logout endpoint
 
