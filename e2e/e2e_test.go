@@ -864,6 +864,7 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 	var proxyAddress string
 	errGroup, _ := errgroup.WithContext(context.Background())
 	var server *http.Server
+	baseURI := "/base"
 
 	AfterEach(func() {
 		if server != nil {
@@ -906,6 +907,9 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 			"--tls-cert=" + tlsCertificate,
 			"--tls-private-key=" + tlsPrivateKey,
 			"--upstream-ca=" + tlsCaCertificate,
+			"--post-login-redirect-path=" + postLoginRedirectPath,
+			"--base-uri=" + baseURI,
+			"--cookie-path=/",
 		}
 
 		osArgs = append(osArgs, proxyArgs...)
@@ -921,13 +925,14 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 
-				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
+				resp := codeFlowLogin(rClient, proxyAddress+baseURI, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 
 				body := resp.Body()
 				Expect(strings.Contains(string(body), pkceCookieName)).To(BeTrue())
+				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
 
-				resp, err = rClient.R().Get(proxyAddress + logoutURI)
+				resp, err = rClient.R().Get(proxyAddress + baseURI + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 
