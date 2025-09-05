@@ -1096,8 +1096,10 @@ will be redirected to login and after login back to `http://somesite/somepath`. 
 he will be redirected back to `/`.
 
 Option `--post-login-redirect-path` changes above example mentioned behaviour in that way that if you come to `/` it will
-redirect you to value set in `--post-login-redirect-path`. So we can say it is kind of rewrite of root path `/` to the value set
+redirect you after login to value set in `--post-login-redirect-path`. So we can say it is kind of rewrite of root path `/` to the value set
 in `--post-login-redirect-path`.
+
+When you have `--base-uri` set, `--post-login-redirect-path` will be used if you visit `/yourbaseuri`.
 
 ## Logout endpoint
 

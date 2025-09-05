@@ -304,7 +304,11 @@ func oauthCallbackHandler(
 		cookManager.ClearStateParameterCookie(req, writer)
 		cookManager.ClearPKCECookie(req, writer)
 
-		if postLoginRedirectPath != "" && redirectURI == "/" {
+		if postLoginRedirectPath != "" && redirectURI == "/" && cookManager.BaseURI == "" {
+			redirectURI = postLoginRedirectPath
+		}
+
+		if postLoginRedirectPath != "" && redirectURI != "/" && redirectURI == cookManager.BaseURI {
 			redirectURI = postLoginRedirectPath
 		}
 
