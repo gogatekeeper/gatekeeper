@@ -342,6 +342,7 @@ func WithOAuthURI(baseURI string, oauthURI string) func(uri string) string {
 	return func(uri string) string {
 		uri = strings.TrimPrefix(uri, "/")
 		if baseURI != "" {
+			oauthURI = strings.TrimPrefix(oauthURI, "/")
 			return fmt.Sprintf("%s/%s/%s", baseURI, oauthURI, uri)
 		}
 		return fmt.Sprintf("%s/%s", oauthURI, uri)
