@@ -323,3 +323,42 @@ func levelOfAuthenticationMiddleware(
 		})
 	}
 }
+
+// signingMiddleware is responsible for signing outbound requests.
+func SigningMiddleware(
+	logger *zap.Logger,
+	pat *PAT,
+	forwardingDomains []string,
+	enableSigningHmac bool,
+	encryptionKey string,
+) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		logger.Info("enabling signing middleware")
+
+		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
+			var token string
+
+			pat.m.RLock()
+			token = pat.Token.AccessToken
+			pat.m.RUnlock()
+
+			hostname := req.Host
+			xForwardedHost := req.Header.Get(constant.HeaderXForwardedHost)
+			if xForwardedHost != "" {
+				hostname = xForwardedHost
+			}
+
+			// is the host being signed?
+			if len(forwardingDomains) == 0 || utils.ContainsSubString(hostname, forwardingDomains) {
+				req.Header.Set(constant.AuthorizationHeader, "Bearer "+token)
+			}
+			if enableSigningHmac {
+				reqHmac, err := utils.GenerateHmac(req, encryptionKey)
+				if err != nil {
+					logger.Error(err.Error())
+				}
+				req.Header.Set(constant.HeaderXHMAC, reqHmac)
+			}
+		})
+	}
+}

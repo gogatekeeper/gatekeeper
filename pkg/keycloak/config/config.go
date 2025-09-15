@@ -179,7 +179,7 @@ type Config struct {
 	EnableUmaMethodScope               bool `env:"ENABLE_UMA_METHOD_SCOPE" json:"enable-uma-method-scope" usage:"enables passing request method as 'method:GET' scope to keycloak for authorization" yaml:"enable-uma-method-scope"`
 	SkipUpstreamTLSVerify              bool `env:"SKIP_UPSTREAM_TLS_VERIFY" json:"skip-upstream-tls-verify" usage:"skip the verification of any upstream TLS" yaml:"skip-upstream-tls-verify"`
 	CorsCredentials                    bool `env:"CORS_CREDENTIALS" json:"cors-credentials" usage:"credentials access control header (Access-Control-Allow-Credentials)" yaml:"cors-credentials"`
-	EnableHmac                         bool `env:"Enable_HMAC" json:"enable-hmac" usage:"enable creating hmac for forwarded requests and verification on incoming requests"`
+	EnableHmac                         bool `env:"ENABLE_HMAC" json:"enable-hmac" usage:"enable creating hmac for forwarded requests and verification on incoming requests" yaml:"enable-hmac"`
 	NoProxy                            bool `env:"NO_PROXY" json:"no-proxy" usage:"do not proxy requests to upstream, useful for forward-auth usage (with nginx, traefik)" yaml:"no-proxy"`
 	NoRedirects                        bool `env:"NO_REDIRECTS" json:"no-redirects" usage:"do not have back redirects when no authentication is present, 401 them" yaml:"no-redirects"`
 	SkipAccessTokenIssuerCheck         bool `env:"SKIP_ACCESS_TOKEN_ISSUER_CHECK" json:"skip-access-token-issuer-check" usage:"according RFC issuer should not be checked on access token, this will be default true in future" yaml:"skip-access-token-issuer-check"`
@@ -192,6 +192,8 @@ type Config struct {
 	DisableAllLogging                  bool `env:"DISABLE_ALL_LOGGING" json:"disable-all-logging" usage:"disables all logging to stdout and stderr" yaml:"disable-all-logging"`
 	EnableLoA                          bool `env:"ENABLE_LOA" json:"enable-loa" usage:"enables level of authentication" yaml:"enable-loa"`
 	EnableStoreHA                      bool `env:"ENABLE_STORE_HA" json:"enable-store-ha" usage:"enable store high availability client, currently only redis-cluster supported" yaml:"enable-store-ha"`
+	EnableSigning                      bool `env:"ENABLE_SIGNING" json:"enable-signing" usage:"enable signing of requests to upstream, when in reverse proxy mode" yaml:"enable-signing"`
+	EnableSigningHmac                  bool `env:"ENABLE_SIGNING_HMAC" json:"enable-signing-hmac" usage:"enable signing of requests to upstream, when in reverse proxy mode with HMAC" yaml:"enable-signing-hmac"`
 	IsDiscoverURILegacy                bool
 }
 
@@ -621,6 +623,7 @@ func (r *Config) isReverseProxySettingsValid() error {
 			r.isPostLogoutRedirectURIValid,
 			r.isAllowedQueryParamsValid,
 			r.isEnableLoAValid,
+			r.isSigningValid,
 		}
 
 		for _, validationFunc := range validationRegistry {
@@ -1007,6 +1010,19 @@ func (r *Config) isCookieValid() error {
 		if !strings.HasPrefix(r.CookiePath, "/") {
 			return apperrors.ErrInvalidCookiePath
 		}
+	}
+	return nil
+}
+
+func (r *Config) isSigningValid() error {
+	if r.EnableSigning && r.NoProxy {
+		return apperrors.ErrSigningNoProxy
+	}
+	if r.EnableSigning && r.ForwardingGrantType == constant.ForwardingGrantTypePassword {
+		return apperrors.ErrSigningPasswordGrantType
+	}
+	if r.EnableSigning && r.EnableSigningHmac && r.EncryptionKey == "" {
+		return apperrors.ErrSigningHmacMissingEncryptionKey
 	}
 	return nil
 }

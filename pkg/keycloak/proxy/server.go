@@ -841,6 +841,21 @@ func (r *OauthProxy) CreateReverseProxy() error {
 			identityMiddleware,
 		)
 
+		var signMid func(http.Handler) http.Handler
+		if r.Config.EnableSigning && !r.Config.NoProxy {
+			signMid = SigningMiddleware(
+				r.Log,
+				r.pat,
+				r.Config.ForwardingDomains,
+				r.Config.EnableSigningHmac,
+				r.Config.EncryptionKey,
+			)
+			middlewares = append(
+				middlewares,
+				signMid,
+			)
+		}
+
 		if res.URL == constant.AllPath && !res.WhiteListed && enableDefaultDenyStrict {
 			middlewares = []func(http.Handler) http.Handler{
 				gmiddleware.DenyMiddleware(r.Log, accessForbidden),
@@ -1105,7 +1120,7 @@ func (r *OauthProxy) Run() (context.Context, error) {
 	r.ErrGroup = errGroup
 	patDone := make(chan bool)
 
-	if r.Config.EnableUma || r.Config.EnableForwarding {
+	if r.Config.EnableUma || r.Config.EnableForwarding || r.Config.EnableSigning {
 		r.ErrGroup.Go(func() error {
 			err := refreshPAT(
 				ctx,
