@@ -143,7 +143,7 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 
 	for idx := range requests {
 		reqCfg := requests[idx]
-		var upstream fakeUpstreamResponse
+		var upstream FakeUpstreamResponse
 
 		f.config.NoRedirects = !reqCfg.Redirects
 		f.config.SkipAccessTokenClientIDCheck = reqCfg.SkipClientIDCheck

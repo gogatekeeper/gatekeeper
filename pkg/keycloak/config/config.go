@@ -192,6 +192,8 @@ type Config struct {
 	DisableAllLogging                  bool `env:"DISABLE_ALL_LOGGING" json:"disable-all-logging" usage:"disables all logging to stdout and stderr" yaml:"disable-all-logging"`
 	EnableLoA                          bool `env:"ENABLE_LOA" json:"enable-loa" usage:"enables level of authentication" yaml:"enable-loa"`
 	EnableStoreHA                      bool `env:"ENABLE_STORE_HA" json:"enable-store-ha" usage:"enable store high availability client, currently only redis-cluster supported" yaml:"enable-store-ha"`
+	EnableSigning                      bool `env:"ENABLE_SIGNING" json:"enable-signing" usage:"enable signing of requests to upstream, when in reverse proxy mode" yaml:"enable-signing"`
+	EnableSigningHmac                  bool `env:"ENABLE_SIGNING_HMAC" json:"enable-signing-hmac" usage:"enable signing of requests to upstream, when in reverse proxy mode with HMAC" yaml:"enable-signing-hmac"`
 	IsDiscoverURILegacy                bool
 }
 
@@ -621,6 +623,8 @@ func (r *Config) isReverseProxySettingsValid() error {
 			r.isPostLogoutRedirectURIValid,
 			r.isAllowedQueryParamsValid,
 			r.isEnableLoAValid,
+			r.isSigningValid,
+			r.isEnableSigningHmacValid,
 		}
 
 		for _, validationFunc := range validationRegistry {
@@ -1007,6 +1011,23 @@ func (r *Config) isCookieValid() error {
 		if !strings.HasPrefix(r.CookiePath, "/") {
 			return apperrors.ErrInvalidCookiePath
 		}
+	}
+	return nil
+}
+
+func (r *Config) isSigningValid() error {
+	if r.EnableSigning && r.NoProxy {
+		return apperrors.ErrSigningNoProxy
+	}
+	if r.EnableSigning && r.ForwardingGrantType == constant.ForwardingGrantTypePassword {
+		return apperrors.ErrSigningPasswordGrantType
+	}
+	return nil
+}
+
+func (r *Config) isEnableSigningHmacValid() error {
+	if r.EnableSigningHmac && r.EncryptionKey == "" {
+		return apperrors.ErrSigningHmacMissingEncryptionKey
 	}
 	return nil
 }
