@@ -13,7 +13,7 @@ import (
 )
 
 // fakeUpstreamResponse is the response from fake upstream.
-type fakeUpstreamResponse struct {
+type FakeUpstreamResponse struct {
 	URI     string      `json:"uri"`
 	Method  string      `json:"method"`
 	Address string      `json:"address"`
@@ -36,7 +36,7 @@ func (f *FakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Reque
 				wsock.WriteClose(http.StatusBadRequest)
 				return
 			}
-			content, _ := json.Marshal(&fakeUpstreamResponse{
+			content, _ := json.Marshal(&FakeUpstreamResponse{
 				URI:     req.RequestURI,
 				Method:  req.Method,
 				Address: req.RemoteAddr,
@@ -67,7 +67,7 @@ func (f *FakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Reque
 
 		wrt.Header().Set(TestProxyAccepted, "true")
 		wrt.Header().Set(constant.HeaderContentType, "application/json")
-		content, err := json.Marshal(&fakeUpstreamResponse{
+		content, err := json.Marshal(&FakeUpstreamResponse{
 			// r.RequestURI is what was received by the proxy.
 			// r.URL.String() is what is actually sent to the upstream service.
 			// KEYCLOAK-10864, KEYCLOAK-11276, KEYCLOAK-13315
