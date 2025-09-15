@@ -179,7 +179,7 @@ type Config struct {
 	EnableUmaMethodScope               bool `env:"ENABLE_UMA_METHOD_SCOPE" json:"enable-uma-method-scope" usage:"enables passing request method as 'method:GET' scope to keycloak for authorization" yaml:"enable-uma-method-scope"`
 	SkipUpstreamTLSVerify              bool `env:"SKIP_UPSTREAM_TLS_VERIFY" json:"skip-upstream-tls-verify" usage:"skip the verification of any upstream TLS" yaml:"skip-upstream-tls-verify"`
 	CorsCredentials                    bool `env:"CORS_CREDENTIALS" json:"cors-credentials" usage:"credentials access control header (Access-Control-Allow-Credentials)" yaml:"cors-credentials"`
-	EnableHmac                         bool `env:"Enable_HMAC" json:"enable-hmac" usage:"enable creating hmac for forwarded requests and verification on incoming requests"`
+	EnableHmac                         bool `env:"ENABLE_HMAC" json:"enable-hmac" usage:"enable creating hmac for forwarded requests and verification on incoming requests" yaml:"enable-hmac"`
 	NoProxy                            bool `env:"NO_PROXY" json:"no-proxy" usage:"do not proxy requests to upstream, useful for forward-auth usage (with nginx, traefik)" yaml:"no-proxy"`
 	NoRedirects                        bool `env:"NO_REDIRECTS" json:"no-redirects" usage:"do not have back redirects when no authentication is present, 401 them" yaml:"no-redirects"`
 	SkipAccessTokenIssuerCheck         bool `env:"SKIP_ACCESS_TOKEN_ISSUER_CHECK" json:"skip-access-token-issuer-check" usage:"according RFC issuer should not be checked on access token, this will be default true in future" yaml:"skip-access-token-issuer-check"`
