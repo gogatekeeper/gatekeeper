@@ -624,6 +624,7 @@ func (r *Config) isReverseProxySettingsValid() error {
 			r.isAllowedQueryParamsValid,
 			r.isEnableLoAValid,
 			r.isSigningValid,
+			r.isEnableSigningHmacValid,
 		}
 
 		for _, validationFunc := range validationRegistry {
@@ -1021,7 +1022,11 @@ func (r *Config) isSigningValid() error {
 	if r.EnableSigning && r.ForwardingGrantType == constant.ForwardingGrantTypePassword {
 		return apperrors.ErrSigningPasswordGrantType
 	}
-	if r.EnableSigning && r.EnableSigningHmac && r.EncryptionKey == "" {
+	return nil
+}
+
+func (r *Config) isEnableSigningHmacValid() error {
+	if r.EnableSigningHmac && r.EncryptionKey == "" {
 		return apperrors.ErrSigningHmacMissingEncryptionKey
 	}
 	return nil

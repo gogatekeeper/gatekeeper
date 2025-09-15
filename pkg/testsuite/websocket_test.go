@@ -94,7 +94,7 @@ func TestWebSocket(t *testing.T) {
 	err = websocket.Message.Receive(wsock, &responseData)
 	require.NoError(t, err)
 
-	responseJSON := fakeUpstreamResponse{}
+	responseJSON := FakeUpstreamResponse{}
 	err = json.Unmarshal(responseData, &responseJSON)
 	require.NoError(t, err)
 

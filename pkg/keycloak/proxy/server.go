@@ -473,6 +473,8 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.Headers,
 		r.Endpoint,
 		r.Config.PreserveHost,
+		r.Config.EnableSigningHmac,
+		r.Config.EncryptionKey,
 		r.Upstream,
 	)
 	if !r.Config.NoProxy {
@@ -847,8 +849,6 @@ func (r *OauthProxy) CreateReverseProxy() error {
 				r.Log,
 				r.pat,
 				r.Config.ForwardingDomains,
-				r.Config.EnableSigningHmac,
-				r.Config.EncryptionKey,
 			)
 			middlewares = append(
 				middlewares,

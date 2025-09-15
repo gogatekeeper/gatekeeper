@@ -313,6 +313,8 @@ func ProxyMiddleware(
 	headers map[string]string,
 	endpoint *url.URL,
 	preserveHost bool,
+	enableSigningHmac bool,
+	encryptionKey string,
 	upstream core.ReverseProxy,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -381,6 +383,14 @@ func ProxyMiddleware(
 					return
 				}
 				return
+			}
+
+			if enableSigningHmac {
+				reqHmac, err := utils.GenerateHmac(req, encryptionKey)
+				if err != nil {
+					logger.Error(err.Error())
+				}
+				req.Header.Set(constant.HeaderXHMAC, reqHmac)
 			}
 
 			upstream.ServeHTTP(wrt, req)
