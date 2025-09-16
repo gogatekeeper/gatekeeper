@@ -216,8 +216,7 @@ var (
 	ErrTLSOpenIDPClientPrivateKeyNotExists  = errors.New("tls openidp client private key file does not exist")
 	ErrTLSOpenIDPClientPairMissing          = errors.New("tls openidp, you must supply both client private key " +
 		"and client certificate for client authentication")
-	ErrSigningNoProxy           = errors.New("sign in no proxy mode is not possible")
-	ErrSigningPasswordGrantType = errors.New("sign request with user token (password grant) is not possible, " +
-		"please use --forwarding-grant-type=client_credentials")
+	ErrSigningNoProxy                  = errors.New("sign in no proxy mode is not possible")
+	ErrSigningNotWithForwarding        = errors.New("signing and forwarding cannot be enabled at the same time")
 	ErrSigningHmacMissingEncryptionKey = errors.New("signing with hmac enabled but encryption key missing")
 )

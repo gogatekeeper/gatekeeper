@@ -2928,3 +2928,93 @@ func TestIsCookiePathValid(t *testing.T) {
 		)
 	}
 }
+
+func TestIsSigningValid(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidSigning",
+			Config: &Config{
+				EnableSigning: true,
+				NoProxy:       false,
+			},
+			Valid: true,
+		},
+		{
+			Name: "InvalidSigningNoProxyTrue",
+			Config: &Config{
+				EnableSigning: true,
+				NoProxy:       true,
+			},
+			Valid: false,
+		},
+		{
+			Name: "InvalidSigningForwardingTrue",
+			Config: &Config{
+				EnableSigning:    true,
+				EnableForwarding: true,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isSigningValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}
+
+func TestEnableSigningHmacValid(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidSigningHmac",
+			Config: &Config{
+				EnableSigningHmac: true,
+				EncryptionKey:     "test",
+			},
+			Valid: true,
+		},
+		{
+			Name: "InvalidSigninghmac",
+			Config: &Config{
+				EnableSigningHmac: true,
+				EncryptionKey:     "",
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isEnableSigningHmacValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}

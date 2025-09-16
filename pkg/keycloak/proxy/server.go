@@ -940,7 +940,17 @@ func (r *OauthProxy) CreateReverseProxy() error {
 			case res.WhiteListedAnon:
 				p.MethodFunc(method, res.URL, handlers.EmptyHandler)
 			case res.WhiteListed:
-				engine.MethodFunc(method, res.URL, handlers.EmptyHandler)
+				if r.Config.EnableSigning && !r.Config.NoProxy {
+					signMid = SigningMiddleware(
+						r.Log,
+						r.pat,
+						r.Config.ForwardingDomains,
+					)
+					p = engine.With(signMid)
+					p.MethodFunc(method, res.URL, handlers.EmptyHandler)
+				} else {
+					engine.MethodFunc(method, res.URL, handlers.EmptyHandler)
+				}
 			default:
 				eProt.MethodFunc(method, res.URL, handlers.EmptyHandler)
 			}
@@ -1133,6 +1143,7 @@ func (r *OauthProxy) Run() (context.Context, error) {
 				r.Config.PatRetryCount,
 				r.Config.PatRetryInterval,
 				r.Config.EnableForwarding,
+				r.Config.EnableSigning,
 				r.Config.ForwardingGrantType,
 				r.IdpClient,
 				r.Config.ForwardingUsername,
