@@ -946,8 +946,8 @@ func (r *OauthProxy) CreateReverseProxy() error {
 						r.pat,
 						r.Config.ForwardingDomains,
 					)
-					p = engine.With(signMid)
-					p.MethodFunc(method, res.URL, handlers.EmptyHandler)
+					eng := engine.With(signMid)
+					eng.MethodFunc(method, res.URL, handlers.EmptyHandler)
 				} else {
 					engine.MethodFunc(method, res.URL, handlers.EmptyHandler)
 				}
