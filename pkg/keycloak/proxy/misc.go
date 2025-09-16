@@ -106,6 +106,7 @@ func refreshPAT(
 	patRetryCount int,
 	patRetryInterval time.Duration,
 	enableForwarding bool,
+	enableSigning bool,
 	forwardingGrantType string,
 	idpClient *gocloak.GoCloak,
 	forwardingUsername string,
@@ -115,7 +116,7 @@ func refreshPAT(
 	initialized := false
 	grantType := configcore.GrantTypeClientCreds
 
-	if enableForwarding && forwardingGrantType == configcore.GrantTypeUserCreds {
+	if (enableForwarding || enableSigning) && forwardingGrantType == configcore.GrantTypeUserCreds {
 		grantType = configcore.GrantTypeUserCreds
 	}
 

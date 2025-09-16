@@ -1019,8 +1019,8 @@ func (r *Config) isSigningValid() error {
 	if r.EnableSigning && r.NoProxy {
 		return apperrors.ErrSigningNoProxy
 	}
-	if r.EnableSigning && r.ForwardingGrantType == constant.ForwardingGrantTypePassword {
-		return apperrors.ErrSigningPasswordGrantType
+	if r.EnableSigning && r.EnableForwarding {
+		return apperrors.ErrSigningNotWithForwarding
 	}
 	return nil
 }

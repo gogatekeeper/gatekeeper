@@ -1908,9 +1908,11 @@ var _ = Describe("Code Flow With signing login/logout", func() {
 				signinToken := strings.Replace(signingHeader, constant.AuthorizationType, "", 1)
 				signinToken = strings.TrimSpace(signinToken)
 				tokenHeader := upstreamResp.Headers.Get("X-Auth-Token")
+				hmacHeader := upstreamResp.Headers.Get(constant.HeaderXHMAC)
 
 				Expect(signinToken).NotTo(BeEmpty())
 				Expect(signinToken).NotTo(Equal(tokenHeader))
+				Expect(hmacHeader).NotTo(BeEmpty())
 
 				By("verify signing token test client")
 				token, err := jwt.ParseSigned(signinToken, constant.SignatureAlgs[:])
@@ -1970,6 +1972,107 @@ var _ = Describe("Code Flow With signing login/logout", func() {
 				rClient.SetRedirectPolicy(resty.NoRedirectPolicy())
 				resp, _ = rClient.R().Get(proxyAddress)
 				Expect(resp.StatusCode()).To(Equal(http.StatusSeeOther))
+			},
+		)
+	})
+})
+
+var _ = Describe("Reverse proxy signing", func() {
+	var portNum string
+	var proxyAddress string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server *http.Server
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
+
+	BeforeEach(func() {
+		var err error
+		var upstreamSvcPort string
+
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
+		proxyAddress = localURI + portNum
+
+		osArgs := []string{os.Args[0]}
+		proxyArgs := []string{
+			"--discovery-url=" + idpRealmURI,
+			"--openid-provider-timeout=300s",
+			"--tls-openid-provider-ca-certificate=" + tlsCaCertificate,
+			"--tls-openid-provider-client-certificate=" + tlsCertificate,
+			"--tls-openid-provider-client-private-key=" + tlsPrivateKey,
+			"--listen=" + allInterfaces + portNum,
+			"--client-id=" + testClient,
+			"--client-secret=" + testClientSecret,
+			"--forwarding-grant-type=client_credentials",
+			"--upstream-url=" + localURI + upstreamSvcPort,
+			"--no-redirects=false",
+			"--enable-signing=true",
+			"--enable-signing-hmac",
+			"--resources=uri=/*|white-listed=true",
+			"--skip-access-token-clientid-check=true",
+			"--skip-access-token-issuer-check=true",
+			"--enable-idp-session-check=false",
+			"--enable-default-deny=false",
+			"--openid-provider-retry-count=30",
+			"--enable-refresh-tokens=true",
+			"--encryption-key=sdkljfalisujeoir",
+			"--secure-cookie=false",
+			"--post-login-redirect-path=" + postLoginRedirectPath,
+			"--enable-register-handler=false",
+			"--enable-encrypted-token=true",
+			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--upstream-ca=" + tlsCaCertificate,
+		}
+
+		osArgs = append(osArgs, proxyArgs...)
+		startAndWait(portNum, osArgs)
+	})
+
+	When("Performing unauthenticated request to reverse proxy", func() {
+		It("should forward request to upstream and add signing with token and hmac",
+			Label("reverse_proxy_signing_case"),
+			func(_ context.Context) {
+				var err error
+				rClient := resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
+				resp, err := rClient.R().Get(proxyAddress + testPath)
+				Expect(err).NotTo(HaveOccurred())
+				body := resp.Body()
+
+				upstreamResp := &testsuite_test.FakeUpstreamResponse{}
+				err = json.Unmarshal(body, &upstreamResp)
+				Expect(err).NotTo(HaveOccurred())
+
+				signingHeader := upstreamResp.Headers.Get("Authorization")
+				signinToken := strings.Replace(signingHeader, constant.AuthorizationType, "", 1)
+				signinToken = strings.TrimSpace(signinToken)
+				tokenHeader := upstreamResp.Headers.Get("X-Auth-Token")
+				hmacHeader := upstreamResp.Headers.Get(constant.HeaderXHMAC)
+				Expect(signinToken).NotTo(BeEmpty())
+				Expect(tokenHeader).To(BeEmpty())
+				Expect(hmacHeader).NotTo(BeEmpty())
+
+				By("verify signing token test client")
+				token, err := jwt.ParseSigned(signinToken, constant.SignatureAlgs[:])
+				Expect(err).NotTo(HaveOccurred())
+
+				customClaims := models.CustClaims{}
+
+				err = token.UnsafeClaimsWithoutVerification(&customClaims)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(customClaims.PrefName).To(ContainSubstring(testClient))
 			},
 		)
 	})
