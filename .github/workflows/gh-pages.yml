@@ -39,7 +39,10 @@ jobs:
       - name: Build
         run: |
           cd docs
+          ls -al public
+          rm -rf public
           hugo --minify
+          ls -al public
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
