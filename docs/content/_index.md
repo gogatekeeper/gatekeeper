@@ -613,6 +613,77 @@ $ bin/gatekeeper \
 
 When `--enable-uma` is set in forwarding mode, proxy signs request with RPT token
 
+## Signing in reverse proxy mode
+
+There are two use cases for signing in reverse proxy mode:
+
+- Sometimes your application don't have ability to set proxy for outgoing requests. So you want
+  to set gatekeeper as upstream server for your application and you don't want gatekeeper to verify
+  incoming requests.
+
+```yaml
+verbose: true
+listen: 0.0.0.0:80
+discovery-url: http://providerurl/realms/hr/.well-known/openid-configuration
+skip-openid-provider-tls-verify: true
+client-id: SECRET
+client-secret: SECRET
+enable-encrypted-token: false
+enable-default-deny: false
+enable-default-deny-strict: false
+enable-logging: true
+enable-json-logging: true
+enable-metrics: true
+upstream-url: http://project1:3001
+preserve-host: true
+upstream-timeout: 180s
+upstream-response-header-timeout: 180s
+upstream-expect-continue-timeout: 180s
+server-read-timeout: 180s
+server-write-timeout: 180s
+skip-access-token-clientid-check: true
+skip-access-token-issuer-check: true
+no-redirects: false
+enable-pkce: false
+enable-signing: true
+enable-signing-hmac: true # this is optional and adds another header for verification of integrity of request
+forwarding-grant-type: client_credentials
+resources:
+- uri: /*
+  white-listed: true
+```
+
+
+- Another use case is that you want to verify incoming requests but after successful auth/authz
+  you want to insert gatekeeper token (sign) as Bearer token to upstream request.
+
+```yaml
+verbose: true
+listen: 0.0.0.0:80
+discovery-url: http://providerurl/realms/hr/.well-known/openid-configuration
+skip-openid-provider-tls-verify: true
+client-id: SECRET
+client-secret: SECRET
+enable-encrypted-token: true
+enable-default-deny: true
+enable-default-deny-strict: false
+enable-logging: true
+enable-json-logging: true
+enable-metrics: true
+upstream-url: http://project1:3001
+preserve-host: true
+upstream-timeout: 180s
+upstream-response-header-timeout: 180s
+upstream-expect-continue-timeout: 180s
+server-read-timeout: 180s
+server-write-timeout: 180s
+skip-access-token-clientid-check: true
+skip-access-token-issuer-check: true
+no-redirects: false
+enable-signing: true
+forwarding-grant-type: client_credentials
+```
+
 ## HTTPS redirect
 
 The proxy supports an HTTP listener, so the only real requirement here
