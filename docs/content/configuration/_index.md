@@ -148,6 +148,8 @@ weight: 2
 |    --forwarding-grant-type value            | grant-type to use when logging into the openid provider, can be one of password, client_credentials | password | PROXY_FORWARDING_GRANT_TYPE
 |    --forwarding-username value              | username to use when logging into the openid provider | | PROXY_FORWARDING_USERNAME
 |    --forwarding-password value              | password to use when logging into the openid provider | | PROXY_FORWARDING_PASSWORD
+|    --enable-signing                         | enable signing of requests to upstream, when in reverse proxy mode |  false | PROXY_ENABLE_SIGNING
+|    --enable-signing-hmac                    | enable signing of requests to upstream, when in reverse proxy mode with HMAC | false | PROXY_ENABLE_SIGNING_HMAC
 |    --forwarding-domains value               | list of domains which should be signed; everything else is relayed unsigned | |
 |    --enable-loa                             | enable level of authentication            | false |
 |    --disable-all-logging                    | disables all logging to stdout and stderr | false | PROXY_DISABLE_ALL_LOGGING
