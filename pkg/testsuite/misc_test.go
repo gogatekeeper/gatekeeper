@@ -23,48 +23,80 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gogatekeeper/gatekeeper/pkg/keycloak/config"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestRedirectToAuthorizationUnauthorized(t *testing.T) {
-	cfg := newFakeKeycloakConfig()
-	cfg.NoRedirects = true
-	requests := []fakeRequest{
-		{
-			URI:          FakeAdminURL,
-			ExpectedCode: http.StatusUnauthorized,
-			Redirects:    false,
-		},
-	}
-	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
-}
-
 func TestRedirectToAuthorization(t *testing.T) {
-	requests := []fakeRequest{
-		{
-			URI:              FakeAdminURL,
-			Redirects:        true,
-			ExpectedLocation: "/oauth/authorize?state",
-			ExpectedCode:     http.StatusSeeOther,
-		},
-	}
-	newFakeProxy(nil, &fakeAuthConfig{}).RunTests(t, requests)
-}
-
-func TestRedirectToAuthorizationWith303Enabled(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 
-	requests := []fakeRequest{
+	requests := []struct {
+		Name              string
+		ProxySettings     func(c *config.Config)
+		ExecutionSettings []fakeRequest
+	}{
 		{
-			URI:              FakeAdminURL,
-			Redirects:        true,
-			ExpectedLocation: "/oauth/authorize?state",
-			ExpectedCode:     http.StatusSeeOther,
+			Name: "TestWithoutRedirects",
+			ProxySettings: func(c *config.Config) {
+				c.NoRedirects = true
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:          FakeAdminURL,
+					ExpectedCode: http.StatusUnauthorized,
+					Redirects:    false,
+				},
+			},
+		},
+		{
+			Name: "TestWithRedirects",
+			ProxySettings: func(c *config.Config) {
+				c.NoRedirects = false
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:              FakeAdminURL,
+					Redirects:        true,
+					ExpectedLocation: "/oauth/authorize?state",
+					ExpectedCode:     http.StatusSeeOther,
+				},
+			},
+		},
+		{
+			Name: "TestWithXForwardedHeaders",
+			ProxySettings: func(c *config.Config) {
+				c.NoRedirects = false
+				c.EnableXForwardedHeaders = true
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:       FakeAdminURL,
+					Redirects: true,
+					Headers: map[string]string{
+						"X-Forwarded-Host":  "testhost",
+						"X-Forwarded-Proto": "https",
+					},
+					ExpectedLocation: "https://testhost/oauth/authorize?state",
+					ExpectedCode:     http.StatusSeeOther,
+				},
+			},
 		},
 	}
-	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
+
+	for _, testCase := range requests {
+		cfg := *cfg
+
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				testCase.ProxySettings(&cfg)
+				p := newFakeProxy(&cfg, &fakeAuthConfig{})
+				p.RunTests(t, testCase.ExecutionSettings)
+			},
+		)
+	}
 }
 
 func assertAlmostEquals(t *testing.T, expected time.Duration, actual time.Duration) {

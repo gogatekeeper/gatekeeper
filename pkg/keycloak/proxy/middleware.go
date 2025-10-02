@@ -96,7 +96,7 @@ func authorizationMiddleware(
 					if noProxy {
 						xForwardedMethod := req.Header.Get(constant.HeaderXForwardedMethod)
 						if xForwardedMethod == "" {
-							scope.Logger.Error(apperrors.ErrForwardAuthMissingHeaders.Error())
+							scope.Logger.Error(apperrors.ErrMissingXForwardedHeaders.Error())
 							accessForbidden(wrt, req)
 							return
 						}
@@ -109,7 +109,7 @@ func authorizationMiddleware(
 				if noProxy {
 					authzPath = req.Header.Get(constant.HeaderXForwardedURI)
 					if authzPath == "" {
-						scope.Logger.Error(apperrors.ErrForwardAuthMissingHeaders.Error())
+						scope.Logger.Error(apperrors.ErrMissingXForwardedHeaders.Error())
 						accessForbidden(wrt, req)
 						return
 					}

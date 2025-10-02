@@ -3018,3 +3018,52 @@ func TestEnableSigningHmacValid(t *testing.T) {
 		)
 	}
 }
+
+func TestEnableXForwardedHeadersValid(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidEnableXForwardedHeadersValid",
+			Config: &Config{
+				EnableXForwardedHeaders: true,
+				RedirectionURL:          "",
+			},
+			Valid: true,
+		},
+		{
+			Name: "ValidDisabledEnableXForwardedHeadersValid",
+			Config: &Config{
+				EnableXForwardedHeaders: false,
+				RedirectionURL:          "",
+			},
+			Valid: true,
+		},
+		{
+			Name: "InvalidEnableXForwardedHeaders",
+			Config: &Config{
+				EnableXForwardedHeaders: true,
+				RedirectionURL:          "http://someurl",
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isEnableXForwardedHeadersValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}
