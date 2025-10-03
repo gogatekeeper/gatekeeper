@@ -355,6 +355,7 @@ func RedirectToAuthorizationMiddleware(
 	oAuthURI string,
 	allowedQueryParams map[string]string,
 	defaultAllowedQueryParams map[string]string,
+	enableXForwardedHeaders bool,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
@@ -392,12 +393,12 @@ func RedirectToAuthorizationMiddleware(
 
 				url := utils.WithOAuthURI(baseURI, oAuthURI)(constant.AuthorizationURL + authQuery)
 
-				if noProxy {
+				if noProxy || enableXForwardedHeaders {
 					xForwardedHost := req.Header.Get(constant.HeaderXForwardedHost)
 					xProto := req.Header.Get(constant.HeaderXForwardedProto)
 
 					if xForwardedHost == "" || xProto == "" {
-						logger.Error(apperrors.ErrForwardAuthMissingHeaders.Error())
+						logger.Error(apperrors.ErrMissingXForwardedHeaders.Error())
 
 						wrt.WriteHeader(http.StatusForbidden)
 						return

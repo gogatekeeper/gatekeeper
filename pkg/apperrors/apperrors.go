@@ -33,8 +33,8 @@ var (
 	ErrDefaultDenyWhitelistConflict   = errors.New("you've asked for a default denial but whitelisted everything")
 	ErrDefaultDenyUserDefinedConflict = errors.New("you've enabled default deny " +
 		"and at the same time defined own rules for /*")
-	ErrBadDiscoveryURIFormat     = errors.New("bad discovery url format")
-	ErrForwardAuthMissingHeaders = errors.New("seems you are using gatekeeper as forward-auth, " +
+	ErrBadDiscoveryURIFormat    = errors.New("bad discovery url format")
+	ErrMissingXForwardedHeaders = errors.New("seems you are using gatekeeper forward-auth or enable-x-forwarded-headers," +
 		"but you don't forward X-FORWARDED-* headers from front proxy")
 	ErrPKCEWithCodeOnly         = errors.New("pkce can be enabled only with no-redirect=false")
 	ErrPKCECodeCreation         = errors.New("creation of code verifier failed")
@@ -219,4 +219,6 @@ var (
 	ErrSigningNoProxy                  = errors.New("sign in no proxy mode is not possible")
 	ErrSigningNotWithForwarding        = errors.New("signing and forwarding cannot be enabled at the same time")
 	ErrSigningHmacMissingEncryptionKey = errors.New("signing with hmac enabled but encryption key missing")
+	ErrXForwardedRedirectionURL        = errors.New("enable-x-forwarded-headers and redirection-url " +
+		"cannot be set at the same time")
 )

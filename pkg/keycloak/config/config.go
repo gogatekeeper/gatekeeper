@@ -194,6 +194,7 @@ type Config struct {
 	EnableStoreHA                      bool `env:"ENABLE_STORE_HA" json:"enable-store-ha" usage:"enable store high availability client, currently only redis-cluster supported" yaml:"enable-store-ha"`
 	EnableSigning                      bool `env:"ENABLE_SIGNING" json:"enable-signing" usage:"enable signing of requests to upstream, when in reverse proxy mode" yaml:"enable-signing"`
 	EnableSigningHmac                  bool `env:"ENABLE_SIGNING_HMAC" json:"enable-signing-hmac" usage:"enable signing of requests to upstream, when in reverse proxy mode with HMAC" yaml:"enable-signing-hmac"`
+	EnableXForwardedHeaders            bool `env:"ENABLE_X_FORWARDED_HEADERS" json:"enable-x-forwarded-headers" usage:"enable using X-Forwarded headers (host and proto) for callback and authorization url" yaml:"enable-x-forwarded-headers"`
 	IsDiscoverURILegacy                bool
 }
 
@@ -625,6 +626,7 @@ func (r *Config) isReverseProxySettingsValid() error {
 			r.isEnableLoAValid,
 			r.isSigningValid,
 			r.isEnableSigningHmacValid,
+			r.isEnableXForwardedHeadersValid,
 		}
 
 		for _, validationFunc := range validationRegistry {
@@ -1028,6 +1030,13 @@ func (r *Config) isSigningValid() error {
 func (r *Config) isEnableSigningHmacValid() error {
 	if r.EnableSigningHmac && r.EncryptionKey == "" {
 		return apperrors.ErrSigningHmacMissingEncryptionKey
+	}
+	return nil
+}
+
+func (r *Config) isEnableXForwardedHeadersValid() error {
+	if r.EnableXForwardedHeaders && r.RedirectionURL != "" {
+		return apperrors.ErrXForwardedRedirectionURL
 	}
 	return nil
 }

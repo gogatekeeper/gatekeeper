@@ -435,6 +435,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.CookieOAuthStateName,
 		WithOAuthURI,
 		false,
+		r.Config.EnableXForwardedHeaders,
 	)
 
 	loginGetRedirectionURL := handlers.GetRedirectionURL(
@@ -446,6 +447,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.CookieOAuthStateName,
 		WithOAuthURI,
 		true,
+		r.Config.EnableXForwardedHeaders,
 	)
 
 	if r.Config.EnableHmac {
@@ -646,6 +648,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.OAuthURI,
 		r.Config.AllowedQueryParams,
 		r.Config.DefaultAllowedQueryParams,
+		r.Config.EnableXForwardedHeaders,
 	)
 	noredToAuthMiddleware := gmiddleware.NoRedirectToAuthorizationMiddleware(r.Log)
 
