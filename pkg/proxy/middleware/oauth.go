@@ -48,6 +48,7 @@ func AuthenticationMiddleware(
 	newOAuth2Config func(redirectionURL string) *oauth2.Config,
 	store storage.Storage,
 	accessTokenDuration time.Duration,
+	enableOptionalEncryption bool,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
@@ -137,6 +138,7 @@ func AuthenticationMiddleware(
 					encryptionKey,
 					req.WithContext(ctx),
 					user,
+					enableOptionalEncryption,
 				)
 				if err != nil {
 					scope.Logger.Error(

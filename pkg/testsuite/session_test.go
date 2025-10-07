@@ -136,6 +136,7 @@ func TestGetIndentity(t *testing.T) {
 			cfg.SkipAuthorizationHeaderIdentity,
 			cfg.EnableEncryptedToken,
 			cfg.ForceEncryptedCookie,
+			cfg.EnableOptionalEncryption,
 			cfg.EncryptionKey,
 		)
 

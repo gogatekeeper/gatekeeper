@@ -646,6 +646,7 @@ func logoutHandler(
 	enableEncryptedToken bool,
 	forceEncryptedCookie bool,
 	enableLogoutRedirect bool,
+	enableOptionalEncryption bool,
 	store storage.Storage,
 	cookManager *cookie.Manager,
 	httpClient *http.Client,
@@ -682,6 +683,7 @@ func logoutHandler(
 			encryptionKey,
 			req,
 			user,
+			enableOptionalEncryption,
 		); err == nil {
 			identityToken = refresh
 		}
@@ -692,6 +694,7 @@ func logoutHandler(
 			forceEncryptedCookie,
 			encryptionKey,
 			req,
+			enableOptionalEncryption,
 		)
 		// we are doing it so that in case with no-redirects=true, we can pass
 		// id token in authorization header

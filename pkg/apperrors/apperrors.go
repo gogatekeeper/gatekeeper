@@ -221,4 +221,6 @@ var (
 	ErrSigningHmacMissingEncryptionKey = errors.New("signing with hmac enabled but encryption key missing")
 	ErrXForwardedRedirectionURL        = errors.New("enable-x-forwarded-headers and redirection-url " +
 		"cannot be set at the same time")
+	ErrOptionalEncryptionWithNoEncryption = errors.New("optional encryption cannot be enabled " +
+		"when encryption is not enabled")
 )

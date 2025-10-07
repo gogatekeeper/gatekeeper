@@ -116,6 +116,7 @@ func RetrieveIDToken(
 	forceEncryptedCookie bool,
 	encryptionKey string,
 	req *http.Request,
+	enableOptionalEncryption bool,
 ) (string, string, error) {
 	var token string
 	var err error
@@ -129,6 +130,9 @@ func RetrieveIDToken(
 	if enableEncryptedToken || forceEncryptedCookie {
 		encrypted = token
 		token, err = encryption.DecodeText(token, encryptionKey)
+		if err != nil && enableOptionalEncryption {
+			return encrypted, encrypted, nil
+		}
 	}
 
 	return token, encrypted, err
