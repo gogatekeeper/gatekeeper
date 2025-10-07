@@ -195,6 +195,7 @@ type Config struct {
 	EnableSigning                      bool `env:"ENABLE_SIGNING" json:"enable-signing" usage:"enable signing of requests to upstream, when in reverse proxy mode" yaml:"enable-signing"`
 	EnableSigningHmac                  bool `env:"ENABLE_SIGNING_HMAC" json:"enable-signing-hmac" usage:"enable signing of requests to upstream, when in reverse proxy mode with HMAC" yaml:"enable-signing-hmac"`
 	EnableXForwardedHeaders            bool `env:"ENABLE_X_FORWARDED_HEADERS" json:"enable-x-forwarded-headers" usage:"enable using X-Forwarded headers (host and proto) for callback and authorization url" yaml:"enable-x-forwarded-headers"`
+	EnableOptionalEncryption           bool `env:"ENABLE_OPTIONAL_ENCRYPTION" json:"enable-optional-encryption" usage:"enable optional decryption for access tokens, id tokens, refresh tokens" yaml:"enable-optional-encryption"`
 	IsDiscoverURILegacy                bool
 }
 
@@ -627,6 +628,7 @@ func (r *Config) isReverseProxySettingsValid() error {
 			r.isSigningValid,
 			r.isEnableSigningHmacValid,
 			r.isEnableXForwardedHeadersValid,
+			r.isEnableOptionalEncryptionValid,
 		}
 
 		for _, validationFunc := range validationRegistry {
@@ -1037,6 +1039,13 @@ func (r *Config) isEnableSigningHmacValid() error {
 func (r *Config) isEnableXForwardedHeadersValid() error {
 	if r.EnableXForwardedHeaders && r.RedirectionURL != "" {
 		return apperrors.ErrXForwardedRedirectionURL
+	}
+	return nil
+}
+
+func (r *Config) isEnableOptionalEncryptionValid() error {
+	if r.EnableOptionalEncryption && !(r.EnableEncryptedToken || r.ForceEncryptedCookie) {
+		return apperrors.ErrOptionalEncryptionWithNoEncryption
 	}
 	return nil
 }

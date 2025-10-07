@@ -130,6 +130,7 @@ func GetIdentity(
 	skipAuthorizationHeaderIdentity bool,
 	enableEncryptedToken bool,
 	forceEncryptedCookie bool,
+	enableOptionalEncryption bool,
 	encKey string,
 ) func(req *http.Request, tokenCookie string, tokenHeader string) (string, error) {
 	return func(req *http.Request, tokenCookie string, tokenHeader string) (string, error) {
@@ -146,8 +147,13 @@ func GetIdentity(
 		}
 
 		if enableEncryptedToken || forceEncryptedCookie && !isBearer {
+			origToken := token
 			if token, err = encryption.DecodeText(token, encKey); err != nil {
-				return "", apperrors.ErrDecryption
+				if enableOptionalEncryption {
+					return origToken, nil
+				} else {
+					return "", apperrors.ErrDecryption
+				}
 			}
 		}
 
@@ -232,6 +238,7 @@ func RetrieveRefreshToken(
 	encryptionKey string,
 	req *http.Request,
 	user *models.UserContext,
+	enableOptionalEncryption bool,
 ) (string, string, error) {
 	var token string
 	var err error
@@ -249,6 +256,10 @@ func RetrieveRefreshToken(
 
 	encrypted := token // returns encrypted, avoids encoding twice
 	token, err = encryption.DecodeText(token, encryptionKey)
+	if err != nil && enableOptionalEncryption {
+		return encrypted, encrypted, nil
+	}
+
 	return token, encrypted, err
 }
 

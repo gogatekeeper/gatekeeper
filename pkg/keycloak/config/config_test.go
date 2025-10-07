@@ -3067,3 +3067,46 @@ func TestEnableXForwardedHeadersValid(t *testing.T) {
 		)
 	}
 }
+
+func TestEnableOptionalEncryptionValid(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidEnableOptionalEncryptionValid",
+			Config: &Config{
+				EnableOptionalEncryption: true,
+				EnableEncryptedToken:     true,
+				ForceEncryptedCookie:     false,
+			},
+			Valid: true,
+		},
+		{
+			Name: "InvalidEnableOptionalEncryption",
+			Config: &Config{
+				EnableOptionalEncryption: true,
+				EnableEncryptedToken:     false,
+				ForceEncryptedCookie:     false,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isEnableOptionalEncryptionValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}

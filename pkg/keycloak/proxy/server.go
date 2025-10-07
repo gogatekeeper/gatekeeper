@@ -423,6 +423,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.SkipAuthorizationHeaderIdentity,
 		r.Config.EnableEncryptedToken,
 		r.Config.ForceEncryptedCookie,
+		r.Config.EnableOptionalEncryption,
 		r.Config.EncryptionKey,
 	)
 
@@ -535,6 +536,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		newOAuth2Config,
 		r.Store,
 		r.Config.AccessTokenDuration,
+		r.Config.EnableOptionalEncryption,
 	)
 
 	loginHand := loginHandler(
@@ -568,6 +570,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.EnableEncryptedToken,
 		r.Config.ForceEncryptedCookie,
 		r.Config.EnableLogoutRedirect,
+		r.Config.EnableOptionalEncryption,
 		r.Store,
 		r.Cm,
 		r.IdpClient.RestyClient().GetClient(),

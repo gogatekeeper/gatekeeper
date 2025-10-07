@@ -20,6 +20,7 @@ import (
 	"github.com/go-jose/go-jose/v4/jwt"
 	resty "github.com/go-resty/resty/v2"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
+	"github.com/gogatekeeper/gatekeeper/pkg/encryption"
 	keycloakcore "github.com/gogatekeeper/gatekeeper/pkg/keycloak/proxy/core"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
@@ -45,7 +46,9 @@ const (
 	umaTestClientSecret = "A5vokiGdI3H2r4aXFrANbKvn4R7cbf6P"
 	loaTestClient       = "test-loa"
 	//nolint:gosec
-	loaTestClientSecret     = "4z9PoOooXNFmSCPZx0xHXaUxX4eYGFO0"
+	loaTestClientSecret = "4z9PoOooXNFmSCPZx0xHXaUxX4eYGFO0"
+	//nolint:gosec
+	testKey                 = "trksjblzqsujshex"
 	timeout                 = time.Second * 300
 	tlsTimeout              = 10 * time.Second
 	idpURI                  = "https://localhost:8443"
@@ -528,11 +531,11 @@ var _ = Describe("Code Flow login/logout", func() {
 			"--resources=uri=/*|roles=uma_authorization,offline_access",
 			"--openid-provider-retry-count=30",
 			"--enable-refresh-tokens=true",
-			"--encryption-key=sdkljfalisujeoir",
+			"--encryption-key=" + testKey,
 			"--secure-cookie=false",
 			"--post-login-redirect-path=" + postLoginRedirectPath,
 			"--enable-register-handler=true",
-			"--enable-encrypted-token=false",
+			"--enable-encrypted-token=true",
 			"--enable-pkce=false",
 			"--tls-cert=" + tlsCertificate,
 			"--tls-private-key=" + tlsPrivateKey,
@@ -763,7 +766,7 @@ var _ = Describe("Code Flow login/logout mTLS", func() {
 			"--resources=uri=/*|roles=uma_authorization,offline_access",
 			"--openid-provider-retry-count=30",
 			"--enable-refresh-tokens=true",
-			"--encryption-key=sdkljfalisujeoir",
+			"--encryption-key=" + testKey,
 			"--secure-cookie=false",
 			"--post-login-redirect-path=" + postLoginRedirectPath,
 			"--enable-register-handler=true",
@@ -990,7 +993,7 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS", func() {
 			"--cookie-pkce-name=" + pkceCookieName,
 			"--enable-encrypted-token=false",
 			"--enable-refresh-tokens=true",
-			"--encryption-key=sdkljfalisujeoir",
+			"--encryption-key=" + testKey,
 			"--tls-cert=" + tlsCertificate,
 			"--tls-private-key=" + tlsPrivateKey,
 			"--upstream-ca=" + tlsCaCertificate,
@@ -1080,7 +1083,7 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS CLUSTER", func() {
 			"--cookie-pkce-name=" + pkceCookieName,
 			"--enable-encrypted-token=false",
 			"--enable-refresh-tokens=true",
-			"--encryption-key=sdkljfalisujeoir",
+			"--encryption-key=" + testKey,
 			"--tls-cert=" + tlsCertificate,
 			"--tls-private-key=" + tlsPrivateKey,
 			"--upstream-ca=" + tlsCaCertificate,
@@ -1303,7 +1306,7 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 			"--resources=uri=" + loaStepUpPath + "|acr=level2",
 			"--openid-provider-retry-count=30",
 			"--enable-refresh-tokens=true",
-			"--encryption-key=sdkljfalisujeoir",
+			"--encryption-key=" + testKey,
 			"--secure-cookie=false",
 			"--post-login-redirect-path=" + postLoginRedirectPath,
 			"--enable-encrypted-token=false",
@@ -1531,7 +1534,7 @@ var _ = Describe("User/password login/logout", func() {
 			"--resources=uri=/*|roles=uma_authorization,offline_access",
 			"--openid-provider-retry-count=30",
 			"--enable-refresh-tokens=true",
-			"--encryption-key=sdkljfalisujeoir",
+			"--encryption-key=" + testKey,
 			"--secure-cookie=false",
 			"--post-login-redirect-path=" + postLoginRedirectPath,
 			"--enable-login-handler=true",
@@ -1872,7 +1875,7 @@ var _ = Describe("Code Flow With signing login/logout", func() {
 			"--enable-default-deny=true",
 			"--openid-provider-retry-count=30",
 			"--enable-refresh-tokens=true",
-			"--encryption-key=sdkljfalisujeoir",
+			"--encryption-key=" + testKey,
 			"--secure-cookie=false",
 			"--post-login-redirect-path=" + postLoginRedirectPath,
 			"--enable-register-handler=false",
@@ -2025,7 +2028,7 @@ var _ = Describe("Reverse proxy signing", func() {
 			"--enable-default-deny=false",
 			"--openid-provider-retry-count=30",
 			"--enable-refresh-tokens=true",
-			"--encryption-key=sdkljfalisujeoir",
+			"--encryption-key=" + testKey,
 			"--secure-cookie=false",
 			"--post-login-redirect-path=" + postLoginRedirectPath,
 			"--enable-register-handler=false",
@@ -2073,6 +2076,163 @@ var _ = Describe("Reverse proxy signing", func() {
 				err = token.UnsafeClaimsWithoutVerification(&customClaims)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(customClaims.PrefName).To(ContainSubstring(testClient))
+			},
+		)
+	})
+})
+
+var _ = Describe("Code Flow login/logout EnableOptionalEncryption", func() {
+	var portNum string
+	var proxyAddress string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server *http.Server
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
+
+	BeforeEach(func() {
+		var err error
+		var upstreamSvcPort string
+
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
+		proxyAddress = localURI + portNum
+
+		osArgs := []string{os.Args[0]}
+		proxyArgs := []string{
+			"--discovery-url=" + idpRealmURI,
+			"--openid-provider-timeout=300s",
+			"--tls-openid-provider-ca-certificate=" + tlsCaCertificate,
+			"--tls-openid-provider-client-certificate=" + tlsCertificate,
+			"--tls-openid-provider-client-private-key=" + tlsPrivateKey,
+			"--listen=" + allInterfaces + portNum,
+			"--client-id=" + testClient,
+			"--client-secret=" + testClientSecret,
+			"--upstream-url=" + localURI + upstreamSvcPort,
+			"--no-redirects=false",
+			"--skip-access-token-clientid-check=true",
+			"--skip-access-token-issuer-check=true",
+			"--enable-idp-session-check=false",
+			"--enable-default-deny=false",
+			"--resources=uri=/*|roles=uma_authorization,offline_access",
+			"--openid-provider-retry-count=30",
+			"--enable-refresh-tokens=true",
+			"--encryption-key=" + testKey,
+			"--secure-cookie=false",
+			"--post-login-redirect-path=" + postLoginRedirectPath,
+			"--enable-register-handler=true",
+			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--upstream-ca=" + tlsCaCertificate,
+			"--enable-encrypted-token=true",
+			"--enable-optional-encryption=true",
+		}
+
+		osArgs = append(osArgs, proxyArgs...)
+		startAndWait(portNum, osArgs)
+	})
+
+	When("Performing standard login", func() {
+		It("should login with user/password and logout successfully",
+			Label("code_flow"),
+			Label("enable_optional_encryption"),
+			func(_ context.Context) {
+				var err error
+				rClient := resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
+				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				body := resp.Body()
+				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+				jarURI, err := url.Parse(proxyAddress)
+				Expect(err).NotTo(HaveOccurred())
+				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
+
+				var accessCookieLogin string
+				var refreshCookieLogin string
+				for _, cook := range cookiesLogin {
+					if cook.Name == constant.AccessCookie {
+						accessCookieLogin = cook.Value
+					}
+					if cook.Name == constant.RefreshCookie {
+						refreshCookieLogin = cook.Value
+					}
+				}
+
+				accessTokenDecr, err := encryption.DecodeText(accessCookieLogin, testKey)
+				Expect(err).NotTo(HaveOccurred())
+				refreshTokenDecr, err := encryption.DecodeText(refreshCookieLogin, testKey)
+				Expect(err).NotTo(HaveOccurred())
+
+				cookiesLogin = rClient.GetClient().Jar.Cookies(jarURI)
+				for _, cook := range cookiesLogin {
+					if cook.Name == constant.AccessCookie {
+						cook.Value = accessTokenDecr
+					}
+					if cook.Name == constant.RefreshCookie {
+						cook.Value = refreshTokenDecr
+					}
+				}
+				rClient.GetClient().Jar.SetCookies(jarURI, cookiesLogin)
+
+				By("wait for access token expiration")
+				time.Sleep(32 * time.Second)
+				By("make request with decrypted refresh/access token")
+				resp, err = rClient.R().Get(proxyAddress + anyURI)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				body = resp.Body()
+				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+				Expect(err).NotTo(HaveOccurred())
+				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
+
+				var accessCookieAfterRefresh string
+				for _, cook := range cookiesAfterRefresh {
+					if cook.Name == constant.AccessCookie {
+						accessCookieLogin = cook.Value
+					}
+				}
+
+				By("check if access token cookie has changed")
+				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
+				accessTokenDecr, err = encryption.DecodeText(accessCookieLogin, testKey)
+				Expect(err).NotTo(HaveOccurred())
+
+				By("make another request with decrypted access token")
+				cookiesLogin = rClient.GetClient().Jar.Cookies(jarURI)
+				for _, cook := range cookiesLogin {
+					if cook.Name == constant.AccessCookie {
+						cook.Value = accessTokenDecr
+					}
+				}
+				rClient.GetClient().Jar.SetCookies(jarURI, cookiesLogin)
+
+				resp, err = rClient.R().Get(proxyAddress + anyURI)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				body = resp.Body()
+				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+
+				By("log out")
+				resp, err = rClient.R().Get(proxyAddress + logoutURI)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+
+				rClient.SetRedirectPolicy(resty.NoRedirectPolicy())
+				resp, _ = rClient.R().Get(proxyAddress)
+				Expect(resp.StatusCode()).To(Equal(http.StatusSeeOther))
 			},
 		)
 	})
