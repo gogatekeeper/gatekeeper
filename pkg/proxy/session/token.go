@@ -151,9 +151,8 @@ func GetIdentity(
 			if token, err = encryption.DecodeText(token, encKey); err != nil {
 				if enableOptionalEncryption {
 					return origToken, nil
-				} else {
-					return "", apperrors.ErrDecryption
 				}
+				return "", apperrors.ErrDecryption
 			}
 		}
 
