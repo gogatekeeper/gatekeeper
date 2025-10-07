@@ -46,8 +46,7 @@ const (
 	umaTestClientSecret = "A5vokiGdI3H2r4aXFrANbKvn4R7cbf6P"
 	loaTestClient       = "test-loa"
 	//nolint:gosec
-	loaTestClientSecret = "4z9PoOooXNFmSCPZx0xHXaUxX4eYGFO0"
-	//nolint:gosec
+	loaTestClientSecret     = "4z9PoOooXNFmSCPZx0xHXaUxX4eYGFO0"
 	testKey                 = "trksjblzqsujshex"
 	timeout                 = time.Second * 300
 	tlsTimeout              = 10 * time.Second

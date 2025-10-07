@@ -1044,7 +1044,7 @@ func (r *Config) isEnableXForwardedHeadersValid() error {
 }
 
 func (r *Config) isEnableOptionalEncryptionValid() error {
-	if r.EnableOptionalEncryption && !(r.EnableEncryptedToken || r.ForceEncryptedCookie) {
+	if r.EnableOptionalEncryption && !r.EnableEncryptedToken && !r.ForceEncryptedCookie {
 		return apperrors.ErrOptionalEncryptionWithNoEncryption
 	}
 	return nil
