@@ -3110,3 +3110,44 @@ func TestEnableOptionalEncryptionValid(t *testing.T) {
 		)
 	}
 }
+
+func TestEnableLogoutAuthValid(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidEnableLogoutAuthValid",
+			Config: &Config{
+				EnableLogoutAuth:     true,
+				EnableLogoutRedirect: true,
+			},
+			Valid: true,
+		},
+		{
+			Name: "InvalidEnableLogoutAuthValid",
+			Config: &Config{
+				EnableLogoutAuth:     false,
+				EnableLogoutRedirect: false,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isEnableLogoutAuthValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}

@@ -694,6 +694,7 @@ func newFakeKeycloakConfig() *config.Config {
 		EnableTokenHeader:           true,
 		EnableCompression:           false,
 		EnableMetrics:               false,
+		EnableLogoutAuth:            true,
 		Listen:                      randomLocalHost,
 		ListenAdmin:                 "",
 		ListenAdminScheme:           "http",
