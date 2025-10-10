@@ -141,15 +141,17 @@ func TestIsConfig(t *testing.T) {
 		},
 		{
 			Config: &Config{
-				Listen:              ":8080",
-				DiscoveryURL:        "http://127.0.0.1:8080",
-				ClientID:            "client",
-				ClientSecret:        "client",
-				RedirectionURL:      "http://120.0.0.1",
-				Upstream:            "http://120.0.0.1",
-				MaxIdleConns:        100,
-				MaxIdleConnsPerHost: 50,
-				TLSMinVersion:       constant.TLS12,
+				Listen:               ":8080",
+				DiscoveryURL:         "http://127.0.0.1:8080",
+				ClientID:             "client",
+				ClientSecret:         "client",
+				RedirectionURL:       "http://120.0.0.1",
+				Upstream:             "http://120.0.0.1",
+				MaxIdleConns:         100,
+				MaxIdleConnsPerHost:  50,
+				TLSMinVersion:        constant.TLS12,
+				EnableLogoutAuth:     true,
+				EnableLogoutRedirect: true,
 			},
 			Ok: true,
 		},
@@ -241,16 +243,18 @@ func TestIsConfig(t *testing.T) {
 		},
 		{
 			Config: &Config{
-				Listen:              ":8080",
-				DiscoveryURL:        "http://127.0.0.1:8080",
-				ClientID:            "client",
-				ClientSecret:        "client",
-				RedirectionURL:      "https://120.0.0.1",
-				Upstream:            "http://someupstream",
-				SecureCookie:        true,
-				MaxIdleConns:        100,
-				MaxIdleConnsPerHost: 50,
-				TLSMinVersion:       constant.TLS13,
+				Listen:               ":8080",
+				DiscoveryURL:         "http://127.0.0.1:8080",
+				ClientID:             "client",
+				ClientSecret:         "client",
+				RedirectionURL:       "https://120.0.0.1",
+				Upstream:             "http://someupstream",
+				SecureCookie:         true,
+				MaxIdleConns:         100,
+				MaxIdleConnsPerHost:  50,
+				TLSMinVersion:        constant.TLS13,
+				EnableLogoutAuth:     true,
+				EnableLogoutRedirect: true,
 			},
 			Ok: true,
 		},
@@ -1313,6 +1317,7 @@ func TestIsReverseProxySettingsValid(t *testing.T) {
 				ClientID:         "some-client",
 				DiscoveryURL:     "https://somediscoveryurl",
 				Upstream:         "https://test.com",
+				EnableLogoutAuth: true,
 			},
 			Valid: true,
 		},
@@ -1323,6 +1328,7 @@ func TestIsReverseProxySettingsValid(t *testing.T) {
 				PatRetryCount:         5,
 				PatRetryInterval:      2 * time.Second,
 				OpenIDProviderTimeout: 30 * time.Second,
+				EnableLogoutAuth:      true,
 			},
 			Valid: true,
 		},
@@ -1333,6 +1339,7 @@ func TestIsReverseProxySettingsValid(t *testing.T) {
 				ClientID:         "some-client",
 				DiscoveryURL:     "https://somediscoveryurl",
 				Upstream:         "",
+				EnableLogoutAuth: true,
 			},
 			Valid: false,
 		},
@@ -3099,6 +3106,47 @@ func TestEnableOptionalEncryptionValid(t *testing.T) {
 			testCase.Name,
 			func(t *testing.T) {
 				err := testCase.Config.isEnableOptionalEncryptionValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}
+
+func TestEnableLogoutAuthValid(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidEnableLogoutAuthValid",
+			Config: &Config{
+				EnableLogoutAuth:     true,
+				EnableLogoutRedirect: true,
+			},
+			Valid: true,
+		},
+		{
+			Name: "InvalidEnableLogoutAuthValid",
+			Config: &Config{
+				EnableLogoutAuth:     false,
+				EnableLogoutRedirect: false,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isEnableLogoutAuthValid()
 				if err != nil && testCase.Valid {
 					t.Fatalf("Expected test not to fail")
 				}

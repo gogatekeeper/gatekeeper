@@ -196,6 +196,7 @@ type Config struct {
 	EnableSigningHmac                  bool `env:"ENABLE_SIGNING_HMAC" json:"enable-signing-hmac" usage:"enable signing of requests to upstream, when in reverse proxy mode with HMAC" yaml:"enable-signing-hmac"`
 	EnableXForwardedHeaders            bool `env:"ENABLE_X_FORWARDED_HEADERS" json:"enable-x-forwarded-headers" usage:"enable using X-Forwarded headers (host and proto) for callback and authorization url" yaml:"enable-x-forwarded-headers"`
 	EnableOptionalEncryption           bool `env:"ENABLE_OPTIONAL_ENCRYPTION" json:"enable-optional-encryption" usage:"enable optional decryption for access tokens, id tokens, refresh tokens" yaml:"enable-optional-encryption"`
+	EnableLogoutAuth                   bool `env:"ENABLE_LOGOUT_AUTH" json:"enable-logout-auth" usage:"enable authentication on logout handler" yaml:"enable-logout-auth"`
 	IsDiscoverURILegacy                bool
 }
 
@@ -222,6 +223,7 @@ func NewDefaultConfig() *Config {
 		EnableJSONLogging:             true,
 		EnableEncryptedToken:          true,
 		EnablePKCE:                    true,
+		EnableLogoutAuth:              true,
 		HTTPOnlyCookie:                true,
 		Headers:                       make(map[string]string),
 		AllowedQueryParams:            make(map[string]string),
@@ -629,6 +631,7 @@ func (r *Config) isReverseProxySettingsValid() error {
 			r.isEnableSigningHmacValid,
 			r.isEnableXForwardedHeadersValid,
 			r.isEnableOptionalEncryptionValid,
+			r.isEnableLogoutAuthValid,
 		}
 
 		for _, validationFunc := range validationRegistry {
@@ -1046,6 +1049,13 @@ func (r *Config) isEnableXForwardedHeadersValid() error {
 func (r *Config) isEnableOptionalEncryptionValid() error {
 	if r.EnableOptionalEncryption && !r.EnableEncryptedToken && !r.ForceEncryptedCookie {
 		return apperrors.ErrOptionalEncryptionWithNoEncryption
+	}
+	return nil
+}
+
+func (r *Config) isEnableLogoutAuthValid() error {
+	if !r.EnableLogoutAuth && !r.EnableLogoutRedirect {
+		return apperrors.ErrDisableAuthLogout
 	}
 	return nil
 }

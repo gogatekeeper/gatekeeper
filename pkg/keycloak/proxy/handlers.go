@@ -638,6 +638,7 @@ func logoutHandler(
 	redirectionURL string,
 	discoveryURL string,
 	revocationEndpoint string,
+	cookieAccessName string,
 	cookieIDTokenName string,
 	cookieRefreshName string,
 	clientID string,
@@ -647,13 +648,27 @@ func logoutHandler(
 	forceEncryptedCookie bool,
 	enableLogoutRedirect bool,
 	enableOptionalEncryption bool,
+	enableLogoutAuth bool,
+	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, error),
+	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
+	provider *oidc3.Provider,
 	store storage.Storage,
 	cookManager *cookie.Manager,
 	httpClient *http.Client,
 ) func(wrt http.ResponseWriter, req *http.Request) {
 	return func(writer http.ResponseWriter, req *http.Request) {
-		// @check if the redirection is there
 		var redirectURL string
+		var refresh string
+		var err error
+		var identityToken string
+		var idToken string
+
+		scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
+		if !assertOk {
+			logger.Error(apperrors.ErrAssertionFailed.Error())
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
 		if postLogoutRedirectURI != "" {
 			redirectURL = postLogoutRedirectURI
@@ -665,41 +680,71 @@ func logoutHandler(
 			)
 		}
 
-		scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
-		if !assertOk {
-			logger.Error(apperrors.ErrAssertionFailed.Error())
-			writer.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		// authentication middleware stores user in scope
 		user := scope.Identity
-		// step: can either use the access token or the refresh token
-		identityToken := user.RawToken
-
-		if refresh, _, err := session.RetrieveRefreshToken(
-			store,
-			cookieRefreshName,
-			encryptionKey,
-			req,
-			user,
-			enableOptionalEncryption,
-		); err == nil {
-			identityToken = refresh
+		if user != nil {
+			identityToken = user.RawToken
 		}
 
-		idToken, _, err := handlers.RetrieveIDToken(
-			cookieIDTokenName,
-			enableEncryptedToken,
-			forceEncryptedCookie,
-			encryptionKey,
-			req,
-			enableOptionalEncryption,
-		)
-		// we are doing it so that in case with no-redirects=true, we can pass
-		// id token in authorization header
-		if err != nil {
-			idToken = user.RawToken
+		if enableLogoutRedirect && postLogoutRedirectURI != "" {
+			idToken, _, err = handlers.RetrieveIDToken(
+				cookieIDTokenName,
+				enableEncryptedToken,
+				forceEncryptedCookie,
+				encryptionKey,
+				req,
+				enableOptionalEncryption,
+			)
+			// we are doing it so that in case with no-redirects=true, we can pass
+			// id token in authorization header
+			if err != nil {
+				if errors.Is(err, apperrors.ErrSessionNotFound) {
+					idToken = identityToken
+				} else {
+					scope.Logger.Error(err.Error())
+					accessForbidden(writer, req)
+					return
+				}
+			}
+
+			if !enableLogoutAuth {
+				if idToken == "" {
+					idToken, err = getIdentity(req, cookieAccessName, "")
+					if err != nil {
+						scope.Logger.Error(err.Error())
+						accessForbidden(writer, req)
+						return
+					}
+				}
+
+				_, err = utils.VerifyToken(
+					req.Context(),
+					provider,
+					idToken,
+					clientID,
+					false,
+					false,
+				)
+				if errors.Is(err, apperrors.ErrTokenSignature) {
+					scope.Logger.Error(
+						apperrors.ErrAccTokenVerifyFailure.Error(),
+						zap.Error(err),
+					)
+					accessForbidden(writer, req)
+					return
+				}
+			}
+		} else {
+			// step: can either use the access token or the refresh token
+			if refresh, _, err = session.RetrieveRefreshToken(
+				store,
+				cookieRefreshName,
+				encryptionKey,
+				req,
+				user,
+				enableOptionalEncryption,
+			); err == nil {
+				identityToken = refresh
+			}
 		}
 
 		cookManager.ClearAllCookies(req, writer)

@@ -562,6 +562,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.RedirectionURL,
 		r.Config.DiscoveryURL,
 		r.Config.RevocationEndpoint,
+		r.Config.CookieAccessName,
 		r.Config.CookieIDTokenName,
 		r.Config.CookieRefreshName,
 		r.Config.ClientID,
@@ -571,6 +572,10 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.ForceEncryptedCookie,
 		r.Config.EnableLogoutRedirect,
 		r.Config.EnableOptionalEncryption,
+		r.Config.EnableLogoutAuth,
+		getIdentity,
+		accessForbidden,
+		r.Provider,
 		r.Store,
 		r.Cm,
 		r.IdpClient.RestyClient().GetClient(),
@@ -681,7 +686,13 @@ func (r *OauthProxy) CreateReverseProxy() error {
 				r.Config.CookieAccessName,
 			),
 			)
-			eng.With(authMid, authFailMiddleware).Get(constant.LogoutURL, logoutHand)
+
+			if r.Config.EnableLogoutAuth {
+				eng.With(authMid, authFailMiddleware).Get(constant.LogoutURL, logoutHand)
+			} else {
+				eng.Get(constant.LogoutURL, logoutHand)
+			}
+
 			eng.With(authMid, authFailMiddleware).Get(
 				constant.TokenURL,
 				handlers.TokenHandler(getIdentity, r.Config.CookieAccessName, accessError),
