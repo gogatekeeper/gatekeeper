@@ -2325,6 +2325,7 @@ var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 
 				By("log out")
+				//nolint:gosec
 				rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
