@@ -197,6 +197,7 @@ type Config struct {
 	EnableXForwardedHeaders            bool `env:"ENABLE_X_FORWARDED_HEADERS" json:"enable-x-forwarded-headers" usage:"enable using X-Forwarded headers (host and proto) for callback and authorization url" yaml:"enable-x-forwarded-headers"`
 	EnableOptionalEncryption           bool `env:"ENABLE_OPTIONAL_ENCRYPTION" json:"enable-optional-encryption" usage:"enable optional decryption for access tokens, id tokens, refresh tokens" yaml:"enable-optional-encryption"`
 	EnableLogoutAuth                   bool `env:"ENABLE_LOGOUT_AUTH" json:"enable-logout-auth" usage:"enable authentication on logout handler" yaml:"enable-logout-auth"`
+	EnableRequestUpstreamCompression   bool `env:"ENABLE_REQUEST_UPSTREAM_COMPRESSION" json:"enable-request-upstream-compression" usage:"enables asking upstream for compression, by adding Accept-Encoding: gzip header and decompressing response from upstream" yaml:"enable-request-upstream-compression"`
 	IsDiscoverURILegacy                bool
 }
 
@@ -208,62 +209,63 @@ func NewDefaultConfig() *Config {
 	hostnames = append(hostnames, []string{"localhost", "127.0.0.1", "::1"}...)
 
 	return &Config{
-		AccessTokenDuration:           time.Duration(constant.FallbackAccessTokenDuration) * time.Hour,
-		CookieAccessName:              constant.AccessCookie,
-		CookieIDTokenName:             constant.IDTokenCookie,
-		CookieRefreshName:             constant.RefreshCookie,
-		CookieOAuthStateName:          constant.RequestStateCookie,
-		CookieRequestURIName:          constant.RequestURICookie,
-		CookiePKCEName:                constant.PKCECookie,
-		EnableAuthorizationCookies:    true,
-		EnableAuthorizationHeader:     true,
-		EnableDefaultDeny:             true,
-		EnableSessionCookies:          true,
-		EnableTokenHeader:             true,
-		EnableJSONLogging:             true,
-		EnableEncryptedToken:          true,
-		EnablePKCE:                    true,
-		EnableLogoutAuth:              true,
-		HTTPOnlyCookie:                true,
-		Headers:                       make(map[string]string),
-		AllowedQueryParams:            make(map[string]string),
-		DefaultAllowedQueryParams:     make(map[string]string),
-		LetsEncryptCacheDir:           "./cache/",
-		MatchClaims:                   make(map[string]string),
-		MaxIdleConns:                  constant.DefaultMaxIdleConns,
-		MaxIdleConnsPerHost:           constant.DefaultMaxIdleConnsPerHost,
-		OAuthURI:                      "/oauth",
-		OpenIDProviderTimeout:         constant.DefaultOpenIDProviderTimeout,
-		OpenIDProviderRetryCount:      constant.DefaultOpenIDProviderRetryCount,
-		PreserveHost:                  false,
-		SelfSignedTLSExpiration:       constant.DefaultSelfSignedTLSExpiration,
-		SelfSignedTLSHostnames:        hostnames,
-		RequestIDHeader:               "X-Request-ID",
-		ResponseHeaders:               make(map[string]string),
-		SameSiteCookie:                constant.SameSiteLax,
-		Scopes:                        []string{"email", "profile"},
-		SecureCookie:                  true,
-		ServerGraceTimeout:            constant.DefaultServerGraceTimeout,
-		ServerIdleTimeout:             constant.DefaultServerIdleTimeout,
-		ServerReadTimeout:             constant.DefaultServerReadTimeout,
-		ServerWriteTimeout:            constant.DefaultServerWriteTimeout,
-		SkipOpenIDProviderTLSVerify:   false,
-		SkipUpstreamTLSVerify:         false,
-		SkipAccessTokenIssuerCheck:    true,
-		SkipAccessTokenClientIDCheck:  true,
-		Tags:                          make(map[string]string),
-		TLSMinVersion:                 constant.TLS13,
-		UpstreamExpectContinueTimeout: constant.DefaultUpstreamExpectContinueTimeout,
-		UpstreamKeepaliveTimeout:      constant.DefaultUpstreamKeepaliveTimeout,
-		UpstreamKeepalives:            true,
-		UpstreamResponseHeaderTimeout: constant.DefaultUpstreamResponseHeaderTimeout,
-		UpstreamTLSHandshakeTimeout:   constant.DefaultUpstreamTLSHandshakeTimeout,
-		UpstreamTimeout:               constant.DefaultUpstreamTimeout,
-		UseLetsEncrypt:                false,
-		ForwardingGrantType:           core.GrantTypeUserCreds,
-		PatRetryCount:                 constant.DefaultPatRetryCount,
-		PatRetryInterval:              constant.DefaultPatRetryInterval,
-		OpaTimeout:                    constant.DefaultOpaTimeout,
+		AccessTokenDuration:              time.Duration(constant.FallbackAccessTokenDuration) * time.Hour,
+		CookieAccessName:                 constant.AccessCookie,
+		CookieIDTokenName:                constant.IDTokenCookie,
+		CookieRefreshName:                constant.RefreshCookie,
+		CookieOAuthStateName:             constant.RequestStateCookie,
+		CookieRequestURIName:             constant.RequestURICookie,
+		CookiePKCEName:                   constant.PKCECookie,
+		EnableAuthorizationCookies:       true,
+		EnableAuthorizationHeader:        true,
+		EnableDefaultDeny:                true,
+		EnableSessionCookies:             true,
+		EnableTokenHeader:                true,
+		EnableJSONLogging:                true,
+		EnableEncryptedToken:             true,
+		EnablePKCE:                       true,
+		EnableLogoutAuth:                 true,
+		EnableRequestUpstreamCompression: true,
+		HTTPOnlyCookie:                   true,
+		Headers:                          make(map[string]string),
+		AllowedQueryParams:               make(map[string]string),
+		DefaultAllowedQueryParams:        make(map[string]string),
+		LetsEncryptCacheDir:              "./cache/",
+		MatchClaims:                      make(map[string]string),
+		MaxIdleConns:                     constant.DefaultMaxIdleConns,
+		MaxIdleConnsPerHost:              constant.DefaultMaxIdleConnsPerHost,
+		OAuthURI:                         "/oauth",
+		OpenIDProviderTimeout:            constant.DefaultOpenIDProviderTimeout,
+		OpenIDProviderRetryCount:         constant.DefaultOpenIDProviderRetryCount,
+		PreserveHost:                     false,
+		SelfSignedTLSExpiration:          constant.DefaultSelfSignedTLSExpiration,
+		SelfSignedTLSHostnames:           hostnames,
+		RequestIDHeader:                  "X-Request-ID",
+		ResponseHeaders:                  make(map[string]string),
+		SameSiteCookie:                   constant.SameSiteLax,
+		Scopes:                           []string{"email", "profile"},
+		SecureCookie:                     true,
+		ServerGraceTimeout:               constant.DefaultServerGraceTimeout,
+		ServerIdleTimeout:                constant.DefaultServerIdleTimeout,
+		ServerReadTimeout:                constant.DefaultServerReadTimeout,
+		ServerWriteTimeout:               constant.DefaultServerWriteTimeout,
+		SkipOpenIDProviderTLSVerify:      false,
+		SkipUpstreamTLSVerify:            false,
+		SkipAccessTokenIssuerCheck:       true,
+		SkipAccessTokenClientIDCheck:     true,
+		Tags:                             make(map[string]string),
+		TLSMinVersion:                    constant.TLS13,
+		UpstreamExpectContinueTimeout:    constant.DefaultUpstreamExpectContinueTimeout,
+		UpstreamKeepaliveTimeout:         constant.DefaultUpstreamKeepaliveTimeout,
+		UpstreamKeepalives:               true,
+		UpstreamResponseHeaderTimeout:    constant.DefaultUpstreamResponseHeaderTimeout,
+		UpstreamTLSHandshakeTimeout:      constant.DefaultUpstreamTLSHandshakeTimeout,
+		UpstreamTimeout:                  constant.DefaultUpstreamTimeout,
+		UseLetsEncrypt:                   false,
+		ForwardingGrantType:              core.GrantTypeUserCreds,
+		PatRetryCount:                    constant.DefaultPatRetryCount,
+		PatRetryInterval:                 constant.DefaultPatRetryInterval,
+		OpaTimeout:                       constant.DefaultOpaTimeout,
 	}
 }
 
@@ -350,6 +352,7 @@ func (r *Config) IsValid() error {
 		r.isLetsEncryptValid,
 		r.isTLSMinValid,
 		r.isUpstreamProxyValid,
+		r.isEnableRequestUpstreamCompressionValid,
 		r.isForwardingProxySettingsValid,
 		r.isReverseProxySettingsValid,
 		r.isCookieValid,
@@ -1056,6 +1059,13 @@ func (r *Config) isEnableOptionalEncryptionValid() error {
 func (r *Config) isEnableLogoutAuthValid() error {
 	if !r.EnableLogoutAuth && !r.EnableLogoutRedirect {
 		return apperrors.ErrDisableAuthLogout
+	}
+	return nil
+}
+
+func (r *Config) isEnableRequestUpstreamCompressionValid() error {
+	if !r.EnableRequestUpstreamCompression && r.EnableCompression {
+		return apperrors.ErrEnableRequestUpstreamCompression
 	}
 	return nil
 }

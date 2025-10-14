@@ -223,5 +223,8 @@ var (
 		"cannot be set at the same time")
 	ErrOptionalEncryptionWithNoEncryption = errors.New("optional encryption cannot be enabled " +
 		"when encryption is not enabled")
-	ErrDisableAuthLogout = errors.New("you can disable authentication only when enable-logout-redirect is enabled")
+	ErrDisableAuthLogout = errors.New("you can disable authentication only when " +
+		"enable-logout-redirect is enabled")
+	ErrEnableRequestUpstreamCompression = errors.New("you cannot enable compression " +
+		"and disable request upstream compression")
 )

@@ -36,7 +36,7 @@ var _ = Describe("UMA Code Flow authorization", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -157,7 +157,7 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -247,7 +247,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		fwdPortNum, err = generateRandomPort()
@@ -362,7 +362,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		fwdPortNum, err = generateRandomPort()

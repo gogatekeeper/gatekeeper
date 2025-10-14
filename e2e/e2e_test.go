@@ -2,11 +2,13 @@ package e2e_test
 
 import (
 	"bytes"
+	"compress/flate"
 	"context"
 	"crypto/rand"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"io"
 	"math/big"
 	"net"
 	"net/http"
@@ -17,6 +19,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-jose/go-jose/v4/jwt"
 	resty "github.com/go-resty/resty/v2"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
@@ -326,7 +329,21 @@ func registerLogin(
 	return resp
 }
 
-func startAndWaitTestUpstream(errGroup *errgroup.Group, clientAuth bool) (*http.Server, string) {
+func addHeaderCompressMiddlware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
+			req.Header.Set("Accept-Encoding", "deflate")
+			next.ServeHTTP(wrt, req)
+		})
+	}
+}
+
+func startAndWaitTestUpstream(
+	errGroup *errgroup.Group,
+	clientAuth bool,
+	compress bool,
+	forceCompressionType bool,
+) (*http.Server, string) {
 	//nolint:gosec
 	listener, err := net.Listen("tcp", "0.0.0.0:0")
 	Expect(err).NotTo(HaveOccurred())
@@ -350,10 +367,22 @@ func startAndWaitTestUpstream(errGroup *errgroup.Group, clientAuth bool) (*http.
 	}
 
 	listener = tls.NewListener(listener, tlsConfig)
+	var handler http.Handler = &testsuite_test.FakeUpstreamService{}
+	if compress {
+		addHeaderComp := addHeaderCompressMiddlware()
+		compressMid := middleware.Compress(constant.HTTPCompressionLevel)
+		handlerWithCompress := compressMid(&testsuite_test.FakeUpstreamService{})
+		if forceCompressionType {
+			handler = addHeaderComp(handlerWithCompress)
+		} else {
+			handler = handlerWithCompress
+		}
+	}
+
 	//nolint:gosec
 	server := &http.Server{
 		Addr:      listener.Addr().String(),
-		Handler:   &testsuite_test.FakeUpstreamService{},
+		Handler:   handler,
 		TLSConfig: tlsConfig,
 	}
 
@@ -413,7 +442,7 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -507,7 +536,7 @@ var _ = Describe("Code Flow login/logout", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -742,7 +771,7 @@ var _ = Describe("Code Flow login/logout mTLS", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, true)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, true, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -885,7 +914,7 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -969,7 +998,7 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -1059,7 +1088,7 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS CLUSTER", func() {
 		redisClusterURL += "?dial_timeout=3&read_timeout=6s&addr=127.0.0.1:" + redisClusterMaster2Port
 		redisClusterURL += "&addr=127.0.0.1:" + redisClusterMaster3Port
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -1149,7 +1178,7 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddressFirst = "https://127.0.0.1:" + portNum
@@ -1279,7 +1308,7 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -1510,7 +1539,7 @@ var _ = Describe("User/password login/logout", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -1731,7 +1760,7 @@ var _ = Describe("No-redirects authorization with forwarding direct access grant
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, true)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, true, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		fwdPortNum, err = generateRandomPort()
@@ -1849,7 +1878,7 @@ var _ = Describe("Code Flow With signing login/logout", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -2001,7 +2030,7 @@ var _ = Describe("Reverse proxy signing", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -2102,7 +2131,7 @@ var _ = Describe("Code Flow login/logout EnableOptionalEncryption", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -2259,7 +2288,7 @@ var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
 		var err error
 		var upstreamSvcPort string
 
-		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false)
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
@@ -2382,6 +2411,152 @@ var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
 				rClient.SetRedirectPolicy(resty.NoRedirectPolicy())
 				resp, _ = rClient.R().Get(proxyAddress)
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+			},
+		)
+	})
+})
+
+var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
+	var portNum1 string
+	var proxyAddress1 string
+	var portNum2 string
+	var proxyAddress2 string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server1 *http.Server
+	var server2 *http.Server
+
+	AfterEach(func() {
+		if server1 != nil {
+			err := server1.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if server2 != nil {
+			err := server2.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
+
+	BeforeEach(func() {
+		var err error
+		var upstreamSvcPort1 string
+		var upstreamSvcPort2 string
+
+		server1, upstreamSvcPort1 = startAndWaitTestUpstream(errGroup, false, true, true)
+		portNum1, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
+		proxyAddress1 = localURI + portNum1
+
+		server2, upstreamSvcPort2 = startAndWaitTestUpstream(errGroup, false, true, false)
+		portNum2, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
+		proxyAddress2 = localURI + portNum2
+
+		osArgs1 := []string{os.Args[0]}
+		osArgs2 := []string{os.Args[0]}
+		proxyArgs1 := []string{
+			"--discovery-url=" + idpRealmURI,
+			"--openid-provider-timeout=300s",
+			"--tls-openid-provider-ca-certificate=" + tlsCaCertificate,
+			"--tls-openid-provider-client-certificate=" + tlsCertificate,
+			"--tls-openid-provider-client-private-key=" + tlsPrivateKey,
+			"--listen=" + allInterfaces + portNum1,
+			"--client-id=" + testClient,
+			"--client-secret=" + testClientSecret,
+			"--upstream-url=" + localURI + upstreamSvcPort1,
+			"--no-redirects=false",
+			"--skip-access-token-clientid-check=true",
+			"--skip-access-token-issuer-check=true",
+			"--enable-idp-session-check=false",
+			"--enable-default-deny=true",
+			"--openid-provider-retry-count=30",
+			"--enable-refresh-tokens=true",
+			"--encryption-key=" + testKey,
+			"--secure-cookie=false",
+			"--post-login-redirect-path=" + postLoginRedirectPath,
+			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--upstream-ca=" + tlsCaCertificate,
+			"--enable-encrypted-token=true",
+			"--enable-compression=false",
+			"--enable-request-upstream-compression=false",
+		}
+
+		proxyArgs2 := []string{
+			"--discovery-url=" + idpRealmURI,
+			"--openid-provider-timeout=300s",
+			"--tls-openid-provider-ca-certificate=" + tlsCaCertificate,
+			"--tls-openid-provider-client-certificate=" + tlsCertificate,
+			"--tls-openid-provider-client-private-key=" + tlsPrivateKey,
+			"--listen=" + allInterfaces + portNum2,
+			"--client-id=" + testClient,
+			"--client-secret=" + testClientSecret,
+			"--upstream-url=" + localURI + upstreamSvcPort2,
+			"--no-redirects=false",
+			"--skip-access-token-clientid-check=true",
+			"--skip-access-token-issuer-check=true",
+			"--enable-idp-session-check=false",
+			"--enable-default-deny=true",
+			"--openid-provider-retry-count=30",
+			"--enable-refresh-tokens=true",
+			"--encryption-key=" + testKey,
+			"--secure-cookie=false",
+			"--post-login-redirect-path=" + postLoginRedirectPath,
+			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--upstream-ca=" + tlsCaCertificate,
+			"--enable-encrypted-token=true",
+			"--enable-compression=false",
+			"--enable-request-upstream-compression=true",
+		}
+
+		osArgs1 = append(osArgs1, proxyArgs1...)
+		osArgs2 = append(osArgs2, proxyArgs2...)
+		startAndWait(portNum1, osArgs1)
+		startAndWait(portNum2, osArgs2)
+	})
+
+	When("Performing request to compressed backend", func() {
+		It("should return backend compressed output",
+			Label("code_flow"),
+			Label("disable_request_upstream_compression"),
+			func(_ context.Context) {
+				var err error
+				rClient := resty.New()
+				rClient.SetHeader("Content-Type", "application/json")
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
+				resp := codeFlowLogin(rClient, proxyAddress1, http.StatusOK, testUser, testPass)
+				enflated, err := io.ReadAll(flate.NewReader(bytes.NewReader(resp.Body())))
+				Expect(err).NotTo(HaveOccurred())
+
+				body := string(enflated)
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				Expect(strings.Contains(body, postLoginRedirectPath)).To(BeTrue())
+				Expect(err).NotTo(HaveOccurred())
+			},
+		)
+	})
+
+	When("Performing request to compressed backend", func() {
+		It("should return uncompressed output",
+			Label("code_flow"),
+			Label("enable_request_upstream_compression"),
+			func(_ context.Context) {
+				var err error
+				rClient := resty.New()
+				rClient.SetHeader("Content-Type", "application/json")
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
+				resp := codeFlowLogin(rClient, proxyAddress2, http.StatusOK, testUser, testPass)
+
+				body := resp.Body()
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+				Expect(err).NotTo(HaveOccurred())
 			},
 		)
 	})

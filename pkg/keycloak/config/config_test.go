@@ -3158,3 +3158,44 @@ func TestEnableLogoutAuthValid(t *testing.T) {
 		)
 	}
 }
+
+func TestIsEnableRequestUpstreamCompressionValid(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidEnableRequestUpstreamCompressionValid",
+			Config: &Config{
+				EnableRequestUpstreamCompression: true,
+				EnableCompression:                false,
+			},
+			Valid: true,
+		},
+		{
+			Name: "InvalidEnableRequestUpstreamCompressionValid",
+			Config: &Config{
+				EnableRequestUpstreamCompression: false,
+				EnableCompression:                true,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isEnableRequestUpstreamCompressionValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}

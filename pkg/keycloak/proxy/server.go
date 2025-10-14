@@ -1623,6 +1623,10 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 		MaxIdleConnsPerHost:   r.Config.MaxIdleConnsPerHost,
 	}
 
+	if !r.Config.EnableRequestUpstreamCompression {
+		upstreamProxy.Tr.DisableCompression = true
+	}
+
 	return nil
 }
 
