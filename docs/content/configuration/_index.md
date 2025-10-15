@@ -151,6 +151,10 @@ weight: 2
 |    --enable-signing                         | enable signing of requests to upstream, when in reverse proxy mode |  false | PROXY_ENABLE_SIGNING
 |    --enable-signing-hmac                    | enable signing of requests to upstream, when in reverse proxy mode with HMAC | false | PROXY_ENABLE_SIGNING_HMAC
 |    --forwarding-domains value               | list of domains which should be signed; everything else is relayed unsigned | |
+|    --enable-x-forwarded-headers             |	enable using X-Forwarded headers (host and proto) for callback and authorization url | false | PROXY_ENABLE_X_FORWARDED_HEADERS
+|    --enable-optional-encryption	          | enable optional decryption for access tokens, id tokens, refresh tokens | false | PROXY_ENABLE_OPTIONAL_ENCRYPTION
+|    --enable-logout-auth                     | enable authentication on logout handler | true | PROXY_ENABLE_LOGOUT_AUTH
+|    --enable-request-upstream-compression    | nables asking upstream for compression, by adding Accept-Encoding: gzip header and decompressing response from upstream | true | PROXY_ENABLE_REQUEST_UPSTREAM_COMPRESSION
 |    --enable-loa                             | enable level of authentication            | false |
 |    --disable-all-logging                    | disables all logging to stdout and stderr | false | PROXY_DISABLE_ALL_LOGGING
 |    --help, -h                               | show help

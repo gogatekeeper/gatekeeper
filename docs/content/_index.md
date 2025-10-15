@@ -1199,6 +1199,13 @@ There are 2 possibilities how to logout:
    id token for logging out, in case of code flow this is gathered automatically from id token cookie. In case of
    `--no-redirects=true` you have to pass id token in authorization header.
 
+### Logout endpint authentication
+
+Authentication on logout handler is enabled by default. In some cases however you might need to accept
+expired (but valid) id token, e.g. when using `--enable-logout-redirect-uri` and enabling front-channel-logout
+in keycloak you want to call front-channel-logout-url even when your id token already expired. To disable
+logout authentication (ID token signature is still verified) you can use option `--enable-logout-auth`.
+
 ### Session logout
 
 Many times there are cases when you have multiple applications (multiple keycloak clients for gatekeeper) and you would
@@ -1444,6 +1451,14 @@ On server side, UMA in no-redirects mode:
   --skip-access-token-issuer-check=true
   --openid-provider-retry-count=30
 ```
+## Compression
+
+There are two options related to compression. First is `--enable-compression` enables compression
+of returned content by gatekeeper. Second is `--enable-request-upstream-compression` which
+is by default `true`. This option asks upstream to compress response by sending header `Accept-Encoding: gzip`.
+Sometimes however you have backend which already does compression by default or used different type of compression
+and you don't want gatekeeper to do any actions on returned content, in that case you can disable both
+`--enable-compression` and also `--enable-request-upstream-compression`.
 
 ## Request tracing
 
