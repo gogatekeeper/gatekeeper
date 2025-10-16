@@ -895,6 +895,13 @@ parameter available within the resource. Headers are implicitly
 required, such as `headers=x-some-header:somevalue,x-other-header:othervalue` where the request 
 MUST have headers 'x-some-header' with value 'somevalue' AND 'x-other-header', with value 'othervalue'.
 
+## Multiple domains
+
+Sometimes you have multiple domains for your application and you want to have one gatekeeper
+for all of them. For this use case you can use option `--enable-x-forwarded-headers` when
+using gatekeeper behind other proxy (DO NOT USE IT when gatekeeper is front proxy) to be
+able to properly construct redirection uri for each domain according forwarded `X-FORWARDED` headers.
+
 ## Forward-auth (suitable for MULTITENANT app deployments)
 
 Traefik, nginx ingress and other gateways usually have feature called forward-auth.
