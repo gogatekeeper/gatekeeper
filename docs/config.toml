@@ -1,4 +1,4 @@
-baseURL = "https://gogatekeeper.github.io/gatekeeper"
+baseURL = "https://gogatekeeper.github.io"
 languageCode = "en-us"
 title = "Gatekeeper"
 
