@@ -5,7 +5,7 @@ weight: 1
 
 # Gatekeeper
 
-Gatekeeper is a proxy which integrates with OpenID Connect (OIDC) Providers, it supports both access tokens in a browser cookie or bearer tokens.
+Gatekeeper is a proxy which integrates with Keycloak IDP Provider, it supports both access tokens in a browser cookie or bearer tokens.
 
 This documentation details how to build and configure Gatekeeper followed by details of how to use each of its features.
 
