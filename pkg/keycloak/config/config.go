@@ -198,6 +198,7 @@ type Config struct {
 	EnableOptionalEncryption           bool `env:"ENABLE_OPTIONAL_ENCRYPTION" json:"enable-optional-encryption" usage:"enable optional decryption for access tokens, id tokens, refresh tokens" yaml:"enable-optional-encryption"`
 	EnableLogoutAuth                   bool `env:"ENABLE_LOGOUT_AUTH" json:"enable-logout-auth" usage:"enable authentication on logout handler" yaml:"enable-logout-auth"`
 	EnableRequestUpstreamCompression   bool `env:"ENABLE_REQUEST_UPSTREAM_COMPRESSION" json:"enable-request-upstream-compression" usage:"enables asking upstream for compression, by adding Accept-Encoding: gzip header and decompressing response from upstream" yaml:"enable-request-upstream-compression"`
+	KeepAcceptEncoding                 bool `env:"KEEP_ACCEPT_ENCODING" json:"keep-accept-encoding" usage:"keep Accept-Encoding header from client and pass it to upstream (goproxy KeepAcceptEncoding flag)" yaml:"keep-accept-encoding"`
 	IsDiscoverURILegacy                bool
 }
 
@@ -226,6 +227,7 @@ func NewDefaultConfig() *Config {
 		EnablePKCE:                       true,
 		EnableLogoutAuth:                 true,
 		EnableRequestUpstreamCompression: true,
+		KeepAcceptEncoding:               true,
 		HTTPOnlyCookie:                   true,
 		Headers:                          make(map[string]string),
 		AllowedQueryParams:               make(map[string]string),

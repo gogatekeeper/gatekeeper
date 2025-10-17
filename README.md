@@ -25,7 +25,7 @@ To run Gatekeeper, you can build it using this command:
 docker buildx build --platform linux/amd64,linux/arm64 -t quay.io/gogatekeeper/gatekeeper:4.0.0 .
 ```
 
-or you can use aleady existing Docker image by running:
+or you can use already existing Docker image by running:
 
 ```bash
 docker run -it --rm quay.io/gogatekeeper/gatekeeper:4.0.0 \
@@ -53,7 +53,7 @@ After you download archive of binary you can calculate it's checksum by using e.
 
 ```
 sha512sum /my/path/gatekeeper_3.0.2_linux_amd64.tar.gz
-38759e75a94d130758cd26958bd9a66b261be8d58a6c7a0fc04845157649aaf628d22a115c95285b405f8e4d6afa8bd78ca8677d1304faf06db93a0cbbc831a6  gatekeeper_3.0.2_linux_amd64.tar.g
+38759e75a94d130758cd26958bd9a66b261be8d58a6c7a0fc04845157649aaf628d22a115c95285b405f8e4d6afa8bd78ca8677d1304faf06db93a0cbbc831a6  gatekeeper_3.0.2_linux_amd64.tar.gz
 ```
 
 As you can see output of command is checksum, you can compare it with the one in gatekeeper-checksum.txt.
