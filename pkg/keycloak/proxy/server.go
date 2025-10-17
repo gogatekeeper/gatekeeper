@@ -1032,6 +1032,9 @@ func (r *OauthProxy) createForwardingProxy() error {
 		return apperrors.ErrAssertionFailed
 	}
 
+	// keep Accept-Encoding header from client if enabled
+	proxy.KeepAcceptEncoding = r.Config.KeepAcceptEncoding
+
 	r.Router = proxy
 
 	// setup the tls configuration
@@ -1589,6 +1592,8 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 	// and for refreshed cookies (htts://github.com/louketo/louketo-proxy/pulls/456])
 	proxy.KeepDestinationHeaders = true
 	proxy.Logger = httplog.New(io.Discard, "", 0)
+	// keep Accept-Encoding header from client if enabled
+	proxy.KeepAcceptEncoding = r.Config.KeepAcceptEncoding
 	r.Upstream = proxy
 
 	// update the tls configuration of the reverse proxy
