@@ -1460,12 +1460,15 @@ On server side, UMA in no-redirects mode:
 ```
 ## Compression
 
-There are two options related to compression. First is `--enable-compression` enables compression
+There are three options related to compression. First is `--enable-compression` enables compression
 of returned content by gatekeeper. Second is `--enable-request-upstream-compression` which
 is by default `true`. This option asks upstream to compress response by sending header `Accept-Encoding: gzip`.
 Sometimes however you have backend which already does compression by default or used different type of compression
 and you don't want gatekeeper to do any actions on returned content, in that case you can disable both
-`--enable-compression` and also `--enable-request-upstream-compression`.
+`--enable-compression` and also `--enable-request-upstream-compression`. Third option is `--enable-accept-encoding-header`
+you can use this option if you just want to pass `Accept-Encoding` header from client to the upstream, by default this
+options is `false`. It is recommended when using this third option to also match `Accept-Encoding` header in header
+resource field to filter exact values allowed in `Accept-Encoding` header, see [Header Matching](#headers-matching).
 
 ## Request tracing
 

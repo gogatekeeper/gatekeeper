@@ -37,6 +37,7 @@ jobs:
           kubectl apply -f ./e2e/k8s/manifest.yml
       - name: "Deploy Redis"
         run: |
+          sudo apt update
           sudo apt install -y redis
 
           REDIS_DIR=/tmp/redis-standalone
@@ -48,6 +49,7 @@ jobs:
           popd
       - name: "Setup Redis Cluster"
         run: |
+          sudo apt update
           sudo apt install -y redis
           PORT_PREFIX=700
           for NODE_NUM in {0..5}

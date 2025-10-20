@@ -1,6 +1,7 @@
 module github.com/gogatekeeper/gatekeeper
 
 require (
+	github.com/KimMachineGun/automemlimit v0.7.3
 	github.com/Nerzal/gocloak/v13 v13.9.0
 	github.com/PuerkitoBio/goquery v1.10.0
 	github.com/PuerkitoBio/purell v1.2.1
@@ -8,7 +9,7 @@ require (
 	github.com/armon/go-proxyproto v0.1.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/coreos/go-oidc/v3 v3.11.0
-	github.com/elazarl/goproxy v0.0.0-20240909085733-6741dbfc16a1
+	github.com/elazarl/goproxy v1.7.2
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-jose/go-jose/v4 v4.0.5
@@ -39,7 +40,6 @@ require (
 
 require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20240806141605-e8a1dd7889d6 // indirect
-	github.com/KimMachineGun/automemlimit v0.7.3 // indirect
 	github.com/Microsoft/hcsshim v0.12.9 // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/alicebob/gopher-json v0.0.0-20230218143504-906a9b012302 // indirect
@@ -60,7 +60,6 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
-	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect

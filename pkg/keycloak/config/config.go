@@ -198,6 +198,7 @@ type Config struct {
 	EnableOptionalEncryption           bool `env:"ENABLE_OPTIONAL_ENCRYPTION" json:"enable-optional-encryption" usage:"enable optional decryption for access tokens, id tokens, refresh tokens" yaml:"enable-optional-encryption"`
 	EnableLogoutAuth                   bool `env:"ENABLE_LOGOUT_AUTH" json:"enable-logout-auth" usage:"enable authentication on logout handler" yaml:"enable-logout-auth"`
 	EnableRequestUpstreamCompression   bool `env:"ENABLE_REQUEST_UPSTREAM_COMPRESSION" json:"enable-request-upstream-compression" usage:"enables asking upstream for compression, by adding Accept-Encoding: gzip header and decompressing response from upstream" yaml:"enable-request-upstream-compression"`
+	EnableAcceptEncodingHeader         bool `env:"ENABLE_ACCEPT_ENCODING_HEADER" json:"enable-accept-encoding-header" usage:"pass Accept-Encoding header from client to upstream" yaml:"enable-accept-encoding-header"`
 	IsDiscoverURILegacy                bool
 }
 
@@ -353,6 +354,7 @@ func (r *Config) IsValid() error {
 		r.isTLSMinValid,
 		r.isUpstreamProxyValid,
 		r.isEnableRequestUpstreamCompressionValid,
+		r.isEnableAcceptEncodingHeaderValid,
 		r.isForwardingProxySettingsValid,
 		r.isReverseProxySettingsValid,
 		r.isCookieValid,
@@ -1065,6 +1067,13 @@ func (r *Config) isEnableLogoutAuthValid() error {
 
 func (r *Config) isEnableRequestUpstreamCompressionValid() error {
 	if !r.EnableRequestUpstreamCompression && r.EnableCompression {
+		return apperrors.ErrEnableRequestUpstreamCompression
+	}
+	return nil
+}
+
+func (r *Config) isEnableAcceptEncodingHeaderValid() error {
+	if r.EnableAcceptEncodingHeader && r.EnableCompression {
 		return apperrors.ErrEnableRequestUpstreamCompression
 	}
 	return nil

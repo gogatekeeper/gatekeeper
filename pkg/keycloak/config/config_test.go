@@ -3199,3 +3199,44 @@ func TestIsEnableRequestUpstreamCompressionValid(t *testing.T) {
 		)
 	}
 }
+
+func TestIsEnableAcceptEncodingHeaderValid(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidEnableAcceptEncodingHeaderValid",
+			Config: &Config{
+				EnableAcceptEncodingHeader: true,
+				EnableCompression:          false,
+			},
+			Valid: true,
+		},
+		{
+			Name: "InvalidEnableAcceptEncodingHeaderValid",
+			Config: &Config{
+				EnableAcceptEncodingHeader: true,
+				EnableCompression:          true,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isEnableAcceptEncodingHeaderValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}
