@@ -77,6 +77,7 @@ const (
 	loaStepUpPath           = "/level2"
 	loaDefaultLevel         = "level1"
 	loaStepUpLevel          = "level2"
+	testCompressionType     = "deflate"
 
 	//nolint:gosec
 	otpSecret = "NE4VKZJYKVDDSYTIK5CVOOLVOFDFE2DC"
@@ -332,7 +333,7 @@ func registerLogin(
 func addHeaderCompressMiddlware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
-			req.Header.Set("Accept-Encoding", "deflate")
+			req.Header.Set("Accept-Encoding", testCompressionType)
 			next.ServeHTTP(wrt, req)
 		})
 	}
@@ -2416,7 +2417,7 @@ var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
 	})
 })
 
-var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
+var _ = Describe("Code Flow Request Upstream Compression", func() {
 	var portNum1 string
 	var proxyAddress1 string
 	var portNum2 string
@@ -2556,6 +2557,165 @@ var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
 				body := resp.Body()
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+				Expect(err).NotTo(HaveOccurred())
+			},
+		)
+	})
+})
+
+var _ = Describe("Code Flow Accept-Encoding header", func() {
+	var portNum1 string
+	var proxyAddress1 string
+	var portNum2 string
+	var proxyAddress2 string
+	errGroup, _ := errgroup.WithContext(context.Background())
+	var server1 *http.Server
+	var server2 *http.Server
+
+	AfterEach(func() {
+		if server1 != nil {
+			err := server1.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if server2 != nil {
+			err := server2.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
+
+	BeforeEach(func() {
+		var err error
+		var upstreamSvcPort1 string
+		var upstreamSvcPort2 string
+
+		server1, upstreamSvcPort1 = startAndWaitTestUpstream(errGroup, false, true, true)
+		portNum1, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
+		proxyAddress1 = localURI + portNum1
+
+		server2, upstreamSvcPort2 = startAndWaitTestUpstream(errGroup, false, true, false)
+		portNum2, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
+		proxyAddress2 = localURI + portNum2
+
+		osArgs1 := []string{os.Args[0]}
+		osArgs2 := []string{os.Args[0]}
+		proxyArgs1 := []string{
+			"--discovery-url=" + idpRealmURI,
+			"--openid-provider-timeout=300s",
+			"--tls-openid-provider-ca-certificate=" + tlsCaCertificate,
+			"--tls-openid-provider-client-certificate=" + tlsCertificate,
+			"--tls-openid-provider-client-private-key=" + tlsPrivateKey,
+			"--listen=" + allInterfaces + portNum1,
+			"--client-id=" + testClient,
+			"--client-secret=" + testClientSecret,
+			"--upstream-url=" + localURI + upstreamSvcPort1,
+			"--no-redirects=false",
+			"--skip-access-token-clientid-check=true",
+			"--skip-access-token-issuer-check=true",
+			"--enable-idp-session-check=false",
+			"--enable-default-deny=true",
+			"--openid-provider-retry-count=30",
+			"--enable-refresh-tokens=true",
+			"--encryption-key=" + testKey,
+			"--secure-cookie=false",
+			"--post-login-redirect-path=" + postLoginRedirectPath,
+			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--upstream-ca=" + tlsCaCertificate,
+			"--enable-encrypted-token=true",
+			"--enable-compression=false",
+			"--enable-request-upstream-compression=false",
+			"--enable-accept-encoding-header=false",
+		}
+
+		proxyArgs2 := []string{
+			"--discovery-url=" + idpRealmURI,
+			"--openid-provider-timeout=300s",
+			"--tls-openid-provider-ca-certificate=" + tlsCaCertificate,
+			"--tls-openid-provider-client-certificate=" + tlsCertificate,
+			"--tls-openid-provider-client-private-key=" + tlsPrivateKey,
+			"--listen=" + allInterfaces + portNum2,
+			"--client-id=" + testClient,
+			"--client-secret=" + testClientSecret,
+			"--upstream-url=" + localURI + upstreamSvcPort2,
+			"--no-redirects=false",
+			"--skip-access-token-clientid-check=true",
+			"--skip-access-token-issuer-check=true",
+			"--enable-idp-session-check=false",
+			"--enable-default-deny=true",
+			"--openid-provider-retry-count=30",
+			"--enable-refresh-tokens=true",
+			"--encryption-key=" + testKey,
+			"--secure-cookie=false",
+			"--post-login-redirect-path=" + postLoginRedirectPath,
+			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--upstream-ca=" + tlsCaCertificate,
+			"--enable-encrypted-token=true",
+			"--enable-compression=false",
+			"--enable-request-upstream-compression=false",
+			"--enable-accept-encoding-header=true",
+		}
+
+		osArgs1 = append(osArgs1, proxyArgs1...)
+		osArgs2 = append(osArgs2, proxyArgs2...)
+		startAndWait(portNum1, osArgs1)
+		startAndWait(portNum2, osArgs2)
+	})
+
+	When("Performing request to compressed backend", func() {
+		It("should return backend compressed output",
+			Label("code_flow"),
+			Label("disable_accept_encoding_header"),
+			func(_ context.Context) {
+				var err error
+				rClient := resty.New()
+				rClient.SetHeader("Content-Type", "application/json")
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
+				resp := codeFlowLogin(rClient, proxyAddress1, http.StatusOK, testUser, testPass)
+				compressed, err := io.ReadAll(flate.NewReader(bytes.NewReader(resp.Body())))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Header().Get("Content-Encoding")).To(Equal(testCompressionType))
+
+				body := string(compressed)
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				Expect(strings.Contains(body, postLoginRedirectPath)).To(BeTrue())
+				Expect(err).NotTo(HaveOccurred())
+			},
+		)
+	})
+
+	When("Performing request with Accept-Encoding header to compressed backend", func() {
+		It("should return compressed output",
+			Label("code_flow"),
+			Label("enable_accept_encoding_header"),
+			func(_ context.Context) {
+				var err error
+				rClient := resty.New()
+				By("make request with Accept-Encoding: deflate")
+				rClient.SetHeader("Content-Type", "application/json")
+				rClient.SetHeader("Accept-Encoding", testCompressionType)
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
+				resp := codeFlowLogin(rClient, proxyAddress2, http.StatusOK, testUser, testPass)
+				compressed, err := io.ReadAll(flate.NewReader(bytes.NewReader(resp.Body())))
+				Expect(err).NotTo(HaveOccurred())
+
+				body := string(compressed)
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				Expect(resp.Header().Get("Content-Encoding")).To(Equal(testCompressionType))
+				Expect(strings.Contains(body, postLoginRedirectPath)).To(BeTrue())
+				Expect(err).NotTo(HaveOccurred())
+
+				body = string(compressed)
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				Expect(strings.Contains(body, postLoginRedirectPath)).To(BeTrue())
 				Expect(err).NotTo(HaveOccurred())
 			},
 		)

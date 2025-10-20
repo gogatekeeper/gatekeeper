@@ -225,6 +225,8 @@ var (
 		"when encryption is not enabled")
 	ErrDisableAuthLogout = errors.New("you can disable authentication only when " +
 		"enable-logout-redirect is enabled")
-	ErrEnableRequestUpstreamCompression = errors.New("you cannot enable compression " +
+	ErrEnableRequestUpstreamCompression = errors.New("cannot enable compression " +
 		"and disable request upstream compression")
+	ErrEnableAcceptEncodingHeaderWithCompression = errors.New("cannot enable both compression " +
+		"and accept-encoding header")
 )

@@ -1033,7 +1033,7 @@ func (r *OauthProxy) createForwardingProxy() error {
 	}
 
 	// keep Accept-Encoding header from client if enabled
-	proxy.KeepAcceptEncoding = r.Config.KeepAcceptEncoding
+	proxy.KeepAcceptEncoding = r.Config.EnableAcceptEncodingHeader
 
 	r.Router = proxy
 
@@ -1593,7 +1593,7 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 	proxy.KeepDestinationHeaders = true
 	proxy.Logger = httplog.New(io.Discard, "", 0)
 	// keep Accept-Encoding header from client if enabled
-	proxy.KeepAcceptEncoding = r.Config.KeepAcceptEncoding
+	proxy.KeepAcceptEncoding = r.Config.EnableAcceptEncodingHeader
 	r.Upstream = proxy
 
 	// update the tls configuration of the reverse proxy
