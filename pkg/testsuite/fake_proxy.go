@@ -703,6 +703,7 @@ func newFakeKeycloakConfig() *config.Config {
 		TLSAdminClientCACertificate: "",
 		OAuthURI:                    "/oauth",
 		OpenIDProviderTimeout:       DefaultOpenIDProviderTimeout,
+		OpenIDProviderRetryCount:    DefaultOpenIDProviderRetryCount,
 		SkipOpenIDProviderTLSVerify: false,
 		SkipUpstreamTLSVerify:       false,
 		Scopes:                      []string{},
