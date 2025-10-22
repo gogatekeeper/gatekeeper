@@ -38,7 +38,7 @@ import (
 	"github.com/KimMachineGun/automemlimit/memlimit"
 	"github.com/Nerzal/gocloak/v13"
 	proxyproto "github.com/armon/go-proxyproto"
-	backoff "github.com/cenkalti/backoff/v4"
+	backoff "github.com/cenkalti/backoff/v5"
 	oidc3 "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/elazarl/goproxy"
 	"github.com/go-chi/chi/v5"
@@ -1790,12 +1790,12 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 	var provider *oidc3.Provider
 	var err error
 
-	operation := func() error {
+	operation := func() (string, error) {
 		provider, err = oidc3.NewProvider(ctx, r.Config.DiscoveryURL)
 		if err != nil {
-			return err
+			return "", err
 		}
-		return nil
+		return "", nil
 	}
 
 	notify := func(err error, delay time.Duration) {
@@ -1806,12 +1806,14 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 		)
 	}
 
-	bo := backoff.WithMaxRetries(
-		backoff.NewExponentialBackOff(),
-		//nolint:gosec
-		uint64(r.Config.OpenIDProviderRetryCount),
-	)
-	err = backoff.RetryNotify(operation, bo, notify)
+	retryType := backoff.WithBackOff(backoff.NewExponentialBackOff())
+	//nolint:gosec
+	countOption := backoff.WithMaxTries(uint(r.Config.OpenIDProviderRetryCount))
+	notifyOption := backoff.WithNotify(notify)
+	boCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	_, err = backoff.Retry(boCtx, operation, retryType, countOption, notifyOption)
 	if err != nil {
 		return nil,
 			nil,

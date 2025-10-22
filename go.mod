@@ -7,7 +7,7 @@ require (
 	github.com/PuerkitoBio/purell v1.2.1
 	github.com/alicebob/miniredis/v2 v2.33.0
 	github.com/armon/go-proxyproto v0.1.0
-	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/coreos/go-oidc/v3 v3.11.0
 	github.com/elazarl/goproxy v1.7.2
 	github.com/fsnotify/fsnotify v1.9.0

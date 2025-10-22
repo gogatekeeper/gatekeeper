@@ -248,7 +248,6 @@ func TestSkipOpenIDProviderTLSVerifyLoginHandler(t *testing.T) {
 	newFakeProxy(cfg, &fakeAuthConfig{EnableTLS: true}).RunTests(t, requests)
 
 	cfg.SkipOpenIDProviderTLSVerify = false
-
 	defer func() {
 		if r := recover(); r != nil {
 			failure, assertOk := r.(string)

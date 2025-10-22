@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/Nerzal/gocloak/v13"
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	oidc3 "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
@@ -123,7 +123,7 @@ func refreshPAT(
 	for {
 		var token *gocloak.JWT
 		var claims *jwt.Claims
-		operation := func() error {
+		operation := func() (string, error) {
 			var err error
 			pCtx, cancel := context.WithCancel(ctx)
 			defer cancel()
@@ -138,7 +138,7 @@ func refreshPAT(
 				forwardingUsername,
 				forwardingPassword,
 			)
-			return err
+			return "", err
 		}
 
 		notify := func(err error, delay time.Duration) {
@@ -148,15 +148,13 @@ func refreshPAT(
 			)
 		}
 
-		bom := backoff.WithMaxRetries(
-			backoff.NewConstantBackOff(patRetryInterval),
-			//nolint:gosec
-			uint64(patRetryCount),
-		)
+		retryType := backoff.WithBackOff(backoff.NewConstantBackOff(patRetryInterval))
+		//nolint:gosec
+		countOption := backoff.WithMaxTries(uint(patRetryCount))
+		notifyOption := backoff.WithNotify(notify)
 		boCtx, cancel := context.WithCancel(ctx)
 		defer cancel()
-		box := backoff.WithContext(bom, boCtx)
-		err := backoff.RetryNotify(operation, box, notify)
+		_, err := backoff.Retry(boCtx, operation, retryType, countOption, notifyOption)
 		if err != nil {
 			return err
 		}
