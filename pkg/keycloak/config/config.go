@@ -33,7 +33,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	redis "github.com/redis/go-redis/v9"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 var _ core.Configs = &Config{}
@@ -310,6 +310,7 @@ func (r *Config) ReadConfigFile(filename string) error {
 		//nolint:musttag
 		err = json.Unmarshal(content, r)
 	default:
+		//nolint:musttag
 		err = yaml.Unmarshal(content, r)
 	}
 
