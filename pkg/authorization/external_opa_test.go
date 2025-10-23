@@ -12,7 +12,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	opaserver "github.com/open-policy-agent/opa/v1/server"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type OpaTestInput struct {
