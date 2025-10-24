@@ -354,6 +354,8 @@ func (r *Config) IsValid() error {
 		r.isLetsEncryptValid,
 		r.isTLSMinValid,
 		r.isUpstreamProxyValid,
+		r.isOpenIDProviderRetryCountValid,
+		r.isPatRetryCountValid,
 		r.isEnableRequestUpstreamCompressionValid,
 		r.isEnableAcceptEncodingHeaderValid,
 		r.isForwardingProxySettingsValid,
@@ -1076,6 +1078,20 @@ func (r *Config) isEnableRequestUpstreamCompressionValid() error {
 func (r *Config) isEnableAcceptEncodingHeaderValid() error {
 	if r.EnableAcceptEncodingHeader && r.EnableCompression {
 		return apperrors.ErrEnableRequestUpstreamCompression
+	}
+	return nil
+}
+
+func (r *Config) isOpenIDProviderRetryCountValid() error {
+	if r.OpenIDProviderRetryCount <= 0 {
+		return apperrors.ErrNegativeOpenIDProviderRetryCount
+	}
+	return nil
+}
+
+func (r *Config) isPatRetryCountValid() error {
+	if r.PatRetryCount <= 0 {
+		return apperrors.ErrNegativeisPatRetryCount
 	}
 	return nil
 }

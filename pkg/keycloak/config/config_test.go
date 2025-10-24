@@ -3240,3 +3240,95 @@ func TestIsEnableAcceptEncodingHeaderValid(t *testing.T) {
 		)
 	}
 }
+
+func TestIsOpenIDProviderRetryCountValid(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidOpenIDProviderRetryCount",
+			Config: &Config{
+				OpenIDProviderRetryCount: 3,
+			},
+			Valid: true,
+		},
+		{
+			Name: "ZeroOpenIDProviderRetryCount",
+			Config: &Config{
+				OpenIDProviderRetryCount: 0,
+			},
+			Valid: false,
+		},
+		{
+			Name: "NegativeOpenIDProviderRetryCount",
+			Config: &Config{
+				OpenIDProviderRetryCount: -3,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isOpenIDProviderRetryCountValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}
+
+func TestIsPatRetryCountValid(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidPatRetryCount",
+			Config: &Config{
+				PatRetryCount: 2,
+			},
+			Valid: true,
+		},
+		{
+			Name: "ZeroPatRetryCount",
+			Config: &Config{
+				PatRetryCount: 0,
+			},
+			Valid: false,
+		},
+		{
+			Name: "NegativePatRetryCount",
+			Config: &Config{
+				PatRetryCount: 0,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isPatRetryCountValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}
