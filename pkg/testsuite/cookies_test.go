@@ -34,6 +34,7 @@ func TestCookieDomainHostHeader(t *testing.T) {
 	assert.NotNil(t, resp)
 
 	var cookie *http.Cookie
+
 	for _, c := range resp.Cookies() {
 		if c.Name == constant.AccessCookie {
 			cookie = c
@@ -47,6 +48,7 @@ func TestCookieDomainHostHeader(t *testing.T) {
 
 func TestCookieBasePath(t *testing.T) {
 	const baseURI = "/base-uri"
+
 	cfg := newFakeKeycloakConfig()
 	cfg.BaseURI = baseURI
 
@@ -57,6 +59,7 @@ func TestCookieBasePath(t *testing.T) {
 	assert.NotNil(t, resp)
 
 	var cookie *http.Cookie
+
 	for _, c := range resp.Cookies() {
 		if c.Name == constant.AccessCookie {
 			cookie = c
@@ -78,6 +81,7 @@ func TestCookieWithoutBasePath(t *testing.T) {
 	assert.NotNil(t, resp)
 
 	var cookie *http.Cookie
+
 	for _, c := range resp.Cookies() {
 		if c.Name == constant.AccessCookie {
 			cookie = c
@@ -97,6 +101,7 @@ func TestCookieDomain(t *testing.T) {
 	assert.NotNil(t, resp)
 
 	var cookie *http.Cookie
+
 	for _, c := range resp.Cookies() {
 		if c.Name == constant.AccessCookie {
 			cookie = c
@@ -116,6 +121,7 @@ func TestCookiePath(t *testing.T) {
 	assert.NotNil(t, resp)
 
 	var cookie *http.Cookie
+
 	for _, c := range resp.Cookies() {
 		if c.Path == FakeAdminURL {
 			cookie = c
@@ -158,6 +164,7 @@ func TestDropCookie(t *testing.T) {
 	proxy.Config.CookieDomain = "test.com"
 	proxy.Cm.DropCookie(resp, "test-cookie", "test-value", 0)
 	proxy.Config.SecureCookie = false
+
 	assert.NotEqual(t,
 		"test-cookie=test-value; Path=/; Domain=test.com;",
 		resp.Header().Get(TestSetCookieHeader),

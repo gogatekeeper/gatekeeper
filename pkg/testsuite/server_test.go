@@ -184,6 +184,7 @@ func TestAuthTokenHeader(t *testing.T) {
 					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 						"X-Auth-Token": func(t *testing.T, c *config.Config, value string) {
 							t.Helper()
+
 							_, err := jwt.ParseSigned(value, constant.SignatureAlgs[:])
 							require.NoError(t, err, "Problem parsing X-Auth-Token")
 							assert.False(t, checkAccessTokenEncryption(t, c, value))
@@ -196,6 +197,7 @@ func TestAuthTokenHeader(t *testing.T) {
 					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 						"X-Auth-Token": func(t *testing.T, c *config.Config, value string) {
 							t.Helper()
+
 							_, err := jwt.ParseSigned(value, constant.SignatureAlgs[:])
 							require.NoError(t, err, "Problem parsing X-Auth-Token")
 							assert.False(t, checkAccessTokenEncryption(t, c, value))
@@ -223,6 +225,7 @@ func TestAuthTokenHeader(t *testing.T) {
 					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 						"X-Auth-Token": func(t *testing.T, c *config.Config, value string) {
 							t.Helper()
+
 							_, err := jwt.ParseSigned(value, constant.SignatureAlgs[:])
 							require.NoError(t, err, "Problem parsing X-Auth-Token")
 							assert.False(t, checkAccessTokenEncryption(t, c, value))
@@ -235,6 +238,7 @@ func TestAuthTokenHeader(t *testing.T) {
 					ExpectedProxyHeadersValidator: map[string]func(*testing.T, *config.Config, string){
 						"X-Auth-Token": func(t *testing.T, c *config.Config, value string) {
 							t.Helper()
+
 							_, err := jwt.ParseSigned(value, constant.SignatureAlgs[:])
 							require.NoError(t, err, "Problem parsing X-Auth-Token")
 							assert.False(t, checkAccessTokenEncryption(t, c, value))
@@ -248,12 +252,13 @@ func TestAuthTokenHeader(t *testing.T) {
 
 	for _, testCase := range testCases {
 		cfgCopy := *cfg
-		c := &cfgCopy
+		conf := &cfgCopy
+
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
-				testCase.ProxySettings(c)
-				p := newFakeProxy(c, &fakeAuthConfig{})
+				testCase.ProxySettings(conf)
+				p := newFakeProxy(conf, &fakeAuthConfig{})
 				// p.idp.setTokenExpiration(1000 * time.Millisecond)
 				p.RunTests(t, testCase.ExecutionSettings)
 			},
@@ -273,7 +278,6 @@ func TestForwardingProxy(t *testing.T) {
 	// go func() {
 	// 	errChan <- middleProxy.Serve(lstn)
 	// }()
-
 	fakeUpstream := httptest.NewServer(&FakeUpstreamService{})
 	upstreamConfig := newFakeKeycloakConfig()
 	upstreamConfig.EnableUma = true
@@ -626,6 +630,7 @@ func TestSkipOpenIDProviderTLSVerifyForwardingProxy(t *testing.T) {
 		},
 	}
 	proxy := newFakeProxy(cfg, &fakeAuthConfig{EnableTLS: true})
+
 	<-time.After(time.Duration(100) * time.Millisecond)
 	proxy.RunTests(t, requests)
 
@@ -648,6 +653,7 @@ func TestSkipOpenIDProviderTLSVerifyForwardingProxy(t *testing.T) {
 	}()
 
 	proxy = newFakeProxy(cfg, &fakeAuthConfig{EnableTLS: true})
+
 	<-time.After(time.Duration(100) * time.Millisecond)
 	proxy.RunTests(t, requests)
 }
@@ -828,12 +834,13 @@ func TestErrorTemplate(t *testing.T) {
 
 	for _, testCase := range testCases {
 		cfgCopy := *cfg
-		c := &cfgCopy
+		conf := &cfgCopy
+
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
-				testCase.ProxySettings(c)
-				p := newFakeProxy(c, &fakeAuthConfig{})
+				testCase.ProxySettings(conf)
+				p := newFakeProxy(conf, &fakeAuthConfig{})
 				p.RunTests(t, testCase.ExecutionSettings)
 			},
 		)
@@ -919,6 +926,7 @@ func TestSkipOpenIDProviderTLSVerify(t *testing.T) {
 						}
 					}()
 				}
+
 				c := newFakeKeycloakConfig()
 				testCase.ProxySettings(c)
 				p := newFakeProxy(c, &fakeAuthConfig{EnableTLS: true})
@@ -1167,12 +1175,13 @@ func TestDefaultDenial(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		c := *cfg
+		conf := *cfg
+
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
-				testCase.ProxySettings(&c)
-				p := newFakeProxy(&c, &fakeAuthConfig{})
+				testCase.ProxySettings(&conf)
+				p := newFakeProxy(&conf, &fakeAuthConfig{})
 				p.RunTests(t, testCase.ExecutionSettings)
 			},
 		)
@@ -1762,6 +1771,7 @@ func TestTokenEncryption(t *testing.T) {
 
 	for _, testCase := range testCases {
 		cfg := *cfg
+
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
@@ -2063,6 +2073,7 @@ func TestTLS(t *testing.T) {
 
 	for _, testCase := range testCases {
 		cfg := newFakeKeycloakConfig()
+
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
@@ -2086,6 +2097,7 @@ func TestTLS(t *testing.T) {
 
 				if certFile != "" {
 					fakeCertByte := []byte(fakeCert)
+
 					err := os.WriteFile(certFile, fakeCertByte, 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing certificate %s", err)
@@ -2095,6 +2107,7 @@ func TestTLS(t *testing.T) {
 
 				if privFile != "" {
 					fakeKeyByte := []byte(fakePrivateKey)
+
 					err := os.WriteFile(privFile, fakeKeyByte, 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing privateKey %s", err)
@@ -2104,6 +2117,7 @@ func TestTLS(t *testing.T) {
 
 				if caFile != "" {
 					fakeCAByte := []byte(fakeCA)
+
 					err := os.WriteFile(caFile, fakeCAByte, 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing cacertificate %s", err)
@@ -2363,15 +2377,20 @@ func TestGraceTimeout(t *testing.T) {
 				}
 
 				proxy := newFakeProxy(cfg, &fakeAuthConfig{EnableTLS: true})
+
 				<-time.After(time.Duration(100) * time.Millisecond)
 
 				go func() {
 					defer waitShutdown.Done()
+
 					<-time.After(time.Duration(200) * time.Millisecond)
-					if err := proxy.Shutdown(); err != nil {
+
+					err := proxy.Shutdown()
+					if err != nil {
 						t.Error("Failed to shutdown proxy")
 					}
 				}()
+
 				proxy.RunTests(t, requests)
 				waitShutdown.Wait()
 			},

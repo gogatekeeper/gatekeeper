@@ -102,6 +102,7 @@ func newFakeProxy(cfg *config.Config, authConfig *fakeAuthConfig) *fakeProxy {
 	cfg.DiscoveryURL = auth.getLocation()
 	// c.Verbose = true
 	cfg.DisableAllLogging = true
+
 	err := cfg.Update()
 	if err != nil {
 		panic(errors.Join(ErrCreateFakeProxy, err).Error())
@@ -113,12 +114,14 @@ func newFakeProxy(cfg *config.Config, authConfig *fakeAuthConfig) *fakeProxy {
 	} else {
 		oProxy, err = proxy.NewProxy(cfg, nil, nil)
 	}
+
 	if err != nil {
 		panic(errors.Join(ErrCreateFakeProxy, err).Error())
 	}
 
 	// proxy.log = zap.NewNop()
-	if _, err = oProxy.Run(); err != nil {
+	_, err = oProxy.Run()
+	if err != nil {
 		panic("failed to create the proxy service, error: " + err.Error())
 	}
 
@@ -127,15 +130,12 @@ func newFakeProxy(cfg *config.Config, authConfig *fakeAuthConfig) *fakeProxy {
 	return &fakeProxy{cfg, auth, oProxy, make(map[string]*http.Cookie)}
 }
 
-func (f *fakeProxy) getServiceURL() string {
-	return "http://" + f.proxy.Listener.Addr().String()
-}
-
 // RunTests performs a series of requests against a fake proxy service
 //
 //nolint:gocyclo,funlen,cyclop
 func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 	t.Helper()
+
 	defer func() {
 		f.idp.Close()
 		f.proxy.Server.Close()
@@ -143,6 +143,7 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 
 	for idx := range requests {
 		reqCfg := requests[idx]
+
 		var upstream FakeUpstreamResponse
 
 		f.config.NoRedirects = !reqCfg.Redirects
@@ -192,12 +193,14 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 
 		// are we performing a oauth login beforehand
 		if reqCfg.HasLogin {
-			if err := f.performUserLogin(&reqCfg); err != nil {
+			err := f.performUserLogin(&reqCfg)
+			if err != nil {
 				t.Errorf(
 					"case %d, unable to login to oauth server, error: %s",
 					idx,
 					err,
 				)
+
 				return
 			}
 		}
@@ -280,8 +283,10 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 		}
 
 		// step: execute the request
-		var resp *resty.Response
-		var err error
+		var (
+			resp *resty.Response
+			err  error
+		)
 
 		switch reqCfg.URL {
 		case "":
@@ -310,6 +315,7 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 					idx,
 					err,
 				)
+
 				continue
 			}
 		}
@@ -373,6 +379,7 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 			// comment
 			for headerName, headerValidator := range reqCfg.ExpectedHeadersValidator {
 				headers := resp.Header()
+
 				switch headerValidator {
 				case nil:
 					assert.NotNil(
@@ -434,6 +441,7 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 			// comment
 			for headerName, headerValidator := range reqCfg.ExpectedProxyHeadersValidator {
 				headers := upstream.Headers
+
 				switch headerValidator {
 				case nil:
 					assert.NotNil(
@@ -558,16 +566,22 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 	}
 }
 
+func (f *fakeProxy) getServiceURL() string {
+	return "http://" + f.proxy.Listener.Addr().String()
+}
+
 func (f *fakeProxy) performUserLogin(reqCfg *fakeRequest) error {
 	userCookies := map[string]bool{
 		f.config.CookieAccessName:  true,
 		f.config.CookieRefreshName: true,
 		f.config.CookieIDTokenName: true,
 	}
+
 	resp, flowCookies, err := makeTestCodeFlowLogin(f.getServiceURL()+reqCfg.URI, reqCfg.LoginXforwarded)
 	if err != nil {
 		return err
 	}
+
 	for _, cookie := range resp.Cookies() {
 		if _, ok := userCookies[cookie.Name]; ok {
 			f.cookies[cookie.Name] = &http.Cookie{
@@ -598,14 +612,17 @@ func setRequestAuthentication(
 	case true:
 		cookies := client.Cookies
 		present := false
+
 		for _, cook := range cookies {
 			if cook.Name == cfg.CookieAccessName {
 				present = true
 				cook.Value = token
 				cook.Path = "/"
+
 				break
 			}
 		}
+
 		if !present {
 			client.SetCookie(&http.Cookie{
 				Name:  cfg.CookieAccessName,
@@ -639,6 +656,7 @@ func newTestProxyService(config *config.Config) (*proxy.OauthProxy, *fakeAuthSer
 	config.RevocationEndpoint = auth.getRevocationURL()
 	config.Verbose = false
 	config.EnableLogging = false
+
 	err := config.Update()
 	if err != nil {
 		panic(errors.Join(ErrCreateFakeProxy, err).Error())
@@ -654,7 +672,8 @@ func newTestProxyService(config *config.Config) (*proxy.OauthProxy, *fakeAuthSer
 	config.RedirectionURL = service.URL
 
 	// step: we need to update the client config
-	if proxy.Provider, proxy.IdpClient, err = proxy.NewOpenIDProvider(); err != nil {
+	proxy.Provider, proxy.IdpClient, err = proxy.NewOpenIDProvider()
+	if err != nil {
 		panic("failed to recreate the openid client, error: " + err.Error())
 	}
 
@@ -749,6 +768,7 @@ func makeTestCodeFlowLogin(location string, xforwarded bool) (*http.Response, []
 	}
 	// step: get the redirect
 	var resp *http.Response
+
 	numIter := 4
 	for range numIter {
 		req, err := http.NewRequest(http.MethodGet, location, nil)
@@ -794,5 +814,6 @@ func makeTestCodeFlowLogin(location string, xforwarded bool) (*http.Response, []
 			location = fmt.Sprintf("%s://%s%s", uri.Scheme, uri.Host, location)
 		}
 	}
+
 	return resp, flowCookies, nil
 }

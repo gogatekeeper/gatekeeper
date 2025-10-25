@@ -37,6 +37,7 @@ import (
 
 type SelfSignedCertificate struct {
 	sync.RWMutex
+
 	// certificate holds the current issuing certificate
 	certificate tls.Certificate
 	// expiration is the certificate expiration
@@ -51,7 +52,7 @@ type SelfSignedCertificate struct {
 	cancel context.CancelFunc
 }
 
-// newSelfSignedCertificate creates and returns a self signed certificate manager.
+// NewSelfSignedCertificate creates and returns a self signed certificate manager.
 func NewSelfSignedCertificate(
 	hostnames []string,
 	expiry time.Duration,
@@ -99,51 +100,6 @@ func NewSelfSignedCertificate(
 	return svc, nil
 }
 
-// rotate is responsible for rotation the certificate.
-func (c *SelfSignedCertificate) rotate(ctx context.Context) {
-	go func() {
-		c.log.Info("starting the self-signed certificate rotation",
-			zap.Duration("expiration", c.expiration))
-
-		for {
-			expires := time.Now().Add(c.expiration).Add(-5 * time.Minute)
-			ticker := time.Until(expires)
-
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(ticker):
-			}
-			c.log.Info(
-				"going to sleep until required for rotation",
-				zap.Time("expires", expires),
-				zap.Duration("duration", time.Until(expires)),
-			)
-
-			// @step: got to sleep until we need to rotate
-			time.Sleep(time.Until(expires))
-
-			// @step: create a new certificate for us
-			cert, err := CreateCertificate(c.privateKey, c.hostnames, c.expiration)
-			if err != nil {
-				c.log.Error("problem creating certificate", zap.Error(err))
-			}
-			c.log.Info("updating the certificate for server")
-
-			// @step: update the current certificate
-			c.updateCertificate(cert)
-		}
-	}()
-}
-
-// updateCertificate is responsible for update the certificate.
-func (c *SelfSignedCertificate) updateCertificate(cert tls.Certificate) {
-	c.Lock()
-	defer c.Unlock()
-
-	c.certificate = cert
-}
-
 // GetCertificate is responsible for retrieving.
 func (c *SelfSignedCertificate) GetCertificate(_ *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	c.RLock()
@@ -152,7 +108,7 @@ func (c *SelfSignedCertificate) GetCertificate(_ *tls.ClientHelloInfo) (*tls.Cer
 	return &c.certificate, nil
 }
 
-// createCertificate is responsible for creating a certificate.
+// CreateCertificate is responsible for creating a certificate.
 func CreateCertificate(key *ed25519.PrivateKey, hostnames []string, expire time.Duration) (tls.Certificate, error) {
 	// @step: create a serial for the certificate
 	serial, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), constant.SelfSignedMaxSerialBits))
@@ -203,7 +159,7 @@ func CreateCertificate(key *ed25519.PrivateKey, hostnames []string, expire time.
 	return tls.X509KeyPair(certPEM, keyPEM)
 }
 
-// loadKeyPair loads the tls key pair.
+// LoadKeyPair loads the tls key pair.
 func LoadKeyPair(certPath, keyPath string) (*tls.Certificate, error) {
 	cert, err := os.ReadFile(certPath)
 	if err != nil {
@@ -237,4 +193,51 @@ func LoadCert(certPath string) (*x509.CertPool, error) {
 	}
 
 	return certPool, nil
+}
+
+// rotate is responsible for rotation the certificate.
+func (c *SelfSignedCertificate) rotate(ctx context.Context) {
+	go func() {
+		c.log.Info("starting the self-signed certificate rotation",
+			zap.Duration("expiration", c.expiration))
+
+		for {
+			expires := time.Now().Add(c.expiration).Add(-5 * time.Minute)
+			ticker := time.Until(expires)
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(ticker):
+			}
+
+			c.log.Info(
+				"going to sleep until required for rotation",
+				zap.Time("expires", expires),
+				zap.Duration("duration", time.Until(expires)),
+			)
+
+			// @step: got to sleep until we need to rotate
+			time.Sleep(time.Until(expires))
+
+			// @step: create a new certificate for us
+			cert, err := CreateCertificate(c.privateKey, c.hostnames, c.expiration)
+			if err != nil {
+				c.log.Error("problem creating certificate", zap.Error(err))
+			}
+
+			c.log.Info("updating the certificate for server")
+
+			// @step: update the current certificate
+			c.updateCertificate(cert)
+		}
+	}()
+}
+
+// updateCertificate is responsible for update the certificate.
+func (c *SelfSignedCertificate) updateCertificate(cert tls.Certificate) {
+	c.Lock()
+	defer c.Unlock()
+
+	c.certificate = cert
 }

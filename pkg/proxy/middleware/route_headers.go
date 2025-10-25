@@ -98,6 +98,7 @@ func (hr *HeaderRouter) Route(
 			Middleware: middlewareHandler,
 		},
 	)
+
 	return hr
 }
 
@@ -181,6 +182,7 @@ func (r HeaderRoute) IsMatch(value string) bool {
 	} else if r.MatchOne.Match(value) {
 		return true
 	}
+
 	return false
 }
 
@@ -202,6 +204,7 @@ func NewPattern(value string, matchingType MatcherType) Pattern {
 	case RouteHeadersRegexMatcher:
 		pat.value = value
 	}
+
 	return pat
 }
 
@@ -211,6 +214,7 @@ func (p Pattern) Match(mVal string) bool {
 		if !p.wildcard {
 			return p.prefix == mVal
 		}
+
 		return len(mVal) >= len(p.prefix+p.suffix) &&
 			strings.HasPrefix(mVal, p.prefix) &&
 			strings.HasSuffix(mVal, p.suffix)
@@ -220,5 +224,6 @@ func (p Pattern) Match(mVal string) bool {
 		reg := regexp.MustCompile(p.value)
 		return reg.MatchString(mVal)
 	}
+
 	return false
 }

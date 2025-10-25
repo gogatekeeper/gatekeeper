@@ -27,7 +27,7 @@ const (
 	normalizeFlags purell.NormalizationFlags = purell.FlagRemoveDotSegments | purell.FlagRemoveDuplicateSlashes
 )
 
-// entrypointMiddleware is custom filtering for incoming requests.
+// EntrypointMiddleware is custom filtering for incoming requests.
 func EntrypointMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
@@ -46,6 +46,7 @@ func EntrypointMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 			if !strings.HasPrefix(req.URL.Path, "/") {
 				req.URL.Path = "/" + req.URL.Path
 			}
+
 			req.URL.RawPath = req.URL.EscapedPath()
 
 			resp := middleware.NewWrapResponseWriter(wrt, 1)
@@ -65,7 +66,7 @@ func EntrypointMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-// requestIDMiddleware is responsible for adding a request id if none found.
+// RequestIDMiddleware is responsible for adding a request id if none found.
 func RequestIDMiddleware(header string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
@@ -74,6 +75,7 @@ func RequestIDMiddleware(header string) func(http.Handler) http.Handler {
 				if err != nil {
 					wrt.WriteHeader(http.StatusInternalServerError)
 				}
+
 				req.Header.Set(header, uuid.String())
 			}
 
@@ -82,7 +84,7 @@ func RequestIDMiddleware(header string) func(http.Handler) http.Handler {
 	}
 }
 
-// loggingMiddleware is a custom http logger.
+// LoggingMiddleware is a custom http logger.
 func LoggingMiddleware(
 	logger *zap.Logger,
 	verbose bool,
@@ -90,6 +92,7 @@ func LoggingMiddleware(
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			start := time.Now()
+
 			resp, assertOk := w.(middleware.WrapResponseWriter)
 			if !assertOk {
 				logger.Error(apperrors.ErrAssertionFailed.Error())
@@ -157,6 +160,7 @@ func DenyMiddleware(
 ) func(http.Handler) http.Handler {
 	return func(_ http.Handler) http.Handler {
 		logger.Info("enabling the deny middleware")
+
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
 			accessForbidden(wrt, req)
 		})
@@ -174,6 +178,7 @@ func ProxyDenyMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 				scope = &models.RequestScope{}
 			} else {
 				var assertOk bool
+
 				scope, assertOk = ctxVal.(*models.RequestScope)
 				if !assertOk {
 					logger.Error(apperrors.ErrAssertionFailed.Error())
@@ -198,6 +203,7 @@ func MethodCheckMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 			if !utils.IsValidHTTPMethod(req.Method) {
 				logger.Warn("method not implemented ", zap.String("method", req.Method))
 				wrt.WriteHeader(http.StatusNotImplemented)
+
 				return
 			}
 
@@ -221,11 +227,14 @@ func IdentityHeadersMiddleware(
 	enableHeaderEncoding bool,
 ) func(http.Handler) http.Handler {
 	customClaims := make(map[string]string)
+
 	const minSliceLength int = 1
+
 	cookieFilter := []string{cookieAccessName, cookieRefreshName}
 
 	for _, val := range custom {
 		xslices := strings.Split(val, "|")
+
 		val = xslices[0]
 		if len(xslices) > minSliceLength {
 			customClaims[val] = utils.ToHeader(xslices[1])
@@ -251,6 +260,7 @@ func IdentityHeadersMiddleware(
 
 			if scope.Identity != nil {
 				user := scope.Identity
+
 				const encoding = "UTF-8"
 				if enableHeaderEncoding {
 					headers.Set("X-Auth-Audience", mime.BEncoding.Encode(encoding, strings.Join(user.Audiences, ",")))
@@ -302,10 +312,9 @@ func IdentityHeadersMiddleware(
 	}
 }
 
-/*
-	ProxyMiddleware is responsible for handles reverse proxy
-	request to the upstream endpoint
-*/
+// ProxyMiddleware is responsible for handles reverse proxy
+// request to the upstream endpoint
+//
 //nolint:cyclop
 func ProxyMiddleware(
 	logger *zap.Logger,
@@ -323,14 +332,18 @@ func ProxyMiddleware(
 
 			// @step: retrieve the request scope
 			ctxVal := req.Context().Value(constant.ContextScopeName)
+
 			var scope *models.RequestScope
+
 			if ctxVal != nil {
 				var assertOk bool
+
 				scope, assertOk = ctxVal.(*models.RequestScope)
 				if !assertOk {
 					logger.Error(apperrors.ErrAssertionFailed.Error())
 					return
 				}
+
 				if scope.AccessDenied || scope.NoProxy {
 					return
 				}
@@ -338,9 +351,11 @@ func ProxyMiddleware(
 
 			// @step: add the proxy forwarding headers
 			req.Header.Set(constant.HeaderXRealIP, utils.RealIP(req))
+
 			if xff := req.Header.Get(constant.HeaderXForwardedFor); xff == "" {
 				req.Header.Set(constant.HeaderXForwardedFor, utils.RealIP(req))
 			}
+
 			if xfh := req.Header.Get(constant.HeaderXForwardedHost); xfh == "" {
 				req.Header.Set(constant.HeaderXForwardedHost, req.Host)
 			}
@@ -364,6 +379,7 @@ func ProxyMiddleware(
 				req.URL.Path = scope.Path
 				req.URL.RawPath = scope.RawPath
 			}
+
 			if v := req.Header.Get("Host"); v != "" {
 				req.Host = v
 				req.Header.Del("Host")
@@ -377,11 +393,15 @@ func ProxyMiddleware(
 					zap.String("client_ip", clientIP),
 					zap.String("remote_addr", req.RemoteAddr),
 				)
-				if err := utils.TryUpdateConnection(req, wrt, endpoint); err != nil {
+
+				err := utils.TryUpdateConnection(req, wrt, endpoint)
+				if err != nil {
 					logger.Error("failed to upgrade connection", zap.Error(err))
 					wrt.WriteHeader(http.StatusInternalServerError)
+
 					return
 				}
+
 				return
 			}
 
@@ -390,6 +410,7 @@ func ProxyMiddleware(
 				if err != nil {
 					logger.Error(err.Error())
 				}
+
 				req.Header.Set(constant.HeaderXHMAC, reqHmac)
 			}
 
@@ -408,10 +429,12 @@ func ForwardAuthMiddleware(logger *zap.Logger, oAuthURI string) func(http.Handle
 					req.URL.Path = forwardedPath
 					req.URL.RawPath = forwardedPath
 				}
+
 				if forwardedMethod := req.Header.Get(constant.HeaderXForwardedMethod); forwardedMethod != "" {
 					req.Method = forwardedMethod
 				}
 			}
+
 			next.ServeHTTP(wrt, req)
 		})
 	}

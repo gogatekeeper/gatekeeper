@@ -119,6 +119,7 @@ func NewProxy(config *config.Config, log *zap.Logger, upstream core.ReverseProxy
 		dup.ClientSecret = ""
 		dup.EncryptionKey = ""
 		dup.ForwardingPassword = ""
+
 		out, err := json.Marshal(dup) //nolint:musttag
 		if err != nil {
 			return nil, err
@@ -140,7 +141,8 @@ func NewProxy(config *config.Config, log *zap.Logger, upstream core.ReverseProxy
 	log.Info("FIPS status", zap.Bool("fips", fips140.Enabled()))
 
 	// parse the upstream endpoint
-	if svc.Endpoint, err = url.Parse(config.Upstream); err != nil {
+	svc.Endpoint, err = url.Parse(config.Upstream)
+	if err != nil {
 		return nil, err
 	}
 
@@ -169,12 +171,13 @@ func NewProxy(config *config.Config, log *zap.Logger, upstream core.ReverseProxy
 	)
 
 	// initialize the openid client
-	if svc.Provider, svc.IdpClient, err = svc.NewOpenIDProvider(); err != nil {
+	svc.Provider, svc.IdpClient, err = svc.NewOpenIDProvider()
+	if err != nil {
 		svc.Log.Error(
 			"failed to get provider configuration from discovery",
 			zap.Error(err),
 		)
-		return nil, err
+		return nil, err //nolint:wsl_v5
 	}
 
 	svc.Log.Info("successfully retrieved openid configuration from the discovery")
@@ -192,11 +195,13 @@ func NewProxy(config *config.Config, log *zap.Logger, upstream core.ReverseProxy
 
 	// are we running in forwarding mode?
 	if config.EnableForwarding {
-		if err := svc.createForwardingProxy(); err != nil {
+		err := svc.createForwardingProxy()
+		if err != nil {
 			return nil, err
 		}
 	} else {
-		if err := svc.CreateReverseProxy(); err != nil {
+		err := svc.CreateReverseProxy()
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -212,12 +217,15 @@ func setupStore(
 	tlsStoreClientPrivateKey string,
 	timeout time.Duration,
 ) (storage.Storage, error) {
-	var certPool *x509.CertPool
-	var keyPair *tls.Certificate
-	var err error
+	var (
+		certPool *x509.CertPool
+		keyPair  *tls.Certificate
+		err      error
+	)
 
 	if tlsStoreCaCertificate != "" {
-		if certPool, err = encryption.LoadCert(tlsStoreCaCertificate); err != nil {
+		certPool, err = encryption.LoadCert(tlsStoreCaCertificate)
+		if err != nil {
 			return nil, errors.Join(apperrors.ErrLoadStoreCA, err)
 		}
 	}
@@ -244,7 +252,9 @@ func setupStore(
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if err := store.Test(ctx); err != nil {
+
+	err = store.Test(ctx)
+	if err != nil {
 		return nil, err
 	}
 
@@ -274,6 +284,7 @@ func createLogger(config *config.Config) (*zap.Logger, error) {
 	// are we running verbose mode?
 	if config.Verbose {
 		httplog.SetOutput(os.Stderr)
+
 		cfg.DisableCaller = false
 		cfg.Development = true
 		cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
@@ -334,7 +345,7 @@ func (r *OauthProxy) useDefaultStack(
 	}
 }
 
-// createReverseProxy creates a reverse proxy
+// CreateReverseProxy creates a reverse proxy
 //
 //nolint:cyclop,funlen
 func (r *OauthProxy) CreateReverseProxy() error {
@@ -344,7 +355,8 @@ func (r *OauthProxy) CreateReverseProxy() error {
 	)
 
 	if r.Upstream == nil {
-		if err := r.createUpstreamProxy(r.Endpoint); err != nil {
+		err := r.createUpstreamProxy(r.Endpoint)
+		if err != nil {
 			return err
 		}
 	}
@@ -672,9 +684,11 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		Route(r.Config.BaseURI+r.Config.OAuthURI, func(eng chi.Router) {
 			eng.MethodNotAllowed(handlers.MethodNotAllowHandlder)
 			eng.HandleFunc(constant.AuthorizationURL, oauthAuthorizationHand)
+
 			if r.Config.EnableRegisterHandler {
 				eng.HandleFunc(constant.RegistrationURL, oauthRegistrationHand)
 			}
+
 			eng.Get(constant.CallbackURL, oauthCallbackHand)
 			eng.Get(constant.ExpiredURL, handlers.ExpirationHandler(
 				r.Log,
@@ -741,6 +755,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		admin.Use(gmiddleware.ProxyDenyMiddleware(r.Log))
 		admin.Route("/", func(e chi.Router) {
 			e.Mount(r.Config.OAuthURI, adminEngine)
+
 			if debugEngine != nil {
 				e.Mount(constant.DebugURL, debugEngine)
 			}
@@ -835,7 +850,9 @@ func (r *OauthProxy) CreateReverseProxy() error {
 				"disabling LoA for resource, no-redirect=true for resource",
 				zap.String("resource", res.URL))
 		}
+
 		var loAMid func(http.Handler) http.Handler
+
 		if r.Config.EnableLoA && !res.NoRedirect {
 			loAMid = levelOfAuthenticationMiddleware(
 				r.Log,
@@ -884,6 +901,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 			enableUma := r.Config.EnableUma
 			if r.Config.EnableUma && res.NoRedirect {
 				enableUma = false
+
 				r.Log.Warn(
 					"disabling EnableUma for resource, no-redirect=true for resource",
 					zap.String("resource", res.URL))
@@ -1011,7 +1029,8 @@ func (r *OauthProxy) createForwardingProxy() error {
 
 	r.rpt = &RPT{}
 
-	if err := r.createUpstreamProxy(nil); err != nil {
+	err := r.createUpstreamProxy(nil)
+	if err != nil {
 		return err
 	}
 	//nolint:bodyclose
@@ -1047,6 +1066,7 @@ func (r *OauthProxy) createForwardingProxy() error {
 		}
 
 		var clientCA *x509.CertPool
+
 		if r.Config.TLSClientCACertificate != "" {
 			r.Log.Info("enabling tls client authentication")
 
@@ -1067,7 +1087,7 @@ func (r *OauthProxy) createForwardingProxy() error {
 						cfg, err := tlsConfig(host, ctx)
 						cfg.ClientAuth = tls.RequireAndVerifyClientCert
 						cfg.ClientCAs = clientCA
-						return cfg, err
+						return cfg, err //nolint:wsl_v5
 					}
 				}
 
@@ -1120,7 +1140,7 @@ func (r *OauthProxy) createForwardingProxy() error {
 	proxy.OnRequest().DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 		ctx.UserData = time.Now()
 		forwardingHandler(req, ctx.Resp)
-		return req, ctx.Resp
+		return req, ctx.Resp //nolint:wsl_v5
 	})
 
 	return nil
@@ -1170,6 +1190,7 @@ func (r *OauthProxy) Run() (context.Context, error) {
 				r.Config.ForwardingPassword,
 				patDone,
 			)
+
 			return err
 		})
 		<-patDone
@@ -1181,10 +1202,13 @@ func (r *OauthProxy) Run() (context.Context, error) {
 				"gatekeeper proxy service starting",
 				zap.String("interface", r.Config.Listen),
 			)
-			if err := server.Serve(listener); err != nil {
+
+			err := server.Serve(listener)
+			if err != nil {
 				err = errors.Join(apperrors.ErrStartMainHTTP, err)
 				return err
 			}
+
 			return nil
 		},
 	)
@@ -1214,10 +1238,12 @@ func (r *OauthProxy) Run() (context.Context, error) {
 
 		r.HTTPServer = httpsvc
 		r.ErrGroup.Go(func() error {
-			if err := httpsvc.Serve(httpListener); err != nil {
+			err := httpsvc.Serve(httpListener)
+			if err != nil {
 				err = errors.Join(apperrors.ErrStartRedirectHTTP, err)
 				return err
 			}
+
 			return nil
 		})
 	}
@@ -1256,6 +1282,7 @@ func (r *OauthProxy) Run() (context.Context, error) {
 				adminListenerConfig.certificate = r.Config.TLSAdminCertificate
 				adminListenerConfig.privateKey = r.Config.TLSAdminPrivateKey
 			}
+
 			if r.Config.TLSAdminClientCACertificate != "" {
 				adminListenerConfig.clientCACert = r.Config.TLSAdminClientCACertificate
 			}
@@ -1276,10 +1303,12 @@ func (r *OauthProxy) Run() (context.Context, error) {
 
 		r.AdminServer = adminsvc
 		r.ErrGroup.Go(func() error {
-			if err := adminsvc.Serve(adminListener); err != nil {
+			err := adminsvc.Serve(adminListener)
+			if err != nil {
 				err = errors.Join(apperrors.ErrStartAdminHTTP, err)
 				return err
 			}
+
 			return nil
 		})
 	}
@@ -1296,6 +1325,7 @@ func (r *OauthProxy) Shutdown() error {
 	defer cancel()
 
 	var err error
+
 	servers := []*http.Server{
 		r.Server,
 		r.HTTPServer,
@@ -1304,8 +1334,11 @@ func (r *OauthProxy) Shutdown() error {
 	for idx, srv := range servers {
 		if srv != nil {
 			r.Log.Debug("shutdown http server", zap.Int("num", idx))
-			if errShut := srv.Shutdown(ctx); errShut != nil {
-				if closeErr := srv.Close(); closeErr != nil {
+
+			errShut := srv.Shutdown(ctx)
+			if errShut != nil {
+				closeErr := srv.Close()
+				if closeErr != nil {
 					err = errors.Join(err, closeErr)
 				}
 			}
@@ -1313,8 +1346,10 @@ func (r *OauthProxy) Shutdown() error {
 	}
 
 	r.Log.Debug("waiting for goroutines to finish")
+
 	if r.ErrGroup != nil {
-		if routineErr := r.ErrGroup.Wait(); routineErr != nil {
+		routineErr := r.ErrGroup.Wait()
+		if routineErr != nil {
 			if !errors.Is(routineErr, http.ErrServerClosed) {
 				err = errors.Join(err, routineErr)
 			}
@@ -1343,6 +1378,7 @@ type listenerConfig struct {
 // makeListenerConfig extracts a listener configuration from a proxy Config.
 func makeListenerConfig(config *config.Config) listenerConfig {
 	var minTLSVersion uint16
+
 	switch strings.ToLower(config.TLSMinVersion) {
 	case "":
 		minTLSVersion = 0 // zero means default value
@@ -1377,15 +1413,18 @@ var ErrHostNotConfigured = errors.New("acme/autocert: host not configured")
 //
 //nolint:cyclop
 func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, error) {
-	var listener net.Listener
-	var err error
+	var (
+		listener net.Listener
+		err      error
+	)
 
 	// are we create a unix socket or tcp listener?
 	if strings.HasPrefix(config.listen, "unix://") {
 		socket := config.listen[7:]
 
 		if exists := utils.FileExists(socket); exists {
-			if err = os.Remove(socket); err != nil {
+			err = os.Remove(socket)
+			if err != nil {
 				return nil, err
 			}
 		}
@@ -1395,11 +1434,13 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 			zap.String("interface", config.listen),
 		)
 
-		if listener, err = net.Listen("unix", socket); err != nil {
+		listener, err = net.Listen("unix", socket)
+		if err != nil {
 			return nil, err
 		}
 	} else {
-		if listener, err = net.Listen("tcp", config.listen); err != nil {
+		listener, err = net.Listen("tcp", config.listen)
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -1410,6 +1451,7 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 			"enabling the proxy protocol on listener",
 			zap.String("interface", config.listen),
 		)
+
 		listener = &proxyproto.Listener{Listener: listener}
 	}
 
@@ -1437,7 +1479,8 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 							return ErrHostNotConfigured
 						}
 					} else if config.redirectionURL != "" {
-						if u, err := url.Parse(config.redirectionURL); err != nil {
+						u, err := url.Parse(config.redirectionURL)
+						if err != nil {
 							return err
 						} else if u.Host != host {
 							return ErrHostNotConfigured
@@ -1487,7 +1530,8 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 			}
 
 			// start watching the files for changes
-			if err := rotate.Watch(); err != nil {
+			err = rotate.Watch()
+			if err != nil {
 				return nil, err
 			}
 
@@ -1604,18 +1648,22 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 	}
 
 	var upstreamProxyFunc func(*http.Request) (*url.URL, error)
+
 	if r.Config.UpstreamProxy != "" {
 		prConfig := httpproxy.Config{
 			HTTPProxy:  r.Config.UpstreamProxy,
 			HTTPSProxy: r.Config.UpstreamProxy,
 		}
+
 		if r.Config.UpstreamNoProxy != "" {
 			prConfig.NoProxy = r.Config.UpstreamNoProxy
 		}
+
 		upstreamProxyFunc = func(req *http.Request) (*url.URL, error) {
 			return prConfig.ProxyFunc()(req.URL)
 		}
 	}
+
 	upstreamProxy.Tr = &http.Transport{
 		Dial:                  dialer,
 		Proxy:                 upstreamProxyFunc,
@@ -1644,6 +1692,7 @@ func createTemplates(
 	errorPage string,
 ) *template.Template {
 	var list []string
+
 	if signInPage != "" {
 		logger.Debug(
 			"loading the custom sign in page",
@@ -1690,6 +1739,7 @@ func createTemplates(
 
 type OpenIDRoundTripper struct {
 	http.Header
+
 	rt http.RoundTripper
 }
 
@@ -1699,7 +1749,7 @@ func NewOpenIDRoundTripper(rt http.RoundTripper) OpenIDRoundTripper {
 	if rt == nil {
 		rt = http.DefaultTransport
 	}
-	return OpenIDRoundTripper{Header: make(http.Header), rt: rt}
+	return OpenIDRoundTripper{Header: make(http.Header), rt: rt} //nolint:wsl_v5
 }
 
 func (r OpenIDRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -1715,7 +1765,7 @@ func (r OpenIDRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 	return r.rt.RoundTrip(req)
 }
 
-// newOpenIDProvider initializes the openID configuration, note: the redirection url is deliberately left blank
+// NewOpenIDProvider initializes the openID configuration, note: the redirection url is deliberately left blank
 // in order to retrieve it from the host header on request.
 //
 //nolint:cyclop
@@ -1746,6 +1796,7 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 		if err != nil {
 			return nil, nil, errors.Join(apperrors.ErrLoadIDPCA, err)
 		}
+
 		tlsConfig.RootCAs = pool
 	}
 
@@ -1782,20 +1833,24 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 	for k, v := range r.Config.OpenIDProviderHeaders {
 		openIDRt.Set(k, v)
 	}
+
 	httpCl.Transport = openIDRt
 
 	// see https://github.com/coreos/go-oidc/issues/214
 	// see https://github.com/coreos/go-oidc/pull/260
 	ctx := oidc3.ClientContext(context.Background(), restyClient.GetClient())
-	var provider *oidc3.Provider
-	var err error
+
+	var (
+		provider *oidc3.Provider
+		err      error
+	)
 
 	operation := func() (string, error) {
 		provider, err = oidc3.NewProvider(ctx, r.Config.DiscoveryURL)
 		if err != nil {
 			return "", err
 		}
-		return "", nil
+		return "", nil //nolint:wsl_v5
 	}
 
 	notify := func(err error, delay time.Duration) {
@@ -1807,9 +1862,11 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 	}
 
 	retryType := backoff.WithBackOff(backoff.NewExponentialBackOff())
+
 	//nolint:gosec
 	countOption := backoff.WithMaxTries(uint(r.Config.OpenIDProviderRetryCount))
 	notifyOption := backoff.WithNotify(notify)
+
 	boCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 

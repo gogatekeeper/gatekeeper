@@ -40,7 +40,8 @@ func TestDecodeResourceBad(t *testing.T) {
 		{Option: "uri=/|require-any-role=BAD"},
 	}
 	for i, testCase := range testCases {
-		if _, err := authorization.NewResource().Parse(testCase.Option); err == nil {
+		_, err := authorization.NewResource().Parse(testCase.Option)
+		if err == nil {
 			t.Errorf("case %d should have errored", i)
 		}
 	}
@@ -238,6 +239,7 @@ const rolesList = "1,2,3"
 
 func TestResourceString(t *testing.T) {
 	expectedRoles := []string{"1", "2", "3"}
+
 	resource := &authorization.Resource{
 		Roles: expectedRoles,
 	}

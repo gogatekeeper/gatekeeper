@@ -230,5 +230,5 @@ var (
 	ErrEnableAcceptEncodingHeaderWithCompression = errors.New("cannot enable both compression " +
 		"and accept-encoding header")
 	ErrNegativeOpenIDProviderRetryCount = errors.New("openidprovider retry count must be greater than zero")
-	ErrNegativeisPatRetryCount          = errors.New("openidprovider retry count must be greater than zero")
+	ErrNegativeisPatRetryCount          = errors.New("pat retry count must be greater than zero")
 )

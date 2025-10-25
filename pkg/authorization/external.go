@@ -6,7 +6,9 @@ const (
 	UndefinedAuthz AuthzDecision = iota
 	AllowedAuthz   AuthzDecision = iota
 	DeniedAuthz    AuthzDecision = iota
+)
 
+const (
 	DeniedAuthzString    string = "Denied"
 	AllowedAuthzString   string = "Allowed"
 	UndefinedAuthzString string = "Undefined"
@@ -21,6 +23,7 @@ func (decision AuthzDecision) String() string {
 	case UndefinedAuthz:
 		return UndefinedAuthzString
 	}
+
 	return DeniedAuthzString
 }
 

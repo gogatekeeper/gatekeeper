@@ -80,9 +80,11 @@ func TestDecodeKeyPairs(t *testing.T) {
 			t.Errorf("test case %d should not have failed", idx)
 			continue
 		}
+
 		if !testCase.Ok {
 			continue
 		}
+
 		if !reflect.DeepEqual(keyPair, testCase.KeyPairs) {
 			t.Errorf("test case %d are not equal %v <-> %v", idx, keyPair, testCase.KeyPairs)
 		}
@@ -154,6 +156,7 @@ func BenchmarkUUID(b *testing.B) {
 		if err != nil {
 			b.Errorf("test case should not have failed")
 		}
+
 		_ = s.String()
 	}
 }

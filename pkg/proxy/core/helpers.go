@@ -25,6 +25,7 @@ func RedirectToURL(
 	)
 
 	http.Redirect(wrt, req, url, statusCode)
+
 	return RevokeProxy(logger, req)
 }
 
@@ -35,23 +36,30 @@ func EncryptToken(
 	tokenType string,
 	writer http.ResponseWriter,
 ) (string, error) {
-	var err error
-	var encrypted string
-	if encrypted, err = encryption.EncodeText(rawToken, encKey); err != nil {
+	var (
+		err       error
+		encrypted string
+	)
+
+	encrypted, err = encryption.EncodeText(rawToken, encKey)
+	if err != nil {
 		scope.Logger.Error(
 			"failed to encrypt token",
 			zap.Error(err),
 			zap.String("type", tokenType),
 		)
 		writer.WriteHeader(http.StatusInternalServerError)
+
 		return "", err
 	}
+
 	return encrypted, nil
 }
 
 // RevokeProxy is responsible for stopping middleware from proxying the request.
 func RevokeProxy(logger *zap.Logger, req *http.Request) context.Context {
 	var scope *models.RequestScope
+
 	ctxVal := req.Context().Value(constant.ContextScopeName)
 
 	switch ctxVal {
@@ -59,9 +67,11 @@ func RevokeProxy(logger *zap.Logger, req *http.Request) context.Context {
 		scope = &models.RequestScope{AccessDenied: true}
 	default:
 		var assertOk bool
+
 		scope, assertOk = ctxVal.(*models.RequestScope)
 		if !assertOk {
 			logger.Error(apperrors.ErrAssertionFailed.Error())
+
 			scope = &models.RequestScope{AccessDenied: true}
 		}
 	}

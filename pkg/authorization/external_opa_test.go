@@ -36,6 +36,7 @@ func TestExternalOpa(t *testing.T) {
 				testInput := &OpaTestInput{
 					Name: "Test",
 				}
+
 				reqBody, err := json.Marshal(testInput)
 				if err != nil {
 					return nil, err
@@ -71,6 +72,7 @@ func TestExternalOpa(t *testing.T) {
 				testInput := &OpaTestInput{
 					Name: "Test",
 				}
+
 				reqBody, err := json.Marshal(testInput)
 				if err != nil {
 					return nil, err
@@ -106,6 +108,7 @@ func TestExternalOpa(t *testing.T) {
 				testInput := &OpaTestInput{
 					Name: "Test",
 				}
+
 				reqBody, err := json.Marshal(testInput)
 				if err != nil {
 					return nil, err
@@ -133,6 +136,7 @@ func TestExternalOpa(t *testing.T) {
 				testInput := &OpaTestInput{
 					Name: "Test",
 				}
+
 				reqBody, err := json.Marshal(testInput)
 				if err != nil {
 					return nil, err
@@ -160,6 +164,7 @@ func TestExternalOpa(t *testing.T) {
 				testInput := &OpaTestInput{
 					Name: "Test",
 				}
+
 				reqBody, err := yaml.Marshal(testInput)
 				if err != nil {
 					return nil, err
@@ -195,6 +200,7 @@ func TestExternalOpa(t *testing.T) {
 				testInput := &OpaTestInput{
 					Name: "Test",
 				}
+
 				reqBody, err := yaml.Marshal(testInput)
 				if err != nil {
 					return nil, err
@@ -210,6 +216,7 @@ func TestExternalOpa(t *testing.T) {
 				}
 
 				httpReq.Header.Add("X-Custom", "TESTVALUE")
+
 				return httpReq, nil
 			},
 			AuthzPolicy: `
@@ -235,6 +242,7 @@ func TestExternalOpa(t *testing.T) {
 				ctx := t.Context()
 				authzPolicy := testCase.AuthzPolicy
 				opaAddress := ""
+
 				var server *opaserver.Server
 
 				if testCase.StartOpa {
@@ -248,6 +256,7 @@ func TestExternalOpa(t *testing.T) {
 					opaAddress,
 					"v1/data/authz/allow",
 				)
+
 				authzURL, err := url.ParseRequestURI(authzURI)
 				if err != nil {
 					t.Fatalf("problem parsing authzURL")

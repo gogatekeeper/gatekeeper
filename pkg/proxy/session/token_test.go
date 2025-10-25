@@ -52,6 +52,7 @@ func TestGetRefreshTokenFromCookie(t *testing.T) {
 		}
 		req.AddCookie(testCase.Cookies)
 		token, err := session.GetRefreshTokenFromCookie(req, constant.RefreshCookie)
+
 		switch testCase.Ok {
 		case true:
 			require.NoError(t, err)

@@ -91,7 +91,7 @@ func oauthAuthorizationHandler(
 				logger.Error(
 					apperrors.ErrPKCECodeCreation.Error(),
 				)
-				return
+				return //nolint:wsl_v5
 			}
 
 			codeChallenge := pkce.CodeChallengeS256(codeVerifier)
@@ -100,6 +100,7 @@ func oauthAuthorizationHandler(
 				oauth2.SetAuthURLParam(pkce.ParamCodeChallenge, codeChallenge),
 				oauth2.SetAuthURLParam(pkce.ParamCodeChallengeMethod, pkce.MethodS256),
 			)
+
 			cookManager.DropPKCECookie(wrt, codeVerifier)
 		}
 
@@ -112,9 +113,10 @@ func oauthAuthorizationHandler(
 								apperrors.ErrQueryParamValueMismatch.Error(),
 								zap.String("param", key),
 							)
-							return
+							return //nolint:wsl_v5
 						}
 					}
+
 					authCodeOptions = append(
 						authCodeOptions,
 						oauth2.SetAuthURLParam(key, param),
@@ -203,6 +205,7 @@ func oauthCallbackHandler(
 		}
 
 		scope.Logger.Debug("callback handler")
+
 		accessToken, identityToken, refreshToken, err := session.GetCodeFlowTokens(
 			scope,
 			writer,
@@ -220,6 +223,7 @@ func oauthCallbackHandler(
 		}
 
 		rawAccessToken := accessToken
+
 		oAccToken, _, err := utils.VerifyOIDCTokens(
 			req.Context(),
 			provider,
@@ -232,6 +236,7 @@ func oauthCallbackHandler(
 		if err != nil {
 			scope.Logger.Error(err.Error())
 			accessForbidden(writer, req)
+
 			return
 		}
 
@@ -254,24 +259,29 @@ func oauthCallbackHandler(
 		metrics.OauthTokensMetric.WithLabelValues("issued").Inc()
 
 		oidcTokensCookiesExp := time.Until(oAccToken.Expiry)
+
 		// step: does the response have a refresh token and we do NOT ignore refresh tokens?
 		if enableRefreshTokens && refreshToken != "" {
-			var encrypted string
-			var stdRefreshClaims *jwt.Claims
+			var (
+				encrypted        string
+				stdRefreshClaims *jwt.Claims
+			)
+
 			stdRefreshClaims, err = utils.ParseRefreshToken(refreshToken)
 			if err != nil {
 				scope.Logger.Error(apperrors.ErrParseRefreshToken.Error(), zap.Error(err))
 				accessForbidden(writer, req)
-				return
+				return //nolint:wsl_v5
 			}
 
 			if stdRefreshClaims.Subject != oAccToken.Subject {
 				scope.Logger.Error(apperrors.ErrAccRefreshTokenMismatch.Error(), zap.Error(err))
 				accessForbidden(writer, req)
-				return
+				return //nolint:wsl_v5
 			}
 
 			oidcTokensCookiesExp = time.Until(stdRefreshClaims.Expiry.Time())
+
 			encrypted, err = core.EncryptToken(scope, refreshToken, encryptionKey, "refresh", writer)
 			if err != nil {
 				return
@@ -279,13 +289,15 @@ func oauthCallbackHandler(
 
 			switch {
 			case store != nil:
-				if err = store.Set(req.Context(), utils.GetHashKey(rawAccessToken), encrypted, oidcTokensCookiesExp); err != nil {
+				err = store.Set(req.Context(), utils.GetHashKey(rawAccessToken), encrypted, oidcTokensCookiesExp)
+				if err != nil {
 					scope.Logger.Error(
 						apperrors.ErrSaveTokToStore.Error(),
 						zap.Error(err),
 						zap.String("sub", oAccToken.Subject),
 					)
 					accessForbidden(writer, req)
+
 					return
 				}
 			default:
@@ -295,6 +307,7 @@ func oauthCallbackHandler(
 
 		// step: decode the request variable
 		redirectURI := "/"
+
 		if req.URL.Query().Get("state") != "" {
 			if encodedRequestURI, _ := req.Cookie(cookieRequestURIName); encodedRequestURI != nil {
 				redirectURI = session.GetRequestURIFromCookie(scope, encodedRequestURI)
@@ -312,10 +325,14 @@ func oauthCallbackHandler(
 			redirectURI = postLoginRedirectPath
 		}
 
-		var umaToken string
-		var umaError error
+		var (
+			umaToken string
+			umaError error
+		)
+
 		if enableUma {
 			var methodScope *string
+
 			if enableUmaMethodScope {
 				ms := constant.UmaMethodScope + req.Method
 				methodScope = &ms
@@ -334,7 +351,9 @@ func oauthCallbackHandler(
 				accessToken,
 				methodScope,
 			)
+
 			umaError = erru
+
 			if token != nil {
 				umaToken = token.AccessToken
 			}
@@ -361,6 +380,7 @@ func oauthCallbackHandler(
 		}
 
 		cookManager.DropAccessTokenCookie(req, writer, accessToken, oidcTokensCookiesExp)
+
 		if enableIDTokenCookie {
 			cookManager.DropIDTokenCookie(req, writer, identityToken, oidcTokensCookiesExp)
 		}
@@ -373,7 +393,7 @@ func oauthCallbackHandler(
 		if umaError != nil {
 			scope.Logger.Error(umaError.Error())
 			accessForbidden(writer, req)
-			return
+			return //nolint:wsl_v5
 		}
 
 		scope.Logger.Debug("redirecting to", zap.String("location", redirectURI))
@@ -407,7 +427,7 @@ func loginHandler(
 		if !assertOk {
 			logger.Error(apperrors.ErrAssertionFailed.Error())
 			writer.WriteHeader(http.StatusInternalServerError)
-			return
+			return //nolint:wsl_v5
 		}
 
 		ctx, cancel := context.WithTimeout(
@@ -438,8 +458,8 @@ func loginHandler(
 			}
 
 			conf := newOAuth2Config(getRedirectionURL(writer, req))
-
 			start := time.Now()
+
 			token, err := conf.PasswordCredentialsToken(ctx, username, password)
 			if err != nil {
 				if !token.Valid() {
@@ -471,6 +491,7 @@ func loginHandler(
 				zap.String("groups", strings.Join(identity.Groups, ",")))
 
 			writer.Header().Set(constant.HeaderContentType, "application/json")
+
 			idToken, assertOk := token.Extra("id_token").(string)
 			if !assertOk {
 				return http.StatusInternalServerError,
@@ -487,15 +508,17 @@ func loginHandler(
 			plainIDToken := idToken
 
 			if enableEncryptedToken || forceEncryptedCookie {
-				if accessToken, err = encryption.EncodeText(accessToken, encryptionKey); err != nil {
+				accessToken, err = encryption.EncodeText(accessToken, encryptionKey)
+				if err != nil {
 					scope.Logger.Error(apperrors.ErrEncryptAccToken.Error(), zap.Error(err))
-					return http.StatusInternalServerError,
+					return http.StatusInternalServerError, //nolint:wsl_v5
 						errors.Join(apperrors.ErrEncryptAccToken, err)
 				}
 
-				if idToken, err = encryption.EncodeText(idToken, encryptionKey); err != nil {
+				idToken, err = encryption.EncodeText(idToken, encryptionKey)
+				if err != nil {
 					scope.Logger.Error(apperrors.ErrEncryptIDToken.Error(), zap.Error(err))
-					return http.StatusInternalServerError,
+					return http.StatusInternalServerError, //nolint:wsl_v5
 						errors.Join(apperrors.ErrEncryptIDToken, err)
 				}
 			}
@@ -505,7 +528,7 @@ func loginHandler(
 				refreshToken, err = encryption.EncodeText(token.RefreshToken, encryptionKey)
 				if err != nil {
 					scope.Logger.Error(apperrors.ErrEncryptRefreshToken.Error(), zap.Error(err))
-					return http.StatusInternalServerError,
+					return http.StatusInternalServerError, //nolint:wsl_v5
 						errors.Join(apperrors.ErrEncryptRefreshToken, err)
 				}
 
@@ -532,7 +555,7 @@ func loginHandler(
 				refreshTokenObj, errRef := jwt.ParseSigned(token.RefreshToken, constant.SignatureAlgs[:])
 				if errRef != nil {
 					return http.StatusInternalServerError,
-						errors.Join(apperrors.ErrParseRefreshToken, err)
+						errors.Join(apperrors.ErrParseRefreshToken, errRef)
 				}
 
 				stdRefreshClaims := &jwt.Claims{}
@@ -548,7 +571,9 @@ func loginHandler(
 				case true:
 					rCtx, rCancel := context.WithTimeout(ctx, constant.RedisTimeout)
 					defer rCancel()
-					if err = store.Set(rCtx, utils.GetHashKey(token.AccessToken), refreshToken, expiration); err != nil {
+
+					err = store.Set(rCtx, utils.GetHashKey(token.AccessToken), refreshToken, expiration)
+					if err != nil {
 						scope.Logger.Error(
 							apperrors.ErrSaveTokToStore.Error(),
 							zap.Error(err),
@@ -564,6 +589,7 @@ func loginHandler(
 					accessToken,
 					time.Until(identity.ExpiresAt),
 				)
+
 				if enableIDTokenCookie {
 					cookManager.DropIDTokenCookie(
 						req,
@@ -576,9 +602,13 @@ func loginHandler(
 
 			// @metric a token has been issued
 			metrics.OauthTokensMetric.WithLabelValues("login").Inc()
-			tokenScope := token.Extra("scope")
-			var tScope string
 
+			var (
+				tScope string
+				resp   models.TokenResponse
+			)
+
+			tokenScope := token.Extra("scope")
 			if tokenScope != nil {
 				tScope, assertOk = tokenScope.(string)
 				if !assertOk {
@@ -586,8 +616,6 @@ func loginHandler(
 						apperrors.ErrAssertionFailed
 				}
 			}
-
-			var resp models.TokenResponse
 
 			if enableEncryptedToken {
 				resp = models.TokenResponse{
@@ -657,17 +685,19 @@ func logoutHandler(
 	httpClient *http.Client,
 ) func(wrt http.ResponseWriter, req *http.Request) {
 	return func(writer http.ResponseWriter, req *http.Request) {
-		var redirectURL string
-		var refresh string
-		var err error
-		var identityToken string
-		var idToken string
+		var (
+			redirectURL   string
+			refresh       string
+			err           error
+			identityToken string
+			idToken       string
+		)
 
 		scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
 		if !assertOk {
 			logger.Error(apperrors.ErrAssertionFailed.Error())
 			writer.WriteHeader(http.StatusInternalServerError)
-			return
+			return //nolint:wsl_v5
 		}
 
 		if postLogoutRedirectURI != "" {
@@ -702,7 +732,7 @@ func logoutHandler(
 				} else {
 					scope.Logger.Error(err.Error())
 					accessForbidden(writer, req)
-					return
+					return //nolint:wsl_v5
 				}
 			}
 
@@ -712,7 +742,7 @@ func logoutHandler(
 					if err != nil {
 						scope.Logger.Error(err.Error())
 						accessForbidden(writer, req)
-						return
+						return //nolint:wsl_v5
 					}
 				}
 
@@ -729,20 +759,22 @@ func logoutHandler(
 						apperrors.ErrAccTokenVerifyFailure.Error(),
 						zap.Error(err),
 					)
+
 					accessForbidden(writer, req)
-					return
+					return //nolint:wsl_v5
 				}
 			}
 		} else {
 			// step: can either use the access token or the refresh token
-			if refresh, _, err = session.RetrieveRefreshToken(
+			refresh, _, err = session.RetrieveRefreshToken(
 				store,
 				cookieRefreshName,
 				encryptionKey,
 				req,
 				user,
 				enableOptionalEncryption,
-			); err == nil {
+			)
+			if err == nil {
 				identityToken = refresh
 			}
 		}
@@ -757,7 +789,9 @@ func logoutHandler(
 			go func(ctx context.Context) {
 				rCtx, rCancel := context.WithTimeout(ctx, constant.RedisTimeout)
 				defer rCancel()
-				if err := store.Delete(rCtx, utils.GetHashKey(user.RawToken)); err != nil {
+
+				err := store.Delete(rCtx, utils.GetHashKey(user.RawToken))
+				if err != nil {
 					scope.Logger.Error(
 						apperrors.ErrDelTokFromStore.Error(),
 						zap.Error(err),
@@ -820,7 +854,7 @@ func logoutHandler(
 			if err != nil {
 				scope.Logger.Error(apperrors.ErrCreateRevocationReq.Error(), zap.Error(err))
 				writer.WriteHeader(http.StatusInternalServerError)
-				return
+				return //nolint:wsl_v5
 			}
 
 			// step: add the authentication headers and content-type
@@ -828,11 +862,12 @@ func logoutHandler(
 			request.Header.Set(constant.HeaderContentType, "application/x-www-form-urlencoded")
 
 			start := time.Now()
+
 			response, err := httpClient.Do(request)
 			if err != nil {
 				scope.Logger.Error(apperrors.ErrRevocationReqFailure.Error(), zap.Error(err))
 				writer.WriteHeader(http.StatusInternalServerError)
-				return
+				return //nolint:wsl_v5
 			}
 
 			defer response.Body.Close()
@@ -857,7 +892,7 @@ func logoutHandler(
 				)
 
 				writer.WriteHeader(http.StatusInternalServerError)
-				return
+				return //nolint:wsl_v5
 			}
 		}
 

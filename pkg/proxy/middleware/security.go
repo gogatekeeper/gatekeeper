@@ -48,9 +48,11 @@ func SecurityMiddleware(
 				return
 			}
 
-			if err := secure.Process(wrt, req); err != nil {
+			err := secure.Process(wrt, req)
+			if err != nil {
 				scope.Logger.Warn("failed security middleware", zap.Error(err))
 				accessForbidden(wrt, req)
+
 				return
 			}
 
@@ -78,6 +80,7 @@ func HmacMiddleware(logger *zap.Logger, encKey string) func(http.Handler) http.H
 			if expectedMAC == "" {
 				logger.Debug(apperrors.ErrHmacHeaderEmpty.Error())
 				wrt.WriteHeader(http.StatusBadRequest)
+
 				return
 			}
 
@@ -89,6 +92,7 @@ func HmacMiddleware(logger *zap.Logger, encKey string) func(http.Handler) http.H
 			if reqHmac != expectedMAC {
 				logger.Debug(apperrors.ErrHmacMismatch.Error())
 				wrt.WriteHeader(http.StatusBadRequest)
+
 				return
 			}
 
@@ -119,6 +123,7 @@ func AdmissionMiddleware(
 				logger.Error(apperrors.ErrAssertionFailed.Error())
 				return
 			}
+
 			if scope.AccessDenied {
 				next.ServeHTTP(wrt, req)
 				return
@@ -136,20 +141,24 @@ func AdmissionMiddleware(
 				lLog.Warn("access denied, invalid roles",
 					zap.String("roles", resource.GetRoles()))
 				accessForbidden(wrt, req)
+
 				return
 			}
 
 			if len(resource.Headers) > 0 {
 				var reqHeaders []string
+
 				for _, resVal := range resource.Headers {
 					resVals := strings.Split(resVal, ":")
 					name := resVals[0]
 					canonName := http.CanonicalHeaderKey(name)
+
 					values, ok := req.Header[canonName]
 					if !ok {
 						lLog.Warn("access denied, invalid headers",
 							zap.String("headers", resource.GetHeaders()))
 						accessForbidden(wrt, req)
+
 						return
 					}
 
@@ -168,6 +177,7 @@ func AdmissionMiddleware(
 					lLog.Warn("access denied, invalid headers",
 						zap.String("headers", resource.GetHeaders()))
 					accessForbidden(wrt, req)
+
 					return
 				}
 			}
@@ -177,6 +187,7 @@ func AdmissionMiddleware(
 				lLog.Warn("access denied, invalid groups",
 					zap.String("groups", strings.Join(resource.Groups, ",")))
 				accessForbidden(wrt, req)
+
 				return
 			}
 

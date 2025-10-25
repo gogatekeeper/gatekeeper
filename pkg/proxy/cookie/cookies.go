@@ -59,6 +59,7 @@ func (cm *Manager) DropCookie(
 	}
 
 	path := "/"
+
 	switch {
 	case cm.CookiePath != "":
 		path = cm.CookiePath
@@ -91,7 +92,7 @@ func (cm *Manager) DropCookie(
 	http.SetCookie(wrt, cookie)
 }
 
-// maxCookieChunkSize calculates max cookie chunk size, which can be used for cookie value
+// GetMaxCookieChunkLength calculates max cookie chunk size, which can be used for cookie value
 // this seems to be not useful as many browsers have limits of all cookies per domain = 4096 bytes.
 func (cm *Manager) GetMaxCookieChunkLength(
 	req *http.Request,
@@ -129,39 +130,7 @@ func (cm *Manager) GetMaxCookieChunkLength(
 	return maxCookieChunkLength
 }
 
-// dropCookieWithChunks drops a cookie from the response, taking into account possible chunks.
-func (cm *Manager) dropCookieWithChunks(
-	req *http.Request,
-	wrt http.ResponseWriter,
-	name,
-	value string,
-	duration time.Duration,
-) {
-	maxCookieChunkLength := cm.GetMaxCookieChunkLength(req, name)
-
-	if len(value) <= maxCookieChunkLength {
-		cm.DropCookie(wrt, name, value, duration)
-	} else {
-		// write divided cookies because payload is too long for single cookie.
-		cm.DropCookie(wrt, name, value[0:maxCookieChunkLength], duration)
-
-		for idx := maxCookieChunkLength; idx < len(value); idx += maxCookieChunkLength {
-			end := idx + maxCookieChunkLength
-			if end > len(value) {
-				end = len(value)
-			}
-
-			cm.DropCookie(
-				wrt,
-				name+"-"+strconv.Itoa(idx/maxCookieChunkLength),
-				value[idx:end],
-				duration,
-			)
-		}
-	}
-}
-
-// dropAccessTokenCookie drops a access token cookie.
+// DropAccessTokenCookie drops a access token cookie.
 func (cm *Manager) DropAccessTokenCookie(
 	req *http.Request,
 	w http.ResponseWriter,
@@ -181,7 +150,7 @@ func (cm *Manager) DropRefreshTokenCookie(
 	cm.dropCookieWithChunks(req, w, cm.CookieRefreshName, value, duration)
 }
 
-// dropIdTokenCookie drops a id token cookie.
+// DropIDTokenCookie drops a id token cookie.
 func (cm *Manager) DropIDTokenCookie(
 	req *http.Request,
 	w http.ResponseWriter,
@@ -191,7 +160,7 @@ func (cm *Manager) DropIDTokenCookie(
 	cm.dropCookieWithChunks(req, w, cm.CookieIDTokenName, value, duration)
 }
 
-// dropUMATokenCookie drops a uma token cookie.
+// DropUMATokenCookie drops a uma token cookie.
 func (cm *Manager) DropUMATokenCookie(
 	req *http.Request,
 	w http.ResponseWriter,
@@ -245,7 +214,6 @@ func (cm *Manager) ClearCookie(req *http.Request, wrt http.ResponseWriter, name 
 		_, err := req.Cookie(
 			name + "-" + strconv.Itoa(idx),
 		)
-
 		if err == nil {
 			cm.DropCookie(
 				wrt,
@@ -259,7 +227,7 @@ func (cm *Manager) ClearCookie(req *http.Request, wrt http.ResponseWriter, name 
 	}
 }
 
-// clearRefreshSessionCookie clears the session cookie.
+// ClearRefreshTokenCookie clears the session cookie.
 func (cm *Manager) ClearRefreshTokenCookie(req *http.Request, wrt http.ResponseWriter) {
 	cm.ClearCookie(req, wrt, cm.CookieRefreshName)
 }
@@ -290,7 +258,7 @@ func (cm *Manager) ClearStateParameterCookie(req *http.Request, wrt http.Respons
 	cm.ClearCookie(req, wrt, cm.CookieOAuthStateName)
 }
 
-// findCookie looks for a cookie in a list of cookies.
+// FindCookie looks for a cookie in a list of cookies.
 func FindCookie(name string, cookies []*http.Cookie) *http.Cookie {
 	for _, cookie := range cookies {
 		if cookie.Name == name {
@@ -301,7 +269,7 @@ func FindCookie(name string, cookies []*http.Cookie) *http.Cookie {
 	return nil
 }
 
-// filterCookies is responsible for censoring any cookies we don't want sent.
+// FilterCookies is responsible for censoring any cookies we don't want sent.
 func FilterCookies(req *http.Request, filter []string) error {
 	// @NOTE: there doesn't appear to be a way of removing a cookie from the http.Request as
 	// AddCookie() just append
@@ -315,7 +283,9 @@ func FilterCookies(req *http.Request, filter []string) error {
 		for _, n := range filter {
 			if strings.HasPrefix(cookie.Name, n) {
 				req.AddCookie(&http.Cookie{Name: cookie.Name, Value: "censored"})
+
 				found = true
+
 				break
 			}
 		}
@@ -326,4 +296,36 @@ func FilterCookies(req *http.Request, filter []string) error {
 	}
 
 	return nil
+}
+
+// dropCookieWithChunks drops a cookie from the response, taking into account possible chunks.
+func (cm *Manager) dropCookieWithChunks(
+	req *http.Request,
+	wrt http.ResponseWriter,
+	name,
+	value string,
+	duration time.Duration,
+) {
+	maxCookieChunkLength := cm.GetMaxCookieChunkLength(req, name)
+
+	if len(value) <= maxCookieChunkLength {
+		cm.DropCookie(wrt, name, value, duration)
+	} else {
+		// write divided cookies because payload is too long for single cookie.
+		cm.DropCookie(wrt, name, value[0:maxCookieChunkLength], duration)
+
+		for idx := maxCookieChunkLength; idx < len(value); idx += maxCookieChunkLength {
+			end := idx + maxCookieChunkLength
+			if end > len(value) {
+				end = len(value)
+			}
+
+			cm.DropCookie(
+				wrt,
+				name+"-"+strconv.Itoa(idx/maxCookieChunkLength),
+				value[idx:end],
+				duration,
+			)
+		}
+	}
 }
