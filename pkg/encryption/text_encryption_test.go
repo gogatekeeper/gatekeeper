@@ -64,6 +64,7 @@ func BenchmarkEncryptDataBlock(b *testing.B) {
 	}
 }
 
+//nolint:wsl_v5
 func BenchmarkEncodeText(b *testing.B) {
 	text := string(fakePlainText)
 	key := string(fakeKey)
@@ -72,11 +73,13 @@ func BenchmarkEncodeText(b *testing.B) {
 	}
 }
 
+//nolint:wsl_v5
 func BenchmarkDecodeText(b *testing.B) {
 	t := string(fakeCipherText)
 	k := string(fakeKey)
 	for b.Loop() {
-		if _, err := encryption.DecodeText(t, k); err != nil {
+		_, err := encryption.DecodeText(t, k)
+		if err != nil {
 			b.FailNow()
 		}
 	}

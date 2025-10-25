@@ -53,8 +53,10 @@ func getPAT(
 	)
 	defer cancel()
 
-	var token *gocloak.JWT
-	var err error
+	var (
+		token *gocloak.JWT
+		err   error
+	)
 
 	switch grantType {
 	case configcore.GrantTypeClientCreds:
@@ -87,6 +89,7 @@ func getPAT(
 	}
 
 	stdClaims := &jwt.Claims{}
+
 	err = parsedToken.UnsafeClaimsWithoutVerification(stdClaims)
 	if err != nil {
 		return nil, nil, err
@@ -121,12 +124,17 @@ func refreshPAT(
 	}
 
 	for {
-		var token *gocloak.JWT
-		var claims *jwt.Claims
+		var (
+			token  *gocloak.JWT
+			claims *jwt.Claims
+		)
+
 		operation := func() (string, error) {
 			var err error
+
 			pCtx, cancel := context.WithCancel(ctx)
 			defer cancel()
+
 			token, claims, err = getPAT(
 				pCtx,
 				clientID,
@@ -138,6 +146,7 @@ func refreshPAT(
 				forwardingUsername,
 				forwardingPassword,
 			)
+
 			return "", err
 		}
 
@@ -152,8 +161,10 @@ func refreshPAT(
 		//nolint:gosec
 		countOption := backoff.WithMaxTries(uint(patRetryCount))
 		notifyOption := backoff.WithNotify(notify)
+
 		boCtx, cancel := context.WithCancel(ctx)
 		defer cancel()
+
 		_, err := backoff.Retry(boCtx, operation, retryType, countOption, notifyOption)
 		if err != nil {
 			return err
@@ -165,7 +176,7 @@ func refreshPAT(
 
 		if !initialized {
 			done <- true
-			initialized = true
+			initialized = true //nolint:wsl_v5
 		}
 
 		expiration := claims.Expiry.Time()
@@ -181,7 +192,7 @@ func refreshPAT(
 		case <-ctx.Done():
 			logger.Info("shutdown PAT refresh routine")
 			refreshTimer.Stop()
-			return nil
+			return nil //nolint:wsl_v5
 		case <-refreshTimer.C:
 		}
 	}
@@ -216,7 +227,7 @@ func WithUMAIdentity(
 		if strings.Contains(err.Error(), "token is expired") {
 			return authorization.DeniedAuthz, apperrors.ErrUMATokenExpired
 		}
-		return authorization.DeniedAuthz, err
+		return authorization.DeniedAuthz, err //nolint:wsl_v5
 	}
 
 	umaUser, err := session.ExtractIdentity(token)
@@ -271,12 +282,14 @@ func getRPT(
 	if len(resources) == 0 {
 		return nil, apperrors.ErrNoIDPResourceForPath
 	}
+
 	if len(resources) > 1 {
 		return nil, apperrors.ErrTooManyResources
 	}
 
 	resourceID := resources[0].ID
 	resourceScopes := make([]string, 0)
+
 	if len(*resources[0].ResourceScopes) == 0 {
 		return nil, fmt.Errorf(
 			"%w, resource: %s",

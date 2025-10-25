@@ -36,6 +36,7 @@ const (
 
 func newTestCertificateRotator(t *testing.T) *encryption.CertificationRotation {
 	t.Helper()
+
 	counter := prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Name: "proxy_certificate_rotation_total",
@@ -81,12 +82,13 @@ func TestGetCertificate(t *testing.T) {
 }
 
 func TestLoadCertificate(t *testing.T) {
-	c := newTestCertificateRotator(t)
-	crt, err := c.GetCertificate(nil)
+	cRotator := newTestCertificateRotator(t)
+	crt, err := cRotator.GetCertificate(nil)
 	require.NoError(t, err)
 	assert.NotEmpty(t, crt)
-	_ = c.StoreCertificate(tls.Certificate{})
-	crt, err = c.GetCertificate(nil)
+
+	_ = cRotator.StoreCertificate(tls.Certificate{})
+	crt, err = cRotator.GetCertificate(nil)
 	require.NoError(t, err)
 	assert.Equal(t, &tls.Certificate{}, crt)
 }

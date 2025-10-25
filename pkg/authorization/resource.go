@@ -55,9 +55,8 @@ func NewResource() *Resource {
 	}
 }
 
-/*
-	parse decodes a resource definition
-*/
+// Parse decodes a resource definition
+//
 //nolint:cyclop
 func (r *Resource) Parse(resource string) (*Resource, error) {
 	if resource == "" {
@@ -102,6 +101,7 @@ func (r *Resource) Parse(resource string) (*Resource, error) {
 			r.Roles = strings.Split(keyPair[1], ",")
 		case "headers":
 			r.Headers = strings.Split(strings.ToLower(keyPair[1]), ",")
+
 			colonCount := strings.Count(keyPair[1], ":")
 			if len(r.Headers) != colonCount {
 				return nil, errors.New("headers key and value should be split by colon")
@@ -149,7 +149,7 @@ func (r *Resource) Parse(resource string) (*Resource, error) {
 	return r, nil
 }
 
-// valid ensure the resource is valid
+// Valid ensure the resource is valid
 //
 //nolint:cyclop
 func (r *Resource) Valid() error {
@@ -175,6 +175,7 @@ func (r *Resource) Valid() error {
 			r.URL,
 		)
 	}
+
 	if strings.HasSuffix(r.URL, "/") && !r.WhiteListed {
 		if r.URL != "/" {
 			return fmt.Errorf(

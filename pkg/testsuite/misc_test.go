@@ -101,16 +101,19 @@ func TestRedirectToAuthorization(t *testing.T) {
 
 func assertAlmostEquals(t *testing.T, expected time.Duration, actual time.Duration) {
 	t.Helper()
+
 	delta := expected - actual
 	if delta < 0 {
 		delta = -delta
 	}
+
 	assert.Less(t, delta, time.Duration(1)*time.Minute, "Diff should be less than a minute but delta is %s", delta)
 }
 
 func TestGetAccessCookieExpiration_NoExp(t *testing.T) {
 	token, err := NewTestToken("foo").GetToken()
 	require.NoError(t, err)
+
 	c := newFakeKeycloakConfig()
 	c.AccessTokenDuration = time.Duration(1) * time.Hour
 	proxy := newFakeProxy(c, &fakeAuthConfig{}).proxy
@@ -123,6 +126,7 @@ func TestGetAccessCookieExpiration_ZeroExp(t *testing.T) {
 	ft.SetExpiration(time.Unix(0, 0))
 	token, err := ft.GetToken()
 	require.NoError(t, err)
+
 	c := newFakeKeycloakConfig()
 	c.AccessTokenDuration = time.Duration(1) * time.Hour
 	proxy := newFakeProxy(c, &fakeAuthConfig{}).proxy
@@ -136,6 +140,7 @@ func TestGetAccessCookieExpiration_PastExp(t *testing.T) {
 	ft.SetExpiration(time.Now().AddDate(-1, 0, 0))
 	token, err := ft.GetToken()
 	require.NoError(t, err)
+
 	c := newFakeKeycloakConfig()
 	c.AccessTokenDuration = time.Duration(1) * time.Hour
 	proxy := newFakeProxy(c, &fakeAuthConfig{}).proxy
@@ -147,6 +152,7 @@ func TestGetAccessCookieExpiration_ValidExp(t *testing.T) {
 	fToken := NewTestToken("foo")
 	token, err := fToken.GetToken()
 	require.NoError(t, err)
+
 	c := newFakeKeycloakConfig()
 	c.AccessTokenDuration = time.Duration(1) * time.Hour
 	proxy := newFakeProxy(c, &fakeAuthConfig{}).proxy

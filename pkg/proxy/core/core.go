@@ -27,6 +27,7 @@ func GetVersion() string {
 		if err != nil {
 			return "unable to parse compiled time"
 		}
+
 		Version = fmt.Sprintf("%s (git+sha: %s, built: %s)", release, gitsha, time.Unix(tm, 0).Format("02-01-2006"))
 	}
 

@@ -106,12 +106,14 @@ func NewTestToken(issuer string) *FakeToken {
 
 func (t *FakeToken) GetToken() (string, error) {
 	input := []byte("")
+
 	block, _ := pem.Decode([]byte(fakePrivateKey))
 	if block != nil {
 		input = block.Bytes
 	}
 
 	var priv interface{}
+
 	priv, err0 := x509.ParsePKCS8PrivateKey(input)
 	if err0 != nil {
 		return "", err0
@@ -119,12 +121,14 @@ func (t *FakeToken) GetToken() (string, error) {
 
 	alg := jose2.SignatureAlgorithm("RS256")
 	privKey := &jose2.JSONWebKey{Key: priv, Algorithm: string(alg), KeyID: "test-kid"}
+
 	signer, err := jose2.NewSigner(jose2.SigningKey{Algorithm: alg, Key: privKey}, nil)
 	if err != nil {
 		return "", err
 	}
 
 	b := jwt.Signed(signer).Claims(&t.Claims)
+
 	jwt, err := b.Serialize()
 	if err != nil {
 		return "", err
@@ -135,26 +139,29 @@ func (t *FakeToken) GetToken() (string, error) {
 
 func (t *FakeToken) GetUnsignedToken() (string, error) {
 	input := []byte("")
+
 	block, _ := pem.Decode([]byte(fakePrivateKey))
 	if block != nil {
 		input = block.Bytes
 	}
 
 	var priv interface{}
-	priv, err0 := x509.ParsePKCS8PrivateKey(input)
 
+	priv, err0 := x509.ParsePKCS8PrivateKey(input)
 	if err0 != nil {
 		return "", err0
 	}
 
 	alg := jose2.SignatureAlgorithm("RS256")
 	privKey := &jose2.JSONWebKey{Key: priv, Algorithm: string(alg), KeyID: ""}
+
 	signer, err := jose2.NewSigner(jose2.SigningKey{Algorithm: alg, Key: privKey}, nil)
 	if err != nil {
 		return "", err
 	}
 
 	b := jwt.Signed(signer).Claims(&t.Claims)
+
 	jwt, err := b.Serialize()
 	if err != nil {
 		return "", err
@@ -296,6 +303,7 @@ func newFakeAuthServer(config *fakeAuthConfig) *fakeAuthServer {
 	certBlock, _ := pem.Decode([]byte(fakeCert))
 
 	var cert *x509.Certificate
+
 	cert, err := x509.ParseCertificate(certBlock.Bytes)
 	if err != nil {
 		panic("failed to parse certificate from block, error: " + err.Error())
@@ -346,6 +354,7 @@ func newFakeAuthServer(config *fakeAuthConfig) *fakeAuthServer {
 	if err != nil {
 		panic("unable to create fake oauth service, error: " + err.Error())
 	}
+
 	service.location = location
 	service.resourceSetHandlerFailure = config.ResourceSetHandlerFailure
 
@@ -360,6 +369,69 @@ func newFakeAuthServer(config *fakeAuthConfig) *fakeAuthServer {
 
 func (r *fakeAuthServer) Close() {
 	r.server.Close()
+}
+
+func (r *fakeAuthServer) ResourcesHandler(w http.ResponseWriter, _ *http.Request) {
+	response := []string{"6ef1b62e-0fd4-47f2-81fc-eead97a01c22"}
+	renderJSON(http.StatusOK, w, response)
+}
+
+func (r *fakeAuthServer) ResourceHandler(wrt http.ResponseWriter, _ *http.Request) {
+	if r.resourceSetHandlerFailure {
+		renderJSON(http.StatusNotFound, wrt, []string{})
+	}
+
+	type Resource struct {
+		Name               string              `json:"name"`
+		Type               string              `json:"type"`
+		Owner              struct{ ID string } `json:"owner"`
+		OwnerManagedAccess bool                `json:"ownerManagedAccess"`
+		Attributes         struct{}            `json:"attributes"`
+		ID                 string              `json:"_id"`
+		URIS               []string            `json:"uris"`
+		ResourceScopes     []struct {
+			Name string `json:"name"`
+		} `json:"resource_scopes"`
+		Scopes []struct {
+			Name string `json:"name"`
+		} `json:"scopes"`
+	}
+
+	response := Resource{
+		Name:               "Default Resource",
+		Type:               "urn:test-client:resources:default",
+		Owner:              struct{ ID string }{ID: "6ef1b62e-0fd4-47f2-81fc-eead97a01c22"},
+		OwnerManagedAccess: false,
+		Attributes:         struct{}{},
+		ID:                 "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",
+		URIS:               []string{"/*"},
+		ResourceScopes: []struct {
+			Name string `json:"name"`
+		}{{Name: "test"}},
+		Scopes: []struct {
+			Name string `json:"name"`
+		}{{Name: "test"}},
+	}
+	renderJSON(http.StatusOK, wrt, response)
+}
+
+func (r *fakeAuthServer) PermissionTicketHandler(wrt http.ResponseWriter, _ *http.Request) {
+	token := NewTestToken(r.getLocation())
+
+	acc, err := token.GetToken()
+	if err != nil {
+		wrt.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	type Ticket struct {
+		Ticket string `json:"ticket"`
+	}
+
+	response := Ticket{
+		Ticket: acc,
+	}
+	renderJSON(http.StatusOK, wrt, response)
 }
 
 func (r *fakeAuthServer) getProxyURL() string {
@@ -464,6 +536,7 @@ func (r *fakeAuthServer) revocationHandler(wrt http.ResponseWriter, req *http.Re
 
 func (r *fakeAuthServer) userInfoHandler(wrt http.ResponseWriter, req *http.Request) {
 	items := strings.Split(req.Header.Get(constant.AuthorizationHeader), " ")
+
 	authItems := 2
 	if len(items) != authItems {
 		wrt.WriteHeader(http.StatusUnauthorized)
@@ -499,6 +572,7 @@ func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Requ
 	refreshExpires := time.Now().Add(time.Duration(refreshExpirationFactor) * r.expiration)
 	token := NewTestToken(r.getLocation())
 	token.SetExpiration(expires)
+
 	refreshToken := NewTestToken(r.getLocation())
 	refreshToken.SetExpiration(refreshExpires)
 	refreshToken.Claims.Aud = defTestTokenClaims.Aud
@@ -556,6 +630,7 @@ func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Requ
 				RefreshToken: jwtRefresh,
 				ExpiresIn:    float64(expires.UTC().Second()),
 			})
+
 			return
 		}
 
@@ -586,6 +661,7 @@ func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Requ
 				RefreshToken: jwtRefresh,
 				ExpiresIn:    float64(expires.UTC().Second()),
 			})
+
 			return
 		}
 
@@ -617,6 +693,7 @@ func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Requ
 			}
 
 			expRefresh := ExpiredRefresh{"invalid_grant", "Token is not active"}
+
 			respBody, err := json.Marshal(expRefresh)
 			if err != nil {
 				writer.WriteHeader(http.StatusInternalServerError)
@@ -664,70 +741,9 @@ func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Requ
 	}
 }
 
-func (r *fakeAuthServer) ResourcesHandler(w http.ResponseWriter, _ *http.Request) {
-	response := []string{"6ef1b62e-0fd4-47f2-81fc-eead97a01c22"}
-	renderJSON(http.StatusOK, w, response)
-}
-
-func (r *fakeAuthServer) ResourceHandler(wrt http.ResponseWriter, _ *http.Request) {
-	if r.resourceSetHandlerFailure {
-		renderJSON(http.StatusNotFound, wrt, []string{})
-	}
-
-	type Resource struct {
-		Name               string              `json:"name"`
-		Type               string              `json:"type"`
-		Owner              struct{ ID string } `json:"owner"`
-		OwnerManagedAccess bool                `json:"ownerManagedAccess"`
-		Attributes         struct{}            `json:"attributes"`
-		ID                 string              `json:"_id"`
-		URIS               []string            `json:"uris"`
-		ResourceScopes     []struct {
-			Name string `json:"name"`
-		} `json:"resource_scopes"`
-		Scopes []struct {
-			Name string `json:"name"`
-		} `json:"scopes"`
-	}
-
-	response := Resource{
-		Name:               "Default Resource",
-		Type:               "urn:test-client:resources:default",
-		Owner:              struct{ ID string }{ID: "6ef1b62e-0fd4-47f2-81fc-eead97a01c22"},
-		OwnerManagedAccess: false,
-		Attributes:         struct{}{},
-		ID:                 "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",
-		URIS:               []string{"/*"},
-		ResourceScopes: []struct {
-			Name string `json:"name"`
-		}{{Name: "test"}},
-		Scopes: []struct {
-			Name string `json:"name"`
-		}{{Name: "test"}},
-	}
-	renderJSON(http.StatusOK, wrt, response)
-}
-
-func (r *fakeAuthServer) PermissionTicketHandler(wrt http.ResponseWriter, _ *http.Request) {
-	token := NewTestToken(r.getLocation())
-	acc, err := token.GetToken()
-	if err != nil {
-		wrt.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	type Ticket struct {
-		Ticket string `json:"ticket"`
-	}
-
-	response := Ticket{
-		Ticket: acc,
-	}
-	renderJSON(http.StatusOK, wrt, response)
-}
-
 func getRandomString(n int) (string, error) {
 	letterRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
 	runes := make([]rune, n)
 	for idx := range runes {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(n)))
@@ -737,14 +753,17 @@ func getRandomString(n int) (string, error) {
 
 		runes[idx] = letterRunes[num.Int64()]
 	}
+
 	return string(runes), nil
 }
 
-func renderJSON(code int, w http.ResponseWriter, data interface{}) {
-	w.Header().Set(constant.HeaderContentType, "application/json")
-	w.WriteHeader(code)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+func renderJSON(code int, wrt http.ResponseWriter, data interface{}) {
+	wrt.Header().Set(constant.HeaderContentType, "application/json")
+	wrt.WriteHeader(code)
+
+	err := json.NewEncoder(wrt).Encode(data)
+	if err != nil {
+		wrt.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }

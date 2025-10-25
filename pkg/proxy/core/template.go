@@ -24,7 +24,8 @@ func AccessForbidden(
 		if page != "" {
 			name := path.Base(page)
 
-			if err := tmpl.ExecuteTemplate(wrt, name, tags); err != nil {
+			err := tmpl.ExecuteTemplate(wrt, name, tags)
+			if err != nil {
 				logger.Error(
 					"failed to render the template",
 					zap.Error(err),
@@ -45,12 +46,14 @@ func CustomSignInPage(
 ) func(wrt http.ResponseWriter, authURL string) {
 	return func(wrt http.ResponseWriter, authURL string) {
 		wrt.WriteHeader(http.StatusOK)
+
 		name := path.Base(page)
 		model := make(map[string]string)
 		model["redirect"] = authURL
 		mTags := utils.MergeMaps(model, tags)
 
-		if err := tmpl.ExecuteTemplate(wrt, name, mTags); err != nil {
+		err := tmpl.ExecuteTemplate(wrt, name, mTags)
+		if err != nil {
 			logger.Error(
 				"failed to render the template",
 				zap.Error(err),
