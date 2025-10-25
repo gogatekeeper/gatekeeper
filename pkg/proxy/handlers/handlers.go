@@ -1,18 +1,3 @@
-/*
-Copyright 2015 All rights reserved.
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package handlers
 
 import (
@@ -105,6 +90,7 @@ func ProxyMetricsHandler(
 				return
 			}
 		}
+
 		metricsHandler.ServeHTTP(wrt, req)
 	}
 }
@@ -118,9 +104,11 @@ func RetrieveIDToken(
 	req *http.Request,
 	enableOptionalEncryption bool,
 ) (string, string, error) {
-	var token string
-	var err error
-	var encrypted string
+	var (
+		token     string
+		err       error
+		encrypted string
+	)
 
 	token, err = session.GetTokenInCookie(req, cookieIDTokenName)
 	if err != nil {
@@ -129,6 +117,7 @@ func RetrieveIDToken(
 
 	if enableEncryptedToken || forceEncryptedCookie {
 		encrypted = token
+
 		token, err = encryption.DecodeText(token, encryptionKey)
 		if err != nil && enableOptionalEncryption {
 			return encrypted, encrypted, nil
@@ -138,7 +127,7 @@ func RetrieveIDToken(
 	return token, encrypted, err
 }
 
-// discoveryHandler provides endpoint info.
+// DiscoveryHandler provides endpoint info.
 func DiscoveryHandler(
 	logger *zap.Logger,
 	withOAuthURI func(string) string,
@@ -159,11 +148,13 @@ func DiscoveryHandler(
 			)
 
 			wrt.WriteHeader(http.StatusInternalServerError)
+
 			return
 		}
 
 		wrt.Header().Set(constant.HeaderContentType, "application/json")
 		wrt.WriteHeader(http.StatusOK)
+
 		_, err = wrt.Write(respBody)
 		if err != nil {
 			logger.Error(
@@ -193,8 +184,10 @@ func GetRedirectionURL(
 
 		switch redirectionURL {
 		case "":
-			var scheme string
-			var host string
+			var (
+				scheme string
+				host   string
+			)
 
 			if (noProxy && !noRedirects) || enableXForwardedHeaders {
 				scheme = req.Header.Get(constant.HeaderXForwardedProto)
@@ -203,6 +196,7 @@ func GetRedirectionURL(
 				// need to determine the scheme, cx.Request.URL.Scheme doesn't have it, best way is to default
 				// and then check for TLS
 				scheme = constant.UnsecureScheme
+
 				host = req.Host
 				if req.TLS != nil {
 					scheme = constant.SecureScheme
@@ -226,6 +220,7 @@ func GetRedirectionURL(
 			if state != nil && req.URL.Query().Get("state") != state.Value {
 				logger.Error("state parameter mismatch")
 				wrt.WriteHeader(http.StatusForbidden)
+
 				return ""
 			}
 		}
@@ -270,7 +265,9 @@ func ExpirationHandler(
 				wrt.WriteHeader(http.StatusUnauthorized)
 				return
 			}
+
 			wrt.WriteHeader(http.StatusForbidden)
+
 			return
 		}
 
@@ -311,6 +308,7 @@ func TokenHandler(
 		}
 
 		jsonMap := make(map[string]interface{})
+
 		err = token.UnsafeClaimsWithoutVerification(&jsonMap)
 		if err != nil {
 			accessError(wrt, req)

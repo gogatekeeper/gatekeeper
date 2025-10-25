@@ -21,10 +21,12 @@ package utils_test
 import (
 	"crypto/tls"
 	"fmt"
+	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"os"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
 
@@ -80,9 +82,11 @@ func TestDecodeKeyPairs(t *testing.T) {
 			t.Errorf("test case %d should not have failed", idx)
 			continue
 		}
+
 		if !testCase.Ok {
 			continue
 		}
+
 		if !reflect.DeepEqual(keyPair, testCase.KeyPairs) {
 			t.Errorf("test case %d are not equal %v <-> %v", idx, keyPair, testCase.KeyPairs)
 		}
@@ -154,6 +158,7 @@ func BenchmarkUUID(b *testing.B) {
 		if err != nil {
 			b.Errorf("test case should not have failed")
 		}
+
 		_ = s.String()
 	}
 }
@@ -309,6 +314,21 @@ func TestHasAccessBad(t *testing.T) {
 func TestContainedIn(t *testing.T) {
 	assert.False(t, utils.ContainedIn("1", []string{"2", "3", "4"}))
 	assert.True(t, utils.ContainedIn("1", []string{"1", "2", "3", "4"}))
+}
+
+func BenchmarkContainedIn(bench *testing.B) {
+	maxNum := 100000
+	minNum := 0
+	testSlice := make([]string, maxNum)
+
+	for i := range maxNum {
+		//nolint:gosec
+		testSlice[i] = strconv.Itoa(rand.IntN(maxNum-minNum) + minNum)
+	}
+
+	for range bench.N {
+		utils.ContainedIn("8106", testSlice)
+	}
 }
 
 func TestContainsSubString(t *testing.T) {

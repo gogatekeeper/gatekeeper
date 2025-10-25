@@ -96,6 +96,7 @@ redirection-url: http://127.0.0.1:3000
 				err,
 			)
 		}
+
 		os.Remove(file.Name())
 	}
 }
@@ -141,17 +142,19 @@ func TestIsConfig(t *testing.T) {
 		},
 		{
 			Config: &Config{
-				Listen:               ":8080",
-				DiscoveryURL:         "http://127.0.0.1:8080",
-				ClientID:             "client",
-				ClientSecret:         "client",
-				RedirectionURL:       "http://120.0.0.1",
-				Upstream:             "http://120.0.0.1",
-				MaxIdleConns:         100,
-				MaxIdleConnsPerHost:  50,
-				TLSMinVersion:        constant.TLS12,
-				EnableLogoutAuth:     true,
-				EnableLogoutRedirect: true,
+				Listen:                   ":8080",
+				DiscoveryURL:             "http://127.0.0.1:8080",
+				ClientID:                 "client",
+				ClientSecret:             "client",
+				RedirectionURL:           "http://120.0.0.1",
+				Upstream:                 "http://120.0.0.1",
+				MaxIdleConns:             100,
+				MaxIdleConnsPerHost:      50,
+				TLSMinVersion:            constant.TLS12,
+				EnableLogoutAuth:         true,
+				EnableLogoutRedirect:     true,
+				OpenIDProviderRetryCount: 3,
+				PatRetryCount:            4,
 			},
 			Ok: true,
 		},
@@ -243,25 +246,28 @@ func TestIsConfig(t *testing.T) {
 		},
 		{
 			Config: &Config{
-				Listen:               ":8080",
-				DiscoveryURL:         "http://127.0.0.1:8080",
-				ClientID:             "client",
-				ClientSecret:         "client",
-				RedirectionURL:       "https://120.0.0.1",
-				Upstream:             "http://someupstream",
-				SecureCookie:         true,
-				MaxIdleConns:         100,
-				MaxIdleConnsPerHost:  50,
-				TLSMinVersion:        constant.TLS13,
-				EnableLogoutAuth:     true,
-				EnableLogoutRedirect: true,
+				Listen:                   ":8080",
+				DiscoveryURL:             "http://127.0.0.1:8080",
+				ClientID:                 "client",
+				ClientSecret:             "client",
+				RedirectionURL:           "https://120.0.0.1",
+				Upstream:                 "http://someupstream",
+				SecureCookie:             true,
+				MaxIdleConns:             100,
+				MaxIdleConnsPerHost:      50,
+				TLSMinVersion:            constant.TLS13,
+				EnableLogoutAuth:         true,
+				EnableLogoutRedirect:     true,
+				OpenIDProviderRetryCount: 3,
+				PatRetryCount:            4,
 			},
 			Ok: true,
 		},
 	}
 
 	for i, c := range tests {
-		if err := c.Config.IsValid(); err != nil && c.Ok {
+		err := c.Config.IsValid()
+		if err != nil && c.Ok {
 			t.Errorf("test case %d, the config should not have errored, error: %s", i, err)
 		}
 	}
@@ -2794,6 +2800,7 @@ func TestIsAllowedQueryParamsValid(t *testing.T) {
 					if testCase.Valid {
 						t.Fatalf("Expected test not to fail")
 					}
+
 					if !errors.Is(err, testCase.ExptectedError) {
 						t.Fatalf("Exptected %s, got %s", testCase.ExptectedError, err)
 					}

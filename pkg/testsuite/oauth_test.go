@@ -33,6 +33,7 @@ func TestGetUserinfo(t *testing.T) {
 	proxy, idp, _ := newTestProxyService(nil)
 	token, err := NewTestToken(idp.getLocation()).GetToken()
 	require.NoError(t, err)
+
 	tokenSource := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
@@ -53,6 +54,7 @@ func TestGetUserinfo(t *testing.T) {
 func TestTokenExpired(t *testing.T) {
 	proxy, idp, _ := newTestProxyService(nil)
 	token := NewTestToken(idp.getLocation())
+
 	testCases := []struct {
 		Expire time.Duration
 		OK     bool
@@ -67,6 +69,7 @@ func TestTokenExpired(t *testing.T) {
 	}
 	for idx, testCase := range testCases {
 		token.SetExpiration(time.Now().Add(testCase.Expire))
+
 		jwt, err := token.GetToken()
 		if err != nil {
 			t.Errorf("case %d unable to sign the token, error: %s", idx, err)
@@ -84,6 +87,7 @@ func TestTokenExpired(t *testing.T) {
 		if testCase.OK && err != nil {
 			t.Errorf("case %d, expected: %t got error: %s", idx, testCase.OK, err)
 		}
+
 		if !testCase.OK && err == nil {
 			t.Errorf("case %d, expected: %t got no error", idx, testCase.OK)
 		}

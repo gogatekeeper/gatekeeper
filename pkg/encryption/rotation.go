@@ -29,6 +29,7 @@ import (
 
 type CertificationRotation struct {
 	sync.RWMutex
+
 	// certificate holds the current issuing certificate
 	certificate tls.Certificate
 	// certificateFile is the path the certificate
@@ -40,7 +41,7 @@ type CertificationRotation struct {
 	rotationMetric *prometheus.Counter
 }
 
-// newCertificateRotator creates a new certificate.
+// NewCertificateRotator creates a new certificate.
 func NewCertificateRotator(
 	cert,
 	key string,
@@ -63,7 +64,7 @@ func NewCertificateRotator(
 	}, nil
 }
 
-// watch is responsible for adding a file notification and watch on the files for changes.
+// Watch is responsible for adding a file notification and watch on the files for changes.
 func (c *CertificationRotation) Watch() error {
 	c.log.Info(
 		"adding a file watch on the certificates, certificate",
@@ -77,7 +78,8 @@ func (c *CertificationRotation) Watch() error {
 	}
 	// add the files to the watch list
 	for _, x := range []string{c.certificateFile, c.privateKeyFile} {
-		if err := watcher.Add(path.Dir(x)); err != nil {
+		err := watcher.Add(path.Dir(x))
+		if err != nil {
 			return fmt.Errorf("unable to add watch on directory: %s, error: %w", path.Dir(x), err)
 		}
 	}
@@ -87,6 +89,7 @@ func (c *CertificationRotation) Watch() error {
 
 	go func() {
 		c.log.Info("starting to watch changes to the tls certificate files")
+
 		for {
 			select {
 			case event := <-watcher.Events:
@@ -119,11 +122,12 @@ func (c *CertificationRotation) Watch() error {
 }
 
 // StoreCertificate provides entrypoint to update the certificate.
+//
+//nolint:wsl_v5
 func (c *CertificationRotation) StoreCertificate(certifacte tls.Certificate) error {
 	c.Lock()
 	defer c.Unlock()
 	c.certificate = certifacte
-
 	return nil
 }
 

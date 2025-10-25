@@ -103,6 +103,7 @@ func TestRouteHeadersMiddleware(t *testing.T) {
 			router.Get("/", func(_ http.ResponseWriter, _ *http.Request) {})
 
 			var body []byte
+
 			req := httptest.NewRequest(http.MethodGet, "/", bytes.NewReader(body))
 			for hName, hVal := range test.requestHeaders {
 				req.Header.Set(hName, hVal)

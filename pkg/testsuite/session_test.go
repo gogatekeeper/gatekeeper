@@ -166,6 +166,7 @@ func TestGetTokenInRequest(t *testing.T) {
 	defaultName := config.NewDefaultConfig().CookieAccessName
 	token, err := NewTestToken("test").GetToken()
 	require.NoError(t, err)
+
 	testCases := []struct {
 		Token                           string
 		AuthScheme                      string
@@ -223,6 +224,7 @@ func TestGetTokenInRequest(t *testing.T) {
 	}
 	for idx, testCase := range testCases {
 		req := newFakeHTTPRequest(http.MethodGet, "/")
+
 		if testCase.Token != "" {
 			if testCase.AuthScheme != "" {
 				req.Header.Set(constant.AuthorizationHeader, testCase.AuthScheme+" "+testCase.Token)
@@ -235,6 +237,7 @@ func TestGetTokenInRequest(t *testing.T) {
 				})
 			}
 		}
+
 		access, bearer, err := session.GetTokenInRequest(req, defaultName, testCase.SkipAuthorizationHeaderIdentity, "")
 		switch testCase.Error {
 		case nil:
@@ -252,6 +255,7 @@ func TestIsExpired(t *testing.T) {
 		ExpiresAt: time.Now(),
 	}
 	time.Sleep(1 * time.Millisecond)
+
 	if !user.IsExpired() {
 		t.Error("we should have been false")
 	}

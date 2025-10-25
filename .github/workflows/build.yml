@@ -10,7 +10,7 @@ jobs:
     # Test the latest release of Go
     strategy:
       matrix:
-        go: ["1.24"]
+        go: ["1.25"]
     steps:
       # Setup the workflow to use the specific version of Go
       - name: Set up Go 1.x
@@ -76,6 +76,7 @@ jobs:
               -a 2aD6FgewLV
       - name: "Run Tests"
         run: |
+          kubectl get pods -A
           go test -v -timeout=30m -race -coverprofile=profile.cov ./...
       # Run Go benchmarks
       - name: Benchmark
@@ -88,7 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: ["1.24"]
+        go: ["1.25"]
     steps:
       - uses: actions/setup-go@v5
         with:
@@ -98,7 +99,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v7
         with:
-          version: v2.0.2
+          version: v2.5.0
           args: "--timeout=3m"
           github-token: "${{ secrets.GITHUB_TOKEN }}"
       - name: Check Golang sources with Aligo

@@ -152,14 +152,20 @@ LRGLvCtLWwvWERcY3iyNiRKUmYjUwS0PLQ==
 )
 
 func generateRandomPort() (string, error) {
-	var minPort int64 = 1024
-	var maxPort int64 = 65000
+	var (
+		minPort int64 = 1024
+		maxPort int64 = 65000
+	)
+
 	maxRand := big.NewInt(maxPort - minPort + 1)
+
 	randPort, err := rand.Int(rand.Reader, maxRand)
 	if err != nil {
 		return "", err
 	}
+
 	randP := int(randPort.Int64() + minPort)
+
 	return strconv.Itoa(randP), nil
 }
 
@@ -176,7 +182,9 @@ func startAndWait(portNum string, osArgs []string) {
 		if err != nil {
 			return err
 		}
+
 		conn.Close()
+
 		return nil
 	}, timeout, 15*time.Second).Should(Succeed())
 }
@@ -187,7 +195,9 @@ func waitForPort(portNum string) {
 		if err != nil {
 			return err
 		}
+
 		conn.Close()
+
 		return nil
 	}, timeout, 15*time.Second).Should(Succeed())
 }
@@ -209,9 +219,11 @@ func codeFlowLoginSaveStateCookie(
 	// state cookie for later use in test
 	jarURI, err := url.Parse(reqAddress)
 	Expect(err).NotTo(HaveOccurred())
+
 	cookiesLogin := client.GetClient().Jar.Cookies(jarURI)
 
 	var requestStateCookie http.Cookie
+
 	for _, cook := range cookiesLogin {
 		if cook.Name == constant.RequestStateCookie {
 			requestStateCookie = *cook
@@ -362,16 +374,20 @@ func startAndWaitTestUpstream(
 	// to simplify and don't have separate key, cert for server and separate key, cert for client
 	// we use same key, cert for server side and also for client auth
 	clientPair := tlsCert
+
 	if clientAuth {
 		tlsConfig.ClientCAs = caPool
 		tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
 	}
 
 	listener = tls.NewListener(listener, tlsConfig)
+
 	var handler http.Handler = &testsuite_test.FakeUpstreamService{}
+
 	if compress {
 		addHeaderComp := addHeaderCompressMiddlware()
 		compressMid := middleware.Compress(constant.HTTPCompressionLevel)
+
 		handlerWithCompress := compressMid(&testsuite_test.FakeUpstreamService{})
 		if forceCompressionType {
 			handler = addHeaderComp(handlerWithCompress)
@@ -392,11 +408,13 @@ func startAndWaitTestUpstream(
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			return err
 		}
+
 		return nil
 	})
 
 	netParts := strings.Split(listener.Addr().String(), ":")
 	port := netParts[len(netParts)-1]
+
 	Eventually(func(_ Gomega) error {
 		ctx, cancel := context.WithTimeout(context.Background(), tlsTimeout)
 		dialer := tls.Dialer{
@@ -412,10 +430,12 @@ func startAndWaitTestUpstream(
 		}
 
 		conn, err := dialer.DialContext(ctx, "tcp", ":"+port)
+
 		cancel()
 		Expect(err).NotTo(HaveOccurred())
 
 		conn.Close()
+
 		return nil
 	}, timeout, tlsTimeout).Should(Succeed())
 

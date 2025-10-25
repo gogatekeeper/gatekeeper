@@ -9,6 +9,11 @@ import (
 type contextKey int8
 
 const (
+	_ contextKey = iota
+	ContextScopeName
+)
+
+const (
 	Prog        = "gatekeeper"
 	Author      = "go-gatekeeper"
 	Email       = ""
@@ -42,7 +47,7 @@ const (
 	PKCECookie         = "pkce"
 	IDTokenCookie      = "id_token"
 	UMACookie          = "uma_token"
-	// case is like this because go net package canonicalizes it
+	// UMAHeader case is like this because go net package canonicalizes it
 	// to this form, see net package.
 	UMAHeader      = "X-Uma-Token"
 	UnsecureScheme = "http"
@@ -50,8 +55,6 @@ const (
 	AnyMethod      = "ANY"
 	UmaMethodScope = "method:"
 
-	_ contextKey = iota
-	ContextScopeName
 	HeaderXForwardedFor    = "X-Forwarded-For"
 	HeaderXForwardedHost   = "X-Forwarded-Host"
 	HeaderXRealIP          = "X-Real-IP"
@@ -63,7 +66,7 @@ const (
 
 	DurationType = "time.Duration"
 
-	// SameSite cookie config options.
+	// SameSiteStrict cookie config options.
 	SameSiteStrict = "Strict"
 	SameSiteLax    = "Lax"
 	SameSiteNone   = "None"
