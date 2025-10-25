@@ -65,6 +65,7 @@ func (p *OpaAuthorizationProvider) Authorize() (AuthzDecision, error) {
 	if err != nil {
 		return DeniedAuthz, err
 	}
+
 	p.req.Body.Close()
 
 	opaReq := &OpaAuthzRequest{Input: &OpaInput{}}
@@ -151,17 +152,20 @@ func StartOpaServer(
 
 	server = server.WithManager(mgr)
 
-	if err = mgr.Start(ctx); err != nil {
+	err = mgr.Start(ctx)
+	if err != nil {
 		t.Fatal(err)
 	}
 
 	txn := opastorage.NewTransactionOrDie(ctx, store, opastorage.WriteParams)
+
 	err = store.UpsertPolicy(ctx, txn, "test", []byte(authzPolicy))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err = store.Commit(ctx, txn); err != nil {
+	err = store.Commit(ctx, txn)
+	if err != nil {
 		t.Fatal(err)
 	}
 
@@ -183,6 +187,7 @@ func StartOpaServer(
 	}
 
 	var addrs []string
+
 	checkRounds := 0
 
 	for {
@@ -198,6 +203,7 @@ func StartOpaServer(
 		}
 
 		checkRounds++
+
 		time.Sleep(time.Second)
 	}
 

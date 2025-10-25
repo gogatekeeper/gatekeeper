@@ -112,6 +112,7 @@ func (b *RedisStoreBuilder) Build() Storage {
 	if b.clusteredOpts != nil {
 		return &RedisStore[*redis.ClusterClient]{redis.NewClusterClient(b.clusteredOpts)}
 	}
+
 	return &RedisStore[*redis.Client]{redis.NewClient(b.opts)}
 }
 
@@ -124,7 +125,7 @@ func (r *RedisStore[T]) Set(ctx context.Context, key, value string, expiration t
 	return nil
 }
 
-// Checks if key exists in store.
+// Exists, checks if key exists in store.
 func (r *RedisStore[T]) Exists(ctx context.Context, key string) (bool, error) {
 	val, err := r.Client.Exists(ctx, key).Result()
 	if err != nil {
@@ -173,7 +174,7 @@ func (r *RedisStore[T]) Test(ctx context.Context) error {
 	return nil
 }
 
-// Get retrieves a token from the store, the key we are using here is the access token.
+// GetRefreshTokenFromStore retrieves a token from the store, the key we are using here is the access token.
 func (r *RedisStore[T]) GetRefreshTokenFromStore(
 	ctx context.Context,
 	token string,
@@ -183,6 +184,7 @@ func (r *RedisStore[T]) GetRefreshTokenFromStore(
 	if err != nil {
 		return val, err
 	}
+
 	if val == "" {
 		return val, apperrors.ErrNoSessionStateFound
 	}

@@ -22,7 +22,7 @@ You can view all settings also in this table [Settings](https://gogatekeeper.git
 
 ## Requirements
 
-  - Go 1.24 or higher
+  - Go 1.25 or higher
 
 ## Example, simple setup architecture
 

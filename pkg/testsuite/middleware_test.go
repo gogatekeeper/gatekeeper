@@ -245,6 +245,7 @@ func TestAdminListener(t *testing.T) {
 
 	for _, testCase := range testCases {
 		cfg := newFakeKeycloakConfig()
+
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
@@ -276,6 +277,7 @@ func TestAdminListener(t *testing.T) {
 
 				if certFile != "" {
 					fakeCertByte := []byte(fakeCert)
+
 					err := os.WriteFile(certFile, fakeCertByte, 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing certificate %s", err)
@@ -285,6 +287,7 @@ func TestAdminListener(t *testing.T) {
 
 				if privFile != "" {
 					fakeKeyByte := []byte(fakePrivateKey)
+
 					err := os.WriteFile(privFile, fakeKeyByte, 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing privateKey %s", err)
@@ -294,6 +297,7 @@ func TestAdminListener(t *testing.T) {
 
 				if caFile != "" {
 					fakeCAByte := []byte(fakeCA)
+
 					err := os.WriteFile(caFile, fakeCAByte, 0o600)
 					if err != nil {
 						t.Fatalf("Problem writing cacertificate %s", err)
@@ -574,6 +578,7 @@ func TestStrangeRoutingError(t *testing.T) {
 
 	for _, testCase := range testCases {
 		cfg := *cfg
+
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
@@ -708,6 +713,7 @@ func TestStrangeAdminRequests(t *testing.T) {
 
 	for _, testCase := range testCases {
 		cfg := *cfg
+
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
@@ -958,12 +964,13 @@ func TestWhiteListedRequests(t *testing.T) {
 
 	for _, testCase := range testCases {
 		cfgCopy := *cfg
-		c := &cfgCopy
+		conf := &cfgCopy
+
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
-				testCase.ProxySettings(c)
-				p := newFakeProxy(c, &fakeAuthConfig{})
+				testCase.ProxySettings(conf)
+				p := newFakeProxy(conf, &fakeAuthConfig{})
 				p.RunTests(t, testCase.ExecutionSettings)
 			},
 		)
@@ -1225,12 +1232,13 @@ func TestHeaderPermissionsMiddleware(t *testing.T) {
 	}
 
 	for _, testCase := range requests {
-		c := *cfg
+		conf := *cfg
+
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
-				testCase.ProxySettings(&c)
-				p := newFakeProxy(&c, &fakeAuthConfig{})
+				testCase.ProxySettings(&conf)
+				p := newFakeProxy(&conf, &fakeAuthConfig{})
 				p.RunTests(t, testCase.ExecutionSettings)
 			},
 		)
@@ -1607,6 +1615,7 @@ func TestRolePermissionsMiddleware(t *testing.T) {
 
 	for _, testCase := range testCases {
 		cfg := *cfg
+
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
@@ -1821,12 +1830,13 @@ func TestRefreshToken(t *testing.T) {
 
 	for _, testCase := range testCases {
 		cfgCopy := *cfg
-		c := &cfgCopy
+		conf := &cfgCopy
+
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
-				testCase.ProxySettings(c)
-				p := newFakeProxy(c, &fakeAuthConfig{Expiration: 1500 * time.Millisecond})
+				testCase.ProxySettings(conf)
+				p := newFakeProxy(conf, &fakeAuthConfig{Expiration: 1500 * time.Millisecond})
 				p.RunTests(t, testCase.ExecutionSettings)
 			},
 		)
@@ -1841,6 +1851,7 @@ func delay(no int, _ *resty.Request, _ *resty.Response) {
 
 func checkAccessTokenEncryption(t *testing.T, cfg *config.Config, value string) bool {
 	t.Helper()
+
 	rawToken, err := encryption.DecodeText(value, cfg.EncryptionKey)
 	if err != nil {
 		return false
@@ -1867,6 +1878,7 @@ func checkRefreshTokenEncryption(_ *testing.T, cfg *config.Config, value string)
 
 func TestAccessTokenEncryption(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
+
 	redisServer, err := miniredis.Run()
 	if err != nil {
 		t.Fatalf("Starting redis failed %s", err)
@@ -1990,12 +2002,13 @@ func TestAccessTokenEncryption(t *testing.T) {
 
 	for _, testCase := range testCases {
 		cfgCopy := *cfg
-		c := &cfgCopy
+		conf := &cfgCopy
+
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
-				testCase.ProxySettings(c)
-				p := newFakeProxy(c, &fakeAuthConfig{Expiration: 2000 * time.Millisecond})
+				testCase.ProxySettings(conf)
+				p := newFakeProxy(conf, &fakeAuthConfig{Expiration: 2000 * time.Millisecond})
 				p.RunTests(t, testCase.ExecutionSettings)
 			},
 		)
@@ -2702,12 +2715,13 @@ func TestEnableUma(t *testing.T) {
 	}
 
 	for _, testCase := range requests {
-		c := *cfg
+		conf := *cfg
+
 		t.Run(
 			testCase.Name,
 			func(t *testing.T) {
-				testCase.ProxySettings(&c)
-				p := newFakeProxy(&c, testCase.AuthServerSettings)
+				testCase.ProxySettings(&conf)
+				p := newFakeProxy(&conf, testCase.AuthServerSettings)
 				p.RunTests(t, testCase.ExecutionSettings)
 			},
 		)
@@ -2746,6 +2760,7 @@ func TestLogRealIP(t *testing.T) {
 	cfg.Verbose = true
 
 	var buffer bytes.Buffer
+
 	writer := bufio.NewWriter(&buffer)
 	encoder := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
 	testLog := zap.New(zapcore.NewCore(encoder, zapcore.AddSync(writer), zapcore.InfoLevel))
@@ -2779,8 +2794,10 @@ func TestLogRealIP(t *testing.T) {
 		}{}
 
 		var rowFound bool
+
 		for _, row := range strings.Split(rows, "\n") {
-			if err := json.Unmarshal([]byte(row), &logRow); err == nil && len(logRow.ClientIP) > 0 {
+			err := json.Unmarshal([]byte(row), &logRow)
+			if err == nil && len(logRow.ClientIP) > 0 {
 				rowFound = true
 				break
 			}
@@ -3033,6 +3050,7 @@ func TestEnableOpa(t *testing.T) {
 				ctx := t.Context()
 				authzPolicy := testCase.AuthzPolicy
 				opaAddress := ""
+
 				var server *opaserver.Server
 
 				if testCase.StartOpa {
@@ -3046,6 +3064,7 @@ func TestEnableOpa(t *testing.T) {
 					opaAddress,
 					"v1/data/authz/allow",
 				)
+
 				authzURL, err := url.ParseRequestURI(authzURI)
 				if err != nil {
 					t.Fatalf("problem parsing authzURL")
@@ -3063,6 +3082,7 @@ func TestEnableOpa(t *testing.T) {
 func TestAuthenticationMiddleware(t *testing.T) {
 	tok := NewTestToken("example")
 	tok.SetExpiration(time.Now().Add(-5 * time.Minute))
+
 	unsignedToken, err := tok.GetUnsignedToken()
 	if err != nil {
 		t.Fatal(err.Error())

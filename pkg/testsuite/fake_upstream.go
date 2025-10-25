@@ -12,7 +12,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-// fakeUpstreamResponse is the response from fake upstream.
+// FakeUpstreamResponse is the response from fake upstream.
 type FakeUpstreamResponse struct {
 	URI     string      `json:"uri"`
 	Method  string      `json:"method"`
@@ -30,12 +30,15 @@ func (f *FakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Reque
 		wrt.Header().Set(TestProxyAccepted, "true")
 		websocket.Handler(func(wsock *websocket.Conn) {
 			defer wsock.Close()
+
 			var data []byte
+
 			err := websocket.Message.Receive(wsock, &data)
 			if err != nil {
 				wsock.WriteClose(http.StatusBadRequest)
 				return
 			}
+
 			content, _ := json.Marshal(&FakeUpstreamResponse{
 				URI:     req.RequestURI,
 				Method:  req.Method,
@@ -51,6 +54,7 @@ func (f *FakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Reque
 		}
 
 		var delay int
+
 		rawDelay := req.Header.Get("Delay")
 		if rawDelay != "" {
 			delay, err = strconv.Atoi(rawDelay)
@@ -67,6 +71,7 @@ func (f *FakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Reque
 
 		wrt.Header().Set(TestProxyAccepted, "true")
 		wrt.Header().Set(constant.HeaderContentType, "application/json")
+
 		content, err := json.Marshal(&FakeUpstreamResponse{
 			// r.RequestURI is what was received by the proxy.
 			// r.URL.String() is what is actually sent to the upstream service.
@@ -77,7 +82,6 @@ func (f *FakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Reque
 			Headers: req.Header,
 			Body:    string(reqBody),
 		})
-
 		if err != nil {
 			wrt.WriteHeader(http.StatusInternalServerError)
 		} else {

@@ -48,6 +48,7 @@ func TestReadOptions(t *testing.T) {
 	capp.Action = func(cx *cli.Context) error {
 		ero := parseCLIOptions(cx, cfg)
 		require.NoError(t, ero)
+
 		return nil
 	}
 	err := capp.Run([]string{""})

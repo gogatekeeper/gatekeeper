@@ -83,14 +83,18 @@ func authorizationMiddleware(
 			scope.Logger.Debug("authorization middleware")
 
 			user := scope.Identity
-			var provider authorization.Provider
-			var decision authorization.AuthzDecision
-			var err error
+
+			var (
+				provider authorization.Provider
+				decision authorization.AuthzDecision
+				err      error
+			)
 
 			scope.Logger.Debug("query external authz provider for authz")
 
 			if enableUma {
 				var methodScope *string
+
 				if enableUmaMethodScope {
 					methSc := constant.UmaMethodScope + req.Method
 					if noProxy {
@@ -98,10 +102,12 @@ func authorizationMiddleware(
 						if xForwardedMethod == "" {
 							scope.Logger.Error(apperrors.ErrMissingXForwardedHeaders.Error())
 							accessForbidden(wrt, req)
-							return
+							return //nolint:wsl_v5
 						}
+
 						methSc = constant.UmaMethodScope + xForwardedMethod
 					}
+
 					methodScope = &methSc
 				}
 
@@ -111,7 +117,7 @@ func authorizationMiddleware(
 					if authzPath == "" {
 						scope.Logger.Error(apperrors.ErrMissingXForwardedHeaders.Error())
 						accessForbidden(wrt, req)
-						return
+						return //nolint:wsl_v5
 					}
 				}
 
@@ -122,6 +128,7 @@ func authorizationMiddleware(
 					pat.m.RLock()
 					token := pat.Token.AccessToken
 					pat.m.RUnlock()
+
 					provider = authorization.NewKeycloakAuthorizationProvider(
 						userPerms,
 						targetPath,
@@ -131,6 +138,7 @@ func authorizationMiddleware(
 						realm,
 						methodScope,
 					)
+
 					return provider.Authorize()
 				}
 
@@ -148,6 +156,7 @@ func authorizationMiddleware(
 				)
 				if err != nil {
 					var umaUser *models.UserContext
+
 					scope.Logger.Error(err.Error())
 					scope.Logger.Info("trying to get new uma token")
 
@@ -163,16 +172,18 @@ func authorizationMiddleware(
 					if err == nil {
 						umaToken := umaUser.RawToken
 						if enableEncryptedToken || forceEncryptedCookie {
-							if umaToken, err = encryption.EncodeText(umaToken, encryptionKey); err != nil {
+							umaToken, err = encryption.EncodeText(umaToken, encryptionKey)
+							if err != nil {
 								scope.Logger.Error(err.Error())
 								accessForbidden(wrt, req)
-								return
+								return //nolint:wsl_v5
 							}
 						}
 
 						cookManager.DropUMATokenCookie(req, wrt, umaToken, time.Until(umaUser.ExpiresAt))
 						wrt.Header().Set(constant.UMAHeader, umaToken)
 						scope.Logger.Debug("got uma token")
+
 						decision, err = authzFunc(authzPath, umaUser.Permissions)
 					}
 				}
@@ -228,7 +239,7 @@ func authorizationMiddleware(
 					if !ok {
 						scope.Logger.Error(apperrors.ErrAssertionFailed.Error())
 						accessForbidden(wrt, req)
-						return
+						return //nolint:wsl_v5
 					}
 
 					//nolint:contextcheck
@@ -245,9 +256,12 @@ func authorizationMiddleware(
 						wrt.Header().Add(constant.UMATicketHeader, permHeader)
 					}
 				}
+
 				accessForbidden(wrt, req)
+
 				return
 			}
+
 			next.ServeHTTP(wrt, req)
 		})
 	}
@@ -273,28 +287,33 @@ func levelOfAuthenticationMiddleware(
 				logger.Error(apperrors.ErrAssertionFailed.Error())
 				return
 			}
+
 			if scope.AccessDenied {
 				next.ServeHTTP(wrt, req)
 				return
 			}
 
 			user := scope.Identity
+
 			lLog := scope.Logger.With(
 				zap.String("middleware", "levelOfAuthentication"),
 				zap.String("userID", user.ID),
 				zap.String("resource", resource.URL),
 			)
+
 			if len(resource.Acr) > 0 && user.Acr == "" {
 				lLog.Error("token is missing acr claim=level of authentication")
 				accessForbidden(wrt, req)
-				return
+				return //nolint:wsl_v5
 			}
+
 			if len(resource.Acr) > 0 && !utils.HasAccess(
 				resource.Acr,
 				[]string{user.Acr},
 				false,
 			) {
 				lLog.Info("token doesn't match required level of authentication")
+
 				allowedQueryParams := map[string]string{"acr_values": resource.Acr[0]}
 				defaultAllowedQueryParams := map[string]string{"acr_values": resource.Acr[0]}
 				uuid := cookManager.DropStateParameterCookie(req, wrt)
@@ -316,6 +335,7 @@ func levelOfAuthenticationMiddleware(
 					allowedQueryParams,
 					defaultAllowedQueryParams,
 				)(wrt, req)
+
 				return
 			}
 
@@ -324,7 +344,7 @@ func levelOfAuthenticationMiddleware(
 	}
 }
 
-// signingMiddleware is responsible for signing outbound requests.
+// SigningMiddleware is responsible for signing outbound requests.
 func SigningMiddleware(
 	logger *zap.Logger,
 	pat *PAT,
@@ -341,6 +361,7 @@ func SigningMiddleware(
 			pat.m.RUnlock()
 
 			hostname := req.Host
+
 			xForwardedHost := req.Header.Get(constant.HeaderXForwardedHost)
 			if xForwardedHost != "" {
 				hostname = xForwardedHost

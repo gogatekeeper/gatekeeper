@@ -64,6 +64,7 @@ func TestWebSocket(t *testing.T) {
 	require.NoError(t, err)
 
 	var cookie *http.Cookie
+
 	for _, c := range resp.Cookies() {
 		if c.Name == constant.AccessCookie {
 			cookie = c

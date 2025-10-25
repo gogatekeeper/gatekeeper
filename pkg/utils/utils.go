@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//nolint:revive
 package utils
 
 import (
@@ -105,7 +106,8 @@ func DefaultTo(v, d string) string {
 }
 
 func FileExists(filename string) bool {
-	if _, err := os.Stat(filename); err != nil {
+	_, err := os.Stat(filename)
+	if err != nil {
 		if os.IsNotExist(err) {
 			return false
 		}
@@ -129,6 +131,7 @@ func HasAccess(need, have []string, all bool) bool {
 			if !all {
 				return true
 			}
+
 			matched++
 		default:
 			if all {
@@ -160,7 +163,7 @@ func ContainsSubString(value string, list []string) bool {
 	return false
 }
 
-// tryDialEndpoint dials the upstream endpoint via plain HTTP.
+// TryDialEndpoint dials the upstream endpoint via plain HTTP.
 func TryDialEndpoint(location *url.URL) (net.Conn, error) {
 	switch dialAddress := DialAddress(location); location.Scheme {
 	case constant.UnsecureScheme:
@@ -178,13 +181,13 @@ func IsUpgradedConnection(req *http.Request) bool {
 	return req.Header.Get(constant.HeaderUpgrade) != ""
 }
 
-// transferBytes transfers bytes between the sink and source.
+// TransferBytes transfers bytes between the sink and source.
 func TransferBytes(src io.Reader, dest io.Writer, wg *sync.WaitGroup) (int64, error) {
 	defer wg.Done()
 	return io.Copy(dest, src)
 }
 
-// tryUpdateConnection attempt to upgrade the connection to a http pdy stream.
+// TryUpdateConnection attempt to upgrade the connection to a http pdy stream.
 func TryUpdateConnection(req *http.Request, writer http.ResponseWriter, endpoint *url.URL) error {
 	// step: dial the endpoint
 	server, err := TryDialEndpoint(endpoint)
@@ -210,22 +213,26 @@ func TryUpdateConnection(req *http.Request, writer http.ResponseWriter, endpoint
 	defer client.Close()
 
 	// step: write the request to upstream
-	if err = req.Write(server); err != nil {
+	err = req.Write(server)
+	if err != nil {
 		return err
 	}
 
 	// @step: copy the data between client and upstream endpoint
-	var wg sync.WaitGroup
+	var wGroup sync.WaitGroup
+
 	numConnectionWorkers := 2
-	wg.Add(numConnectionWorkers)
-	go func() { _, _ = TransferBytes(server, client, &wg) }()
-	go func() { _, _ = TransferBytes(client, server, &wg) }()
-	wg.Wait()
+	wGroup.Add(numConnectionWorkers)
+
+	go func() { _, _ = TransferBytes(server, client, &wGroup) }()
+	go func() { _, _ = TransferBytes(client, server, &wGroup) }()
+
+	wGroup.Wait()
 
 	return nil
 }
 
-// dialAddress extracts the dial address from the url.
+// DialAddress extracts the dial address from the url.
 func DialAddress(location *url.URL) string {
 	items := strings.Split(location.Host, ":")
 
@@ -254,17 +261,18 @@ func ToHeader(v string) string {
 	return strings.Join(list, "-")
 }
 
-// capitalize capitalizes the first letter of a word.
+// Capitalize capitalizes the first letter of a word.
 func Capitalize(word string) string {
 	if word == "" {
 		return ""
 	}
+
 	r, n := utf8.DecodeRuneInString(word)
 
 	return string(unicode.ToUpper(r)) + word[n:]
 }
 
-// mergeMaps simples copies the keys from source to destination.
+// MergeMaps simples copies the keys from source to destination.
 func MergeMaps(dest, source map[string]string) map[string]string {
 	for k, v := range source {
 		dest[k] = v
@@ -273,7 +281,7 @@ func MergeMaps(dest, source map[string]string) map[string]string {
 	return dest
 }
 
-// getWithin calculates a duration of x percent of the time period, i.e. something
+// GetWithin calculates a duration of x percent of the time period, i.e. something
 // expires in 1 hours, get me a duration within 80%.
 func GetWithin(expires time.Time, within float64) time.Duration {
 	left := expires.UTC().Sub(time.Now().UTC()).Seconds()
@@ -287,18 +295,18 @@ func GetWithin(expires time.Time, within float64) time.Duration {
 	return time.Duration(seconds) * time.Second
 }
 
-// getHashKey returns a hash of the encoded jwt token.
+// GetHashKey returns a hash of the encoded jwt token.
 func GetHashKey(token string) string {
 	hash := sha.Sum512([]byte(token))
 	return base64.RawStdEncoding.EncodeToString(hash[:])
 }
 
-// printError display the command line usage and error.
+// PrintError display the command line usage and error.
 func PrintError(message string, args ...interface{}) cli.ExitCoder {
 	return cli.Exit(fmt.Sprintf("[error] "+message, args...), 1)
 }
 
-// realIP retrieves the client ip address from a http request.
+// RealIP retrieves the client ip address from a http request.
 func RealIP(req *http.Request) string {
 	rAddr := req.RemoteAddr
 
@@ -345,6 +353,7 @@ func WithOAuthURI(baseURI string, oauthURI string) func(uri string) string {
 			oauthURI = strings.TrimPrefix(oauthURI, "/")
 			return fmt.Sprintf("%s/%s/%s", baseURI, oauthURI, uri)
 		}
+
 		return fmt.Sprintf("%s/%s", oauthURI, uri)
 	}
 }
