@@ -110,9 +110,20 @@ func AdmissionMiddleware(
 	matchClaims map[string]string,
 	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
 ) func(http.Handler) http.Handler {
+	canonHeaders := make([]string, len(resource.Headers))
+	resourceVals := make(map[string]bool, len(resource.Headers))
+
 	claimMatches := make(map[string]*regexp.Regexp)
 	for k, v := range matchClaims {
 		claimMatches[k] = regexp.MustCompile(v)
+	}
+
+	for idx, resVal := range resource.Headers {
+		resVals := strings.Split(resVal, ":")
+		name := resVals[0]
+		canonName := http.CanonicalHeaderKey(name)
+		canonHeaders[idx] = canonName
+		resourceVals[resVal] = true
 	}
 
 	return func(next http.Handler) http.Handler {
@@ -146,13 +157,7 @@ func AdmissionMiddleware(
 			}
 
 			if len(resource.Headers) > 0 {
-				var reqHeaders []string
-
-				for _, resVal := range resource.Headers {
-					resVals := strings.Split(resVal, ":")
-					name := resVals[0]
-					canonName := http.CanonicalHeaderKey(name)
-
+				for _, canonName := range canonHeaders {
 					values, ok := req.Header[canonName]
 					if !ok {
 						lLog.Warn("access denied, invalid headers",
@@ -165,20 +170,18 @@ func AdmissionMiddleware(
 					for _, value := range values {
 						headVal := fmt.Sprintf(
 							"%s:%s",
-							strings.ToLower(name),
+							strings.ToLower(canonName),
 							strings.ToLower(value),
 						)
-						reqHeaders = append(reqHeaders, headVal)
+
+						if _, ok := resourceVals[headVal]; !ok {
+							lLog.Warn("access denied, invalid headers",
+								zap.String("headers", resource.GetHeaders()))
+							accessForbidden(wrt, req)
+
+							return
+						}
 					}
-				}
-
-				// @step: we need to check the headers
-				if !utils.HasAccess(resource.Headers, reqHeaders, true) {
-					lLog.Warn("access denied, invalid headers",
-						zap.String("headers", resource.GetHeaders()))
-					accessForbidden(wrt, req)
-
-					return
 				}
 			}
 
