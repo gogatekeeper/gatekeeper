@@ -116,31 +116,29 @@ func FileExists(filename string) bool {
 	return true
 }
 
-func HasAccess(need, have []string, all bool) bool {
+func HasAccess(need map[string]bool, have []string, all bool) bool {
 	if len(need) == 0 {
 		return true
 	}
 
 	var matched int
 
-	for _, x := range need {
-		found := ContainedIn(x, have)
+	for _, x := range have {
+		_, found := need[x]
+		if found && !all {
+			return true
+		}
 
-		switch found {
-		case true:
-			if !all {
-				return true
-			}
-
+		if found {
 			matched++
-		default:
-			if all {
-				return false
-			}
+		}
+
+		if matched == len(need) {
+			return true
 		}
 	}
 
-	return matched > 0
+	return false
 }
 
 func ContainedIn(value string, list []string) bool {

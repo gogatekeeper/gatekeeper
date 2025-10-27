@@ -111,7 +111,9 @@ func AdmissionMiddleware(
 	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
 ) func(http.Handler) http.Handler {
 	canonHeaders := make([]string, len(resource.Headers))
-	resourceVals := make(map[string]bool, len(resource.Headers))
+	resourceHeaderVals := make(map[string]bool, len(resource.Headers))
+	resourceRoles := make(map[string]bool, len(resource.Roles))
+	resourceGroups := make(map[string]bool, len(resource.Groups))
 
 	claimMatches := make(map[string]*regexp.Regexp)
 	for k, v := range matchClaims {
@@ -123,7 +125,15 @@ func AdmissionMiddleware(
 		name := resVals[0]
 		canonName := http.CanonicalHeaderKey(name)
 		canonHeaders[idx] = canonName
-		resourceVals[resVal] = true
+		resourceHeaderVals[resVal] = true
+	}
+
+	for _, role := range resource.Roles {
+		resourceRoles[role] = true
+	}
+
+	for _, group := range resource.Groups {
+		resourceGroups[group] = true
 	}
 
 	return func(next http.Handler) http.Handler {
@@ -148,7 +158,7 @@ func AdmissionMiddleware(
 			)
 
 			// @step: we need to check the roles
-			if !utils.HasAccess(resource.Roles, user.Roles, !resource.RequireAnyRole) {
+			if !utils.HasAccess(resourceRoles, user.Roles, !resource.RequireAnyRole) {
 				lLog.Warn("access denied, invalid roles",
 					zap.String("roles", resource.GetRoles()))
 				accessForbidden(wrt, req)
@@ -174,7 +184,7 @@ func AdmissionMiddleware(
 							strings.ToLower(value),
 						)
 
-						if _, ok := resourceVals[headVal]; !ok {
+						if _, ok := resourceHeaderVals[headVal]; !ok {
 							lLog.Warn("access denied, invalid headers",
 								zap.String("headers", resource.GetHeaders()))
 							accessForbidden(wrt, req)
@@ -186,7 +196,7 @@ func AdmissionMiddleware(
 			}
 
 			// @step: check if we have any groups, the groups are there
-			if !utils.HasAccess(resource.Groups, user.Groups, false) {
+			if !utils.HasAccess(resourceGroups, user.Groups, false) {
 				lLog.Warn("access denied, invalid groups",
 					zap.String("groups", strings.Join(resource.Groups, ",")))
 				accessForbidden(wrt, req)
