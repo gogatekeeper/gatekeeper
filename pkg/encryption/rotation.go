@@ -19,10 +19,10 @@ import (
 	"crypto/tls"
 	"fmt"
 	"path"
+	"slices"
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
@@ -95,7 +95,7 @@ func (c *CertificationRotation) Watch() error {
 			case event := <-watcher.Events:
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					// step: does the change effect our files?
-					if !utils.ContainedIn(event.Name, filewatchPaths) {
+					if !slices.Contains(filewatchPaths, event.Name) {
 						continue
 					}
 					// step: reload the certificate
