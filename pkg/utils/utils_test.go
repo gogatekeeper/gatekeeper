@@ -210,7 +210,7 @@ func TestFindCookie(t *testing.T) {
 func TestHasAccessOK(t *testing.T) {
 	testCases := []struct {
 		Have     []string
-		Need     []string
+		Need     map[string]bool
 		Required bool
 	}{
 		{},
@@ -219,37 +219,37 @@ func TestHasAccessOK(t *testing.T) {
 		},
 		{
 			Have:     []string{"a", "b", "c"},
-			Need:     []string{"a", "b"},
+			Need:     map[string]bool{"a": true, "b": true},
 			Required: true,
 		},
 		{
 			Have: []string{"a", "b", "c"},
-			Need: []string{"a", "c"},
+			Need: map[string]bool{"a": true, "c": true},
 		},
 		{
 			Have: []string{"a", "b", "c"},
-			Need: []string{"c"},
+			Need: map[string]bool{"c": true},
 		},
 		{
 			Have: []string{"a", "b", "c"},
-			Need: []string{"b"},
+			Need: map[string]bool{"b": true},
 		},
 		{
 			Have: []string{"a", "b", "c"},
-			Need: []string{"b"},
+			Need: map[string]bool{"b": true},
 		},
 		{
 			Have: []string{"a", "b"},
-			Need: []string{"a"},
+			Need: map[string]bool{"a": true},
 		},
 		{
 			Have:     []string{"a", "b"},
-			Need:     []string{"a"},
+			Need:     map[string]bool{"a": true},
 			Required: true,
 		},
 		{
 			Have:     []string{"b", "a"},
-			Need:     []string{"a"},
+			Need:     map[string]bool{"a": true},
 			Required: true,
 		},
 	}
@@ -269,31 +269,31 @@ func TestHasAccessOK(t *testing.T) {
 func TestHasAccessBad(t *testing.T) {
 	testCases := []struct {
 		Have     []string
-		Need     []string
+		Need     map[string]bool
 		Required bool
 	}{
 		{
 			Have: []string{"a", "b"},
-			Need: []string{"c"},
+			Need: map[string]bool{"c": true},
 		},
 		{
 			Have:     []string{"a", "b"},
-			Need:     []string{"c"},
+			Need:     map[string]bool{"c": true},
 			Required: true,
 		},
 		{
 			Have:     []string{"a", "c"},
-			Need:     []string{"a", "b"},
+			Need:     map[string]bool{"a": true, "b": true},
 			Required: true,
 		},
 		{
 			Have:     []string{"a", "b", "c"},
-			Need:     []string{"b", "j"},
+			Need:     map[string]bool{"b": true, "j": true},
 			Required: true,
 		},
 		{
 			Have:     []string{"a", "b", "c"},
-			Need:     []string{"a", "d"},
+			Need:     map[string]bool{"a": true, "d": true},
 			Required: true,
 		},
 	}

@@ -279,6 +279,11 @@ func levelOfAuthenticationMiddleware(
 	resource *authorization.Resource,
 	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
 ) func(http.Handler) http.Handler {
+	resourceAcr := make(map[string]bool, len(resource.Acr))
+	for _, acr := range resource.Acr {
+		resourceAcr[acr] = true
+	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
 			// we don't need to continue is a decision has been made
@@ -308,7 +313,7 @@ func levelOfAuthenticationMiddleware(
 			}
 
 			if len(resource.Acr) > 0 && !utils.HasAccess(
-				resource.Acr,
+				resourceAcr,
 				[]string{user.Acr},
 				false,
 			) {

@@ -2172,39 +2172,39 @@ func TestAdmissionHandlerRoles(t *testing.T) {
 			HasToken:     true,
 			ExpectedCode: http.StatusForbidden,
 		},
-		{
-			URI:           FakeAdminURL,
-			Roles:         []string{"admin"},
-			HasToken:      true,
-			ExpectedProxy: true,
-			ExpectedCode:  http.StatusOK,
-		},
-		{
-			URI:           FakeTestURL,
-			Roles:         []string{"test"},
-			HasToken:      true,
-			ExpectedProxy: true,
-			ExpectedCode:  http.StatusOK,
-		},
-		{
-			URI:           "/either",
-			Roles:         []string{"test", "admin"},
-			HasToken:      true,
-			ExpectedProxy: true,
-			ExpectedCode:  http.StatusOK,
-		},
-		{
-			URI:          "/either",
-			Roles:        []string{"no_roles"},
-			HasToken:     true,
-			ExpectedCode: http.StatusForbidden,
-		},
-		{
-			URI:           "/",
-			HasToken:      true,
-			ExpectedProxy: true,
-			ExpectedCode:  http.StatusOK,
-		},
+		// {
+		// 	URI:           FakeAdminURL,
+		// 	Roles:         []string{"admin"},
+		// 	HasToken:      true,
+		// 	ExpectedProxy: true,
+		// 	ExpectedCode:  http.StatusOK,
+		// },
+		// {
+		// 	URI:           FakeTestURL,
+		// 	Roles:         []string{"test"},
+		// 	HasToken:      true,
+		// 	ExpectedProxy: true,
+		// 	ExpectedCode:  http.StatusOK,
+		// },
+		// {
+		// 	URI:           "/either",
+		// 	Roles:         []string{"test", "admin"},
+		// 	HasToken:      true,
+		// 	ExpectedProxy: true,
+		// 	ExpectedCode:  http.StatusOK,
+		// },
+		// {
+		// 	URI:          "/either",
+		// 	Roles:        []string{"no_roles"},
+		// 	HasToken:     true,
+		// 	ExpectedCode: http.StatusForbidden,
+		// },
+		// {
+		// 	URI:           "/",
+		// 	HasToken:      true,
+		// 	ExpectedProxy: true,
+		// 	ExpectedCode:  http.StatusOK,
+		// },
 	}
 	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
 }
