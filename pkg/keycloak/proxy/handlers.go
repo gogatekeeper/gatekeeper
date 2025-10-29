@@ -24,6 +24,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -77,7 +78,7 @@ func oauthAuthorizationHandler(
 		// step: set the access type of the session
 		accessType := oauth2.AccessTypeOnline
 
-		if utils.ContainedIn("offline", scopes) {
+		if slices.Contains(scopes, "offline") {
 			accessType = oauth2.AccessTypeOffline
 		}
 

@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"slices"
 	"syscall"
 	"time"
 
@@ -220,7 +221,7 @@ func parseCLIOptions(cliCtx *cli.Context, config core.Configs) error {
 		field := reflect.TypeOf(config).Elem().Field(i)
 		name := field.Tag.Get("yaml")
 
-		if utils.ContainedIn(name, ignoredOptions) {
+		if slices.Contains(ignoredOptions, name) {
 			continue
 		}
 

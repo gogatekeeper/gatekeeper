@@ -31,6 +31,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -141,24 +142,10 @@ func HasAccess(need map[string]bool, have []string, all bool) bool {
 	return false
 }
 
-func ContainedIn(value string, list []string) bool {
-	for _, x := range list {
-		if x == value {
-			return true
-		}
-	}
-
-	return false
-}
-
 func ContainsSubString(value string, list []string) bool {
-	for _, x := range list {
-		if strings.Contains(value, x) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(list, func(val string) bool {
+		return strings.Contains(value, val)
+	})
 }
 
 // TryDialEndpoint dials the upstream endpoint via plain HTTP.
