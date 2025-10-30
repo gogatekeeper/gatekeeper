@@ -530,7 +530,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:4.0.0
+  image: quay.io/gogatekeeper/gatekeeper:4.3.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -557,7 +557,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:4.0.0
+  image: quay.io/gogatekeeper/gatekeeper:4.3.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -1157,7 +1157,7 @@ You can specify also connection options in redis URI e.g. `redis://user:password
 In both cases, the refresh token is encrypted before being placed into
 the store.
 
-From version 4.0.0 gatekeeper also supports Redis Cluster HA client.
+From version 4.3.0 gatekeeper also supports Redis Cluster HA client.
 Example of redis cluster URI e.g. `redis://user:password@localhost:6789?dial_timeout=3&read_timeout=6s&addr=localhost:6790&addr=localhost:6791`
 
 Both Redis and also RedisCluster connections support TLS/mTLS, see section [TLS/mTLS](#tlsmtls)
