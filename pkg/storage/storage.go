@@ -29,7 +29,13 @@ type Storage interface {
 }
 
 // CreateStorage creates the store client for use.
-func CreateStorage(location string, highAvail bool, caPool *x509.CertPool, keyPair *tls.Certificate) (Storage, error) {
+func CreateStorage(
+	location string,
+	highAvail bool,
+	failover bool,
+	caPool *x509.CertPool,
+	keyPair *tls.Certificate,
+) (Storage, error) {
 	uri, err := url.Parse(location)
 	if err != nil {
 		return nil, err
@@ -37,14 +43,14 @@ func CreateStorage(location string, highAvail bool, caPool *x509.CertPool, keyPa
 
 	switch uri.Scheme {
 	case constant.RedisScheme:
-		builder, err := newRedisStoreBuilder(location, highAvail)
+		builder, err := newRedisStoreBuilder(location, highAvail, failover)
 		if err != nil {
 			return nil, err
 		}
 
 		return builder.Build(), nil
 	case constant.TLSRedisScheme:
-		builder, err := newRedisStoreBuilder(location, highAvail)
+		builder, err := newRedisStoreBuilder(location, highAvail, failover)
 		if err != nil {
 			return nil, err
 		}
