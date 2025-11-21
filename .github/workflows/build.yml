@@ -38,7 +38,7 @@ jobs:
       - name: "Deploy Redis"
         run: |
           sudo apt update
-          sudo apt install -y redis
+          sudo apt install -y redis redis-sentinel
 
           REDIS_DIR=/tmp/redis-standalone
           mkdir -p $REDIS_DIR
@@ -50,7 +50,7 @@ jobs:
       - name: "Setup Redis Cluster"
         run: |
           sudo apt update
-          sudo apt install -y redis
+          sudo apt install -y redis redis-sentinel
           PORT_PREFIX=700
           for NODE_NUM in {0..5}
           do
@@ -74,6 +74,45 @@ jobs:
               --key e2e/redis/redis.key \
               --cert e2e/redis/redis.crt \
               -a 2aD6FgewLV
+      - name: "Setup Redis Sentinel"
+        run: |
+          sudo apt update
+          sudo apt install -y redis redis-sentinel
+
+          REDIS_DIR=/tmp/redis-sentinel-master
+          mkdir -p $REDIS_DIR
+          cp e2e/redis/redis-sentinel.conf ${REDIS_DIR}/redis.conf
+          echo "tls-port 6800" >> ${REDIS_DIR}/redis.conf
+          cp e2e/redis/{ca.crt,redis.crt,redis.key} $REDIS_DIR
+          pushd $REDIS_DIR
+          redis-server ./redis.conf &
+          popd
+
+          REDIS_DIR=/tmp/redis-sentinel-slave
+          mkdir -p $REDIS_DIR
+          cp e2e/redis/redis-sentinel.conf ${REDIS_DIR}/redis.conf
+          echo "tls-port 6801" >> ${REDIS_DIR}/redis.conf
+          echo "slaveof 127.0.0.1 6800" >> ${REDIS_DIR}/redis.conf
+          cp e2e/redis/{ca.crt,redis.crt,redis.key} $REDIS_DIR
+          pushd $REDIS_DIR
+          redis-server ./redis.conf &
+          popd
+
+          PORT_PREFIX=800
+          for NODE_NUM in {0..2}
+          do
+              REDIS_DIR=/tmp/sentinel-$NODE_NUM
+              mkdir -p $REDIS_DIR
+              cp e2e/redis/sentinel.conf ${REDIS_DIR}/sentinel.conf
+              echo "tls-port ${PORT_PREFIX}${NODE_NUM}" >> ${REDIS_DIR}/sentinel.conf
+              echo "sentinel announce-port ${PORT_PREFIX}${NODE_NUM}" >> ${REDIS_DIR}/sentinel.conf
+              cp e2e/redis/{ca.crt,redis.crt,redis.key} $REDIS_DIR
+              pushd $REDIS_DIR
+              redis-sentinel ./sentinel.conf &
+              popd
+          done
+
+          sleep 3
       - name: "Run Tests"
         run: |
           kubectl get pods -A

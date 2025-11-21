@@ -240,9 +240,16 @@ func setupStore(
 		}
 	}
 
+	var enableStoreFailover bool
+	if strings.Contains(storeURL, "master_name") {
+		enableStoreFailover = true
+		enableStoreHA = false
+	}
+
 	store, err := storage.CreateStorage(
 		storeURL,
 		enableStoreHA,
+		enableStoreFailover,
 		certPool,
 		keyPair,
 	)

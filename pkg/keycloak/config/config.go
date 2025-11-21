@@ -833,9 +833,16 @@ func (r *Config) isStoreURLValid() error {
 		}
 
 		if r.EnableStoreHA {
-			_, err := redis.ParseClusterURL(r.StoreURL)
-			if err != nil {
-				return errors.Join(apperrors.ErrInvalidHAStoreURL, err)
+			if strings.Contains(r.StoreURL, "master_name") {
+				_, err := redis.ParseFailoverURL(r.StoreURL)
+				if err != nil {
+					return errors.Join(apperrors.ErrInvalidSentinelStoreURL, err)
+				}
+			} else {
+				_, err := redis.ParseClusterURL(r.StoreURL)
+				if err != nil {
+					return errors.Join(apperrors.ErrInvalidRedisClusterStoreURL, err)
+				}
 			}
 		} else {
 			_, err := redis.ParseURL(r.StoreURL)
