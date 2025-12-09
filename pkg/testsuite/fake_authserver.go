@@ -334,8 +334,8 @@ func newFakeAuthServer(config *fakeAuthConfig) *fakeAuthServer {
 	router.Post(baseURI+constant.IdpLogoutURI, service.logoutHandler)
 	router.Post(baseURI+constant.IdpRevokeURI, service.revocationHandler)
 	router.Post(baseURI+constant.IdpTokenURI, service.tokenHandler)
-	router.Get(baseURI+constant.IdpResourceSetURI, service.ResourcesHandler)
-	router.Get(baseURI+constant.IdpResourceSetURI+"/{id}", service.ResourceHandler)
+	router.Get(baseURI+constant.IdpResourcesSetURI, service.ResourcesHandler)
+	router.Get(baseURI+constant.IdpResourceSetURI, service.ResourceHandler)
 	router.Post(baseURI+constant.IdpProtectPermURI, service.PermissionTicketHandler)
 
 	if config.EnableTLS {

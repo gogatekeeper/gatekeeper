@@ -25,12 +25,12 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/Nerzal/gocloak/v13"
 	oidc3 "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/encryption"
+	keycloak_client "github.com/gogatekeeper/gatekeeper/pkg/keycloak/client"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/cookie"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
@@ -50,7 +50,7 @@ func authorizationMiddleware(
 	noProxy bool,
 	pat *PAT,
 	oidcProvider *oidc3.Provider,
-	idpClient *gocloak.GoCloak,
+	idpClient *keycloak_client.Client,
 	openIDProviderTimeout time.Duration,
 	realm string,
 	enableEncryptedToken bool,
@@ -164,7 +164,6 @@ func authorizationMiddleware(
 						req.Context(),
 						pat,
 						idpClient,
-						realm,
 						authzPath,
 						user,
 						methodScope,

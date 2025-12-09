@@ -22,7 +22,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Nerzal/gocloak/v13"
 	"github.com/cenkalti/backoff/v5"
 	oidc3 "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/go-jose/go-jose/v4/jwt"
@@ -30,6 +29,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	configcore "github.com/gogatekeeper/gatekeeper/pkg/config/core"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
+	keycloak_client "github.com/gogatekeeper/gatekeeper/pkg/keycloak/client"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/session"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
@@ -38,15 +38,13 @@ import (
 
 func getPAT(
 	ctx context.Context,
-	clientID string,
 	clientSecret string,
-	realm string,
 	openIDProviderTimeout time.Duration,
 	grantType string,
-	idpClient *gocloak.GoCloak,
+	idpClient *keycloak_client.Client,
 	forwardingUsername string,
 	forwardingPassword string,
-) (*gocloak.JWT, *jwt.Claims, error) {
+) (*models.TokenResponse, *jwt.Claims, error) {
 	cntx, cancel := context.WithTimeout(
 		ctx,
 		openIDProviderTimeout,
@@ -54,26 +52,20 @@ func getPAT(
 	defer cancel()
 
 	var (
-		token *gocloak.JWT
+		token *models.TokenResponse
 		err   error
 	)
 
 	switch grantType {
 	case configcore.GrantTypeClientCreds:
-		token, err = idpClient.LoginClient(
-			cntx,
-			clientID,
-			clientSecret,
-			realm,
-		)
+		token, err = idpClient.Login(cntx, &clientSecret, nil, nil, grantType)
 	case configcore.GrantTypeUserCreds:
 		token, err = idpClient.Login(
 			cntx,
-			clientID,
-			clientSecret,
-			realm,
-			forwardingUsername,
-			forwardingPassword,
+			&clientSecret,
+			&forwardingUsername,
+			&forwardingPassword,
+			grantType,
 		)
 	default:
 		return nil, nil, apperrors.ErrInvalidGrantType
@@ -102,16 +94,14 @@ func refreshPAT(
 	ctx context.Context,
 	logger *zap.Logger,
 	pat *PAT,
-	clientID string,
 	clientSecret string,
-	realm string,
 	openIDProviderTimeout time.Duration,
 	patRetryCount int,
 	patRetryInterval time.Duration,
 	enableForwarding bool,
 	enableSigning bool,
 	forwardingGrantType string,
-	idpClient *gocloak.GoCloak,
+	idpClient *keycloak_client.Client,
 	forwardingUsername string,
 	forwardingPassword string,
 	done chan bool,
@@ -125,7 +115,7 @@ func refreshPAT(
 
 	for {
 		var (
-			token  *gocloak.JWT
+			token  *models.TokenResponse
 			claims *jwt.Claims
 		)
 
@@ -137,9 +127,7 @@ func refreshPAT(
 
 			token, claims, err = getPAT(
 				pCtx,
-				clientID,
 				clientSecret,
-				realm,
 				openIDProviderTimeout,
 				grantType,
 				idpClient,
@@ -248,31 +236,23 @@ func WithUMAIdentity(
 func getRPT(
 	ctx context.Context,
 	pat *PAT,
-	idpClient *gocloak.GoCloak,
-	realm string,
+	idpClient *keycloak_client.Client,
 	targetPath string,
 	userToken string,
 	methodScope *string,
-) (*gocloak.JWT, error) {
-	matchingURI := true
-	resourceParam := gocloak.GetResourceParams{
-		URI:         &targetPath,
-		MatchingURI: &matchingURI,
-		Scope:       methodScope,
-	}
-
+) (string, error) {
 	pat.m.RLock()
 	patTok := pat.Token.AccessToken
 	pat.m.RUnlock()
 
-	resources, err := idpClient.GetResourcesClient(
+	resources, err := idpClient.GetResources(
 		ctx,
 		patTok,
-		realm,
-		resourceParam,
+		targetPath,
+		methodScope,
 	)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return "", fmt.Errorf(
 			"%w %w",
 			apperrors.ErrNoIDPResourceForPath,
 			err,
@@ -280,18 +260,18 @@ func getRPT(
 	}
 
 	if len(resources) == 0 {
-		return nil, apperrors.ErrNoIDPResourceForPath
+		return "", apperrors.ErrNoIDPResourceForPath
 	}
 
 	if len(resources) > 1 {
-		return nil, apperrors.ErrTooManyResources
+		return "", apperrors.ErrTooManyResources
 	}
 
 	resourceID := resources[0].ID
 	resourceScopes := make([]string, 0)
 
 	if len(*resources[0].ResourceScopes) == 0 {
-		return nil, fmt.Errorf(
+		return "", fmt.Errorf(
 			"%w, resource: %s",
 			apperrors.ErrMissingScopesForResource,
 			*resourceID,
@@ -306,21 +286,14 @@ func getRPT(
 		}
 	}
 
-	permissions := []gocloak.CreatePermissionTicketParams{
-		{
-			ResourceID:     resourceID,
-			ResourceScopes: &resourceScopes,
-		},
-	}
-
 	permTicket, err := idpClient.CreatePermissionTicket(
 		ctx,
 		patTok,
-		realm,
-		permissions,
+		*resourceID,
+		resourceScopes,
 	)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return "", fmt.Errorf(
 			"%s resource: %s %w",
 			apperrors.ErrPermissionTicketForResourceID.Error(),
 			*resourceID,
@@ -330,18 +303,13 @@ func getRPT(
 
 	grantType := configcore.GrantTypeUmaTicket
 
-	rptOptions := gocloak.RequestingPartyTokenOptions{
-		GrantType: &grantType,
-		Ticket:    permTicket.Ticket,
-	}
-
 	if userToken == "" {
 		userToken = patTok
 	}
 
-	rpt, err := idpClient.GetRequestingPartyToken(ctx, userToken, realm, rptOptions)
+	rpt, err := idpClient.GetRequestingPartyToken(ctx, userToken, permTicket, grantType)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return "", fmt.Errorf(
 			"%s resource: %s %w",
 			apperrors.ErrRetrieveRPT.Error(),
 			*resourceID,
@@ -355,8 +323,7 @@ func getRPT(
 func refreshUmaToken(
 	ctx context.Context,
 	pat *PAT,
-	idpClient *gocloak.GoCloak,
-	realm string,
+	idpClient *keycloak_client.Client,
 	targetPath string,
 	user *models.UserContext,
 	methodScope *string,
@@ -365,7 +332,6 @@ func refreshUmaToken(
 		ctx,
 		pat,
 		idpClient,
-		realm,
 		targetPath,
 		user.RawToken,
 		methodScope,
@@ -374,7 +340,7 @@ func refreshUmaToken(
 		return nil, err
 	}
 
-	umaUser, err := session.ExtractIdentity(tok.AccessToken)
+	umaUser, err := session.ExtractIdentity(tok)
 	if err != nil {
 		return nil, err
 	}

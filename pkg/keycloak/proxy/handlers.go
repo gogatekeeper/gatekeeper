@@ -28,12 +28,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Nerzal/gocloak/v13"
 	oidc3 "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/encryption"
+	keycloak_client "github.com/gogatekeeper/gatekeeper/pkg/keycloak/client"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/cookie"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/core"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/handlers"
@@ -174,7 +174,6 @@ func oauthAuthorizationHandler(
 func oauthCallbackHandler(
 	logger *zap.Logger,
 	clientID string,
-	realm string,
 	cookiePKCEName string,
 	cookieRequestURIName string,
 	postLoginRedirectPath string,
@@ -191,7 +190,7 @@ func oauthCallbackHandler(
 	provider *oidc3.Provider,
 	cookManager *cookie.Manager,
 	pat *PAT,
-	idpClient *gocloak.GoCloak,
+	idpClient *keycloak_client.Client,
 	store storage.Storage,
 	newOAuth2Config func(redirectionURL string) *oauth2.Config,
 	getRedirectionURL func(wrt http.ResponseWriter, req *http.Request) string,
@@ -213,7 +212,7 @@ func oauthCallbackHandler(
 			req,
 			enablePKCE,
 			cookiePKCEName,
-			idpClient.RestyClient().GetClient(),
+			idpClient.GetClient(),
 			accessForbidden,
 			accessError,
 			newOAuth2Config,
@@ -347,7 +346,6 @@ func oauthCallbackHandler(
 				req.Context(),
 				pat,
 				idpClient,
-				realm,
 				redirectURI,
 				accessToken,
 				methodScope,
@@ -355,8 +353,8 @@ func oauthCallbackHandler(
 
 			umaError = erru
 
-			if token != nil {
-				umaToken = token.AccessToken
+			if token != "" {
+				umaToken = token
 			}
 		}
 

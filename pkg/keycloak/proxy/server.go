@@ -36,7 +36,6 @@ import (
 	"time"
 
 	"github.com/KimMachineGun/automemlimit/memlimit"
-	"github.com/Nerzal/gocloak/v13"
 	proxyproto "github.com/armon/go-proxyproto"
 	backoff "github.com/cenkalti/backoff/v5"
 	oidc3 "github.com/coreos/go-oidc/v3/oidc"
@@ -47,6 +46,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/encryption"
+	keycloak_client "github.com/gogatekeeper/gatekeeper/pkg/keycloak/client"
 	"github.com/gogatekeeper/gatekeeper/pkg/keycloak/config"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/cookie"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/core"
@@ -539,7 +539,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.CookieAccessName,
 		r.Config.CookieRefreshName,
 		getIdentity,
-		r.IdpClient.RestyClient().GetClient(),
+		r.IdpClient.GetClient(),
 		r.Config.EnableIDPSessionCheck,
 		r.Provider,
 		r.Config.ClientID,
@@ -561,7 +561,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 	loginHand := loginHandler(
 		r.Log,
 		r.Config.OpenIDProviderTimeout,
-		r.IdpClient.RestyClient().GetClient(),
+		r.IdpClient.GetClient(),
 		r.Config.EnableLoginHandler,
 		newOAuth2Config,
 		loginGetRedirectionURL,
@@ -597,7 +597,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Provider,
 		r.Store,
 		r.Cm,
-		r.IdpClient.RestyClient().GetClient(),
+		r.IdpClient.GetClient(),
 	)
 
 	if r.Config.EnablePKCE {
@@ -607,7 +607,6 @@ func (r *OauthProxy) CreateReverseProxy() error {
 	oauthCallbackHand := oauthCallbackHandler(
 		r.Log,
 		r.Config.ClientID,
-		r.Config.Realm,
 		r.Config.CookiePKCEName,
 		r.Config.CookieRequestURIName,
 		r.Config.PostLoginRedirectPath,
@@ -1183,9 +1182,7 @@ func (r *OauthProxy) Run() (context.Context, error) {
 				ctx,
 				r.Log,
 				r.pat,
-				r.Config.ClientID,
 				r.Config.ClientSecret,
-				r.Config.Realm,
 				r.Config.OpenIDProviderTimeout,
 				r.Config.PatRetryCount,
 				r.Config.PatRetryInterval,
@@ -1776,22 +1773,35 @@ func (r OpenIDRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 // in order to retrieve it from the host header on request.
 //
 //nolint:cyclop
-func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, error) {
+func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *keycloak_client.Client, error) {
 	host := fmt.Sprintf(
 		"%s://%s",
 		r.Config.DiscoveryURI.Scheme,
 		r.Config.DiscoveryURI.Host,
 	)
 
-	client := gocloak.NewClient(host)
 	tlsConfig := &tls.Config{
 		//nolint:gosec
 		InsecureSkipVerify: r.Config.SkipOpenIDProviderTLSVerify,
 	}
 
 	if r.Config.IsDiscoverURILegacy {
-		gocloak.SetLegacyWildFlySupport()(client)
+		host = fmt.Sprintf(
+			"%s/%s/%s/%s",
+			host,
+			"auth", "realms", r.Config.Realm,
+		)
+	} else {
+		host = fmt.Sprintf(
+			"%s/%s/%s",
+			host,
+			"realms", r.Config.Realm,
+		)
 	}
+
+	idpClient := keycloak_client.New(&r.Config.ClientID)
+	restyClient := idpClient.Client
+	restyClient.SetBaseURL(host)
 
 	if r.Config.TLSOpenIDProviderCACertificate != "" {
 		r.Log.Info(
@@ -1825,7 +1835,6 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 		tlsConfig.Certificates = []tls.Certificate{*clientKeyPair}
 	}
 
-	restyClient := client.RestyClient()
 	restyClient.SetTimeout(r.Config.OpenIDProviderTimeout)
 	restyClient.SetTLSClientConfig(tlsConfig)
 
@@ -1845,7 +1854,7 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 
 	// see https://github.com/coreos/go-oidc/issues/214
 	// see https://github.com/coreos/go-oidc/pull/260
-	ctx := oidc3.ClientContext(context.Background(), restyClient.GetClient())
+	ctx := oidc3.ClientContext(context.Background(), httpCl)
 
 	var (
 		provider *oidc3.Provider
@@ -1887,5 +1896,5 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *gocloak.GoCloak, err
 			)
 	}
 
-	return provider, client, nil
+	return provider, idpClient, nil
 }
