@@ -74,15 +74,17 @@ const (
 	AllPath = "/*"
 
 	//nolint:gosec
-	IdpWellKnownURI   = "/.well-known/openid-configuration"
-	IdpCertsURI       = "/protocol/openid-connect/certs"
-	IdpTokenURI       = "/protocol/openid-connect/token"
-	IdpAuthURI        = "/protocol/openid-connect/auth"
-	IdpUserURI        = "/protocol/openid-connect/userinfo"
-	IdpLogoutURI      = "/protocol/openid-connect/logout"
-	IdpRevokeURI      = "/protocol/openid-connect/revoke"
-	IdpResourceSetURI = "/authz/protection/resource_set"
-	IdpProtectPermURI = "/authz/protection/permission"
+	IdpWellKnownURI    = "/.well-known/openid-configuration"
+	IdpCertsURI        = "/protocol/openid-connect/certs"
+	IdpTokenURI        = "/protocol/openid-connect/token"
+	IdpAuthURI         = "/protocol/openid-connect/auth"
+	IdpUserURI         = "/protocol/openid-connect/userinfo"
+	IdpLogoutURI       = "/protocol/openid-connect/logout"
+	IdpRevokeURI       = "/protocol/openid-connect/revoke"
+	IdpResourcesSetURI = "/authz/protection/resource_set"
+	IdpResourceSetURI  = "/authz/protection/resource_set/{id}"
+	IdpProtectPermURI  = "/authz/protection/permission"
+	IdpClientIDURI     = "/clients"
 
 	InvalidCookieDuration   = -10 * time.Hour
 	PKCECodeVerifierLength  = 96

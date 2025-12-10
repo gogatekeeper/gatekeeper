@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/Nerzal/gocloak/v13"
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
+	keycloak_client "github.com/gogatekeeper/gatekeeper/pkg/keycloak/client"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 )
 
@@ -14,7 +14,7 @@ var _ Provider = (*KeycloakAuthorizationProvider)(nil)
 type KeycloakAuthorizationProvider struct {
 	perms       models.Permissions
 	targetPath  string
-	idpClient   *gocloak.GoCloak
+	idpClient   *keycloak_client.Client
 	idpTimeout  time.Duration
 	pat         string
 	realm       string
@@ -24,7 +24,7 @@ type KeycloakAuthorizationProvider struct {
 func NewKeycloakAuthorizationProvider(
 	perms models.Permissions,
 	targetPath string,
-	idpClient *gocloak.GoCloak,
+	idpClient *keycloak_client.Client,
 	idpTimeout time.Duration,
 	pat string,
 	realm string,
@@ -53,18 +53,11 @@ func (p *KeycloakAuthorizationProvider) Authorize() (AuthzDecision, error) {
 
 	defer cancel()
 
-	matchingURI := true
-	resourceParam := gocloak.GetResourceParams{
-		URI:         &p.targetPath,
-		MatchingURI: &matchingURI,
-		Scope:       p.methodScope,
-	}
-
-	resources, err := p.idpClient.GetResourcesClient(
+	resources, err := p.idpClient.GetResources(
 		resctx,
 		p.pat,
-		p.realm,
-		resourceParam,
+		p.targetPath,
+		p.methodScope,
 	)
 	if err != nil {
 		return DeniedAuthz, apperrors.ErrResourceRetrieve
@@ -108,18 +101,11 @@ func (p *KeycloakAuthorizationProvider) GenerateUMATicket() (string, error) {
 
 	defer cancel()
 
-	matchingURI := true
-	resourceParam := gocloak.GetResourceParams{
-		URI:         &p.targetPath,
-		MatchingURI: &matchingURI,
-		Scope:       p.methodScope,
-	}
-
-	resources, err := p.idpClient.GetResourcesClient(
+	resources, err := p.idpClient.GetResources(
 		resctx,
 		p.pat,
-		p.realm,
-		resourceParam,
+		p.targetPath,
+		p.methodScope,
 	)
 	if err != nil {
 		return "", err
@@ -140,22 +126,15 @@ func (p *KeycloakAuthorizationProvider) GenerateUMATicket() (string, error) {
 		resourceScopes = append(resourceScopes, *scope.Name)
 	}
 
-	permissions := []gocloak.CreatePermissionTicketParams{
-		{
-			ResourceID:     resourceID,
-			ResourceScopes: &resourceScopes,
-		},
-	}
-
-	permTicket, err := p.idpClient.CreatePermissionTicket(
+	permToken, err := p.idpClient.CreatePermissionTicket(
 		resctx,
 		p.pat,
-		p.realm,
-		permissions,
+		*resourceID,
+		resourceScopes,
 	)
 	if err != nil {
 		return "", err
 	}
 
-	return *permTicket.Ticket, nil
+	return permToken, nil
 }
