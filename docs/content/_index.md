@@ -532,7 +532,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:4.3.0
+  image: quay.io/gogatekeeper/gatekeeper:4.4.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -559,7 +559,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:4.3.0
+  image: quay.io/gogatekeeper/gatekeeper:4.4.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -1162,7 +1162,17 @@ the store.
 From version 4.0.0 gatekeeper also supports Redis Cluster HA client by using option `--enable-store-ha=true`.
 Example of redis cluster URI e.g. `--store-url=redis://user:password@localhost:6789?dial_timeout=3&read_timeout=6s&addr=localhost:6790&addr=localhost:6791`
 
-Both Redis and also RedisCluster connections support TLS/mTLS, see section [TLS/mTLS](#tlsmtls)
+From version 4.4.0 gatekeeper supports also Redis Sentinel e.g. `--enable-store-ha=true` and `--store-url=redis://user:password@localhost:6789?master_name=mymaster&dial_timeout=3&read_timeout=6s&addr=localhost:6790&addr=localhost:6791&username=user&password=password`.
+
+To enable tls connections for redis you have to specify `--store-url=rediss://...` instead of just plain `--store-url=redis://...` and supply store certificate options:
+
+```yaml
+--tls-store-ca-certificate=xxxx
+--tls-store-client-certificate=xxxx // if you would like to enable mTLS
+--tls-store-client-private-key=xxxxx // if you would like to enable mTLS
+```
+
+Redis, RedisCluster, Redis Sentinel connections support TLS/mTLS, see section [TLS/mTLS](#tlsmtls)
 
 ## Post Login Redirect
 
