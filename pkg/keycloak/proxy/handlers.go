@@ -289,7 +289,7 @@ func oauthCallbackHandler(
 
 			switch {
 			case store != nil:
-				err = store.Set(req.Context(), utils.GetHashKey(rawAccessToken), encrypted, oidcTokensCookiesExp)
+				err = store.Set(req.Context(), oAccToken.Subject, encrypted, oidcTokensCookiesExp)
 				if err != nil {
 					scope.Logger.Error(
 						apperrors.ErrSaveTokToStore.Error(),
@@ -571,7 +571,7 @@ func loginHandler(
 					rCtx, rCancel := context.WithTimeout(ctx, constant.RedisTimeout)
 					defer rCancel()
 
-					err = store.Set(rCtx, utils.GetHashKey(token.AccessToken), refreshToken, expiration)
+					err = store.Set(rCtx, identity.ID, refreshToken, expiration)
 					if err != nil {
 						scope.Logger.Error(
 							apperrors.ErrSaveTokToStore.Error(),
@@ -789,7 +789,7 @@ func logoutHandler(
 				rCtx, rCancel := context.WithTimeout(ctx, constant.RedisTimeout)
 				defer rCancel()
 
-				err := store.Delete(rCtx, utils.GetHashKey(user.RawToken))
+				err := store.Delete(rCtx, user.ID)
 				if err != nil {
 					scope.Logger.Error(
 						apperrors.ErrDelTokFromStore.Error(),

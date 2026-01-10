@@ -20,9 +20,7 @@ import (
 	"crypto/hmac"
 	cryptorand "crypto/rand"
 	"crypto/sha256"
-	sha "crypto/sha512"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -286,12 +284,6 @@ func GetWithin(expires time.Time, within float64) time.Duration {
 	seconds := int(left * within)
 
 	return time.Duration(seconds) * time.Second
-}
-
-// GetHashKey returns a hash of the encoded jwt token.
-func GetHashKey(token string) string {
-	hash := sha.Sum512([]byte(token))
-	return base64.RawStdEncoding.EncodeToString(hash[:])
 }
 
 // PrintError display the command line usage and error.

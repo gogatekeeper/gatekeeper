@@ -296,11 +296,11 @@ func AuthenticationMiddleware(
 					}
 
 					if store != nil {
-						go func(ctx context.Context, old string, newToken string, encrypted string) {
+						go func(ctx context.Context, id string, newID string, encrypted string) {
 							ctxx, cancel := context.WithCancel(ctx)
 							defer cancel()
 
-							err = store.Delete(ctxx, utils.GetHashKey(old))
+							err = store.Delete(ctxx, id)
 							if err != nil {
 								lLog.Error(
 									apperrors.ErrDelTokFromStore.Error(),
@@ -308,7 +308,7 @@ func AuthenticationMiddleware(
 								)
 							}
 
-							err = store.Set(ctxx, utils.GetHashKey(newToken), encrypted, refreshExpiresIn)
+							err = store.Set(ctxx, newID, encrypted, refreshExpiresIn)
 							if err != nil {
 								lLog.Error(
 									apperrors.ErrSaveTokToStore.Error(),
@@ -317,7 +317,7 @@ func AuthenticationMiddleware(
 
 								return
 							}
-						}(ctx, user.RawToken, newRawAccToken, encryptedRefreshToken)
+						}(ctx, user.ID, newUser.ID, encryptedRefreshToken)
 					} else {
 						cookMgr.DropRefreshTokenCookie(req.WithContext(ctx), wrt, encryptedRefreshToken, refreshExpiresIn)
 					}

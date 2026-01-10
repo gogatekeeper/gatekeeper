@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
-	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	redis "github.com/redis/go-redis/v9"
 )
 
@@ -208,13 +207,14 @@ func (r *RedisStore[T]) Test(ctx context.Context) error {
 	return nil
 }
 
-// GetRefreshTokenFromStore retrieves a token from the store, the key we are using here is the access token.
+// GetRefreshTokenFromStore retrieves a token from the store, the key we are using here is the use subject=ID
+// keycloak uses uuids for subject.
 func (r *RedisStore[T]) GetRefreshTokenFromStore(
 	ctx context.Context,
-	token string,
+	subject string,
 ) (string, error) {
 	// step: the key is the access token
-	val, err := r.Get(ctx, utils.GetHashKey(token))
+	val, err := r.Get(ctx, subject)
 	if err != nil {
 		return val, err
 	}

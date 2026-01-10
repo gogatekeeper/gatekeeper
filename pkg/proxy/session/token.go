@@ -257,7 +257,7 @@ func RetrieveRefreshToken(
 
 	switch store != nil {
 	case true:
-		token, err = store.GetRefreshTokenFromStore(req.Context(), user.RawToken)
+		token, err = store.GetRefreshTokenFromStore(req.Context(), user.ID)
 	default:
 		token, err = GetRefreshTokenFromCookie(req, cookieRefreshName)
 	}
