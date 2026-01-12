@@ -154,6 +154,10 @@ Before contributing to Gatekeeper please read our [contributing guidelines](CONT
 * [Keycloak Documentation](https://github.com/keycloak/keycloak-documentation) - Documentation for Keycloak
 * [Keycloak QuickStarts](https://github.com/keycloak/keycloak-quickstarts) - QuickStarts for getting started with Keycloak
 
+## Maintainers
+
+Pavol Ipoth pavol.ipoth@protonmail.com
+
 ## License
 
 * [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
