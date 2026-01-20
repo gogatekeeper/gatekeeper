@@ -170,7 +170,7 @@ func oauthAuthorizationHandler(
 /*
 	oauthCallbackHandler is responsible for handling the response from oauth service
 */
-//nolint:cyclop
+//nolint:cyclop,funlen
 func oauthCallbackHandler(
 	logger *zap.Logger,
 	clientID string,
@@ -187,6 +187,7 @@ func oauthCallbackHandler(
 	enableEncryptedToken bool,
 	forceEncryptedCookie bool,
 	enablePKCE bool,
+	compressedToken bool,
 	provider *oidc3.Provider,
 	cookManager *cookie.Manager,
 	pat *PAT,
@@ -282,9 +283,18 @@ func oauthCallbackHandler(
 
 			oidcTokensCookiesExp = time.Until(stdRefreshClaims.Expiry.Time())
 
-			encrypted, err = core.EncryptToken(scope, refreshToken, encryptionKey, "refresh", writer)
-			if err != nil {
-				return
+			if compressedToken {
+				encrypted, err = session.EncryptAndCompressToken(refreshToken, encryptionKey)
+				if err != nil {
+					scope.Logger.Error(apperrors.ErrEncryptAndCompressRefreshToken.Error(), zap.Error(err))
+					accessForbidden(writer, req)
+					return //nolint:wsl_v5
+				}
+			} else {
+				encrypted, err = core.EncryptToken(scope, refreshToken, encryptionKey, "refresh", writer)
+				if err != nil {
+					return
+				}
 			}
 
 			switch {
@@ -358,8 +368,12 @@ func oauthCallbackHandler(
 			}
 		}
 
-		// step: are we encrypting the access token?
-		if enableEncryptedToken || forceEncryptedCookie {
+		encryptOnly := !compressedToken && (enableEncryptedToken || forceEncryptedCookie)
+		encryptedAndCompressed := compressedToken && (enableEncryptedToken || forceEncryptedCookie)
+		compressedOnly := compressedToken && !enableEncryptedToken && !forceEncryptedCookie
+
+		switch {
+		case encryptOnly:
 			accessToken, err = core.EncryptToken(scope, accessToken, encryptionKey, "access", writer)
 			if err != nil {
 				return
@@ -372,6 +386,40 @@ func oauthCallbackHandler(
 
 			if enableUma && umaError == nil {
 				umaToken, err = core.EncryptToken(scope, umaToken, encryptionKey, "uma", writer)
+				if err != nil {
+					return
+				}
+			}
+		case encryptedAndCompressed:
+			accessToken, err = core.EncryptAndCompressToken(scope, accessToken, encryptionKey, "access", writer)
+			if err != nil {
+				return
+			}
+
+			identityToken, err = core.EncryptAndCompressToken(scope, identityToken, encryptionKey, "id", writer)
+			if err != nil {
+				return
+			}
+
+			if enableUma && umaError == nil {
+				umaToken, err = core.EncryptAndCompressToken(scope, umaToken, encryptionKey, "uma", writer)
+				if err != nil {
+					return
+				}
+			}
+		case compressedOnly:
+			accessToken, err = core.CompressToken(scope, accessToken, "access", writer)
+			if err != nil {
+				return
+			}
+
+			identityToken, err = core.CompressToken(scope, identityToken, "id", writer)
+			if err != nil {
+				return
+			}
+
+			if enableUma && umaError == nil {
+				umaToken, err = core.CompressToken(scope, umaToken, "uma", writer)
 				if err != nil {
 					return
 				}
@@ -416,6 +464,7 @@ func loginHandler(
 	encryptionKey string,
 	enableRefreshTokens bool,
 	enableIDTokenCookie bool,
+	enableCompressToken bool,
 	cookManager *cookie.Manager,
 	accessTokenDuration time.Duration,
 	store storage.Storage,
@@ -504,12 +553,37 @@ func loginHandler(
 			}
 
 			// step: are we encrypting the access token?
-			plainIDToken := idToken
+			var (
+				plainIDToken     string
+				plainAccessToken string
+			)
 
-			if enableEncryptedToken || forceEncryptedCookie {
+			encrypt := enableEncryptedToken || forceEncryptedCookie
+			encryptAndCompress := enableCompressToken && encrypt
+			encryptOnly := !enableCompressToken && encrypt
+			compressOnly := enableCompressToken && !encrypt
+			plainIDToken = idToken
+			plainAccessToken = accessToken
+
+			switch {
+			case encryptAndCompress:
+				accessToken, err = session.EncryptAndCompressToken(accessToken, encryptionKey)
+				if err != nil {
+					scope.Logger.Error(apperrors.ErrEncryptAndCompressAccToken.Error(), zap.Error(err))
+					return http.StatusInternalServerError, //nolint:wsl_v5
+						errors.Join(apperrors.ErrEncryptAndCompressAccToken, err)
+				}
+
+				idToken, err = session.EncryptAndCompressToken(idToken, encryptionKey)
+				if err != nil {
+					scope.Logger.Error(apperrors.ErrEncryptAndCompressIDToken.Error(), zap.Error(err))
+					return http.StatusInternalServerError, //nolint:wsl_v5
+						errors.Join(apperrors.ErrEncryptAndCompressIDToken, err)
+				}
+			case encryptOnly:
 				accessToken, err = encryption.EncodeText(accessToken, encryptionKey)
 				if err != nil {
-					scope.Logger.Error(apperrors.ErrEncryptAccToken.Error(), zap.Error(err))
+					scope.Logger.Error(apperrors.ErrEncryptIDToken.Error(), zap.Error(err))
 					return http.StatusInternalServerError, //nolint:wsl_v5
 						errors.Join(apperrors.ErrEncryptAccToken, err)
 				}
@@ -520,23 +594,50 @@ func loginHandler(
 					return http.StatusInternalServerError, //nolint:wsl_v5
 						errors.Join(apperrors.ErrEncryptIDToken, err)
 				}
+			case compressOnly:
+				accessToken, err = session.CompressToken(accessToken)
+				if err != nil {
+					scope.Logger.Error(apperrors.ErrCompressAccessToken.Error(), zap.Error(err))
+					return http.StatusInternalServerError, apperrors.ErrCompressAccessToken
+				}
+
+				idToken, err = session.CompressToken(idToken)
+				if err != nil {
+					scope.Logger.Error(apperrors.ErrCompressIDToken.Error(), zap.Error(err))
+					return http.StatusInternalServerError, apperrors.ErrCompressIDToken
+				}
+
+				plainIDToken = idToken
+				plainAccessToken = accessToken
 			}
 
 			// step: does the response have a refresh token and we do NOT ignore refresh tokens?
 			if enableRefreshTokens && token.RefreshToken != "" {
-				refreshToken, err = encryption.EncodeText(token.RefreshToken, encryptionKey)
-				if err != nil {
-					scope.Logger.Error(apperrors.ErrEncryptRefreshToken.Error(), zap.Error(err))
-					return http.StatusInternalServerError, //nolint:wsl_v5
-						errors.Join(apperrors.ErrEncryptRefreshToken, err)
+				refreshToken = token.RefreshToken
+
+				if enableCompressToken {
+					refreshToken, err = session.EncryptAndCompressToken(refreshToken, encryptionKey)
+					if err != nil {
+						scope.Logger.Error(apperrors.ErrEncryptAndCompressRefreshToken.Error(), zap.Error(err))
+						return http.StatusInternalServerError, //nolint:wsl_v5
+							errors.Join(apperrors.ErrEncryptAndCompressRefreshToken, err)
+					}
+				} else {
+					refreshToken, err = encryption.EncodeText(refreshToken, encryptionKey)
+					if err != nil {
+						scope.Logger.Error(apperrors.ErrEncryptRefreshToken.Error(), zap.Error(err))
+						return http.StatusInternalServerError, //nolint:wsl_v5
+							errors.Join(apperrors.ErrEncryptRefreshToken, err)
+					}
 				}
 
+				refreshExpiry := session.GetAccessCookieExpiration(scope.Logger, accessTokenDuration, token.RefreshToken)
 				// drop in the access token - cookie expiration = access token
 				cookManager.DropAccessTokenCookie(
 					req,
 					writer,
 					accessToken,
-					session.GetAccessCookieExpiration(scope.Logger, accessTokenDuration, token.RefreshToken),
+					refreshExpiry,
 				)
 
 				if enableIDTokenCookie {
@@ -544,7 +645,7 @@ func loginHandler(
 						req,
 						writer,
 						idToken,
-						session.GetAccessCookieExpiration(scope.Logger, accessTokenDuration, token.RefreshToken),
+						refreshExpiry,
 					)
 				}
 
@@ -628,7 +729,7 @@ func loginHandler(
 			} else {
 				resp = models.TokenResponse{
 					IDToken:      plainIDToken,
-					AccessToken:  token.AccessToken,
+					AccessToken:  plainAccessToken,
 					RefreshToken: refreshToken,
 					ExpiresIn:    expiresIn,
 					Scope:        tScope,
@@ -658,7 +759,7 @@ func loginHandler(
 	- if the user has a refresh token, the token is invalidated by the provider
 	- optionally, the user can be redirected by to a url
 */
-//nolint:cyclop
+//nolint:cyclop,funlen
 func logoutHandler(
 	logger *zap.Logger,
 	postLogoutRedirectURI string,
@@ -676,6 +777,7 @@ func logoutHandler(
 	enableLogoutRedirect bool,
 	enableOptionalEncryption bool,
 	enableLogoutAuth bool,
+	enableCompressToken bool,
 	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, error),
 	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
 	provider *oidc3.Provider,
@@ -722,6 +824,7 @@ func logoutHandler(
 				encryptionKey,
 				req,
 				enableOptionalEncryption,
+				enableCompressToken,
 			)
 			// we are doing it so that in case with no-redirects=true, we can pass
 			// id token in authorization header
@@ -738,6 +841,15 @@ func logoutHandler(
 			if !enableLogoutAuth {
 				if idToken == "" {
 					idToken, err = getIdentity(req, cookieAccessName, "")
+					if err != nil {
+						scope.Logger.Error(err.Error())
+						accessForbidden(writer, req)
+						return //nolint:wsl_v5
+					}
+				}
+
+				if user == nil {
+					user, err = session.ExtractIdentity(idToken)
 					if err != nil {
 						scope.Logger.Error(err.Error())
 						accessForbidden(writer, req)
@@ -772,6 +884,7 @@ func logoutHandler(
 				req,
 				user,
 				enableOptionalEncryption,
+				enableCompressToken,
 			)
 			if err == nil {
 				identityToken = refresh

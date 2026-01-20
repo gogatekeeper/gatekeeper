@@ -48,6 +48,7 @@ func AuthenticationMiddleware(
 	store storage.Storage,
 	accessTokenDuration time.Duration,
 	enableOptionalEncryption bool,
+	enableCompressToken bool,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
@@ -143,6 +144,7 @@ func AuthenticationMiddleware(
 					req.WithContext(ctx),
 					user,
 					enableOptionalEncryption,
+					enableCompressToken,
 				)
 				if err != nil {
 					scope.Logger.Error(
@@ -260,15 +262,28 @@ func AuthenticationMiddleware(
 				}
 
 				if enableEncryptedToken || forceEncryptedCookie {
-					accessToken, err = encryption.EncodeText(accessToken, encryptionKey)
-					if err != nil {
-						lLog.Error(
-							apperrors.ErrEncryptAccToken.Error(),
-							zap.Error(err),
-						)
-						accessForbidden(wrt, req)
+					if enableCompressToken {
+						accessToken, err = session.EncryptAndCompressToken(accessToken, encryptionKey)
+						if err != nil {
+							lLog.Error(
+								apperrors.ErrEncryptAndCompressAccToken.Error(),
+								zap.Error(err),
+							)
+							accessForbidden(wrt, req)
 
-						return
+							return
+						}
+					} else {
+						accessToken, err = encryption.EncodeText(accessToken, encryptionKey)
+						if err != nil {
+							lLog.Error(
+								apperrors.ErrEncryptAccToken.Error(),
+								zap.Error(err),
+							)
+							accessForbidden(wrt, req)
+
+							return
+						}
 					}
 				}
 
@@ -284,15 +299,28 @@ func AuthenticationMiddleware(
 
 					var encryptedRefreshToken string
 
-					encryptedRefreshToken, err = encryption.EncodeText(newRefreshToken, encryptionKey)
-					if err != nil {
-						lLog.Error(
-							apperrors.ErrEncryptRefreshToken.Error(),
-							zap.Error(err),
-						)
-						wrt.WriteHeader(http.StatusInternalServerError)
+					if enableCompressToken {
+						encryptedRefreshToken, err = session.EncryptAndCompressToken(newRefreshToken, encryptionKey)
+						if err != nil {
+							lLog.Error(
+								apperrors.ErrEncryptRefreshToken.Error(),
+								zap.Error(err),
+							)
+							wrt.WriteHeader(http.StatusInternalServerError)
 
-						return
+							return
+						}
+					} else {
+						encryptedRefreshToken, err = encryption.EncodeText(newRefreshToken, encryptionKey)
+						if err != nil {
+							lLog.Error(
+								apperrors.ErrEncryptRefreshToken.Error(),
+								zap.Error(err),
+							)
+							wrt.WriteHeader(http.StatusInternalServerError)
+
+							return
+						}
 					}
 
 					if store != nil {

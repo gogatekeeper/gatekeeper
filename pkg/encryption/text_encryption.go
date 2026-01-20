@@ -80,3 +80,28 @@ func DecodeText(state, key string) (string, error) {
 
 	return string(encoded), nil
 }
+
+// EncodeBytes encodes the session state information into a value for a cookie to consume.
+func EncodeBytes(encodedBytes []byte, key string) (string, error) {
+	cipherText, err := EncryptDataBlock(encodedBytes, []byte(key))
+	if err != nil {
+		return "", err
+	}
+
+	return base64.RawStdEncoding.EncodeToString(cipherText), nil
+}
+
+// DecodeBytes decodes the session state cookie value.
+func DecodeBytes(state, key string) ([]byte, error) {
+	cipherText, err := base64.RawStdEncoding.DecodeString(state)
+	if err != nil {
+		return nil, err
+	}
+	// step: decrypt the cookie back in the expiration|token
+	encoded, err := DecryptDataBlock(cipherText, []byte(key))
+	if err != nil {
+		return nil, apperrors.ErrInvalidSession
+	}
+
+	return encoded, nil
+}

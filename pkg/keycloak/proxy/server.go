@@ -443,6 +443,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.EnableEncryptedToken,
 		r.Config.ForceEncryptedCookie,
 		r.Config.EnableOptionalEncryption,
+		r.Config.EnableCompressToken,
 		r.Config.EncryptionKey,
 	)
 
@@ -556,6 +557,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Store,
 		r.Config.AccessTokenDuration,
 		r.Config.EnableOptionalEncryption,
+		r.Config.EnableCompressToken,
 	)
 
 	loginHand := loginHandler(
@@ -570,6 +572,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.EncryptionKey,
 		r.Config.EnableRefreshTokens,
 		r.Config.EnableIDTokenCookie,
+		r.Config.EnableCompressToken,
 		r.Cm,
 		r.Config.AccessTokenDuration,
 		r.Store,
@@ -592,6 +595,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.EnableLogoutRedirect,
 		r.Config.EnableOptionalEncryption,
 		r.Config.EnableLogoutAuth,
+		r.Config.EnableCompressToken,
 		getIdentity,
 		accessForbidden,
 		r.Provider,
@@ -620,6 +624,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.EnableEncryptedToken,
 		r.Config.ForceEncryptedCookie,
 		r.Config.EnablePKCE,
+		r.Config.EnableCompressToken,
 		r.Provider,
 		r.Cm,
 		r.pat,
@@ -935,6 +940,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 				r.Config.ClientID,
 				r.Config.SkipAccessTokenClientIDCheck,
 				r.Config.SkipAccessTokenIssuerCheck,
+				r.Config.EnableCompressToken,
 				getIdentity,
 				accessForbidden,
 			)
