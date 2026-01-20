@@ -33,6 +33,7 @@ import (
 	keycloak_client "github.com/gogatekeeper/gatekeeper/pkg/keycloak/client"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/cookie"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
+	"github.com/gogatekeeper/gatekeeper/pkg/proxy/session"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
@@ -64,6 +65,7 @@ func authorizationMiddleware(
 	clientID string,
 	skipClientIDCheck bool,
 	skipIssuerCheck bool,
+	compressedToken bool,
 	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, error),
 	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
 ) func(http.Handler) http.Handler {
@@ -170,12 +172,31 @@ func authorizationMiddleware(
 					)
 					if err == nil {
 						umaToken := umaUser.RawToken
+
 						if enableEncryptedToken || forceEncryptedCookie {
-							umaToken, err = encryption.EncodeText(umaToken, encryptionKey)
-							if err != nil {
-								scope.Logger.Error(err.Error())
-								accessForbidden(wrt, req)
-								return //nolint:wsl_v5
+							if compressedToken {
+								umaToken, err = session.EncryptAndCompressToken(umaToken, encryptionKey)
+								if err != nil {
+									scope.Logger.Error(err.Error())
+									accessForbidden(wrt, req)
+									return //nolint:wsl_v5
+								}
+							} else {
+								umaToken, err = encryption.EncodeText(umaToken, encryptionKey)
+								if err != nil {
+									scope.Logger.Error(err.Error())
+									accessForbidden(wrt, req)
+									return //nolint:wsl_v5
+								}
+							}
+						} else {
+							if compressedToken {
+								umaToken, err = session.CompressToken(umaToken)
+								if err != nil {
+									scope.Logger.Error(err.Error())
+									accessForbidden(wrt, req)
+									return //nolint:wsl_v5
+								}
 							}
 						}
 

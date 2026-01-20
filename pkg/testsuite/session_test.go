@@ -49,6 +49,36 @@ func TestGetIndentity(t *testing.T) {
 			},
 		},
 		{
+			Request: func(token string) *http.Request {
+				return &http.Request{
+					Header: http.Header{
+						constant.AuthorizationHeader: []string{"Bearer " + token},
+					},
+				}
+			},
+			Ok: true,
+			ProxySettings: func(c *config.Config) {
+				c.SkipAuthorizationHeaderIdentity = false
+				c.EnableCompressToken = true
+			},
+		},
+		{
+			Request: func(token string) *http.Request {
+				return &http.Request{
+					Header: http.Header{
+						constant.AuthorizationHeader: []string{"Bearer " + token},
+					},
+				}
+			},
+			Ok: true,
+			ProxySettings: func(c *config.Config) {
+				c.SkipAuthorizationHeaderIdentity = false
+				c.EnableCompressToken = true
+				c.EncryptionKey = testEncryptionKey
+				c.EnableEncryptedToken = true
+			},
+		},
+		{
 			Request: func(_ string) *http.Request {
 				return &http.Request{
 					Header: http.Header{
@@ -137,10 +167,25 @@ func TestGetIndentity(t *testing.T) {
 			cfg.EnableEncryptedToken,
 			cfg.ForceEncryptedCookie,
 			cfg.EnableOptionalEncryption,
+			cfg.EnableCompressToken,
 			cfg.EncryptionKey,
 		)
 
-		rawToken, err := getIdentity(testCase.Request(token), cfg.CookieAccessName, "")
+		var rawToken string
+
+		if cfg.EnableCompressToken {
+			if cfg.EnableEncryptedToken {
+				compressedToken, err := session.EncryptAndCompressToken(token, testEncryptionKey)
+				require.NoError(t, err)
+				rawToken, err = getIdentity(testCase.Request(compressedToken), cfg.CookieAccessName, "")
+			} else {
+				compressedToken, err := session.CompressToken(token)
+				require.NoError(t, err)
+				rawToken, err = getIdentity(testCase.Request(compressedToken), cfg.CookieAccessName, "")
+			}
+		} else {
+			rawToken, err = getIdentity(testCase.Request(token), cfg.CookieAccessName, "")
+		}
 
 		if err != nil && testCase.Ok {
 			t.Errorf("test case %d should not have errored", idx)
