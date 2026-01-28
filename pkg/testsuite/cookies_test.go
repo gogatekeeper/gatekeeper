@@ -384,7 +384,7 @@ func TestCustomCookieNames(t *testing.T) {
 				cfg.EnableLogging = true
 				cfg.EnableRefreshTokens = true
 				cfg.CookieRefreshName = customRefreshName
-				cfg.EncryptionKey = testEncryptionKey
+				cfg.EncryptionKey = TestEncryptionKey
 			},
 			ExecutionSettings: []fakeRequest{
 				{

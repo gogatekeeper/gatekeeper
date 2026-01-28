@@ -86,6 +86,7 @@ const (
 	IdpProtectPermURI  = "/authz/protection/permission"
 	IdpClientIDURI     = "/clients"
 
+	CompressTokenPoolSize   = 100
 	InvalidCookieDuration   = -10 * time.Hour
 	PKCECodeVerifierLength  = 96
 	PATRefreshInPercent     = 0.85

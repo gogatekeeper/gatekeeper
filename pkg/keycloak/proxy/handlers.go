@@ -193,6 +193,7 @@ func oauthCallbackHandler(
 	pat *PAT,
 	idpClient *keycloak_client.Client,
 	store storage.Storage,
+	compressTokenPool *utils.LimitedBufferPool,
 	newOAuth2Config func(redirectionURL string) *oauth2.Config,
 	getRedirectionURL func(wrt http.ResponseWriter, req *http.Request) string,
 	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
@@ -284,7 +285,7 @@ func oauthCallbackHandler(
 			oidcTokensCookiesExp = time.Until(stdRefreshClaims.Expiry.Time())
 
 			if compressedToken {
-				encrypted, err = session.EncryptAndCompressToken(refreshToken, encryptionKey)
+				encrypted, err = session.EncryptAndCompressToken(refreshToken, encryptionKey, compressTokenPool)
 				if err != nil {
 					scope.Logger.Error(apperrors.ErrEncryptAndCompressRefreshToken.Error(), zap.Error(err))
 					accessForbidden(writer, req)
@@ -391,35 +392,37 @@ func oauthCallbackHandler(
 				}
 			}
 		case encryptedAndCompressed:
-			accessToken, err = core.EncryptAndCompressToken(scope, accessToken, encryptionKey, "access", writer)
+			accessToken, err = core.EncryptAndCompressToken(
+				scope, accessToken, encryptionKey, "access", compressTokenPool, writer)
 			if err != nil {
 				return
 			}
 
-			identityToken, err = core.EncryptAndCompressToken(scope, identityToken, encryptionKey, "id", writer)
+			identityToken, err = core.EncryptAndCompressToken(
+				scope, identityToken, encryptionKey, "id", compressTokenPool, writer)
 			if err != nil {
 				return
 			}
 
 			if enableUma && umaError == nil {
-				umaToken, err = core.EncryptAndCompressToken(scope, umaToken, encryptionKey, "uma", writer)
+				umaToken, err = core.EncryptAndCompressToken(scope, umaToken, encryptionKey, "uma", compressTokenPool, writer)
 				if err != nil {
 					return
 				}
 			}
 		case compressedOnly:
-			accessToken, err = core.CompressToken(scope, accessToken, "access", writer)
+			accessToken, err = core.CompressToken(scope, accessToken, "access", compressTokenPool, writer)
 			if err != nil {
 				return
 			}
 
-			identityToken, err = core.CompressToken(scope, identityToken, "id", writer)
+			identityToken, err = core.CompressToken(scope, identityToken, "id", compressTokenPool, writer)
 			if err != nil {
 				return
 			}
 
 			if enableUma && umaError == nil {
-				umaToken, err = core.CompressToken(scope, umaToken, "uma", writer)
+				umaToken, err = core.CompressToken(scope, umaToken, "uma", compressTokenPool, writer)
 				if err != nil {
 					return
 				}
@@ -468,6 +471,7 @@ func loginHandler(
 	cookManager *cookie.Manager,
 	accessTokenDuration time.Duration,
 	store storage.Storage,
+	compressTokenPool *utils.LimitedBufferPool,
 ) func(wrt http.ResponseWriter, req *http.Request) {
 	return func(writer http.ResponseWriter, req *http.Request) {
 		scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
@@ -567,14 +571,14 @@ func loginHandler(
 
 			switch {
 			case encryptAndCompress:
-				accessToken, err = session.EncryptAndCompressToken(accessToken, encryptionKey)
+				accessToken, err = session.EncryptAndCompressToken(accessToken, encryptionKey, compressTokenPool)
 				if err != nil {
 					scope.Logger.Error(apperrors.ErrEncryptAndCompressAccToken.Error(), zap.Error(err))
 					return http.StatusInternalServerError, //nolint:wsl_v5
 						errors.Join(apperrors.ErrEncryptAndCompressAccToken, err)
 				}
 
-				idToken, err = session.EncryptAndCompressToken(idToken, encryptionKey)
+				idToken, err = session.EncryptAndCompressToken(idToken, encryptionKey, compressTokenPool)
 				if err != nil {
 					scope.Logger.Error(apperrors.ErrEncryptAndCompressIDToken.Error(), zap.Error(err))
 					return http.StatusInternalServerError, //nolint:wsl_v5
@@ -595,13 +599,13 @@ func loginHandler(
 						errors.Join(apperrors.ErrEncryptIDToken, err)
 				}
 			case compressOnly:
-				accessToken, err = session.CompressToken(accessToken)
+				accessToken, err = session.CompressToken(accessToken, compressTokenPool)
 				if err != nil {
 					scope.Logger.Error(apperrors.ErrCompressAccessToken.Error(), zap.Error(err))
 					return http.StatusInternalServerError, apperrors.ErrCompressAccessToken
 				}
 
-				idToken, err = session.CompressToken(idToken)
+				idToken, err = session.CompressToken(idToken, compressTokenPool)
 				if err != nil {
 					scope.Logger.Error(apperrors.ErrCompressIDToken.Error(), zap.Error(err))
 					return http.StatusInternalServerError, apperrors.ErrCompressIDToken
@@ -616,7 +620,7 @@ func loginHandler(
 				refreshToken = token.RefreshToken
 
 				if enableCompressToken {
-					refreshToken, err = session.EncryptAndCompressToken(refreshToken, encryptionKey)
+					refreshToken, err = session.EncryptAndCompressToken(refreshToken, encryptionKey, compressTokenPool)
 					if err != nil {
 						scope.Logger.Error(apperrors.ErrEncryptAndCompressRefreshToken.Error(), zap.Error(err))
 						return http.StatusInternalServerError, //nolint:wsl_v5

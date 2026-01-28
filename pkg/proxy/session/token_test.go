@@ -7,6 +7,8 @@ import (
 
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/session"
+	testsuite_test "github.com/gogatekeeper/gatekeeper/pkg/testsuite"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -62,5 +64,90 @@ func TestGetRefreshTokenFromCookie(t *testing.T) {
 			require.Error(t, err)
 			assert.Empty(t, token)
 		}
+	}
+}
+
+func TestCompressAndDecompressToken(t *testing.T) {
+	tokenGenerator := testsuite_test.NewTestToken("doesntmatter")
+	token, err := tokenGenerator.GetToken()
+	require.NoError(t, err)
+
+	bufPool := utils.NewLimitedBufferPool(100)
+	compressedToken, err := session.CompressToken(token, bufPool)
+	assert.NotEmpty(t, compressedToken)
+	require.NoError(t, err)
+	decompressedToken, err := session.DecompressToken(compressedToken)
+	assert.NotEmpty(t, decompressedToken)
+	require.NoError(t, err)
+	assert.Equal(t, token, decompressedToken)
+}
+
+func BenchmarkCompressToken(b *testing.B) {
+	tokenGenerator := testsuite_test.NewTestToken("doesntmatter")
+	token, err := tokenGenerator.GetToken()
+	require.NoError(b, err)
+
+	bufPool := utils.NewLimitedBufferPool(1000)
+
+	for b.Loop() {
+		_, _ = session.CompressToken(token, bufPool)
+	}
+}
+
+func BenchmarkDecompressToken(b *testing.B) {
+	tokenGenerator := testsuite_test.NewTestToken("doesntmatter")
+	token, err := tokenGenerator.GetToken()
+	require.NoError(b, err)
+
+	bufPool := utils.NewLimitedBufferPool(100)
+	compressedToken, err := session.CompressToken(token, bufPool)
+	assert.NotEmpty(b, compressedToken)
+	require.NoError(b, err)
+
+	for b.Loop() {
+		_, _ = session.DecompressToken(compressedToken)
+	}
+}
+
+func TestCompressEncryptAndDecompressEncryptedToken(t *testing.T) {
+	tokenGenerator := testsuite_test.NewTestToken("doesntmatter")
+	token, err := tokenGenerator.GetToken()
+	require.NoError(t, err)
+
+	bufPool := utils.NewLimitedBufferPool(100)
+	compressedToken, err := session.EncryptAndCompressToken(token, testsuite_test.TestEncryptionKey, bufPool)
+	assert.NotEmpty(t, compressedToken)
+	require.NoError(t, err)
+	decompressedToken, err := session.DecryptAndDecompressToken(compressedToken, testsuite_test.TestEncryptionKey)
+	assert.NotEmpty(t, decompressedToken)
+	require.NoError(t, err)
+	assert.Equal(t, token, decompressedToken)
+}
+
+func BenchmarkEncryptCompressToken(b *testing.B) {
+	tokenGenerator := testsuite_test.NewTestToken("doesntmatter")
+	token, err := tokenGenerator.GetToken()
+	require.NoError(b, err)
+
+	bufPool := utils.NewLimitedBufferPool(1000)
+
+	for b.Loop() {
+		_, _ = session.EncryptAndCompressToken(token, testsuite_test.TestEncryptionKey, bufPool)
+	}
+}
+
+func BenchmarkDecryptDecompressToken(b *testing.B) {
+	tokenGenerator := testsuite_test.NewTestToken("doesntmatter")
+	token, err := tokenGenerator.GetToken()
+	require.NoError(b, err)
+
+	bufPool := utils.NewLimitedBufferPool(100)
+
+	compressedToken, err := session.EncryptAndCompressToken(token, testsuite_test.TestEncryptionKey, bufPool)
+	assert.NotEmpty(b, compressedToken)
+	require.NoError(b, err)
+
+	for b.Loop() {
+		_, _ = session.DecryptAndDecompressToken(compressedToken, testsuite_test.TestEncryptionKey)
 	}
 }

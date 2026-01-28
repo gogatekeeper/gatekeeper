@@ -274,7 +274,7 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	uri := utils.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.LoginURL)
 	// !! it must be here because of how test is written
-	cfg.EncryptionKey = testEncryptionKey
+	cfg.EncryptionKey = TestEncryptionKey
 
 	testCases := []struct {
 		Name              string
@@ -289,7 +289,7 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 				conf.EnableLoginHandler = true
 				conf.Verbose = true
 				conf.EnableLogging = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 				conf.EnableIDTokenCookie = true
 			},
 			ExecutionSettings: []fakeRequest{
@@ -328,7 +328,7 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 				conf.Verbose = true
 				conf.EnableLogging = true
 				conf.EnableRefreshTokens = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 			},
 			ExecutionSettings: []fakeRequest{
 				{
@@ -362,7 +362,7 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 				conf.EnableLoginHandler = true
 				conf.Verbose = true
 				conf.EnableLogging = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 			},
 			ExecutionSettings: []fakeRequest{
 				{
@@ -396,7 +396,7 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 				conf.Verbose = true
 				conf.EnableRefreshTokens = true
 				conf.EnableLogging = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 			},
 			ExecutionSettings: []fakeRequest{
 				{
@@ -430,7 +430,7 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 				conf.EnableLoginHandler = true
 				conf.Verbose = true
 				conf.EnableLogging = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 			},
 			ExecutionSettings: []fakeRequest{
 				{
@@ -473,7 +473,7 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 				conf.Verbose = true
 				conf.EnableRefreshTokens = true
 				conf.EnableLogging = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 				conf.EnableIDTokenCookie = true
 			},
 			ExecutionSettings: []fakeRequest{
