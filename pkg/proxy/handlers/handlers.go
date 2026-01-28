@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -103,6 +104,7 @@ func RetrieveIDToken(
 	encryptionKey string,
 	req *http.Request,
 	enableOptionalEncryption bool,
+	enableCompressToken bool,
 ) (string, string, error) {
 	var (
 		token     string
@@ -121,6 +123,18 @@ func RetrieveIDToken(
 		token, err = encryption.DecodeText(token, encryptionKey)
 		if err != nil && enableOptionalEncryption {
 			return encrypted, encrypted, nil
+		}
+
+		if enableCompressToken {
+			token, err = session.DecryptAndDecompressToken(token, encryptionKey)
+			if err != nil {
+				return "", "", errors.Join(apperrors.ErrDecryptAndDecompressToken, err)
+			}
+		}
+	} else if enableCompressToken {
+		token, err = session.DecompressToken(token)
+		if err != nil {
+			return "", "", errors.Join(apperrors.ErrDecompressToken, err)
 		}
 	}
 

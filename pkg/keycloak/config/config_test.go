@@ -3339,3 +3339,44 @@ func TestIsPatRetryCountValid(t *testing.T) {
 		)
 	}
 }
+
+func TestIsEnableCompressTokenValid(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidEnableCompressToken",
+			Config: &Config{
+				EnableOptionalEncryption: false,
+				EnableCompressToken:      true,
+			},
+			Valid: true,
+		},
+		{
+			Name: "InValidEnableCompressToken",
+			Config: &Config{
+				EnableOptionalEncryption: true,
+				EnableCompressToken:      true,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isEnableCompressTokenValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}

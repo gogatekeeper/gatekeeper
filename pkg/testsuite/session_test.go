@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+//nolint:cyclop
 func TestGetIndentity(t *testing.T) {
 	testCases := []struct {
 		Request       func(token string) *http.Request
@@ -46,6 +47,36 @@ func TestGetIndentity(t *testing.T) {
 			Ok: true,
 			ProxySettings: func(c *config.Config) {
 				c.SkipAuthorizationHeaderIdentity = false
+			},
+		},
+		{
+			Request: func(token string) *http.Request {
+				return &http.Request{
+					Header: http.Header{
+						constant.AuthorizationHeader: []string{"Bearer " + token},
+					},
+				}
+			},
+			Ok: true,
+			ProxySettings: func(c *config.Config) {
+				c.SkipAuthorizationHeaderIdentity = false
+				c.EnableCompressToken = true
+			},
+		},
+		{
+			Request: func(token string) *http.Request {
+				return &http.Request{
+					Header: http.Header{
+						constant.AuthorizationHeader: []string{"Bearer " + token},
+					},
+				}
+			},
+			Ok: true,
+			ProxySettings: func(c *config.Config) {
+				c.SkipAuthorizationHeaderIdentity = false
+				c.EnableCompressToken = true
+				c.EncryptionKey = testEncryptionKey
+				c.EnableEncryptedToken = true
 			},
 		},
 		{
@@ -137,10 +168,27 @@ func TestGetIndentity(t *testing.T) {
 			cfg.EnableEncryptedToken,
 			cfg.ForceEncryptedCookie,
 			cfg.EnableOptionalEncryption,
+			cfg.EnableCompressToken,
 			cfg.EncryptionKey,
 		)
 
-		rawToken, err := getIdentity(testCase.Request(token), cfg.CookieAccessName, "")
+		var rawToken string
+
+		if cfg.EnableCompressToken {
+			if cfg.EnableEncryptedToken {
+				compressedToken, errC := session.EncryptAndCompressToken(token, testEncryptionKey)
+				require.NoError(t, errC)
+
+				rawToken, err = getIdentity(testCase.Request(compressedToken), cfg.CookieAccessName, "")
+			} else {
+				compressedToken, errC := session.CompressToken(token)
+				require.NoError(t, errC)
+
+				rawToken, err = getIdentity(testCase.Request(compressedToken), cfg.CookieAccessName, "")
+			}
+		} else {
+			rawToken, err = getIdentity(testCase.Request(token), cfg.CookieAccessName, "")
+		}
 
 		if err != nil && testCase.Ok {
 			t.Errorf("test case %d should not have errored", idx)

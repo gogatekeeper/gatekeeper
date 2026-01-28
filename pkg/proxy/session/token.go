@@ -2,10 +2,12 @@ package session
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -133,11 +135,14 @@ func GetTokenInCookie(req *http.Request, name string) (string, error) {
 }
 
 // GetIdentity retrieves the user identity from a request, either from a session cookie or a bearer token.
+//
+//nolint:cyclop
 func GetIdentity(
 	skipAuthorizationHeaderIdentity bool,
 	enableEncryptedToken bool,
 	forceEncryptedCookie bool,
 	enableOptionalEncryption bool,
+	enableCompressToken bool,
 	encKey string,
 ) func(req *http.Request, tokenCookie string, tokenHeader string) (string, error) {
 	return func(req *http.Request, tokenCookie string, tokenHeader string) (string, error) {
@@ -156,13 +161,25 @@ func GetIdentity(
 		if enableEncryptedToken || forceEncryptedCookie && !isBearer {
 			origToken := token
 
-			token, err = encryption.DecodeText(token, encKey)
-			if err != nil {
-				if enableOptionalEncryption {
-					return origToken, nil
+			if enableCompressToken {
+				token, err = DecryptAndDecompressToken(token, encKey)
+				if err != nil {
+					return "", errors.Join(apperrors.ErrDecryptAndDecompressToken, err)
 				}
+			} else {
+				token, err = encryption.DecodeText(token, encKey)
+				if err != nil {
+					if enableOptionalEncryption {
+						return origToken, nil
+					}
 
-				return "", apperrors.ErrDecryption
+					return "", apperrors.ErrDecryption
+				}
+			}
+		} else if enableCompressToken {
+			token, err = DecompressToken(token)
+			if err != nil {
+				return "", errors.Join(apperrors.ErrDecompressToken, err)
 			}
 		}
 
@@ -249,6 +266,7 @@ func RetrieveRefreshToken(
 	req *http.Request,
 	user *models.UserContext,
 	enableOptionalEncryption bool,
+	enableCompressToken bool,
 ) (string, string, error) {
 	var (
 		token string
@@ -268,9 +286,16 @@ func RetrieveRefreshToken(
 
 	encrypted := token // returns encrypted, avoids encoding twice
 
-	token, err = encryption.DecodeText(token, encryptionKey)
-	if err != nil && enableOptionalEncryption {
-		return encrypted, encrypted, nil
+	if enableCompressToken {
+		token, err = DecryptAndDecompressToken(token, encryptionKey)
+		if err != nil {
+			return "", "", errors.Join(apperrors.ErrDecryptAndDecompressToken, err)
+		}
+	} else {
+		token, err = encryption.DecodeText(token, encryptionKey)
+		if err != nil && enableOptionalEncryption {
+			return encrypted, encrypted, nil
+		}
 	}
 
 	return token, encrypted, err
@@ -428,4 +453,145 @@ func GetRequestURIFromCookie(
 	}
 
 	return string(decoded)
+}
+
+func CompressToken(token string) (string, error) {
+	parts := strings.Split(token, ".")
+	if len(parts) != constant.PlainTokenParts {
+		return "", apperrors.ErrTokenParts
+	}
+
+	info, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return "", err
+	}
+
+	var compBuffer bytes.Buffer
+
+	gzWr := gzip.NewWriter(&compBuffer)
+
+	_, err = gzWr.Write(info)
+	if err != nil {
+		return "", err
+	}
+
+	gzWr.Close()
+
+	compInfo := base64.RawURLEncoding.EncodeToString(compBuffer.Bytes())
+
+	return fmt.Sprintf("%s.%s.%s", parts[0], compInfo, parts[2]), nil
+}
+
+func DecompressToken(compressedToken string) (string, error) {
+	parts := strings.Split(compressedToken, ".")
+	if len(parts) != constant.PlainTokenParts {
+		return "", apperrors.ErrTokenParts
+	}
+
+	info, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return "", err
+	}
+
+	gzR, err := gzip.NewReader(bytes.NewReader(info))
+	if err != nil {
+		return "", err
+	}
+
+	// Empty byte slice.
+	var result []byte
+
+	// Read in data.
+	result, err = io.ReadAll(gzR)
+	if err != nil {
+		return "", err
+	}
+
+	gzR.Close()
+
+	compInfo := base64.RawURLEncoding.EncodeToString(result)
+
+	return fmt.Sprintf("%s.%s.%s", parts[0], compInfo, parts[2]), nil
+}
+
+func EncryptAndCompressToken(token string, encryptionKey string) (string, error) {
+	parts := strings.Split(token, ".")
+	if len(parts) != constant.PlainTokenParts {
+		return "", apperrors.ErrTokenParts
+	}
+
+	info, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return "", err
+	}
+
+	var compBuffer bytes.Buffer
+
+	gzWr := gzip.NewWriter(&compBuffer)
+
+	_, err = gzWr.Write(info)
+	if err != nil {
+		return "", err
+	}
+
+	gzWr.Close()
+
+	compHeader, err := encryption.EncodeText(parts[0], encryptionKey)
+	if err != nil {
+		return "", errors.Join(apperrors.ErrEncryptTokenHeader, err)
+	}
+
+	compInfo, err := encryption.EncodeBytes(compBuffer.Bytes(), encryptionKey)
+	if err != nil {
+		return "", errors.Join(apperrors.ErrEncryptTokenBody, err)
+	}
+
+	compSignature, err := encryption.EncodeText(parts[2], encryptionKey)
+	if err != nil {
+		return "", errors.Join(apperrors.ErrEncryptTokenSignature, err)
+	}
+
+	return fmt.Sprintf("%s.%s.%s", compHeader, compInfo, compSignature), nil
+}
+
+func DecryptAndDecompressToken(token string, encryptionKey string) (string, error) {
+	parts := strings.Split(token, ".")
+	if len(parts) != constant.PlainTokenParts {
+		return "", apperrors.ErrTokenParts
+	}
+
+	compHeader, err := encryption.DecodeText(parts[0], encryptionKey)
+	if err != nil {
+		return "", errors.Join(apperrors.ErrDecryptTokenHeader, err)
+	}
+
+	compInfo, err := encryption.DecodeBytes(parts[1], encryptionKey)
+	if err != nil {
+		return "", errors.Join(apperrors.ErrDecryptTokenBody, err)
+	}
+
+	compSignature, err := encryption.DecodeText(parts[2], encryptionKey)
+	if err != nil {
+		return "", errors.Join(apperrors.ErrDecryptTokenSignature, err)
+	}
+
+	gzR, err := gzip.NewReader(bytes.NewReader(compInfo))
+	if err != nil {
+		return "", err
+	}
+
+	// Empty byte slice.
+	var result []byte
+
+	// Read in data.
+	result, err = io.ReadAll(gzR)
+	if err != nil {
+		return "", err
+	}
+
+	gzR.Close()
+
+	info := base64.RawURLEncoding.EncodeToString(result)
+
+	return fmt.Sprintf("%s.%s.%s", compHeader, info, compSignature), nil
 }
