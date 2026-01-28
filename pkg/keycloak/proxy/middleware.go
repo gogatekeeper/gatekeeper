@@ -66,6 +66,7 @@ func authorizationMiddleware(
 	skipClientIDCheck bool,
 	skipIssuerCheck bool,
 	compressedToken bool,
+	compressTokenPool *utils.LimitedBufferPool,
 	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, error),
 	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
 ) func(http.Handler) http.Handler {
@@ -175,7 +176,7 @@ func authorizationMiddleware(
 
 						if enableEncryptedToken || forceEncryptedCookie {
 							if compressedToken {
-								umaToken, err = session.EncryptAndCompressToken(umaToken, encryptionKey)
+								umaToken, err = session.EncryptAndCompressToken(umaToken, encryptionKey, compressTokenPool)
 								if err != nil {
 									scope.Logger.Error(err.Error())
 									accessForbidden(wrt, req)
@@ -191,7 +192,7 @@ func authorizationMiddleware(
 							}
 						} else {
 							if compressedToken {
-								umaToken, err = session.CompressToken(umaToken)
+								umaToken, err = session.CompressToken(umaToken, compressTokenPool)
 								if err != nil {
 									scope.Logger.Error(err.Error())
 									accessForbidden(wrt, req)

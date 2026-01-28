@@ -171,7 +171,7 @@ func TestAuthTokenHeader(t *testing.T) {
 			ProxySettings: func(c *config.Config) {
 				c.EnableRefreshTokens = true
 				c.EnableEncryptedToken = true
-				c.EncryptionKey = testEncryptionKey
+				c.EncryptionKey = TestEncryptionKey
 			},
 			ExecutionSettings: []fakeRequest{
 				{
@@ -212,7 +212,7 @@ func TestAuthTokenHeader(t *testing.T) {
 			ProxySettings: func(c *config.Config) {
 				c.EnableEncryptedToken = false
 				c.ForceEncryptedCookie = true
-				c.EncryptionKey = testEncryptionKey
+				c.EncryptionKey = TestEncryptionKey
 			},
 			ExecutionSettings: []fakeRequest{
 				{

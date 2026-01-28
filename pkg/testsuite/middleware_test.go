@@ -54,7 +54,7 @@ func TestMetricsMiddleware(t *testing.T) {
 	cfg.LocalhostMetrics = true
 	cfg.EnableRefreshTokens = true
 	cfg.EnableEncryptedToken = true
-	cfg.EncryptionKey = testEncryptionKey
+	cfg.EncryptionKey = TestEncryptionKey
 	uri := utils.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.MetricsURL)
 	requests := []fakeRequest{
 		{
@@ -850,7 +850,7 @@ func TestWhiteListedRequests(t *testing.T) {
 				conf.EnableEncryptedToken = false // we don't have encrypt token functionality in our fake
 				conf.Verbose = true
 				conf.EnableLogging = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 			},
 			ExecutionSettings: []fakeRequest{
 				{ // check whitelisted is passed
@@ -1707,7 +1707,7 @@ func TestRefreshToken(t *testing.T) {
 				conf.EnableEncryptedToken = true
 				conf.Verbose = true
 				conf.EnableLogging = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 			},
 			ExecutionSettings: []fakeRequest{
 				{
@@ -1738,7 +1738,7 @@ func TestRefreshToken(t *testing.T) {
 				conf.EnableEncryptedToken = true
 				conf.Verbose = true
 				conf.EnableLogging = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 			},
 			ExecutionSettings: []fakeRequest{
 				{
@@ -1768,7 +1768,7 @@ func TestRefreshToken(t *testing.T) {
 				conf.EnableEncryptedToken = true
 				conf.Verbose = true
 				conf.EnableLogging = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 				conf.SkipAccessTokenClientIDCheck = false
 				conf.SkipAccessTokenIssuerCheck = false
 			},
@@ -1800,7 +1800,7 @@ func TestRefreshToken(t *testing.T) {
 				conf.EnableEncryptedToken = true
 				conf.Verbose = true
 				conf.EnableLogging = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 				conf.NoRedirects = false
 			},
 			ExecutionSettings: []fakeRequest{
@@ -1898,7 +1898,7 @@ func TestAccessTokenEncryption(t *testing.T) {
 				conf.EnableEncryptedToken = true
 				conf.Verbose = true
 				conf.EnableLogging = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 				conf.StoreURL = fmt.Sprintf("redis://%s/2", redisServer.Addr())
 			},
 			ExecutionSettings: []fakeRequest{
@@ -1934,7 +1934,7 @@ func TestAccessTokenEncryption(t *testing.T) {
 				conf.EnableEncryptedToken = true
 				conf.Verbose = true
 				conf.EnableLogging = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 			},
 			ExecutionSettings: []fakeRequest{
 				{
@@ -1970,7 +1970,7 @@ func TestAccessTokenEncryption(t *testing.T) {
 				conf.ForceEncryptedCookie = true
 				conf.Verbose = true
 				conf.EnableLogging = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 			},
 			ExecutionSettings: []fakeRequest{
 				{
@@ -3101,7 +3101,7 @@ func TestAuthenticationMiddleware(t *testing.T) {
 			ProxySettings: func(conf *config.Config) {
 				conf.EnableIDPSessionCheck = false
 				conf.EnableRefreshTokens = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 				conf.ClientID = ValidUsername
 				conf.ClientSecret = ValidPassword
 				conf.NoRedirects = false
@@ -3138,7 +3138,7 @@ func TestAuthenticationMiddleware(t *testing.T) {
 			ProxySettings: func(conf *config.Config) {
 				conf.EnableIDPSessionCheck = true
 				conf.EnableRefreshTokens = true
-				conf.EncryptionKey = testEncryptionKey
+				conf.EncryptionKey = TestEncryptionKey
 				conf.ClientID = ValidUsername
 				conf.ClientSecret = ValidPassword
 				conf.NoRedirects = false

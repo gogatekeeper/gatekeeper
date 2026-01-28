@@ -26,6 +26,7 @@ import (
 	"os"
 	"reflect"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -34,6 +35,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/cookie"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDecodeKeyPairs(t *testing.T) {
@@ -511,4 +513,31 @@ func TestMergeMaps(t *testing.T) {
 func getFakeURL(location string) *url.URL {
 	u, _ := url.Parse(location)
 	return u
+}
+
+func TestBufferPool(t *testing.T) {
+	var (
+		bufferPoolLimit uint = 100
+		result          strings.Builder
+	)
+
+	repetitions := 200
+
+	bufPool := utils.NewLimitedBufferPool(bufferPoolLimit)
+	testText := "hello"
+	testTextBytes := len(testText)
+	totalTextLen := repetitions * testTextBytes
+
+	for range repetitions {
+		buf, err := bufPool.Get()
+		require.NoError(t, err)
+		buf.WriteString(testText)
+		result.WriteString(buf.String())
+		bufPool.Put(buf)
+	}
+
+	resultLen := len(result.String())
+	assert.Equal(t, totalTextLen, resultLen, "Expected result len %d, actual %s", totalTextLen, resultLen)
+	assert.Equal(t, uint(1), bufPool.Capacity(),
+		"Expected buffer pool size %d, actual %d", 1, 1)
 }

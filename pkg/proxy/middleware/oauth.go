@@ -49,6 +49,7 @@ func AuthenticationMiddleware(
 	accessTokenDuration time.Duration,
 	enableOptionalEncryption bool,
 	enableCompressToken bool,
+	compressTokenPool *utils.LimitedBufferPool,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
@@ -263,7 +264,7 @@ func AuthenticationMiddleware(
 
 				if enableEncryptedToken || forceEncryptedCookie {
 					if enableCompressToken {
-						accessToken, err = session.EncryptAndCompressToken(accessToken, encryptionKey)
+						accessToken, err = session.EncryptAndCompressToken(accessToken, encryptionKey, compressTokenPool)
 						if err != nil {
 							lLog.Error(
 								apperrors.ErrEncryptAndCompressAccToken.Error(),
@@ -300,7 +301,7 @@ func AuthenticationMiddleware(
 					var encryptedRefreshToken string
 
 					if enableCompressToken {
-						encryptedRefreshToken, err = session.EncryptAndCompressToken(newRefreshToken, encryptionKey)
+						encryptedRefreshToken, err = session.EncryptAndCompressToken(newRefreshToken, encryptionKey, compressTokenPool)
 						if err != nil {
 							lLog.Error(
 								apperrors.ErrEncryptRefreshToken.Error(),

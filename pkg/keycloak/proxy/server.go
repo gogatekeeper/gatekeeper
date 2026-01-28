@@ -368,6 +368,11 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		}
 	}
 
+	var compressTokenPool *utils.LimitedBufferPool
+	if r.Config.EnableCompressToken {
+		compressTokenPool = utils.NewLimitedBufferPool(constant.CompressTokenPoolSize)
+	}
+
 	// step: load the templates if any
 	tmpl := createTemplates(
 		r.Log,
@@ -558,6 +563,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.AccessTokenDuration,
 		r.Config.EnableOptionalEncryption,
 		r.Config.EnableCompressToken,
+		compressTokenPool,
 	)
 
 	loginHand := loginHandler(
@@ -576,6 +582,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Cm,
 		r.Config.AccessTokenDuration,
 		r.Store,
+		compressTokenPool,
 	)
 
 	logoutHand := logoutHandler(
@@ -630,6 +637,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.pat,
 		r.IdpClient,
 		r.Store,
+		compressTokenPool,
 		newOAuth2Config,
 		getRedirectionURL,
 		accessForbidden,
@@ -941,6 +949,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 				r.Config.SkipAccessTokenClientIDCheck,
 				r.Config.SkipAccessTokenIssuerCheck,
 				r.Config.EnableCompressToken,
+				compressTokenPool,
 				getIdentity,
 				accessForbidden,
 			)

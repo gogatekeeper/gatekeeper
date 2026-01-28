@@ -25,6 +25,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/keycloak/config"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/session"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -75,7 +76,7 @@ func TestGetIndentity(t *testing.T) {
 			ProxySettings: func(c *config.Config) {
 				c.SkipAuthorizationHeaderIdentity = false
 				c.EnableCompressToken = true
-				c.EncryptionKey = testEncryptionKey
+				c.EncryptionKey = TestEncryptionKey
 				c.EnableEncryptedToken = true
 			},
 		},
@@ -176,12 +177,14 @@ func TestGetIndentity(t *testing.T) {
 
 		if cfg.EnableCompressToken {
 			if cfg.EnableEncryptedToken {
-				compressedToken, errC := session.EncryptAndCompressToken(token, testEncryptionKey)
+				bufPool := utils.NewLimitedBufferPool(100)
+				compressedToken, errC := session.EncryptAndCompressToken(token, TestEncryptionKey, bufPool)
 				require.NoError(t, errC)
 
 				rawToken, err = getIdentity(testCase.Request(compressedToken), cfg.CookieAccessName, "")
 			} else {
-				compressedToken, errC := session.CompressToken(token)
+				bufPool := utils.NewLimitedBufferPool(100)
+				compressedToken, errC := session.CompressToken(token, bufPool)
 				require.NoError(t, errC)
 
 				rawToken, err = getIdentity(testCase.Request(compressedToken), cfg.CookieAccessName, "")

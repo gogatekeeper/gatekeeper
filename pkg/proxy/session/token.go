@@ -22,6 +22,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/metrics"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 	"github.com/gogatekeeper/gatekeeper/pkg/storage"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/grokify/go-pkce"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
@@ -455,7 +456,7 @@ func GetRequestURIFromCookie(
 	return string(decoded)
 }
 
-func CompressToken(token string) (string, error) {
+func CompressToken(token string, pool *utils.LimitedBufferPool) (string, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != constant.PlainTokenParts {
 		return "", apperrors.ErrTokenParts
@@ -466,9 +467,13 @@ func CompressToken(token string) (string, error) {
 		return "", err
 	}
 
-	var compBuffer bytes.Buffer
+	compBuffer, err := pool.Get()
+	if err != nil {
+		return "", err
+	}
+	defer pool.Put(compBuffer)
 
-	gzWr := gzip.NewWriter(&compBuffer)
+	gzWr := gzip.NewWriter(compBuffer)
 
 	_, err = gzWr.Write(info)
 	if err != nil {
@@ -514,7 +519,7 @@ func DecompressToken(compressedToken string) (string, error) {
 	return fmt.Sprintf("%s.%s.%s", parts[0], compInfo, parts[2]), nil
 }
 
-func EncryptAndCompressToken(token string, encryptionKey string) (string, error) {
+func EncryptAndCompressToken(token string, encryptionKey string, pool *utils.LimitedBufferPool) (string, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != constant.PlainTokenParts {
 		return "", apperrors.ErrTokenParts
@@ -525,9 +530,13 @@ func EncryptAndCompressToken(token string, encryptionKey string) (string, error)
 		return "", err
 	}
 
-	var compBuffer bytes.Buffer
+	compBuffer, err := pool.Get()
+	if err != nil {
+		return "", err
+	}
+	defer pool.Put(compBuffer)
 
-	gzWr := gzip.NewWriter(&compBuffer)
+	gzWr := gzip.NewWriter(compBuffer)
 
 	_, err = gzWr.Write(info)
 	if err != nil {
