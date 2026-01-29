@@ -517,7 +517,7 @@ func getFakeURL(location string) *url.URL {
 
 func TestBufferPool(t *testing.T) {
 	var (
-		bufferPoolLimit uint = 100
+		bufferPoolLimit int32 = 100
 		result          strings.Builder
 	)
 
@@ -538,6 +538,6 @@ func TestBufferPool(t *testing.T) {
 
 	resultLen := len(result.String())
 	assert.Equal(t, totalTextLen, resultLen, "Expected result len %d, actual %s", totalTextLen, resultLen)
-	assert.Equal(t, uint(1), bufPool.Capacity(),
+	assert.Equal(t, int32(1), bufPool.Capacity(),
 		"Expected buffer pool size %d, actual %d", 1, 1)
 }
