@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"errors"
 	"sync"
+	"sync/atomic"
 )
 
 type LimitedBufferPool struct {
 	pool  *sync.Pool
-	limit uint
-	count uint
+	limit int32
+	count int32
 }
 
-func NewLimitedBufferPool(limit uint) *LimitedBufferPool {
+func NewLimitedBufferPool(limit int32) *LimitedBufferPool {
 	return &LimitedBufferPool{
 		pool: &sync.Pool{
 			New: func() any {
@@ -25,8 +26,9 @@ func NewLimitedBufferPool(limit uint) *LimitedBufferPool {
 }
 
 func (limPool *LimitedBufferPool) Get() (*bytes.Buffer, error) {
-	if limPool.count > 0 {
-		limPool.count--
+	curr := atomic.LoadInt32(&limPool.count)
+	if curr > 0 {
+		atomic.AddInt32(&limPool.count, int32(-1))
 	}
 
 	val, ok := limPool.pool.Get().(*bytes.Buffer)
@@ -38,14 +40,15 @@ func (limPool *LimitedBufferPool) Get() (*bytes.Buffer, error) {
 }
 
 func (limPool *LimitedBufferPool) Put(buf *bytes.Buffer) {
-	if limPool.count <= limPool.limit {
-		limPool.count++
+	curr := atomic.LoadInt32(&limPool.count)
+	if curr <= limPool.limit {
+		atomic.AddInt32(&limPool.count, int32(1))
 
 		buf.Reset()
 		limPool.pool.Put(buf)
 	}
 }
 
-func (limPool *LimitedBufferPool) Capacity() uint {
-	return limPool.count
+func (limPool *LimitedBufferPool) Capacity() int32 {
+	return atomic.LoadInt32(&limPool.count)
 }
