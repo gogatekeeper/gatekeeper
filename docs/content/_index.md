@@ -532,7 +532,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:4.4.0
+  image: quay.io/gogatekeeper/gatekeeper:4.5.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -559,7 +559,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:4.4.0
+  image: quay.io/gogatekeeper/gatekeeper:4.5.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -1472,7 +1472,10 @@ On server side, UMA in no-redirects mode:
 ```
 ## Compression
 
-There are three options related to compression. First is `--enable-compression` enables compression
+
+### Content compression
+
+There are four options related to compression. First is `--enable-compression` enables compression
 of returned content by gatekeeper. Second is `--enable-request-upstream-compression` which
 is by default `true`. This option asks upstream to compress response by sending header `Accept-Encoding: gzip`.
 Sometimes however you have backend which already does compression by default or used different type of compression
@@ -1481,6 +1484,13 @@ and you don't want gatekeeper to do any actions on returned content, in that cas
 you can use this option if you just want to pass `Accept-Encoding` header from client to the upstream, by default this
 options is `false`. It is recommended when using this third option to also match `Accept-Encoding` header in header
 resource field to filter exact values allowed in `Accept-Encoding` header, see [Header Matching](#headers-matching).
+
+
+### Token compression
+
+There is option for compressing tokens `--enable-compress-token`. It compresses, middle part of jwt token. You can
+simply restore original token body by using e.g. `echo "yourtoken" | awk '{print $2}'| base64 -d | gzip -d`. In case
+token encryption is used, original token body is base64 decoded, compressed, encrypted, base64 encoded.
 
 ## Request tracing
 
