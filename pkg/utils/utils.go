@@ -182,7 +182,6 @@ func TransferBytes(src io.Reader, dest io.Writer, wg *sync.WaitGroup) (int64, er
 
 // TryUpdateConnection attempt to upgrade the connection to a http pdy stream.
 func TryUpdateConnection(req *http.Request, writer http.ResponseWriter, endpoint *url.URL) error {
-	// step: dial the endpoint
 	server, err := TryDialEndpoint(endpoint)
 	if err != nil {
 		return err
@@ -190,28 +189,43 @@ func TryUpdateConnection(req *http.Request, writer http.ResponseWriter, endpoint
 
 	defer server.Close()
 
-	// @check the response writer implements Hijack method
 	hijacker, assertOk := writer.(http.Hijacker)
 
 	if !assertOk {
 		return apperrors.ErrHijackerMethodMissing
 	}
 
-	// @step: get the client connection object
 	client, _, err := hijacker.Hijack()
 	if err != nil {
 		return err
 	}
 
-	defer client.Close()
-
-	// step: write the request to upstream
 	err = req.Write(server)
 	if err != nil {
 		return err
 	}
 
-	// @step: copy the data between client and upstream endpoint
+	headerBytes := make([]byte, len(constant.SwitchProtoHeader))
+
+	_, err = server.Read(headerBytes)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.Write(headerBytes)
+	if err != nil {
+		return err
+	}
+
+	if !bytes.Contains(headerBytes, constant.SwitchProtoHeader) {
+		_, err = client.Write(constant.CRLF)
+		if err != nil {
+			return err
+		}
+
+		return apperrors.ErrConnectionUpgrade
+	}
+
 	var wGroup sync.WaitGroup
 
 	numConnectionWorkers := 2
