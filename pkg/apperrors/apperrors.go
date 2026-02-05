@@ -112,6 +112,8 @@ var (
 	ErrCompressIDToken      = errors.New("problem compressing id token")
 	ErrCompressRefreshToken = errors.New("problem compressing refresh token")
 
+	ErrConnectionUpgrade = errors.New("connection upgrade failed")
+
 	// config errors.
 
 	ErrNoRedirectsWithEnableRefreshTokensInvalid = errors.New("no-redirects true cannot be enabled with refresh tokens")

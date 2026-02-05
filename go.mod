@@ -14,6 +14,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.3
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/gofrs/uuid v4.4.0+incompatible
+	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
 	github.com/grokify/go-pkce v0.2.4
 	github.com/jochasinga/relay v0.0.0-20161125200856-6a088273228f
 	github.com/oleiade/reflections v1.1.0
@@ -42,7 +43,7 @@ require (
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/boombuler/barcode v1.1.0 // indirect
+	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
 	github.com/bytecodealliance/wasmtime-go/v39 v39.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/containerd/containerd/v2 v2.2.1 // indirect

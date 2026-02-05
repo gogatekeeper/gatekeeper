@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"mime"
 	"net/http"
@@ -397,7 +398,10 @@ func ProxyMiddleware(
 				err := utils.TryUpdateConnection(req, wrt, endpoint)
 				if err != nil {
 					logger.Error("failed to upgrade connection", zap.Error(err))
-					wrt.WriteHeader(http.StatusInternalServerError)
+
+					if !errors.Is(err, apperrors.ErrConnectionUpgrade) {
+						wrt.WriteHeader(http.StatusInternalServerError)
+					}
 
 					return
 				}
