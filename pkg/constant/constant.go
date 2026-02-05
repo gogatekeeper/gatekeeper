@@ -125,4 +125,8 @@ const (
 )
 
 //nolint:gochecknoglobals
-var SignatureAlgs = [3]jose.SignatureAlgorithm{jose.RS256, jose.HS256, jose.HS512}
+var (
+	SignatureAlgs     = [3]jose.SignatureAlgorithm{jose.RS256, jose.HS256, jose.HS512}
+	SwitchProtoHeader = []byte("HTTP/1.1 101 Switching Protocols")
+	CRLF              = []byte("\r\n\r\n")
+)
