@@ -57,6 +57,7 @@ const (
 	idpURI                  = "https://localhost:8443"
 	localURI                = "https://localhost:"
 	httpLocalURI            = "http://localhost:"
+	localAddr               = "localhost:"
 	loginURI                = "/oauth" + constant.LoginURL
 	logoutURI               = "/oauth" + constant.LogoutURL
 	registerURI             = "/oauth" + constant.RegistrationURL

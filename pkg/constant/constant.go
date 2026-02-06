@@ -122,7 +122,13 @@ const (
 
 	TLSRedisScheme = "rediss"
 	RedisScheme    = "redis"
+
+	HTTPStatusHeaderLen = 42
+	SwitchProtoHeader   = "HTTP/1.1 101 Switching Protocols"
+	CRLF                = "\r\n\r\n"
 )
 
 //nolint:gochecknoglobals
-var SignatureAlgs = [3]jose.SignatureAlgorithm{jose.RS256, jose.HS256, jose.HS512}
+var (
+	SignatureAlgs = [3]jose.SignatureAlgorithm{jose.RS256, jose.HS256, jose.HS512}
+)

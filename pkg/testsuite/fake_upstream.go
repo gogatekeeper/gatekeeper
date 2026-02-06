@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
-	"golang.org/x/net/websocket"
+	"github.com/gorilla/websocket"
 )
 
 // FakeUpstreamResponse is the response from fake upstream.
@@ -24,30 +24,57 @@ type FakeUpstreamResponse struct {
 // FakeUpstreamService acts as a fake upstream service, returns the headers and request.
 type FakeUpstreamService struct{}
 
+//nolint:cyclop
 func (f *FakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Request) {
 	upgrade := strings.ToLower(req.Header.Get(constant.HeaderUpgrade))
-	if upgrade == "websocket" {
-		wrt.Header().Set(TestProxyAccepted, "true")
-		websocket.Handler(func(wsock *websocket.Conn) {
-			defer wsock.Close()
+	websocketFail := strings.ToLower(req.Header.Get("Websocketfail"))
 
-			var data []byte
+	switch {
+	case websocketFail == "true":
+		wrt.WriteHeader(http.StatusOK)
+		return
+	case upgrade == "websocket":
+		var headers http.Header = map[string][]string{}
+		headers.Add(TestProxyAccepted, "true")
 
-			err := websocket.Message.Receive(wsock, &data)
-			if err != nil {
-				wsock.WriteClose(http.StatusBadRequest)
-				return
-			}
+		upgrader := websocket.Upgrader{
+			CheckOrigin: func(_ *http.Request) bool {
+				return true
+			},
+		}
 
-			content, _ := json.Marshal(&FakeUpstreamResponse{
-				URI:     req.RequestURI,
-				Method:  req.Method,
-				Address: req.RemoteAddr,
-				Headers: req.Header,
-			})
-			_ = websocket.Message.Send(wsock, content)
-		}).ServeHTTP(wrt, req)
-	} else {
+		wsock, err := upgrader.Upgrade(wrt, req, headers)
+		if err != nil {
+			wrt.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		defer wsock.Close()
+
+		_, message, err := wsock.ReadMessage()
+		if err != nil {
+			wrt.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		content, err := json.Marshal(&FakeUpstreamResponse{
+			URI:     req.RequestURI,
+			Method:  req.Method,
+			Address: req.RemoteAddr,
+			Headers: req.Header,
+			Body:    string(message),
+		})
+		if err != nil {
+			wrt.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		err = wsock.WriteMessage(websocket.BinaryMessage, content)
+		if err != nil {
+			wrt.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	default:
 		reqBody, err := io.ReadAll(req.Body)
 		if err != nil {
 			wrt.WriteHeader(http.StatusInternalServerError)
