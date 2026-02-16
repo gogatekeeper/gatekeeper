@@ -14,13 +14,13 @@ jobs:
     steps:
       # Setup the workflow to use the specific version of Go
       - name: Set up Go 1.x
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
         id: go
       # Checkout the repository
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
       # Verify downloaded dependencies
       - name: Verify dependencies
         run: go mod verify
@@ -28,14 +28,13 @@ jobs:
         uses: AbsaOSS/k3d-action@v2.4.0
         with:
           cluster-name: "testcluster"
-          with:
-            k3d-version: v5.8.3
+          k3d-version: v5.8.3
           args: >-
             -p "8443:443@loadbalancer"
       - name: "Deploy keycloak"
         run: |
-          k3d kubeconfig merge testcluster --kubeconfig-switch-context
-          export KUBECONFIG=~/.k3d/kubeconfig-testcluster.yaml
+          k3d kubeconfig get testcluster > kubeconfig-testcluster.yaml
+          export KUBECONFIG=kubeconfig-testcluster.yaml
           kubectl apply -f ./e2e/k8s/manifest.yml
       - name: "Deploy Redis"
         run: |
@@ -134,11 +133,11 @@ jobs:
       matrix:
         go: ["1.25"]
     steps:
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v7
         with:
