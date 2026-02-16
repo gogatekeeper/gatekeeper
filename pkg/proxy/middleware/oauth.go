@@ -49,6 +49,7 @@ func AuthenticationMiddleware(
 	accessTokenDuration time.Duration,
 	enableOptionalEncryption bool,
 	enableCompressToken bool,
+	enableIDTokenClaims bool,
 	compressTokenPool *utils.LimitedBufferPool,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -82,14 +83,40 @@ func AuthenticationMiddleware(
 			// https://github.com/coreos/go-oidc/issues/402
 			oidcLibCtx := context.WithValue(ctx, oauth2.HTTPClient, httpClient)
 
-			_, err = utils.VerifyToken(
-				ctx,
-				provider,
-				token,
-				clientID,
-				skipAccessTokenClientIDCheck,
-				skipAccessTokenIssuerCheck,
-			)
+			idToken := ""
+
+			if enableIDTokenClaims {
+				var idErr error
+
+				idToken, idErr = getIdentity(req, cookMgr.CookieIDTokenName, "")
+				if idErr != nil {
+					scope.Logger.Error(idErr.Error())
+					core.RevokeProxy(logger, req)
+					next.ServeHTTP(wrt, req)
+
+					return
+				}
+
+				_, _, err = utils.VerifyOIDCTokens(
+					req.Context(),
+					provider,
+					clientID,
+					token,
+					idToken,
+					skipAccessTokenClientIDCheck,
+					skipAccessTokenIssuerCheck,
+				)
+			} else {
+				_, err = utils.VerifyToken(
+					ctx,
+					provider,
+					token,
+					clientID,
+					skipAccessTokenClientIDCheck,
+					skipAccessTokenIssuerCheck,
+				)
+			}
+
 			if err != nil {
 				if errors.Is(err, apperrors.ErrTokenSignature) {
 					lLog.Error(
@@ -352,6 +379,19 @@ func AuthenticationMiddleware(
 					}
 				}
 
+				if enableIDTokenClaims {
+					idTokenClaims, err := session.ExtractClaims(idToken)
+					if err != nil {
+						lLog.Error(err.Error())
+						core.RevokeProxy(logger, req)
+						next.ServeHTTP(wrt, req)
+
+						return
+					}
+
+					newUser.IDTokenClaims = idTokenClaims
+				}
+
 				// IMPORTANT: on this rely other middlewares, must be refreshed
 				// with new identity!
 				newUser.RawToken = newRawAccToken
@@ -373,6 +413,19 @@ func AuthenticationMiddleware(
 					zap.String("email", user.Email),
 					zap.String("roles", strings.Join(user.Roles, ",")),
 					zap.String("groups", strings.Join(user.Groups, ",")))
+
+				if enableIDTokenClaims {
+					idTokenClaims, err := session.ExtractClaims(idToken)
+					if err != nil {
+						lLog.Error(err.Error())
+						core.RevokeProxy(logger, req)
+						next.ServeHTTP(wrt, req)
+
+						return
+					}
+
+					user.IDTokenClaims = idTokenClaims
+				}
 
 				scope.Identity = user
 			}

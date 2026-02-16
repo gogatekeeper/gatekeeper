@@ -61,6 +61,7 @@ var (
 	ErrDecryptTokenSignature          = errors.New("unable to decrypt token signature")
 	ErrDecompressToken                = errors.New("unable to decompress token")
 	ErrDecryptAndDecompressToken      = errors.New("unable to decrypt and decompress token")
+	ErrExtractIDTokenClaims           = errors.New("problem extracting idToken claims")
 
 	ErrDelTokFromStore = errors.New("failed to remove old token")
 	ErrSaveTokToStore  = errors.New("failed to store refresh token")
@@ -252,4 +253,5 @@ var (
 	ErrNegativeisPatRetryCount          = errors.New("pat retry count must be greater than zero")
 	ErrEnableTokenCompression           = errors.New("cannot enable token compression " +
 		"with optional token encryption")
+	ErrEnableIDTokenClaims = errors.New("enable id token claims requires also enable-id-token-cookie option")
 )

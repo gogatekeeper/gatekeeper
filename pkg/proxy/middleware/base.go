@@ -226,6 +226,7 @@ func IdentityHeadersMiddleware(
 	enableAuthzHeader bool,
 	enableAuthzCookies bool,
 	enableHeaderEncoding bool,
+	enableIDTokenClaims bool,
 ) func(http.Handler) http.Handler {
 	customClaims := make(map[string]string)
 
@@ -304,6 +305,17 @@ func IdentityHeadersMiddleware(
 						}
 
 						headers.Set(header, val)
+					}
+
+					if enableIDTokenClaims {
+						if claim, found := user.IDTokenClaims[claim]; found {
+							val := fmt.Sprintf("%v", claim)
+							if enableHeaderEncoding {
+								val = mime.BEncoding.Encode(encoding, val)
+							}
+
+							headers.Set(header, val)
+						}
 					}
 				}
 			}

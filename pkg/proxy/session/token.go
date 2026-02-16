@@ -188,7 +188,6 @@ func GetIdentity(
 	}
 }
 
-// ExtractIdentity parse the jwt token and extracts the various elements is order to construct.
 func ExtractIdentity(rawToken string) (*models.UserContext, error) {
 	token, err := jwt.ParseSigned(rawToken, constant.SignatureAlgs[:])
 	if err != nil {
@@ -257,6 +256,22 @@ func ExtractIdentity(rawToken string) (*models.UserContext, error) {
 		Permissions:   customClaims.Authorization,
 		RawToken:      rawToken,
 	}, nil
+}
+
+func ExtractClaims(rawToken string) (map[string]any, error) {
+	token, err := jwt.ParseSigned(rawToken, constant.SignatureAlgs[:])
+	if err != nil {
+		return nil, err
+	}
+
+	jsonMap := make(map[string]any)
+
+	err = token.UnsafeClaimsWithoutVerification(&jsonMap)
+	if err != nil {
+		return nil, err
+	}
+
+	return jsonMap, nil
 }
 
 // RetrieveRefreshToken retrieves the refresh token from store or cookie.

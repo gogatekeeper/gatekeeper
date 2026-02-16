@@ -1011,7 +1011,7 @@ data:
                 "userinfo.token.claim": "true",
                 "user.attribute": "emailVerified",
                 "id.token.claim": "true",
-                "access.token.claim": "true",
+                "access.token.claim": "false",
                 "claim.name": "email_verified",
                 "jsonType.label": "boolean"
               }

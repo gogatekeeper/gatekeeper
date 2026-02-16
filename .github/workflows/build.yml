@@ -28,6 +28,8 @@ jobs:
         uses: AbsaOSS/k3d-action@v2.4.0
         with:
           cluster-name: "testcluster"
+          with:
+            k3d-version: v5.8.3
           args: >-
             -p "8443:443@loadbalancer"
       - name: "Deploy keycloak"
