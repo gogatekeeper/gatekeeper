@@ -1,6 +1,7 @@
 # Mark the release as not ready for production in case there is an
 # indicator for this in the tag e.g. v1.0.0-rc1
 # See: https://goreleaser.com/customization/release/
+version: 2
 release:
   prerelease: auto
 # Prune any dependencies that are no longer needed before the build starts
@@ -121,7 +122,7 @@ changelog:
 # The artifacts to be uploaded
 archives:
   - id: nix
-    builds: [macos, linux]
+    ids: [macos, linux]
     # Generate the compresed files based on the following templates
     name_template: >-
       {{ .ProjectName }}_
@@ -130,14 +131,16 @@ archives:
       {{- .Arch }}{{- .Arm }}
     # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
     wrap_in_directory: true
-    format: tar.gz
+    formats: 
+      - tar.gz
   - id: windows
-    builds: [windows]
+    ids: [windows]
     # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
     wrap_in_directory: true
-    format: zip
+    formats:
+      - zip
   - id: nix-fips
-    builds: [macos-fips, linux-fips]
+    ids: [macos-fips, linux-fips]
     # Generate the compresed files based on the following templates
     name_template: >-
       {{ .ProjectName }}_
@@ -146,9 +149,10 @@ archives:
       {{- .Arch }}{{- .Arm }}_fips
     # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
     wrap_in_directory: true
-    format: tar.gz
+    formats: 
+      - tar.gz
   - id: windows-fips
-    builds: [windows-fips]
+    ids: [windows-fips]
     name_template: >-
       {{ .ProjectName }}_
       {{- .Version }}_
@@ -156,4 +160,5 @@ archives:
       {{- .Arch }}{{- .Arm }}_fips
     # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
     wrap_in_directory: true
-    format: zip
+    formats:
+      - zip
