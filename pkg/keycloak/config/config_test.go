@@ -3380,3 +3380,52 @@ func TestIsEnableCompressTokenValid(t *testing.T) {
 		)
 	}
 }
+
+func TestIsEnableIDTokenClaimsValid(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Config *Config
+		Valid  bool
+	}{
+		{
+			Name: "ValidEnableIDTokenClaims",
+			Config: &Config{
+				EnableIDTokenClaims: true,
+				EnableIDTokenCookie: true,
+			},
+			Valid: true,
+		},
+		{
+			Name: "ValidDisabledEnableIDTokenClaims",
+			Config: &Config{
+				EnableIDTokenClaims: false,
+				EnableIDTokenCookie: false,
+			},
+			Valid: true,
+		},
+		{
+			Name: "InValidEnableIDTokenClaimsValid",
+			Config: &Config{
+				EnableIDTokenClaims: true,
+				EnableIDTokenCookie: false,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isEnableIDTokenClaimsValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}

@@ -72,7 +72,9 @@ type UserContext struct {
 	// rawToken
 	RawToken string
 	// claims
-	Claims map[string]interface{}
+	Claims map[string]any
 	// permissions
 	Permissions Permissions
+	// IDClaims
+	IDTokenClaims map[string]any
 }

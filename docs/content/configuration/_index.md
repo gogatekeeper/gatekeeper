@@ -157,6 +157,7 @@ weight: 2
 |    \--enable-logout-auth                     | enable authentication on logout handler | true | PROXY_ENABLE_LOGOUT_AUTH
 |    \--enable-request-upstream-compression    | enables asking upstream for compression, by adding Accept-Encoding: gzip header and decompressing response from upstream | true | PROXY_ENABLE_REQUEST_UPSTREAM_COMPRESSION
 |    \--enable-accept-encoding-header          | pass Accept-Encoding header from client to upstream | false | PROXY_ENABLE_ACCEPT_ENCODING_HEADER
+|    \--enable-id-token-claims                 | extract claims also from ID token, you can then use --add-claims option to specify claims from ID token | false | PROXY_ENABLE_ID_TOKEN_CLAIMS
 |    \--enable-loa                             | enable level of authentication            | false |
 |    \--enable-store-ha                        | enable RedisCluster HA client             | false | PROXY_ENABLE_STORE_HA
 |    \--disable-all-logging                    | disables all logging to stdout and stderr | false | PROXY_DISABLE_ALL_LOGGING
