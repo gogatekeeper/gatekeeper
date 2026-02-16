@@ -42,7 +42,7 @@ jobs:
           go-version: "1.25.3"
       # Checkout the repository
       - name: Checkout
-        uses:   @v4
+        uses: actions/checkout@v6
       # Cleans up unreachable Git objects and convert a shallow clone to a regular one if needed
       - name: Unshallow
         run: git fetch --prune --unshallow
@@ -62,8 +62,8 @@ jobs:
             -p "8443:443@loadbalancer"
       - name: "Deploy keycloak"
         run: |
-          k3d kubeconfig merge testcluster --kubeconfig-switch-context
-          export KUBECONFIG=~/.k3d/kubeconfig-testcluster.yaml
+          k3d kubeconfig get testcluster > kubeconfig-testcluster.yaml
+          export KUBECONFIG=kubeconfig-testcluster.yaml
           kubectl apply -f ./e2e/k8s/manifest.yml
       - name: "Deploy Redis"
         run: |
@@ -149,6 +149,7 @@ jobs:
           pkill redis-server
           sleep 3
           rm -rf /tmp/redis-*
+          rm kubeconfig-testcluster.yaml
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:

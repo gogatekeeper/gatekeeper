@@ -28,14 +28,13 @@ jobs:
         uses: AbsaOSS/k3d-action@v2.4.0
         with:
           cluster-name: "testcluster"
-          with:
-            k3d-version: v5.8.3
+          k3d-version: v5.8.3
           args: >-
             -p "8443:443@loadbalancer"
       - name: "Deploy keycloak"
         run: |
-          k3d kubeconfig merge testcluster --kubeconfig-switch-context
-          export KUBECONFIG=~/.k3d/kubeconfig-testcluster.yaml
+          k3d kubeconfig get testcluster > kubeconfig-testcluster.yaml
+          export KUBECONFIG=kubeconfig-testcluster.yaml
           kubectl apply -f ./e2e/k8s/manifest.yml
       - name: "Deploy Redis"
         run: |
