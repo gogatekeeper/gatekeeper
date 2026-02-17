@@ -50,6 +50,7 @@ func AuthenticationMiddleware(
 	enableOptionalEncryption bool,
 	enableCompressToken bool,
 	enableIDTokenClaims bool,
+	enableUserInfoClaims bool,
 	compressTokenPool *utils.LimitedBufferPool,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -430,18 +431,33 @@ func AuthenticationMiddleware(
 				scope.Identity = user
 			}
 
-			if enableIDPSessionCheck {
+			if enableIDPSessionCheck || enableUserInfoClaims {
 				tokenSource := oauth2.StaticTokenSource(
 					&oauth2.Token{AccessToken: scope.Identity.RawToken},
 				)
 
-				_, err := provider.UserInfo(oidcLibCtx, tokenSource)
+				userInfo, err := provider.UserInfo(oidcLibCtx, tokenSource)
 				if err != nil {
 					scope.Logger.Error(err.Error())
 					core.RevokeProxy(logger, req)
 					next.ServeHTTP(wrt, req)
 
 					return
+				}
+
+				if enableUserInfoClaims {
+					claims := map[string]any{}
+
+					err = userInfo.Claims(&claims)
+					if err != nil {
+						scope.Logger.Error(err.Error())
+						core.RevokeProxy(logger, req)
+						next.ServeHTTP(wrt, req)
+
+						return
+					}
+
+					scope.Identity.UserInfoClaims = claims
 				}
 			}
 

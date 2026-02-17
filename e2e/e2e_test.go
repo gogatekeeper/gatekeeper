@@ -593,7 +593,9 @@ var _ = Describe("Code Flow login/logout", func() {
 			"--enable-encrypted-token=false",
 			"--enable-id-token-claims=true",
 			"--enable-id-token-cookie=true",
+			"--enable-user-info-claims=true",
 			"--add-claims=email_verified",
+			"--add-claims=email",
 			"--enable-pkce=false",
 			"--tls-cert=" + tlsCertificate,
 			"--tls-private-key=" + tlsPrivateKey,
@@ -655,9 +657,11 @@ var _ = Describe("Code Flow login/logout", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body = resp.Body()
+				By(string(body))
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
-				Expect(body).To(ContainSubstring("X-Auth-Email-Verified"))
+				Expect(body).To(ContainSubstring(`"X-Auth-Email-Verified":["true"]`))
+				Expect(body).To(ContainSubstring(`"X-Auth-Email":["somebody@somewhere.com"]`))
 
 				By("log out")
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
@@ -832,6 +836,7 @@ var _ = Describe("Code Flow login/logout mTLS", func() {
 			"--enable-register-handler=true",
 			"--enable-encrypted-token=false",
 			"--enable-pkce=false",
+			"--add-claims=email",
 			"--tls-cert=" + tlsCertificate,
 			"--tls-private-key=" + tlsPrivateKey,
 			"--upstream-ca=" + tlsCaCertificate,
@@ -911,6 +916,7 @@ var _ = Describe("Code Flow login/logout mTLS", func() {
 				body = resp.Body()
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+				Expect(body).To(ContainSubstring(`"X-Auth-Email":[""]`))
 
 				By("log out")
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)

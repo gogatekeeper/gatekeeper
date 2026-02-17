@@ -1025,8 +1025,8 @@ data:
               "config": {
                 "userinfo.token.claim": "true",
                 "user.attribute": "email",
-                "id.token.claim": "true",
-                "access.token.claim": "true",
+                "id.token.claim": "false",
+                "access.token.claim": "false",
                 "claim.name": "email",
                 "jsonType.label": "String"
               }

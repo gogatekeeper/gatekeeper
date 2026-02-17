@@ -751,7 +751,7 @@ option is set to `true`.
 
 ## Custom claim headers
 
-You can inject additional claims from the access token and from version 4.6.0 also from ID token into the
+You can inject additional claims from the access token and from version 4.6.0 also from ID token and userinfo into the
 upstream headers with the `--add-claims` option. For example, a
 token from a Keycloak provider might include the following
 claims:
