@@ -114,7 +114,7 @@ func (hr *HeaderRouter) RouteAny(
 		hr.routes[header] = []HeaderRoute{}
 	}
 
-	patterns := []Pattern{}
+	patterns := make([]Pattern, 0, len(match))
 	for _, m := range match {
 		patterns = append(patterns, NewPattern(m, hr.matchingType))
 	}

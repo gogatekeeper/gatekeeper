@@ -27,7 +27,7 @@ import (
 )
 
 type BasicRedis interface {
-	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
+	Set(ctx context.Context, key string, value any, expiration time.Duration) *redis.StatusCmd
 	Exists(ctx context.Context, key ...string) *redis.IntCmd
 	Get(ctx context.Context, key string) *redis.StringCmd
 	Del(ctx context.Context, key ...string) *redis.IntCmd

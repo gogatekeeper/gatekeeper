@@ -321,7 +321,7 @@ func TokenHandler(
 			return
 		}
 
-		jsonMap := make(map[string]interface{})
+		jsonMap := make(map[string]any)
 
 		err = token.UnsafeClaimsWithoutVerification(&jsonMap)
 		if err != nil {

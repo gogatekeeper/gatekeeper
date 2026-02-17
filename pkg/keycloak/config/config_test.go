@@ -1135,6 +1135,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 					if err != nil {
 						t.Fatalf("Problem writing certificate %s", err)
 					}
+
 					defer os.Remove(certFile)
 				}
 
