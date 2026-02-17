@@ -48,7 +48,6 @@ var _ = Describe("NoRedirects Websocket login/logout", func() {
 		proxyAddress = localURI + portNum
 		proxyAddr = localAddr + portNum
 
-		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -71,6 +70,8 @@ var _ = Describe("NoRedirects Websocket login/logout", func() {
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})
@@ -216,7 +217,6 @@ var _ = Describe("Code Flow websocket login/logout", func() {
 		proxyAddress = localURI + portNum
 		proxyAddr = localAddr + portNum
 
-		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -246,6 +246,8 @@ var _ = Describe("Code Flow websocket login/logout", func() {
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})

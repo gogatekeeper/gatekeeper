@@ -473,7 +473,6 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 
-		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -496,6 +495,8 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})
@@ -567,7 +568,6 @@ var _ = Describe("Code Flow login/logout", func() {
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 
-		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -600,6 +600,8 @@ var _ = Describe("Code Flow login/logout", func() {
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})
@@ -806,7 +808,6 @@ var _ = Describe("Code Flow login/logout mTLS", func() {
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 
-		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -839,6 +840,8 @@ var _ = Describe("Code Flow login/logout mTLS", func() {
 			"--tls-client-ca-certificate=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})
@@ -948,7 +951,7 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
-		osArgs := []string{os.Args[0]}
+
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -975,6 +978,8 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 			"--cookie-path=/",
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})
@@ -1032,7 +1037,7 @@ var _ = Describe("Code Flow PKCE login/logout with token compression and encrypt
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
-		osArgs := []string{os.Args[0]}
+
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -1059,6 +1064,8 @@ var _ = Describe("Code Flow PKCE login/logout with token compression and encrypt
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 		waitForPort(redisMasterPort)
@@ -1148,7 +1155,7 @@ var _ = Describe("Code Flow PKCE login/logout only with access token compression
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
-		osArgs := []string{os.Args[0]}
+
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -1175,6 +1182,8 @@ var _ = Describe("Code Flow PKCE login/logout only with access token compression
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 		waitForPort(redisMasterPort)
@@ -1262,7 +1271,7 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS", func() {
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
-		osArgs := []string{os.Args[0]}
+
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -1292,6 +1301,8 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS", func() {
 			"--tls-store-client-private-key=" + tlsPrivateKey,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 		waitForPort(redisMasterPort)
@@ -1352,7 +1363,7 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS CLUSTER", func() {
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
-		osArgs := []string{os.Args[0]}
+
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -1383,6 +1394,8 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS CLUSTER", func() {
 			"--tls-store-client-private-key=" + tlsPrivateKey,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 		waitForPort(redisClusterMaster1Port)
@@ -1445,7 +1458,7 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS SENTINEL", func() 
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
-		osArgs := []string{os.Args[0]}
+
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -1476,6 +1489,8 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS SENTINEL", func() 
 			"--tls-store-client-private-key=" + tlsPrivateKey,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 		waitForPort(redisSentinel1Port)
@@ -1536,7 +1551,6 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddressFirst = "https://127.0.0.1:" + portNum
 
-		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -1563,13 +1577,15 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddressSec = localURI + portNum
-		osArgs = []string{os.Args[0]}
+
 		proxyArgs = []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -1597,6 +1613,8 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs = make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})
@@ -1666,7 +1684,6 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 
-		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -1698,6 +1715,8 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})
@@ -1897,7 +1916,6 @@ var _ = Describe("User/password login/logout", func() {
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 
-		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -1927,6 +1945,8 @@ var _ = Describe("User/password login/logout", func() {
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})
@@ -2120,8 +2140,7 @@ var _ = Describe("No-redirects authorization with forwarding direct access grant
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 		fwdProxyAddress = httpLocalURI + fwdPortNum
-		osArgs := []string{os.Args[0]}
-		fwdOsArgs := []string{os.Args[0]}
+
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -2175,8 +2194,13 @@ var _ = Describe("No-redirects authorization with forwarding direct access grant
 			"--tls-forwarding-ca-private-key=" + tlsCaKey,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
+
+		fwdOsArgs := make([]string, 0, 1+len(fwdProxyArgs))
+		fwdOsArgs = append(fwdOsArgs, os.Args[0])
 		fwdOsArgs = append(fwdOsArgs, fwdProxyArgs...)
 		startAndWait(fwdPortNum, fwdOsArgs)
 	})
@@ -2236,7 +2260,6 @@ var _ = Describe("Code Flow With signing login/logout", func() {
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 
-		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -2268,6 +2291,8 @@ var _ = Describe("Code Flow With signing login/logout", func() {
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})
@@ -2388,7 +2413,6 @@ var _ = Describe("Reverse proxy signing", func() {
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 
-		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -2421,6 +2445,8 @@ var _ = Describe("Reverse proxy signing", func() {
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})
@@ -2489,7 +2515,6 @@ var _ = Describe("Code Flow login/logout EnableOptionalEncryption", func() {
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 
-		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -2520,6 +2545,8 @@ var _ = Describe("Code Flow login/logout EnableOptionalEncryption", func() {
 			"--enable-optional-encryption=true",
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})
@@ -2646,7 +2673,6 @@ var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 
-		osArgs := []string{os.Args[0]}
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -2680,6 +2706,8 @@ var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
 			"--enable-logout-auth=false",
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})
@@ -2808,8 +2836,6 @@ var _ = Describe("Code Flow Request Upstream Compression", func() {
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress2 = localURI + portNum2
 
-		osArgs1 := []string{os.Args[0]}
-		osArgs2 := []string{os.Args[0]}
 		proxyArgs1 := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -2868,7 +2894,11 @@ var _ = Describe("Code Flow Request Upstream Compression", func() {
 			"--enable-request-upstream-compression=true",
 		}
 
+		osArgs1 := make([]string, 0, 1+len(proxyArgs1))
+		osArgs1 = append(osArgs1, os.Args[0])
 		osArgs1 = append(osArgs1, proxyArgs1...)
+		osArgs2 := make([]string, 0, 1+len(proxyArgs2))
+		osArgs2 = append(osArgs2, os.Args[0])
 		osArgs2 = append(osArgs2, proxyArgs2...)
 		startAndWait(portNum1, osArgs1)
 		startAndWait(portNum2, osArgs2)
@@ -2954,8 +2984,6 @@ var _ = Describe("Code Flow Accept-Encoding header", func() {
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress2 = localURI + portNum2
 
-		osArgs1 := []string{os.Args[0]}
-		osArgs2 := []string{os.Args[0]}
 		proxyArgs1 := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -3016,7 +3044,11 @@ var _ = Describe("Code Flow Accept-Encoding header", func() {
 			"--enable-accept-encoding-header=true",
 		}
 
+		osArgs1 := make([]string, 0, 1+len(proxyArgs1))
+		osArgs1 = append(osArgs1, os.Args[0])
 		osArgs1 = append(osArgs1, proxyArgs1...)
+		osArgs2 := make([]string, 0, 1+len(proxyArgs2))
+		osArgs2 = append(osArgs2, os.Args[0])
 		osArgs2 = append(osArgs2, proxyArgs2...)
 		startAndWait(portNum1, osArgs1)
 		startAndWait(portNum2, osArgs2)

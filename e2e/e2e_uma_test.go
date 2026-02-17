@@ -40,7 +40,7 @@ var _ = Describe("UMA Code Flow authorization", func() {
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
-		osArgs := []string{os.Args[0]}
+
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -66,6 +66,8 @@ var _ = Describe("UMA Code Flow authorization", func() {
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})
@@ -161,7 +163,7 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
-		osArgs := []string{os.Args[0]}
+
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -189,6 +191,8 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})
@@ -254,8 +258,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 		fwdProxyAddress = httpLocalURI + fwdPortNum
-		osArgs := []string{os.Args[0]}
-		fwdOsArgs := []string{os.Args[0]}
+
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -304,8 +307,12 @@ var _ = Describe("UMA no-redirects authorization with forwarding client credenti
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
+		fwdOsArgs := make([]string, 0, 1+len(fwdProxyArgs))
+		fwdOsArgs = append(fwdOsArgs, os.Args[0])
 		fwdOsArgs = append(fwdOsArgs, fwdProxyArgs...)
 		startAndWait(fwdPortNum, fwdOsArgs)
 	})
@@ -369,8 +376,7 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
 		fwdProxyAddress = httpLocalURI + fwdPortNum
-		osArgs := []string{os.Args[0]}
-		fwdOsArgs := []string{os.Args[0]}
+
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -421,8 +427,13 @@ var _ = Describe("UMA no-redirects authorization with forwarding direct access g
 			"--upstream-ca=" + tlsCaCertificate,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
+
+		fwdOsArgs := make([]string, 0, 1+len(fwdProxyArgs))
+		fwdOsArgs = append(fwdOsArgs, os.Args[0])
 		fwdOsArgs = append(fwdOsArgs, fwdProxyArgs...)
 		startAndWait(fwdPortNum, fwdOsArgs)
 	})
@@ -483,7 +494,7 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		proxyAddress = localURI + portNum
-		osArgs := []string{os.Args[0]}
+
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -510,6 +521,8 @@ var _ = Describe("UMA Code Flow, NOPROXY authorization with method scope", func(
 			"--tls-private-key=" + tlsPrivateKey,
 		}
 
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
 		startAndWait(portNum, osArgs)
 	})
