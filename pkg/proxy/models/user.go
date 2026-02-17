@@ -77,4 +77,6 @@ type UserContext struct {
 	Permissions Permissions
 	// IDClaims
 	IDTokenClaims map[string]any
+	// UserInfoClaims
+	UserInfoClaims map[string]any
 }

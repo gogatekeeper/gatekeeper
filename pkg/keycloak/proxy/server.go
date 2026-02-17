@@ -564,6 +564,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.EnableOptionalEncryption,
 		r.Config.EnableCompressToken,
 		r.Config.EnableIDTokenClaims,
+		r.Config.EnableUserInfoClaims,
 		compressTokenPool,
 	)
 
@@ -858,6 +859,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 			r.Config.EnableAuthorizationCookies,
 			r.Config.EnableHeaderEncoding,
 			r.Config.EnableIDTokenClaims,
+			r.Config.EnableUserInfoClaims,
 		)
 
 		middlewares := []func(http.Handler) http.Handler{
