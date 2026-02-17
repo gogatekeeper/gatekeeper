@@ -315,10 +315,7 @@ func (cm *Manager) dropCookieWithChunks(
 		cm.DropCookie(wrt, name, value[0:maxCookieChunkLength], duration)
 
 		for idx := maxCookieChunkLength; idx < len(value); idx += maxCookieChunkLength {
-			end := idx + maxCookieChunkLength
-			if end > len(value) {
-				end = len(value)
-			}
+			end := min(idx+maxCookieChunkLength, len(value))
 
 			cm.DropCookie(
 				wrt,

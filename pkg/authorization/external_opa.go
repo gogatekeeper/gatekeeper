@@ -180,6 +180,7 @@ func StartOpaServer(
 	}
 
 	errc := make(chan error)
+
 	for _, loop := range loops {
 		go func(serverLoop func() error) {
 			errc <- serverLoop()

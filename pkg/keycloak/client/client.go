@@ -147,8 +147,7 @@ func (client *Client) CreatePermissionTicket(
 	params := &keycloak_models.CreatePermissionTicketParams{}
 	params.ResourceID = resourceID
 	params.ResourceScopes = resourceScopes
-	permissions := make([]*keycloak_models.CreatePermissionTicketParams, 0)
-	permissions = append(permissions, params)
+	permissions := []*keycloak_models.CreatePermissionTicketParams{params}
 
 	errorResponse := &ResponseError{}
 	ticket := &keycloak_models.PermissionTicketRepresentation{}

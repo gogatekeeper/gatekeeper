@@ -305,6 +305,7 @@ func TestIsExpired(t *testing.T) {
 	user := &models.UserContext{
 		ExpiresAt: time.Now(),
 	}
+
 	time.Sleep(1 * time.Millisecond)
 
 	if !user.IsExpired() {
@@ -330,7 +331,8 @@ func TestGetUserContext(t *testing.T) {
 }
 
 func TestGetUserRealmRoleContext(t *testing.T) {
-	roles := []string{"dsp-dev-vpn", "vpn-user", "dsp-prod-vpn", "openvpn:dev-vpn"}
+	roles := make([]string, 0, 5)
+	roles = append(roles, "dsp-dev-vpn", "vpn-user", "dsp-prod-vpn", "openvpn:dev-vpn")
 	token := NewTestToken("test")
 	token.addRealmRoles(roles)
 	jwtToken, err := token.GetToken()
