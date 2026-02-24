@@ -171,7 +171,7 @@ type Config struct {
 	EnableCompression                  bool `env:"ENABLE_COMPRESSION" json:"enable-compression" usage:"enable gzip compression for response" yaml:"enable-compression"`
 	EnableCompressToken                bool `env:"ENABLE_COMPRESS_TOKEN" json:"enable-compress-token" usage:"enable token gzip compression" yaml:"enable-compress-token"`
 	EnablePKCE                         bool `env:"ENABLE_PKCE"              json:"enable-pkce"              usage:"enable pkce for auth code flow, only S256 code challenge supported"                                  yaml:"enable-pkce"`
-	EnableIDPSessionCheck              bool `env:"ENABLE_IDP_SESSION_CHECK" json:"enable_idp_session_check" usage:"during token validation it also checks if user session is still present, useful for multiapp logout" yaml:"enable-idp-session-check"`
+	EnableIDPSessionCheck              bool `env:"ENABLE_IDP_SESSION_CHECK" json:"enable-idp-session-check" usage:"during token validation it also checks if user session is still present, useful for multiapp logout" yaml:"enable-idp-session-check"`
 	EnableUma                          bool `env:"ENABLE_UMA"               json:"enable-uma"               usage:"enable uma authorization, please don't use it in production, we would like to receive feedback"      yaml:"enable-uma"`
 	EnableOpa                          bool `env:"ENABLE_OPA"               json:"enable-opa"               usage:"enable authorization with external Open policy agent"                                                yaml:"enable-opa"`
 	SecureCookie                       bool `env:"SECURE_COOKIE" json:"secure-cookie" usage:"enforces the cookie to be secure" yaml:"secure-cookie"`
