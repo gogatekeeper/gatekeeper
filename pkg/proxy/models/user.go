@@ -7,9 +7,9 @@ import (
 )
 
 type Permission struct {
-	Scopes       []string `json:"scopes"`
 	ResourceID   string   `json:"rsid"`
 	ResourceName string   `json:"rsname"`
+	Scopes       []string `json:"scopes"`
 }
 
 type Permissions struct {
@@ -21,16 +21,16 @@ type RealmRoles struct {
 }
 
 type CustClaims struct {
-	Email          string                 `json:"email"`
-	Acr            string                 `json:"acr"`
-	PrefName       string                 `json:"preferred_username"`
-	RealmAccess    RealmRoles             `json:"realm_access"`
-	Groups         []string               `json:"groups"`
-	ResourceAccess map[string]interface{} `json:"resource_access"`
-	FamilyName     string                 `json:"family_name"`
-	GivenName      string                 `json:"given_name"`
-	Username       string                 `json:"username"`
-	Authorization  Permissions            `json:"authorization"`
+	Email          string         `json:"email"`
+	Acr            string         `json:"acr"`
+	PrefName       string         `json:"preferred_username"`
+	RealmAccess    RealmRoles     `json:"realm_access"`
+	Groups         []string       `json:"groups"`
+	ResourceAccess map[string]any `json:"resource_access"`
+	FamilyName     string         `json:"family_name"`
+	GivenName      string         `json:"given_name"`
+	Username       string         `json:"username"`
+	Authorization  Permissions    `json:"authorization"`
 }
 
 // IsExpired checks if the token has expired.
@@ -49,34 +49,19 @@ func (r *UserContext) String() string {
 
 // UserContext holds the information extracted the token.
 type UserContext struct {
-	// the id of the user
-	ID string
-	// the audience for the token
-	Audiences []string
-	// whether the context is from a session cookie or authorization header
-	BearerToken bool
-	// the email associated to the user
-	Email string
-	// current level of authentication for user
-	Acr string
-	// the expiration of the access token
-	ExpiresAt time.Time
-	// groups is a collection of groups where user is member
-	Groups []string
-	// a name of the user
-	Name string
-	// preferredName is the name of the user
-	PreferredName string
-	// roles is a collection of roles the users holds
-	Roles []string
-	// rawToken
-	RawToken string
-	// claims
-	Claims map[string]any
-	// permissions
-	Permissions Permissions
-	// IDClaims
-	IDTokenClaims map[string]any
-	// UserInfoClaims
+	ExpiresAt      time.Time
 	UserInfoClaims map[string]any
+	IDTokenClaims  map[string]any
+	Claims         map[string]any
+	RawToken       string
+	Email          string
+	Acr            string
+	ID             string
+	Name           string
+	PreferredName  string
+	Groups         []string
+	Roles          []string
+	Permissions    Permissions
+	Audiences      []string
+	BearerToken    bool
 }

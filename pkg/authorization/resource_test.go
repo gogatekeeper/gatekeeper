@@ -48,8 +48,8 @@ func TestDecodeResourceBad(t *testing.T) {
 
 func TestResourceParseOk(t *testing.T) {
 	testCases := []struct {
-		Option   string
 		Resource *authorization.Resource
+		Option   string
 		Ok       bool
 	}{
 		{

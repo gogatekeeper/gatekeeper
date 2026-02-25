@@ -1,5 +1,4 @@
 //go:build !e2e
-// +build !e2e
 
 /*
 Copyright 2015 All rights reserved.
@@ -2332,10 +2331,10 @@ func TestGraceTimeout(t *testing.T) {
 
 	testCases := []struct {
 		Name                 string
-		ServerGraceTimeout   time.Duration
 		ResponseDelay        string
-		ExpectedCode         int
 		ExpectedRequestError string
+		ServerGraceTimeout   time.Duration
+		ExpectedCode         int
 		ExpectedProxy        bool
 	}{
 		{

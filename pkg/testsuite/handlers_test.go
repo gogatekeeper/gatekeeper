@@ -746,7 +746,7 @@ func TestTokenHandler(t *testing.T) {
 			ExpectedContent: func(body string, _ int) {
 				assert.NotEqual(t, body, goodToken)
 
-				jsonMap := make(map[string]interface{})
+				jsonMap := make(map[string]any)
 				err := json.Unmarshal([]byte(body), &jsonMap)
 				require.NoError(t, err)
 			},
@@ -771,7 +771,7 @@ func TestTokenHandler(t *testing.T) {
 			ExpectedContent: func(body string, _ int) {
 				assert.NotEqual(t, body, goodToken)
 
-				jsonMap := make(map[string]interface{})
+				jsonMap := make(map[string]any)
 				err := json.Unmarshal([]byte(body), &jsonMap)
 				require.NoError(t, err)
 			},

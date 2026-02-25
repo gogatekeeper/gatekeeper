@@ -34,8 +34,8 @@ import (
 func TestGetIndentity(t *testing.T) {
 	testCases := []struct {
 		Request       func(token string) *http.Request
-		Ok            bool
 		ProxySettings func(c *config.Config)
+		Ok            bool
 	}{
 		{
 			Request: func(token string) *http.Request {
@@ -219,9 +219,9 @@ func TestGetTokenInRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	testCases := []struct {
+		Error                           error
 		Token                           string
 		AuthScheme                      string
-		Error                           error
 		SkipAuthorizationHeaderIdentity bool
 	}{
 		{

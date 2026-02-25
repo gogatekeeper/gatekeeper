@@ -2025,7 +2025,7 @@ func TestCustomHeadersHandler(t *testing.T) {
 			Request: fakeRequest{
 				URI:      FakeAuthAllURL,
 				HasToken: true,
-				TokenClaims: map[string]interface{}{
+				TokenClaims: map[string]any{
 					"sub":                "test-subject",
 					"username":           "rohith",
 					"preferred_username": "rohith",
@@ -2046,7 +2046,7 @@ func TestCustomHeadersHandler(t *testing.T) {
 			Request: fakeRequest{
 				URI:      FakeAuthAllURL,
 				HasToken: true,
-				TokenClaims: map[string]interface{}{
+				TokenClaims: map[string]any{
 					"email":              "gambol99@gmail.com",
 					"name":               "Rohith Jayawardene",
 					"family_name":        "Jayawardene",
@@ -2086,7 +2086,7 @@ func TestCustomHeadersHandlerNoProxyNoRedirects(t *testing.T) {
 			Request: fakeRequest{
 				URI:      FakeAuthAllURL,
 				HasToken: true,
-				TokenClaims: map[string]interface{}{
+				TokenClaims: map[string]any{
 					"sub":                "test-subject",
 					"username":           "rohith",
 					"preferred_username": "rohith",
@@ -2114,7 +2114,7 @@ func TestCustomHeadersHandlerNoProxyNoRedirects(t *testing.T) {
 			Request: fakeRequest{
 				URI:      FakeAuthAllURL,
 				HasToken: true,
-				TokenClaims: map[string]interface{}{
+				TokenClaims: map[string]any{
 					"email":              "gambol99@gmail.com",
 					"name":               "Rohith Jayawardene",
 					"family_name":        "Jayawardene",
@@ -2291,7 +2291,7 @@ func TestRolesAdmissionHandlerClaims(t *testing.T) {
 			Request: fakeRequest{
 				URI:           testAdminURI,
 				HasToken:      true,
-				TokenClaims:   map[string]interface{}{"item": "tes"},
+				TokenClaims:   map[string]any{"item": "tes"},
 				ExpectedProxy: true,
 				ExpectedCode:  http.StatusOK,
 			},
@@ -2301,7 +2301,7 @@ func TestRolesAdmissionHandlerClaims(t *testing.T) {
 			Request: fakeRequest{
 				URI:          testAdminURI,
 				HasToken:     true,
-				TokenClaims:  map[string]interface{}{"item": "test"},
+				TokenClaims:  map[string]any{"item": "test"},
 				ExpectedCode: http.StatusForbidden,
 			},
 		},
@@ -2310,7 +2310,7 @@ func TestRolesAdmissionHandlerClaims(t *testing.T) {
 			Request: fakeRequest{
 				URI:          testAdminURI,
 				HasToken:     true,
-				TokenClaims:  map[string]interface{}{"item": "test"},
+				TokenClaims:  map[string]any{"item": "test"},
 				ExpectedCode: http.StatusForbidden,
 			},
 		},
@@ -2319,7 +2319,7 @@ func TestRolesAdmissionHandlerClaims(t *testing.T) {
 			Request: fakeRequest{
 				URI:      testAdminURI,
 				HasToken: true,
-				TokenClaims: map[string]interface{}{
+				TokenClaims: map[string]any{
 					"item":  "tester",
 					"found": "something",
 				},
@@ -2332,7 +2332,7 @@ func TestRolesAdmissionHandlerClaims(t *testing.T) {
 			Request: fakeRequest{
 				URI:           testAdminURI,
 				HasToken:      true,
-				TokenClaims:   map[string]interface{}{"item": "test"},
+				TokenClaims:   map[string]any{"item": "test"},
 				ExpectedProxy: true,
 				ExpectedCode:  http.StatusOK,
 			},
@@ -2342,7 +2342,7 @@ func TestRolesAdmissionHandlerClaims(t *testing.T) {
 			Request: fakeRequest{
 				URI:           testAdminURI,
 				HasToken:      true,
-				TokenClaims:   map[string]interface{}{"item": "test"},
+				TokenClaims:   map[string]any{"item": "test"},
 				ExpectedProxy: true,
 				ExpectedCode:  http.StatusOK,
 			},
@@ -2353,7 +2353,7 @@ func TestRolesAdmissionHandlerClaims(t *testing.T) {
 			Request: fakeRequest{
 				URI:           testAdminURI,
 				HasToken:      true,
-				TokenClaims:   map[string]interface{}{"item1": []string{"nonMatchingClaim", "test", "anotherNonMatching"}},
+				TokenClaims:   map[string]any{"item1": []string{"nonMatchingClaim", "test", "anotherNonMatching"}},
 				ExpectedProxy: true,
 				ExpectedCode:  http.StatusOK,
 			},
@@ -2363,7 +2363,7 @@ func TestRolesAdmissionHandlerClaims(t *testing.T) {
 			Request: fakeRequest{
 				URI:           testAdminURI,
 				HasToken:      true,
-				TokenClaims:   map[string]interface{}{"item1": []string{"1test", "2test", "3test"}},
+				TokenClaims:   map[string]any{"item1": []string{"1test", "2test", "3test"}},
 				ExpectedProxy: false,
 				ExpectedCode:  http.StatusForbidden,
 			},
@@ -2373,7 +2373,7 @@ func TestRolesAdmissionHandlerClaims(t *testing.T) {
 			Request: fakeRequest{
 				URI:           testAdminURI,
 				HasToken:      true,
-				TokenClaims:   map[string]interface{}{"item1": []string{}},
+				TokenClaims:   map[string]any{"item1": []string{}},
 				ExpectedProxy: false,
 				ExpectedCode:  http.StatusForbidden,
 			},
@@ -2386,7 +2386,7 @@ func TestRolesAdmissionHandlerClaims(t *testing.T) {
 			Request: fakeRequest{
 				URI:      testAdminURI,
 				HasToken: true,
-				TokenClaims: map[string]interface{}{
+				TokenClaims: map[string]any{
 					"item1": []string{"randomItem", "test"},
 					"item2": []string{"randomItem", "anotherItem"},
 					"item3": []string{"randomItem2", "anotherItem3"},
@@ -2527,10 +2527,10 @@ func TestEnableUma(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 
 	requests := []struct {
-		Name               string
 		ProxySettings      func(c *config.Config)
-		ExecutionSettings  []fakeRequest
 		AuthServerSettings *fakeAuthConfig
+		Name               string
+		ExecutionSettings  []fakeRequest
 	}{
 		{
 			Name: "TestUmaNoTokenNoRedirects",
@@ -2795,7 +2795,7 @@ func TestLogRealIP(t *testing.T) {
 
 		var rowFound bool
 
-		for _, row := range strings.Split(rows, "\n") {
+		for row := range strings.SplitSeq(rows, "\n") {
 			err := json.Unmarshal([]byte(row), &logRow)
 			if err == nil && len(logRow.ClientIP) > 0 {
 				rowFound = true
@@ -2814,10 +2814,10 @@ func TestEnableOpa(t *testing.T) {
 	upstreamURL := upstreamService.URL
 
 	requests := []struct {
-		Name              string
 		ProxySettings     func(c *config.Config)
-		ExecutionSettings []fakeRequest
+		Name              string
 		AuthzPolicy       string
+		ExecutionSettings []fakeRequest
 		StartOpa          bool
 	}{
 		{

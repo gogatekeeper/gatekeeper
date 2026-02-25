@@ -27,6 +27,7 @@ import (
 	"io"
 	httplog "log"
 	"log/slog"
+	"maps"
 	"net"
 	"net/http"
 	"net/url"
@@ -1384,18 +1385,18 @@ func (r *OauthProxy) Shutdown() error {
 
 // listenerConfig encapsulate listener options.
 type listenerConfig struct {
-	hostnames           []string // list of hostnames the service will respond to
-	certificate         string   // the path to the certificate if any
-	clientCACert        string   // the path to a CA certificate used to verify clients, mutual tls
-	letsEncryptCacheDir string   // the path to cache letsencrypt certificates
-	listen              string   // the interface to bind the listener to
-	privateKey          string   // the path to the private key if any
-	redirectionURL      string   // url to redirect to
-	minTLSVersion       uint16   // server minimal TLS version
-	proxyProtocol       bool     // whether to enable proxy protocol on the listen
-	useFileTLS          bool     // indicates we are using certificates from files
-	useLetsEncryptTLS   bool     // indicates we are using letsencrypt
-	useSelfSignedTLS    bool     // indicates we are using the self-signed tls
+	certificate         string
+	clientCACert        string
+	letsEncryptCacheDir string
+	listen              string
+	privateKey          string
+	redirectionURL      string
+	hostnames           []string
+	minTLSVersion       uint16
+	proxyProtocol       bool
+	useFileTLS          bool
+	useLetsEncryptTLS   bool
+	useSelfSignedTLS    bool
 }
 
 // makeListenerConfig extracts a listener configuration from a proxy Config.
@@ -1781,9 +1782,7 @@ func (r OpenIDRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 	}
 
 	req = req.Clone(req.Context())
-	for k, v := range r.Header {
-		req.Header[k] = v
-	}
+	maps.Copy(req.Header, r.Header)
 
 	return r.rt.RoundTrip(req)
 }

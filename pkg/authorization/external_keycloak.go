@@ -12,13 +12,13 @@ import (
 var _ Provider = (*KeycloakAuthorizationProvider)(nil)
 
 type KeycloakAuthorizationProvider struct {
-	perms       models.Permissions
-	targetPath  string
 	idpClient   *keycloak_client.Client
-	idpTimeout  time.Duration
+	methodScope *string
+	targetPath  string
 	pat         string
 	realm       string
-	methodScope *string
+	perms       models.Permissions
+	idpTimeout  time.Duration
 }
 
 func NewKeycloakAuthorizationProvider(
