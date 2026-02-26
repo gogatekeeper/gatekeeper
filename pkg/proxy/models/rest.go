@@ -6,8 +6,8 @@ type TokenResponse struct {
 	AccessToken  string  `json:"access_token"`
 	IDToken      string  `json:"id_token"`
 	RefreshToken string  `json:"refresh_token,omitempty"`
-	ExpiresIn    float64 `json:"expires_in"`
 	Scope        string  `json:"scope,omitempty"`
+	ExpiresIn    float64 `json:"expires_in"`
 }
 
 type DiscoveryResponse struct {

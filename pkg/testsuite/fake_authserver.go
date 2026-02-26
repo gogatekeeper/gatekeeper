@@ -31,32 +31,32 @@ type RoleClaim struct {
 }
 
 type DefaultTestTokenClaims struct {
-	Aud               string               `json:"aud"`
-	Azp               string               `json:"azp"`
-	ClientSession     string               `json:"client_session"`
-	Email             string               `json:"email"`
+	ResourceAccess    map[string]RoleClaim `json:"resource_access"`
 	FamilyName        string               `json:"family_name"`
+	Name              string               `json:"name"`
+	Email             string               `json:"email"`
+	Aud               string               `json:"aud"`
 	GivenName         string               `json:"given_name"`
 	Username          string               `json:"username"`
-	Iat               int64                `json:"iat"`
-	Iss               string               `json:"iss"`
+	ClientSession     string               `json:"client_session"`
+	Found             string               `json:"found"`
 	Jti               string               `json:"jti"`
-	Name              string               `json:"name"`
-	Nbf               int                  `json:"nbf"`
-	Exp               int64                `json:"exp"`
+	Iss               string               `json:"iss"`
+	Item              string               `json:"item"`
+	Azp               string               `json:"azp"`
 	PreferredUsername string               `json:"preferred_username"`
 	SessionState      string               `json:"session_state"`
 	Sub               string               `json:"sub"`
 	Typ               string               `json:"typ"`
-	Groups            []string             `json:"groups"`
 	RealmAccess       RoleClaim            `json:"realm_access"`
-	ResourceAccess    map[string]RoleClaim `json:"resource_access"`
-	Item              string               `json:"item"`
-	Found             string               `json:"found"`
+	Groups            []string             `json:"groups"`
 	Item1             []string             `json:"item1"`
 	Item2             []string             `json:"item2"`
 	Item3             []string             `json:"item3"`
 	Authorization     models.Permissions   `json:"authorization"`
+	Exp               int64                `json:"exp"`
+	Nbf               int                  `json:"nbf"`
+	Iat               int64                `json:"iat"`
 }
 
 //nolint:gochecknoglobals
@@ -112,7 +112,7 @@ func (t *FakeToken) GetToken() (string, error) {
 		input = block.Bytes
 	}
 
-	var priv interface{}
+	var priv any
 
 	priv, err0 := x509.ParsePKCS8PrivateKey(input)
 	if err0 != nil {
@@ -145,7 +145,7 @@ func (t *FakeToken) GetUnsignedToken() (string, error) {
 		input = block.Bytes
 	}
 
-	var priv interface{}
+	var priv any
 
 	priv, err0 := x509.ParsePKCS8PrivateKey(input)
 	if err0 != nil {
@@ -192,13 +192,13 @@ func (t *FakeToken) addClientRoles(client string, roles []string) {
 
 type fakeAuthServer struct {
 	location                  *url.URL
-	proxyLocation             string
-	key                       jose2.JSONWebKey
 	server                    *httptest.Server
+	fakeAuthConfig            *fakeAuthConfig
+	proxyLocation             string
+	pkceChallenge             string
+	key                       jose2.JSONWebKey
 	expiration                time.Duration
 	resourceSetHandlerFailure bool
-	fakeAuthConfig            *fakeAuthConfig
-	pkceChallenge             string
 }
 
 const fakePrivateKey = `
@@ -382,19 +382,19 @@ func (r *fakeAuthServer) ResourceHandler(wrt http.ResponseWriter, _ *http.Reques
 	}
 
 	type Resource struct {
-		Name               string              `json:"name"`
-		Type               string              `json:"type"`
-		Owner              struct{ ID string } `json:"owner"`
-		OwnerManagedAccess bool                `json:"ownerManagedAccess"`
-		Attributes         struct{}            `json:"attributes"`
-		ID                 string              `json:"_id"`
-		URIS               []string            `json:"uris"`
-		ResourceScopes     []struct {
+		Attributes     struct{}            `json:"attributes"`
+		Name           string              `json:"name"`
+		Type           string              `json:"type"`
+		Owner          struct{ ID string } `json:"owner"`
+		ID             string              `json:"_id"`
+		URIS           []string            `json:"uris"`
+		ResourceScopes []struct {
 			Name string `json:"name"`
 		} `json:"resource_scopes"`
 		Scopes []struct {
 			Name string `json:"name"`
 		} `json:"scopes"`
+		OwnerManagedAccess bool `json:"ownerManagedAccess"`
 	}
 
 	response := Resource{
@@ -554,7 +554,7 @@ func (r *fakeAuthServer) userInfoHandler(wrt http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	renderJSON(http.StatusOK, wrt, map[string]interface{}{
+	renderJSON(http.StatusOK, wrt, map[string]any{
 		"sub":                user.Claims["sub"],
 		"name":               user.Claims["name"],
 		"given_name":         user.Claims["given_name"],
@@ -757,7 +757,7 @@ func getRandomString(n int) (string, error) {
 	return string(runes), nil
 }
 
-func renderJSON(code int, wrt http.ResponseWriter, data interface{}) {
+func renderJSON(code int, wrt http.ResponseWriter, data any) {
 	wrt.Header().Set(constant.HeaderContentType, "application/json")
 	wrt.WriteHeader(code)
 

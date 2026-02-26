@@ -1,5 +1,4 @@
 //go:build !e2e
-// +build !e2e
 
 /*
 Copyright 2015 All rights reserved.
@@ -275,8 +274,8 @@ func TestIsConfig(t *testing.T) {
 
 func TestIsListenValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -314,8 +313,8 @@ func TestIsListenValid(t *testing.T) {
 
 func TestIsListenAdminSchemeValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -360,8 +359,8 @@ func TestIsListenAdminSchemeValid(t *testing.T) {
 
 func TestIsOpenIDProviderProxyValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -422,8 +421,8 @@ func TestIsOpenIDProviderProxyValid(t *testing.T) {
 
 func TestIsMaxIdlleConnValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -484,8 +483,8 @@ func TestIsMaxIdlleConnValid(t *testing.T) {
 
 func TestIsSameSiteValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -545,8 +544,8 @@ func TestIsSameSiteValid(t *testing.T) {
 //nolint:cyclop, funlen
 func TestIsTLSFilesValid(t *testing.T) {
 	testCases := []struct {
-		Name                             string
 		Config                           *Config
+		Name                             string
 		Valid                            bool
 		TLSCertificateExists             bool
 		TLSClientCACertificateExists     bool
@@ -956,8 +955,8 @@ func TestIsTLSFilesValid(t *testing.T) {
 //nolint:cyclop
 func TestIsAdminTLSFilesValid(t *testing.T) {
 	testCases := []struct {
-		Name                            string
 		Config                          *Config
+		Name                            string
 		Valid                           bool
 		TLSAdminCertificateExists       bool
 		TLSAdminClientCertificateExists bool
@@ -1171,8 +1170,8 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 
 func TestIsLetsEncryptValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -1219,8 +1218,8 @@ func TestIsLetsEncryptValid(t *testing.T) {
 
 func TestIsForwardingProxySettingsValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -1313,8 +1312,8 @@ func TestIsForwardingProxySettingsValid(t *testing.T) {
 
 func TestIsReverseProxySettingsValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -1371,8 +1370,8 @@ func TestIsReverseProxySettingsValid(t *testing.T) {
 
 func TestIsTokenVerificationSettingsValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -1413,8 +1412,8 @@ func TestIsTokenVerificationSettingsValid(t *testing.T) {
 
 func TestIsTLSMinValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -1487,8 +1486,8 @@ func TestIsTLSMinValid(t *testing.T) {
 
 func TestIsNoProxyValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -1537,8 +1536,8 @@ func TestIsNoProxyValid(t *testing.T) {
 
 func TestIsUpstreamValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -1592,8 +1591,8 @@ func TestIsUpstreamValid(t *testing.T) {
 
 func TestIsUpstreamProxyValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -1638,8 +1637,8 @@ func TestIsUpstreamProxyValid(t *testing.T) {
 
 func TestIsClientIDValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -1677,8 +1676,8 @@ func TestIsClientIDValid(t *testing.T) {
 
 func TestIsDiscoveryURLValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -1716,8 +1715,8 @@ func TestIsDiscoveryURLValid(t *testing.T) {
 
 func TestIsForwardingGrantValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -1793,8 +1792,8 @@ func TestIsForwardingGrantValid(t *testing.T) {
 
 func TestIsSecurityFilterValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -1870,8 +1869,8 @@ func TestIsSecurityFilterValid(t *testing.T) {
 
 func TestIsTokenEncryptionValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -1938,8 +1937,8 @@ func TestIsTokenEncryptionValid(t *testing.T) {
 
 func TestIsSecureCookieValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -1981,8 +1980,8 @@ func TestIsSecureCookieValid(t *testing.T) {
 
 func TestIsStoreURLValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -2071,8 +2070,8 @@ func TestIsStoreURLValid(t *testing.T) {
 
 func TestIsResourceValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -2208,8 +2207,8 @@ func TestIsResourceValid(t *testing.T) {
 
 func TestIsMatchClaimValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -2251,8 +2250,8 @@ func TestIsMatchClaimValid(t *testing.T) {
 
 func TestExternalAuthzValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -2341,8 +2340,8 @@ func TestExternalAuthzValid(t *testing.T) {
 
 func TestUpdateDiscoveryURI(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -2488,8 +2487,8 @@ func TestExtractDiscoveryURIComponents(t *testing.T) {
 
 func TestDefaultDenyValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -2543,8 +2542,8 @@ func TestDefaultDenyValid(t *testing.T) {
 
 func TestIsPKCEValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -2584,8 +2583,8 @@ func TestIsPKCEValid(t *testing.T) {
 
 func TestIsPostLoginRedirectValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -2638,8 +2637,8 @@ func TestIsPostLoginRedirectValid(t *testing.T) {
 
 func TestIsEnableHmacValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -2679,8 +2678,8 @@ func TestIsEnableHmacValid(t *testing.T) {
 
 func TestIsPostLogoutRedirectURIValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -2720,10 +2719,10 @@ func TestIsPostLogoutRedirectURIValid(t *testing.T) {
 
 func TestIsAllowedQueryParamsValid(t *testing.T) {
 	testCases := []struct {
-		Name           string
-		Config         *Config
-		Valid          bool
 		ExptectedError error
+		Config         *Config
+		Name           string
+		Valid          bool
 	}{
 		{
 			Name: "AllowedQueryParamsValidValid",
@@ -2817,8 +2816,8 @@ func TestIsAllowedQueryParamsValid(t *testing.T) {
 
 func TestEnableLoa(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -2866,8 +2865,8 @@ func TestEnableLoa(t *testing.T) {
 
 func TestIsCorsValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -2907,8 +2906,8 @@ func TestIsCorsValid(t *testing.T) {
 
 func TestIsCookiePathValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -2946,8 +2945,8 @@ func TestIsCookiePathValid(t *testing.T) {
 
 func TestIsSigningValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -2995,8 +2994,8 @@ func TestIsSigningValid(t *testing.T) {
 
 func TestEnableSigningHmacValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -3036,8 +3035,8 @@ func TestEnableSigningHmacValid(t *testing.T) {
 
 func TestEnableXForwardedHeadersValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -3085,8 +3084,8 @@ func TestEnableXForwardedHeadersValid(t *testing.T) {
 
 func TestEnableOptionalEncryptionValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -3128,8 +3127,8 @@ func TestEnableOptionalEncryptionValid(t *testing.T) {
 
 func TestEnableLogoutAuthValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -3169,8 +3168,8 @@ func TestEnableLogoutAuthValid(t *testing.T) {
 
 func TestIsEnableRequestUpstreamCompressionValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -3210,8 +3209,8 @@ func TestIsEnableRequestUpstreamCompressionValid(t *testing.T) {
 
 func TestIsEnableAcceptEncodingHeaderValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -3251,8 +3250,8 @@ func TestIsEnableAcceptEncodingHeaderValid(t *testing.T) {
 
 func TestIsOpenIDProviderRetryCountValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -3297,8 +3296,8 @@ func TestIsOpenIDProviderRetryCountValid(t *testing.T) {
 
 func TestIsPatRetryCountValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -3343,8 +3342,8 @@ func TestIsPatRetryCountValid(t *testing.T) {
 
 func TestIsEnableCompressTokenValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{
@@ -3384,8 +3383,8 @@ func TestIsEnableCompressTokenValid(t *testing.T) {
 
 func TestIsEnableIDTokenClaimsValid(t *testing.T) {
 	testCases := []struct {
-		Name   string
 		Config *Config
+		Name   string
 		Valid  bool
 	}{
 		{

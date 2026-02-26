@@ -26,27 +26,19 @@ import (
 )
 
 // Resource represents a url resource to protect.
+//
+//nolint:tagalign
 type Resource struct {
-	// URL the url for the resource
-	URL string `json:"uri" yaml:"uri"`
-	// Methods the method type
-	Methods []string `json:"methods" yaml:"methods"`
-	// WhiteListed permits the prefix through
-	WhiteListed bool `json:"white-listed" yaml:"white-listed"`
-	// WhiteListedAnon permits access for requests without token
-	WhiteListedAnon bool `json:"white-listed-anon" yaml:"white-listed-anon"`
-	// NoRedirect overrides global no-redirect setting
-	NoRedirect bool `json:"no-redirect" yaml:"no-redirect"`
-	// RequireAnyRole indicates that ANY of the roles are required, the default is all
-	RequireAnyRole bool `json:"require-any-role" yaml:"require-any-role"`
-	// Headers required to access this url
-	Headers []string `json:"headers" yaml:"headers"`
-	// Roles the roles required to access this url
-	Roles []string `json:"roles" yaml:"roles"`
-	// Groups is a list of groups the user is in
-	Groups []string `json:"groups" yaml:"groups"`
-	// Acr (Authentication Context Class Reference) is a list of allowed levels of authentication for user
-	Acr []string `json:"acr" yaml:"acr"`
+	URL             string   `json:"uri" yaml:"uri"`
+	Methods         []string `json:"methods" yaml:"methods"`
+	Headers         []string `json:"headers" yaml:"headers"`
+	Roles           []string `json:"roles" yaml:"roles"`
+	Groups          []string `json:"groups" yaml:"groups"`
+	Acr             []string `json:"acr" yaml:"acr"`
+	WhiteListed     bool     `json:"white-listed" yaml:"white-listed"`
+	WhiteListedAnon bool     `json:"white-listed-anon" yaml:"white-listed-anon"`
+	NoRedirect      bool     `json:"no-redirect" yaml:"no-redirect"`
+	RequireAnyRole  bool     `json:"require-any-role" yaml:"require-any-role"`
 }
 
 func NewResource() *Resource {

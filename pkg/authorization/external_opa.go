@@ -40,9 +40,9 @@ type OpaAuthzResponse struct {
 var _ Provider = (*OpaAuthorizationProvider)(nil)
 
 type OpaAuthorizationProvider struct {
-	timeout  time.Duration
-	authzURL url.URL
 	req      *http.Request
+	authzURL url.URL
+	timeout  time.Duration
 }
 
 func NewOpaAuthorizationProvider(

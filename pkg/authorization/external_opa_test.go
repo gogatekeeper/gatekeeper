@@ -23,11 +23,11 @@ type OpaTestInput struct {
 //nolint:funlen,cyclop
 func TestExternalOpa(t *testing.T) {
 	requests := []struct {
-		Name           string
 		FakeRequest    func() (*http.Request, error)
+		Name           string
 		AuthzPolicy    string
-		StartOpa       bool
 		ExpectedResult authorization.AuthzDecision
+		StartOpa       bool
 		ExptectError   bool
 	}{
 		{

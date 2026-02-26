@@ -26,6 +26,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net"
 	"net/http"
 	"net/url"
@@ -97,13 +98,7 @@ func DecodeKeyPairs(list []string) (map[string]string, error) {
 }
 
 func IsValidHTTPMethod(method string) bool {
-	for _, x := range AllHTTPMethods {
-		if method == x {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(AllHTTPMethods, method)
 }
 
 func DefaultTo(v, d string) string {
@@ -281,10 +276,7 @@ func Capitalize(word string) string {
 
 // MergeMaps simples copies the keys from source to destination.
 func MergeMaps(dest, source map[string]string) map[string]string {
-	for k, v := range source {
-		dest[k] = v
-	}
-
+	maps.Copy(dest, source)
 	return dest
 }
 
@@ -303,7 +295,7 @@ func GetWithin(expires time.Time, within float64) time.Duration {
 }
 
 // PrintError display the command line usage and error.
-func PrintError(message string, args ...interface{}) cli.ExitCoder {
+func PrintError(message string, args ...any) cli.ExitCoder {
 	return cli.Exit(fmt.Sprintf("[error] "+message, args...), 1)
 }
 
@@ -534,7 +526,7 @@ func CheckClaim(
 	}
 
 	switch claims := user.Claims[claimName].(type) {
-	case []interface{}:
+	case []any:
 		for _, v := range claims {
 			value, ok := v.(string)
 			if !ok {

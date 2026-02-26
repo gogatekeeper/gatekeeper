@@ -30,42 +30,42 @@ import (
 )
 
 type fakeRequest struct {
-	Cookies                       []*http.Cookie
-	Groups                        []string
-	Roles                         []string
-	ExpectedNoProxyHeaders        []string
+	FormValues                    map[string]string
+	ExpectedLoginCookiesValidator map[string]func(*testing.T, *config.Config, string) bool
+	ExpectedCookiesValidator      map[string]func(*testing.T, *config.Config, string) bool
+	ExpectedProxyHeadersValidator map[string]func(*testing.T, *config.Config, string)
+	ExpectedProxyHeaders          map[string]string
+	ExpectedHeadersValidator      map[string]func(*testing.T, *config.Config, string)
+	ExpectedHeaders               map[string]string
+	ExpectedCookies               map[string]string
+	ExpectedContent               func(body string, testNum int)
+	TokenAuthorization            *models.Permissions
+	TokenClaims                   map[string]any
+	OnResponse                    func(int, *resty.Request, *resty.Response)
+	Headers                       map[string]string
+	URL                           string
+	URI                           string
 	Method                        string
+	ExpectedRequestError          string
+	ExpectedContentContains       string
+	Username                      string
 	Password                      string
 	ProxyProtocol                 string
-	RawToken                      string
-	RequestCA                     string
-	URI                           string
-	URL                           string
-	Username                      string
-	ExpectedContentContains       string
-	ExpectedRequestError          string
 	ExpectedLocation              string
-	Expires                       time.Duration
-	FormValues                    map[string]string
-	Headers                       map[string]string
-	OnResponse                    func(int, *resty.Request, *resty.Response)
-	TokenClaims                   map[string]interface{}
-	TokenAuthorization            *models.Permissions
+	RequestCA                     string
+	RawToken                      string
+	Roles                         []string
+	Cookies                       []*http.Cookie
+	Groups                        []string
+	ExpectedNoProxyHeaders        []string
 	ExpectedCode                  int
-	ExpectedContent               func(body string, testNum int)
-	ExpectedCookies               map[string]string
-	ExpectedHeaders               map[string]string
-	ExpectedHeadersValidator      map[string]func(*testing.T, *config.Config, string)
-	ExpectedProxyHeaders          map[string]string
-	ExpectedProxyHeadersValidator map[string]func(*testing.T, *config.Config, string)
-	ExpectedCookiesValidator      map[string]func(*testing.T, *config.Config, string) bool
-	ExpectedLoginCookiesValidator map[string]func(*testing.T, *config.Config, string) bool
+	Expires                       time.Duration
 	TLSMin                        uint16
 	TLSMax                        uint16
-	BasicAuth                     bool
+	LoginXforwarded               bool
 	HasCookieToken                bool
 	HasLogin                      bool
-	LoginXforwarded               bool
+	BasicAuth                     bool
 	HasToken                      bool
 	NotSigned                     bool
 	ProxyRequest                  bool

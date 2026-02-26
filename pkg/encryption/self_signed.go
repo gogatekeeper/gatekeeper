@@ -36,20 +36,13 @@ import (
 )
 
 type SelfSignedCertificate struct {
-	sync.RWMutex
-
-	// certificate holds the current issuing certificate
-	certificate tls.Certificate
-	// expiration is the certificate expiration
-	expiration time.Duration
-	// hostnames is the list of host names on the certificate
-	hostnames []string
-	// privateKey is the rsa private key
-	privateKey *ed25519.PrivateKey
-	// the logger for this service
-	log *zap.Logger
-	// stopCh is a channel to close off the rotation
-	cancel context.CancelFunc
+	certificate  tls.Certificate
+	privateKey   *ed25519.PrivateKey
+	log          *zap.Logger
+	cancel       context.CancelFunc
+	hostnames    []string
+	expiration   time.Duration
+	sync.RWMutex //nolint:embeddedstructfieldcheck
 }
 
 // NewSelfSignedCertificate creates and returns a self signed certificate manager.

@@ -496,7 +496,7 @@ func RedirectToAuthorizationMiddleware(
 				authQuery := "?state=" + uuid
 
 				if len(allowedQueryParams) > 0 {
-					query := ""
+					builder := strings.Builder{}
 
 					for key, val := range allowedQueryParams {
 						if param := req.URL.Query().Get(key); param != "" {
@@ -506,15 +506,15 @@ func RedirectToAuthorizationMiddleware(
 								}
 							}
 
-							query += fmt.Sprintf("&%s=%s", key, param)
+							builder.WriteString(fmt.Sprintf("&%s=%s", key, param))
 						} else {
 							if val, ok := defaultAllowedQueryParams[key]; ok {
-								query += fmt.Sprintf("&%s=%s", key, val)
+								builder.WriteString(fmt.Sprintf("&%s=%s", key, val))
 							}
 						}
 					}
 
-					authQuery += query
+					authQuery += builder.String()
 				}
 
 				url := utils.WithOAuthURI(baseURI, oAuthURI)(constant.AuthorizationURL + authQuery)

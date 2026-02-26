@@ -202,7 +202,7 @@ func ExtractIdentity(rawToken string) (*models.UserContext, error) {
 		return nil, err
 	}
 
-	jsonMap := make(map[string]interface{})
+	jsonMap := make(map[string]any)
 
 	err = token.UnsafeClaimsWithoutVerification(&jsonMap)
 	if err != nil {
@@ -223,14 +223,14 @@ func ExtractIdentity(rawToken string) (*models.UserContext, error) {
 
 	// @step: extract the client roles from the access token
 	for name, list := range customClaims.ResourceAccess {
-		scopes, assertOk := list.(map[string]interface{})
+		scopes, assertOk := list.(map[string]any)
 
 		if !assertOk {
 			return nil, apperrors.ErrAssertionFailed
 		}
 
 		if roles, found := scopes[constant.ClaimResourceRoles]; found {
-			rolesVal, assertOk := roles.([]interface{})
+			rolesVal, assertOk := roles.([]any)
 
 			if !assertOk {
 				return nil, apperrors.ErrAssertionFailed

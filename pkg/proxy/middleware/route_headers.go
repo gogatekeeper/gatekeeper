@@ -189,9 +189,9 @@ func (r HeaderRoute) IsMatch(value string) bool {
 type Pattern struct {
 	prefix       string
 	suffix       string
-	wildcard     bool
 	value        string
 	matchingType MatcherType
+	wildcard     bool
 }
 
 func NewPattern(value string, matchingType MatcherType) Pattern {

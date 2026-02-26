@@ -23,63 +23,63 @@ func TestRouteHeadersMiddleware(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		requestHeaders map[string]string
 		name           string
 		header         string
 		match          string
 		matchType      gmiddleware.MatcherType
-		requestHeaders map[string]string
 		want           int
 	}{
 		{
-			"TestClassicMatch",
-			constant.AuthorizationHeader,
-			constant.AuthorizationType + "*",
-			gmiddleware.RouteHeadersClassicMatcher,
-			map[string]string{
+			name:      "TestClassicMatch",
+			header:    constant.AuthorizationHeader,
+			match:     constant.AuthorizationType + "*",
+			matchType: gmiddleware.RouteHeadersClassicMatcher,
+			requestHeaders: map[string]string{
 				"Authorization": "Bearer whatever",
 				"Other":         "bera",
 			},
-			http.StatusForbidden,
+			want: http.StatusForbidden,
 		},
 		{
-			"TestContainsMatch",
-			"Cookie",
-			"kc-access=",
-			gmiddleware.RouteHeadersContainsMatcher,
-			map[string]string{
+			name:      "TestContainsMatch",
+			header:    "Cookie",
+			match:     "kc-access=",
+			matchType: gmiddleware.RouteHeadersContainsMatcher,
+			requestHeaders: map[string]string{
 				"Cookie": "some-cookie=tadadada; kc-access=mytoken",
 			},
-			http.StatusForbidden,
+			want: http.StatusForbidden,
 		},
 		{
-			"TestRegexMatch",
-			"X-Custom-Header",
-			".*mycustom[4-9]+.*",
-			gmiddleware.RouteHeadersRegexMatcher,
-			map[string]string{
+			name:      "TestRegexMatch",
+			header:    "X-Custom-Header",
+			match:     ".*mycustom[4-9]+.*",
+			matchType: gmiddleware.RouteHeadersRegexMatcher,
+			requestHeaders: map[string]string{
 				"X-Custom-Header": "test1mycustom564other",
 			},
-			http.StatusForbidden,
+			want: http.StatusForbidden,
 		},
 		{
-			"TestMatchAndValueIsLowered",
-			constant.AuthorizationHeader,
-			constant.AuthorizationType + " *",
-			gmiddleware.RouteHeadersClassicMatcher,
-			map[string]string{
+			name:      "TestMatchAndValueIsLowered",
+			header:    constant.AuthorizationHeader,
+			match:     constant.AuthorizationType + " *",
+			matchType: gmiddleware.RouteHeadersClassicMatcher,
+			requestHeaders: map[string]string{
 				"Authorization": "bearer whatever",
 			},
-			http.StatusForbidden,
+			want: http.StatusForbidden,
 		},
 		{
-			"TestNotMatch",
-			constant.AuthorizationHeader,
-			constant.AuthorizationType,
-			gmiddleware.RouteHeadersClassicMatcher,
-			map[string]string{
+			name:      "TestNotMatch",
+			header:    constant.AuthorizationHeader,
+			match:     constant.AuthorizationType,
+			matchType: gmiddleware.RouteHeadersClassicMatcher,
+			requestHeaders: map[string]string{
 				"Authorization": "Basic test",
 			},
-			http.StatusOK,
+			want: http.StatusOK,
 		},
 	}
 

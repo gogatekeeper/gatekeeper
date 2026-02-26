@@ -28,17 +28,12 @@ import (
 )
 
 type CertificationRotation struct {
-	sync.RWMutex
-
-	// certificate holds the current issuing certificate
-	certificate tls.Certificate
-	// certificateFile is the path the certificate
+	certificate     tls.Certificate
+	log             *zap.Logger
+	rotationMetric  *prometheus.Counter
 	certificateFile string
-	// the privateKeyFile is the path of the private key
-	privateKeyFile string
-	// the logger for this service
-	log            *zap.Logger
-	rotationMetric *prometheus.Counter
+	privateKeyFile  string
+	sync.RWMutex    //nolint:embeddedstructfieldcheck
 }
 
 // NewCertificateRotator creates a new certificate.

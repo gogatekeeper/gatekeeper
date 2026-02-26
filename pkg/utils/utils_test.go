@@ -1,5 +1,4 @@
 //go:build !e2e
-// +build !e2e
 
 /*
 Copyright 2015 All rights reserved.
@@ -40,8 +39,8 @@ import (
 
 func TestDecodeKeyPairs(t *testing.T) {
 	testCases := []struct {
-		List     []string
 		KeyPairs map[string]string
+		List     []string
 		Ok       bool
 	}{
 		{
@@ -96,10 +95,10 @@ func TestDecodeKeyPairs(t *testing.T) {
 
 func TestGetRequestHostURL(t *testing.T) {
 	testCases := []struct {
-		Expected string
-		Hostname string
 		Headers  map[string]string
 		TLS      *tls.ConnectionState
+		Expected string
+		Hostname string
 	}{
 		{
 			Expected: "http://www.test.com",
@@ -210,8 +209,8 @@ func TestFindCookie(t *testing.T) {
 
 func TestHasAccessOK(t *testing.T) {
 	testCases := []struct {
-		Have     []string
 		Need     map[string]bool
+		Have     []string
 		Required bool
 	}{
 		{},
@@ -269,8 +268,8 @@ func TestHasAccessOK(t *testing.T) {
 
 func TestHasAccessBad(t *testing.T) {
 	testCases := []struct {
-		Have     []string
 		Need     map[string]bool
+		Have     []string
 		Required bool
 	}{
 		{
@@ -332,7 +331,7 @@ func TestContainsSubString(t *testing.T) {
 }
 
 func BenchmarkContainsSubString(t *testing.B) {
-	for range t.N {
+	for t.Loop() {
 		utils.ContainsSubString("svc.cluster.local", []string{"nginx.pr1.svc.cluster.local"})
 	}
 }
