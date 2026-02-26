@@ -20,7 +20,7 @@ type OpenIDProviderRetryCount int
 
 type Configs interface {
 	ReadConfigFile(filename string) error
-	IsValid() error
+	IsValid(fileCheckEnable bool) error
 	GetResources() []*authorization.Resource
 	SetResources(resources []*authorization.Resource)
 	GetHeaders() map[string]string
