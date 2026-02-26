@@ -77,7 +77,7 @@ func NewOauthProxyApp[T proxycore.KeycloakProvider | proxycore.GoogleProvider](p
 		}
 
 		// step: validate the configuration
-		err = cfg.IsValid()
+		err = cfg.IsValid(true)
 		if err != nil {
 			return utils.PrintError(err.Error())
 		}

@@ -201,7 +201,7 @@ func NewDefaultConfig() *Config {
 		Headers:                       make(map[string]string),
 		AllowedQueryParams:            make(map[string]string),
 		DefaultAllowedQueryParams:     make(map[string]string),
-		LetsEncryptCacheDir:           "./cache/",
+		LetsEncryptCacheDir:           "./cache",
 		MatchClaims:                   make(map[string]string),
 		MaxIdleConns:                  constant.DefaultMaxIdleConns,
 		MaxIdleConnsPerHost:           constant.DefaultMaxIdleConnsPerHost,
@@ -304,7 +304,7 @@ func (r *Config) Update() error {
 }
 
 // IsValid validates if the config is valid.
-func (r *Config) IsValid() error {
+func (r *Config) IsValid(_ bool) error {
 	if r.ListenAdmin == r.Listen {
 		r.ListenAdmin = ""
 	}

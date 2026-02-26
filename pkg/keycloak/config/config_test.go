@@ -265,7 +265,7 @@ func TestIsConfig(t *testing.T) {
 	}
 
 	for i, c := range tests {
-		err := c.Config.IsValid()
+		err := c.Config.IsValid(true)
 		if err != nil && c.Ok {
 			t.Errorf("test case %d, the config should not have errored, error: %s", i, err)
 		}
@@ -938,7 +938,7 @@ func TestIsTLSFilesValid(t *testing.T) {
 					defer os.Remove(storeClientPrivFile)
 				}
 
-				err := testCase.Config.isTLSFilesValid()
+				err := testCase.Config.isTLSFilesValid(true)
 
 				if err != nil && testCase.Valid {
 					t.Fatalf("Expected test not to fail")
@@ -1154,7 +1154,7 @@ func TestIsAdminTLSFilesValid(t *testing.T) {
 					defer os.Remove(caFile)
 				}
 
-				err := testCase.Config.isAdminTLSFilesValid()
+				err := testCase.Config.isAdminTLSFilesValid(true)
 
 				if err != nil && testCase.Valid {
 					t.Fatalf("Expected test not to fail")

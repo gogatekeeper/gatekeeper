@@ -237,7 +237,7 @@ func NewDefaultConfig() *Config {
 		Headers:                          make(map[string]string),
 		AllowedQueryParams:               make(map[string]string),
 		DefaultAllowedQueryParams:        make(map[string]string),
-		LetsEncryptCacheDir:              "./cache/",
+		LetsEncryptCacheDir:              "./cache",
 		MatchClaims:                      make(map[string]string),
 		MaxIdleConns:                     constant.DefaultMaxIdleConns,
 		MaxIdleConnsPerHost:              constant.DefaultMaxIdleConnsPerHost,
@@ -339,7 +339,7 @@ func (r *Config) Update() error {
 }
 
 // IsValid validates if the config is valid.
-func (r *Config) IsValid() error {
+func (r *Config) IsValid(fileCheckEnable bool) error {
 	if r.ListenAdmin == r.Listen {
 		r.ListenAdmin = ""
 	}
@@ -355,8 +355,6 @@ func (r *Config) IsValid() error {
 		r.isMaxIdlleConnValid,
 		r.isSameSiteValid,
 		r.isCorsValid,
-		r.isTLSFilesValid,
-		r.isAdminTLSFilesValid,
 		r.isLetsEncryptValid,
 		r.isTLSMinValid,
 		r.isUpstreamProxyValid,
@@ -375,6 +373,16 @@ func (r *Config) IsValid() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	err := r.isAdminTLSFilesValid(fileCheckEnable)
+	if err != nil {
+		return err
+	}
+
+	err = r.isTLSFilesValid(fileCheckEnable)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -446,7 +454,7 @@ func (r *Config) isSameSiteValid() error {
 }
 
 //nolint:cyclop
-func (r *Config) isTLSFilesValid() error {
+func (r *Config) isTLSFilesValid(fileCheckEnable bool) error {
 	if r.TLSCertificate != "" && r.TLSPrivateKey == "" {
 		return apperrors.ErrMissingPrivateKey
 	}
@@ -455,56 +463,58 @@ func (r *Config) isTLSFilesValid() error {
 		return apperrors.ErrMissingCert
 	}
 
-	if r.TLSCertificate != "" && !utils.FileExists(r.TLSCertificate) {
-		return apperrors.ErrTLSCertificateNotExists
-	}
+	if fileCheckEnable {
+		if r.TLSCertificate != "" && !utils.FileExists(r.TLSCertificate) {
+			return apperrors.ErrTLSCertificateNotExists
+		}
 
-	if r.TLSPrivateKey != "" && !utils.FileExists(r.TLSPrivateKey) {
-		return apperrors.ErrTLSPrivateKeyNotExists
-	}
+		if r.TLSPrivateKey != "" && !utils.FileExists(r.TLSPrivateKey) {
+			return apperrors.ErrTLSPrivateKeyNotExists
+		}
 
-	if r.TLSClientCertificate != "" && !utils.FileExists(r.TLSClientCertificate) {
-		return apperrors.ErrTLSClientCertificateNotExists
-	}
+		if r.TLSClientCertificate != "" && !utils.FileExists(r.TLSClientCertificate) {
+			return apperrors.ErrTLSClientCertificateNotExists
+		}
 
-	if r.TLSClientPrivateKey != "" && !utils.FileExists(r.TLSClientPrivateKey) {
-		return apperrors.ErrTLSClientPrivateKeyNotExists
-	}
+		if r.TLSClientPrivateKey != "" && !utils.FileExists(r.TLSClientPrivateKey) {
+			return apperrors.ErrTLSClientPrivateKeyNotExists
+		}
 
-	if r.TLSClientCACertificate != "" && !utils.FileExists(r.TLSClientCACertificate) {
-		return apperrors.ErrTLSClientCACertificateNotExists
-	}
+		if r.TLSClientCACertificate != "" && !utils.FileExists(r.TLSClientCACertificate) {
+			return apperrors.ErrTLSClientCACertificateNotExists
+		}
 
-	if r.TLSForwardingCACertificate != "" && !utils.FileExists(r.TLSForwardingCACertificate) {
-		return apperrors.ErrTLSForwardingCACertificateNotExists
-	}
+		if r.TLSForwardingCACertificate != "" && !utils.FileExists(r.TLSForwardingCACertificate) {
+			return apperrors.ErrTLSForwardingCACertificateNotExists
+		}
 
-	if r.TLSForwardingCAPrivateKey != "" && !utils.FileExists(r.TLSForwardingCAPrivateKey) {
-		return apperrors.ErrTLSForwardingCAPrivateKeyNotExists
-	}
+		if r.TLSForwardingCAPrivateKey != "" && !utils.FileExists(r.TLSForwardingCAPrivateKey) {
+			return apperrors.ErrTLSForwardingCAPrivateKeyNotExists
+		}
 
-	if r.TLSStoreCACertificate != "" && !utils.FileExists(r.TLSStoreCACertificate) {
-		return apperrors.ErrTLSStoreCACertificateNotExists
-	}
+		if r.TLSStoreCACertificate != "" && !utils.FileExists(r.TLSStoreCACertificate) {
+			return apperrors.ErrTLSStoreCACertificateNotExists
+		}
 
-	if r.TLSStoreClientCertificate != "" && !utils.FileExists(r.TLSStoreClientCertificate) {
-		return apperrors.ErrTLSStoreClientCertificateNotExists
-	}
+		if r.TLSStoreClientCertificate != "" && !utils.FileExists(r.TLSStoreClientCertificate) {
+			return apperrors.ErrTLSStoreClientCertificateNotExists
+		}
 
-	if r.TLSStoreClientPrivateKey != "" && !utils.FileExists(r.TLSStoreClientPrivateKey) {
-		return apperrors.ErrTLSStoreClientPrivateKeyNotExists
-	}
+		if r.TLSStoreClientPrivateKey != "" && !utils.FileExists(r.TLSStoreClientPrivateKey) {
+			return apperrors.ErrTLSStoreClientPrivateKeyNotExists
+		}
 
-	if r.TLSOpenIDProviderCACertificate != "" && !utils.FileExists(r.TLSOpenIDProviderCACertificate) {
-		return apperrors.ErrTLSOpenIDPCACertificateNotExists
-	}
+		if r.TLSOpenIDProviderCACertificate != "" && !utils.FileExists(r.TLSOpenIDProviderCACertificate) {
+			return apperrors.ErrTLSOpenIDPCACertificateNotExists
+		}
 
-	if r.TLSOpenIDProviderClientCertificate != "" && !utils.FileExists(r.TLSOpenIDProviderClientCertificate) {
-		return apperrors.ErrTLSOpenIDPClientCertificateNotExists
-	}
+		if r.TLSOpenIDProviderClientCertificate != "" && !utils.FileExists(r.TLSOpenIDProviderClientCertificate) {
+			return apperrors.ErrTLSOpenIDPClientCertificateNotExists
+		}
 
-	if r.TLSOpenIDProviderClientPrivateKey != "" && !utils.FileExists(r.TLSOpenIDProviderClientPrivateKey) {
-		return apperrors.ErrTLSOpenIDPClientPrivateKeyNotExists
+		if r.TLSOpenIDProviderClientPrivateKey != "" && !utils.FileExists(r.TLSOpenIDProviderClientPrivateKey) {
+			return apperrors.ErrTLSOpenIDPClientPrivateKeyNotExists
+		}
 	}
 
 	clientOpenIDPPrivMiss := r.TLSOpenIDProviderClientPrivateKey == "" && r.TLSOpenIDProviderClientCertificate != ""
@@ -539,7 +549,7 @@ func (r *Config) isTLSFilesValid() error {
 }
 
 //nolint:cyclop
-func (r *Config) isAdminTLSFilesValid() error {
+func (r *Config) isAdminTLSFilesValid(fileCheckEnable bool) error {
 	if r.TLSAdminCertificate != "" && r.TLSAdminPrivateKey == "" {
 		return apperrors.ErrMissingAdminEndpointPrivateKey
 	}
@@ -548,25 +558,27 @@ func (r *Config) isAdminTLSFilesValid() error {
 		return apperrors.ErrMissingAdminEndpointCert
 	}
 
-	if r.TLSAdminCertificate != "" && !utils.FileExists(r.TLSAdminCertificate) {
-		return fmt.Errorf(
-			"the tls certificate %s does not exist for admin endpoint",
-			r.TLSAdminCertificate,
-		)
-	}
+	if fileCheckEnable {
+		if r.TLSAdminCertificate != "" && !utils.FileExists(r.TLSAdminCertificate) {
+			return fmt.Errorf(
+				"the tls certificate %s does not exist for admin endpoint",
+				r.TLSAdminCertificate,
+			)
+		}
 
-	if r.TLSAdminPrivateKey != "" && !utils.FileExists(r.TLSAdminPrivateKey) {
-		return fmt.Errorf(
-			"the tls private key %s does not exist for admin endpoint",
-			r.TLSAdminPrivateKey,
-		)
-	}
+		if r.TLSAdminPrivateKey != "" && !utils.FileExists(r.TLSAdminPrivateKey) {
+			return fmt.Errorf(
+				"the tls private key %s does not exist for admin endpoint",
+				r.TLSAdminPrivateKey,
+			)
+		}
 
-	if r.TLSAdminClientCACertificate != "" && !utils.FileExists(r.TLSAdminClientCACertificate) {
-		return fmt.Errorf(
-			"the tls client CA certificate %s does not exist for admin endpoint",
-			r.TLSAdminClientCACertificate,
-		)
+		if r.TLSAdminClientCACertificate != "" && !utils.FileExists(r.TLSAdminClientCACertificate) {
+			return fmt.Errorf(
+				"the tls client CA certificate %s does not exist for admin endpoint",
+				r.TLSAdminClientCACertificate,
+			)
+		}
 	}
 
 	return nil
