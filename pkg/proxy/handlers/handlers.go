@@ -126,7 +126,7 @@ func RetrieveIDToken(
 		}
 
 		if enableCompressToken {
-			token, err = session.DecryptAndDecompressToken(token, encryptionKey)
+			token, err = session.DecryptAndDecompressToken(encrypted, encryptionKey)
 			if err != nil {
 				return "", "", errors.Join(apperrors.ErrDecryptAndDecompressToken, err)
 			}
