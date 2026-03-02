@@ -2,20 +2,21 @@ version: "2"
 linters:
   default: all
   disable:
-    - depguard
-    - dupl
-    - err113
-    - exhaustruct
-    - gocognit
-    - ireturn
-    - maintidx
-    - nestif
-    - nlreturn
-    - noctx
-    - paralleltest
-    - tagliatelle
-    - wrapcheck
-    - wsl
+  - depguard
+  - dupl
+  - err113
+  - exhaustruct
+  - gocognit
+  - ireturn
+  - maintidx
+  - nestif
+  - nlreturn
+  - noctx
+  - paralleltest
+  - tagliatelle
+  - wrapcheck
+  - wsl
+  - gomoddirectives
   settings:
     dupl:
       threshold: 100
@@ -30,23 +31,23 @@ linters:
   exclusions:
     generated: lax
     presets:
-      - comments
-      - common-false-positives
-      - legacy
-      - std-error-handling
+    - comments
+    - common-false-positives
+    - legacy
+    - std-error-handling
     paths:
-      - third_party$
-      - builtin$
-      - examples$
+    - third_party$
+    - builtin$
+    - examples$
 formatters:
   enable:
-    - gci
-    - gofmt
-    - gofumpt
-    - goimports
+  - gci
+  - gofmt
+  - gofumpt
+  - goimports
   exclusions:
     generated: lax
     paths:
-      - third_party$
-      - builtin$
-      - examples$
+    - third_party$
+    - builtin$
+    - examples$
