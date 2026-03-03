@@ -643,12 +643,17 @@ var _ = Describe("Code Flow login/logout", func() {
 				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieAfterRefresh string
+				var testCookie string
 				for _, cook := range cookiesAfterRefresh {
 					if cook.Name == constant.AccessCookie {
 						accessCookieAfterRefresh = cook.Value
 					}
+					if cook.Name == "test-cookie" {
+						testCookie = cook.Value
+					}
 				}
 
+				Expect(testCookie).To(Equal("test_value"))
 				_, err = jwt.ParseSigned(accessCookieAfterRefresh, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
 

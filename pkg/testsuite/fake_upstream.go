@@ -98,6 +98,7 @@ func (f *FakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Reque
 
 		wrt.Header().Set(TestProxyAccepted, "true")
 		wrt.Header().Set(constant.HeaderContentType, "application/json")
+		wrt.Header().Add("Set-Cookie", "test-cookie=test_value")
 
 		content, err := json.Marshal(&FakeUpstreamResponse{
 			// r.RequestURI is what was received by the proxy.
