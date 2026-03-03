@@ -127,6 +127,6 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-replace github.com/gogatekeeper/goproxy v1.8.2 => github.com/elazarl/goproxy v1.8.2
-
 go 1.25.3
+
+replace github.com/elazarl/goproxy v1.8.2 => github.com/gogatekeeper/goproxy v1.8.2
