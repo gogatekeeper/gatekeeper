@@ -20,35 +20,35 @@ spec:
         secret:
           secretName: tls
       containers:
-        - name: proxy
-          image: quay.io/gogatekeeper/gatekeeper:4.6.0
-          imagePullPolicy: Always
-          args:
-            - --client-id=broker
-            - --discovery-url=https://sso.example.com/realms/hod-test
-            - --enable-default-deny=false
-            - --enable-json-logging=true
-            - --enable-logging=true
-            - --enable-request-id=true
-            - --enable-security-filter=true
-            - --http-only-cookie=true
-            - --listen=127.0.0.1:3000
-            - --preserve-host=true
-            - --redirection-url=https://www.example.com
-            - --resources=uri=/admin/*|roles=admin
-            - --skip-client-id=true
-            - --tls-cert=/certs/tls.pem
-            - --tls-private-key=/certs/tls-key.pem
-            - --upstream-url=http://127.0.0.1:8080
-          env:
-            - name: PROXY_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: openid
-                  key: client.secret
-          securityContext:
-            readOnlyRootFilesystem: true
-          volumeMounts:
-          - name: certs
-            mountPath: /certs
-            readOnly: true
+      - name: proxy
+        image: quay.io/gogatekeeper/gatekeeper:4.6.1
+        imagePullPolicy: Always
+        args:
+        - --client-id=broker
+        - --discovery-url=https://sso.example.com/realms/hod-test
+        - --enable-default-deny=false
+        - --enable-json-logging=true
+        - --enable-logging=true
+        - --enable-request-id=true
+        - --enable-security-filter=true
+        - --http-only-cookie=true
+        - --listen=127.0.0.1:3000
+        - --preserve-host=true
+        - --redirection-url=https://www.example.com
+        - --resources=uri=/admin/*|roles=admin
+        - --skip-client-id=true
+        - --tls-cert=/certs/tls.pem
+        - --tls-private-key=/certs/tls-key.pem
+        - --upstream-url=http://127.0.0.1:8080
+        env:
+        - name: PROXY_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: openid
+              key: client.secret
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - name: certs
+          mountPath: /certs
+          readOnly: true
