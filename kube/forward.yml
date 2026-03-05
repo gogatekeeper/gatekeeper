@@ -13,20 +13,20 @@ spec:
     spec:
       containers:
       - name: proxy
-        image: quay.io/gogatekeeper/gatekeeper:4.6.1
+        image: quay.io/gogatekeeper/gatekeeper:4.6.0
         imagePullPolicy: Always
         args:
-        - --config /etc/secrets/forwarding.yml
-        - --discovery-url https://sso.example.com/realms/hod-test
-        - --client-id broker
-        - --client-secret
-        - --listen 127.0.0.1:3000
-        - --enable-forwarding=true
-        - --forwarding-username=username
-        - --forwarding-password=password
-        - --enable-logging=true
-        - --enable-json-logging true
-        - --verbose true
+          - --config /etc/secrets/forwarding.yml
+          - --discovery-url https://sso.example.com/realms/hod-test
+          - --client-id broker
+          - --client-secret
+          - --listen 127.0.0.1:3000
+          - --enable-forwarding=true
+          - --forwarding-username=username
+          - --forwarding-password=password
+          - --enable-logging=true
+          - --enable-json-logging true
+          - --verbose true
         volumeMounts:
         - name: secrets
           mountPath: /etc/secrets
