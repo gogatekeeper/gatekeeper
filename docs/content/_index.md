@@ -532,7 +532,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:4.6.1
+  image: quay.io/gogatekeeper/gatekeeper:4.6.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -559,7 +559,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:4.6.1
+  image: quay.io/gogatekeeper/gatekeeper:4.6.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -751,7 +751,7 @@ option is set to `true`.
 
 ## Custom claim headers
 
-You can inject additional claims from the access token and from version 4.6.1 also from ID token and userinfo into the
+You can inject additional claims from the access token and from version 4.6.0 also from ID token and userinfo into the
 upstream headers with the `--add-claims` option. For example, a
 token from a Keycloak provider might include the following
 claims:
@@ -1532,7 +1532,7 @@ users won’t be able to obtain an access token.
 
 ## Known Issues
 
-There WAS a known issue with the Keycloak server 4.6.1.Final in which
+There WAS a known issue with the Keycloak server 4.6.0.Final in which
 Gatekeeper Proxy is unable to find the *client\_id* in the *aud* claim. This
 is due to the fact the *client\_id* is not in the audience anymore. The
 workaround is to add the "Audience" protocol mapper to the client with
