@@ -54,6 +54,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/handlers"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/metrics"
 	gmiddleware "github.com/gogatekeeper/gatekeeper/pkg/proxy/middleware"
+	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/session"
 	"github.com/gogatekeeper/gatekeeper/pkg/storage"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
@@ -1658,7 +1659,9 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 	// headers formed by middleware before proxying to upstream shall be
 	// kept in response. This is true for CORS headers ([KEYCOAK-9045])
 	// and for refreshed cookies (htts://github.com/louketo/louketo-proxy/pulls/456])
-	proxy.KeepDestinationHeaders = true
+	// see https://github.com/elazarl/goproxy/issues/752
+	// disabled due to above issues
+	proxy.KeepDestinationHeaders = false
 	proxy.Logger = httplog.New(io.Discard, "", 0)
 	// keep Accept-Encoding header from client if enabled
 	proxy.KeepAcceptEncoding = r.Config.EnableAcceptEncodingHeader
@@ -1687,6 +1690,33 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 			return prConfig.ProxyFunc()(req.URL)
 		}
 	}
+
+	upstreamProxy.OnResponse().DoFunc(func(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
+		scope, ok := ctx.UserData.(*models.RequestScope)
+		if ok && scope != nil {
+			if scope.RefreshedAccessCookie != "" {
+				refreshedAccessCookie, _ := ctx.UserData.(string)
+				r.Cm.DropAccessTokenCookieToResponse(ctx.Req, resp, scope.RefreshedAccessCookie, scope.RefreshedAccessExpiresIn)
+				resp.Header.Add("Set-Cookie", refreshedAccessCookie)
+			}
+
+			if scope.RefreshedUMACookie != "" {
+				refreshedUMACookie, _ := ctx.UserData.(string)
+				r.Cm.DropUMATokenCookieToResponse(ctx.Req, resp, scope.RefreshedUMACookie, scope.RefreshedUMAExpiresIn)
+				resp.Header.Add("Set-Cookie", refreshedUMACookie)
+				resp.Header.Add(constant.UMAHeader, refreshedUMACookie)
+			}
+		}
+
+		return resp
+	})
+
+	upstreamProxy.OnRequest().DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+		scope, _ := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
+		ctx.UserData = scope
+
+		return req, ctx.Resp
+	})
 
 	upstreamProxy.Tr = &http.Transport{
 		Dial:                  dialer,

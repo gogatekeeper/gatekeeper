@@ -45,13 +45,11 @@ type Manager struct {
 	NoRedirects          bool
 }
 
-// DropCookie drops a cookie into the response.
-func (cm *Manager) DropCookie(
-	wrt http.ResponseWriter,
-	name,
+func (cm *Manager) NewCookie(
+	name string,
 	value string,
 	duration time.Duration,
-) {
+) *http.Cookie {
 	// step: default to the host header, else the config domain
 	domain := ""
 	if cm.CookieDomain != "" {
@@ -89,6 +87,17 @@ func (cm *Manager) DropCookie(
 		cookie.SameSite = http.SameSiteNoneMode
 	}
 
+	return cookie
+}
+
+// DropCookie drops a cookie into the response.
+func (cm *Manager) DropCookie(
+	wrt http.ResponseWriter,
+	name,
+	value string,
+	duration time.Duration,
+) {
+	cookie := cm.NewCookie(name, value, duration)
 	http.SetCookie(wrt, cookie)
 }
 
@@ -140,6 +149,15 @@ func (cm *Manager) DropAccessTokenCookie(
 	cm.dropCookieWithChunks(req, w, cm.CookieAccessName, value, duration)
 }
 
+func (cm *Manager) DropAccessTokenCookieToResponse(
+	req *http.Request,
+	resp *http.Response,
+	value string,
+	duration time.Duration,
+) {
+	cm.dropCookieWithChunksToResponse(req, resp, cm.CookieAccessName, value, duration)
+}
+
 // DropRefreshTokenCookie drops a refresh token cookie.
 func (cm *Manager) DropRefreshTokenCookie(
 	req *http.Request,
@@ -168,6 +186,15 @@ func (cm *Manager) DropUMATokenCookie(
 	duration time.Duration,
 ) {
 	cm.dropCookieWithChunks(req, w, cm.CookieUMAName, value, duration)
+}
+
+func (cm *Manager) DropUMATokenCookieToResponse(
+	req *http.Request,
+	resp *http.Response,
+	value string,
+	duration time.Duration,
+) {
+	cm.dropCookieWithChunksToResponse(req, resp, cm.CookieUMAName, value, duration)
 }
 
 // DropStateParameterCookie sets a state parameter cookie into the response.
@@ -298,6 +325,16 @@ func FilterCookies(req *http.Request, filter []string) error {
 	return nil
 }
 
+func (cm *Manager) DropCookieToResponse(
+	resp *http.Response,
+	name,
+	value string,
+	duration time.Duration,
+) {
+	cookie := cm.NewCookie(name, value, duration)
+	resp.Header.Add("Set-Cookie", cookie.String())
+}
+
 // dropCookieWithChunks drops a cookie from the response, taking into account possible chunks.
 func (cm *Manager) dropCookieWithChunks(
 	req *http.Request,
@@ -319,6 +356,34 @@ func (cm *Manager) dropCookieWithChunks(
 
 			cm.DropCookie(
 				wrt,
+				name+"-"+strconv.Itoa(idx/maxCookieChunkLength),
+				value[idx:end],
+				duration,
+			)
+		}
+	}
+}
+
+func (cm *Manager) dropCookieWithChunksToResponse(
+	req *http.Request,
+	resp *http.Response,
+	name,
+	value string,
+	duration time.Duration,
+) {
+	maxCookieChunkLength := cm.GetMaxCookieChunkLength(req, name)
+
+	if len(value) <= maxCookieChunkLength {
+		cm.DropCookieToResponse(resp, name, value, duration)
+	} else {
+		// write divided cookies because payload is too long for single cookie.
+		cm.DropCookieToResponse(resp, name, value[0:maxCookieChunkLength], duration)
+
+		for idx := maxCookieChunkLength; idx < len(value); idx += maxCookieChunkLength {
+			end := min(idx+maxCookieChunkLength, len(value))
+
+			cm.DropCookieToResponse(
+				resp,
 				name+"-"+strconv.Itoa(idx/maxCookieChunkLength),
 				value[idx:end],
 				duration,

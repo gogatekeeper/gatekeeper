@@ -397,6 +397,8 @@ func AuthenticationMiddleware(
 				// with new identity!
 				newUser.RawToken = newRawAccToken
 				scope.Identity = newUser
+				scope.RefreshedAccessCookie = accessToken
+				scope.RefreshedAccessExpiresIn = accessExpiresIn
 				ctx = context.WithValue(req.Context(), constant.ContextScopeName, scope)
 			} else {
 				user, err := session.ExtractIdentity(token)

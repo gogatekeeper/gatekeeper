@@ -201,8 +201,14 @@ func authorizationMiddleware(
 							}
 						}
 
-						cookManager.DropUMATokenCookie(req, wrt, umaToken, time.Until(umaUser.ExpiresAt))
+						expiresIn := time.Until(umaUser.ExpiresAt)
+
+						cookManager.DropUMATokenCookie(req, wrt, umaToken, expiresIn)
 						wrt.Header().Set(constant.UMAHeader, umaToken)
+
+						scope.RefreshedUMACookie = umaToken
+						scope.RefreshedUMAExpiresIn = expiresIn
+
 						scope.Logger.Debug("got uma token")
 
 						decision, err = authzFunc(authzPath, umaUser.Permissions)

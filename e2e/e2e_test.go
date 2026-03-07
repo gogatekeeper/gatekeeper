@@ -615,6 +615,7 @@ var _ = Describe("Code Flow login/logout", func() {
 			func(_ context.Context) {
 				var err error
 				rClient := resty.New()
+				rClient.Header.Set("Content-Type", "application/yaml")
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -625,9 +626,13 @@ var _ = Describe("Code Flow login/logout", func() {
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieLogin string
+				var refreshCookieLogin string
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
+					}
+					if cook.Name == constant.RefreshCookie {
+						refreshCookieLogin = cook.Value
 					}
 				}
 
@@ -643,6 +648,7 @@ var _ = Describe("Code Flow login/logout", func() {
 				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieAfterRefresh string
+				var refreshCookieAfterRefresh string
 				var testCookie string
 				for _, cook := range cookiesAfterRefresh {
 					if cook.Name == constant.AccessCookie {
@@ -650,6 +656,9 @@ var _ = Describe("Code Flow login/logout", func() {
 					}
 					if cook.Name == "test-cookie" {
 						testCookie = cook.Value
+					}
+					if cook.Name == constant.RefreshCookie {
+						refreshCookieAfterRefresh = cook.Value
 					}
 				}
 
@@ -659,6 +668,7 @@ var _ = Describe("Code Flow login/logout", func() {
 
 				By("check if access token cookie has changed")
 				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
+				Expect(refreshCookieLogin).To(Equal(refreshCookieAfterRefresh))
 
 				By("make another request with new access token")
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
