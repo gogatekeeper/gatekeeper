@@ -202,6 +202,7 @@ type Config struct {
 	EnableAcceptEncodingHeader         bool                      `env:"ENABLE_ACCEPT_ENCODING_HEADER" json:"enable-accept-encoding-header,omitempty" usage:"pass Accept-Encoding header from client to upstream" yaml:"enable-accept-encoding-header"`
 	EnableIDTokenClaims                bool                      `env:"ENABLE_ID_TOKEN_CLAIMS" json:"enable-id-token-claims,omitempty" usage:"extract claims also from id token, you can then use --add-claims option to specify claims from id token" yaml:"enable-id-token-claims"`
 	EnableUserInfoClaims               bool                      `env:"ENABLE_USER_INFO_CLAIMS" json:"enable-user-info-claims,omitempty" usage:"extract information from userinfo endpoint, you can then use --add-claims to specify claims" yaml:"enable-user-info-claims"`
+	OverrideDestinationHeaders         bool                      `env:"OVERRIDE_DESTINATION_HEADERS" json:"override-destination-headers" usage:"enables overriding headers set by gatekeeper by your upstream, flag present only for backward compatibility" yaml:"override-destination-headers"`
 	IsDiscoverURILegacy                bool                      `json:"-"`
 }
 

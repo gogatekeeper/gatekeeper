@@ -1659,6 +1659,7 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 	// kept in response. This is true for CORS headers ([KEYCOAK-9045])
 	// and for refreshed cookies (htts://github.com/louketo/louketo-proxy/pulls/456])
 	proxy.KeepDestinationHeaders = true
+	proxy.OverrideDestinationHeaders = r.Config.OverrideDestinationHeaders
 	proxy.Logger = httplog.New(io.Discard, "", 0)
 	// keep Accept-Encoding header from client if enabled
 	proxy.KeepAcceptEncoding = r.Config.EnableAcceptEncodingHeader

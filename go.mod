@@ -129,4 +129,4 @@ require (
 
 go 1.25.3
 
-replace github.com/elazarl/goproxy v1.8.2 => github.com/gogatekeeper/goproxy v1.8.2
+replace github.com/elazarl/goproxy v1.8.2 => github.com/gogatekeeper/goproxy v1.8.2-2
