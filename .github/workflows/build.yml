@@ -1,7 +1,7 @@
 name: Build & Lint
 
 # Only trigger the event on pull-requests
-on: [pull_request]
+on: [ pull_request ]
 
 jobs:
   build:
@@ -10,120 +10,122 @@ jobs:
     # Test the latest release of Go
     strategy:
       matrix:
-        go: ["1.25"]
+        go: [ "1.25" ]
     steps:
-      # Setup the workflow to use the specific version of Go
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v6
-        with:
-          go-version: ${{ matrix.go }}
-        id: go
-      # Checkout the repository
-      - name: Checkout
-        uses: actions/checkout@v6
-      # Verify downloaded dependencies
-      - name: Verify dependencies
-        run: go mod verify
-      - name: "Create k3d Cluster for E2E testing"
-        uses: AbsaOSS/k3d-action@v2.4.0
-        with:
-          cluster-name: "testcluster"
-          k3d-version: v5.8.3
-          args: >-
-            -p "8443:443@loadbalancer"
-      - name: "Deploy keycloak"
-        run: |
-          k3d kubeconfig get testcluster > kubeconfig-testcluster.yaml
-          export KUBECONFIG=kubeconfig-testcluster.yaml
-          kubectl apply -f ./e2e/k8s/manifest.yml
-      - name: "Deploy Redis"
-        run: |
-          sudo apt update
-          sudo apt install -y redis redis-sentinel
+    # Setup the workflow to use the specific version of Go
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ matrix.go }}
+      id: go
+    # Checkout the repository
+    - name: Checkout
+      uses: actions/checkout@v6
+    # Verify downloaded dependencies
+    - name: Verify dependencies
+      run: go mod verify
+    - name: "Create k3d Cluster for E2E testing"
+      uses: AbsaOSS/k3d-action@v2.4.0
+      with:
+        cluster-name: "testcluster"
+        k3d-version: v5.8.3
+        args: >-
+          -p "8443:443@loadbalancer"
+    - name: "Deploy keycloak"
+      run: |
+        k3d kubeconfig get testcluster > kubeconfig-testcluster.yaml
+        export KUBECONFIG=kubeconfig-testcluster.yaml
+        kubectl apply -f ./e2e/k8s/manifest.yml
+    - name: "Deploy Redis"
+      run: |
+        sudo apt update
+        sudo apt install -y redis redis-sentinel
 
-          REDIS_DIR=/tmp/redis-standalone
-          mkdir -p $REDIS_DIR
-          cp e2e/redis/redis.conf ${REDIS_DIR}/redis.conf
-          cp e2e/redis/{ca.crt,redis.crt,redis.key} $REDIS_DIR
-          pushd $REDIS_DIR
-          redis-server ./redis.conf &
-          popd
-      - name: "Setup Redis Cluster"
-        run: |
-          sudo apt update
-          sudo apt install -y redis redis-sentinel
-          PORT_PREFIX=700
-          for NODE_NUM in {0..5}
-          do
-              REDIS_DIR=/tmp/redis-$NODE_NUM
-              mkdir -p $REDIS_DIR
-              cp e2e/redis/redis-cluster.conf ${REDIS_DIR}/redis.conf
-              echo "tls-port ${PORT_PREFIX}${NODE_NUM}" >> ${REDIS_DIR}/redis.conf
-              cp e2e/redis/{ca.crt,redis.crt,redis.key} $REDIS_DIR
-              pushd $REDIS_DIR
-              redis-server ./redis.conf &
-              popd
-          done
+        REDIS_DIR=/tmp/redis-standalone
+        mkdir -p $REDIS_DIR
+        cp e2e/redis/redis.conf ${REDIS_DIR}/redis.conf
+        cp e2e/redis/{ca.crt,redis.crt,redis.key} $REDIS_DIR
+        pushd $REDIS_DIR
+        redis-server ./redis.conf &
+        popd
+    - name: "Setup Redis Cluster"
+      run: |
+        sudo apt update
+        sudo apt install -y redis redis-sentinel
+        PORT_PREFIX=700
+        for NODE_NUM in {0..5}
+        do
+            REDIS_DIR=/tmp/redis-$NODE_NUM
+            mkdir -p $REDIS_DIR
+            cp e2e/redis/redis-cluster.conf ${REDIS_DIR}/redis.conf
+            echo "tls-port ${PORT_PREFIX}${NODE_NUM}" >> ${REDIS_DIR}/redis.conf
+            cp e2e/redis/{ca.crt,redis.crt,redis.key} $REDIS_DIR
+            pushd $REDIS_DIR
+            redis-server ./redis.conf &
+            popd
+        done
 
-          sleep 3
+        sleep 3
 
-          redis-cli --cluster create 127.0.0.1:${PORT_PREFIX}{0..5} \
-              --cluster-replicas 1 \
-              --cluster-yes \
-              --tls \
-              --cacert e2e/redis/ca.crt \
-              --key e2e/redis/redis.key \
-              --cert e2e/redis/redis.crt \
-              -a 2aD6FgewLV
-      - name: "Setup Redis Sentinel"
-        run: |
-          sudo apt update
-          sudo apt install -y redis redis-sentinel
+        redis-cli --cluster create 127.0.0.1:${PORT_PREFIX}{0..5} \
+            --cluster-replicas 1 \
+            --cluster-yes \
+            --tls \
+            --cacert e2e/redis/ca.crt \
+            --key e2e/redis/redis.key \
+            --cert e2e/redis/redis.crt \
+            -a 2aD6FgewLV
+    - name: "Setup Redis Sentinel"
+      run: |
+        sudo apt update
+        sudo apt install -y redis redis-sentinel
 
-          REDIS_DIR=/tmp/redis-sentinel-master
-          mkdir -p $REDIS_DIR
-          cp e2e/redis/redis-sentinel.conf ${REDIS_DIR}/redis.conf
-          echo "tls-port 6800" >> ${REDIS_DIR}/redis.conf
-          cp e2e/redis/{ca.crt,redis.crt,redis.key} $REDIS_DIR
-          pushd $REDIS_DIR
-          redis-server ./redis.conf &
-          popd
+        REDIS_DIR=/tmp/redis-sentinel-master
+        mkdir -p $REDIS_DIR
+        cp e2e/redis/redis-sentinel.conf ${REDIS_DIR}/redis.conf
+        echo "tls-port 6800" >> ${REDIS_DIR}/redis.conf
+        cp e2e/redis/{ca.crt,redis.crt,redis.key} $REDIS_DIR
+        pushd $REDIS_DIR
+        redis-server ./redis.conf &
+        popd
 
-          REDIS_DIR=/tmp/redis-sentinel-slave
-          mkdir -p $REDIS_DIR
-          cp e2e/redis/redis-sentinel.conf ${REDIS_DIR}/redis.conf
-          echo "tls-port 6801" >> ${REDIS_DIR}/redis.conf
-          echo "slaveof 127.0.0.1 6800" >> ${REDIS_DIR}/redis.conf
-          cp e2e/redis/{ca.crt,redis.crt,redis.key} $REDIS_DIR
-          pushd $REDIS_DIR
-          redis-server ./redis.conf &
-          popd
+        REDIS_DIR=/tmp/redis-sentinel-slave
+        mkdir -p $REDIS_DIR
+        cp e2e/redis/redis-sentinel.conf ${REDIS_DIR}/redis.conf
+        echo "tls-port 6801" >> ${REDIS_DIR}/redis.conf
+        echo "slaveof 127.0.0.1 6800" >> ${REDIS_DIR}/redis.conf
+        cp e2e/redis/{ca.crt,redis.crt,redis.key} $REDIS_DIR
+        pushd $REDIS_DIR
+        redis-server ./redis.conf &
+        popd
 
-          PORT_PREFIX=800
-          for NODE_NUM in {0..2}
-          do
-              REDIS_DIR=/tmp/sentinel-$NODE_NUM
-              mkdir -p $REDIS_DIR
-              cp e2e/redis/sentinel.conf ${REDIS_DIR}/sentinel.conf
-              echo "tls-port ${PORT_PREFIX}${NODE_NUM}" >> ${REDIS_DIR}/sentinel.conf
-              echo "sentinel announce-port ${PORT_PREFIX}${NODE_NUM}" >> ${REDIS_DIR}/sentinel.conf
-              cp e2e/redis/{ca.crt,redis.crt,redis.key} $REDIS_DIR
-              pushd $REDIS_DIR
-              redis-sentinel ./sentinel.conf &
-              popd
-          done
+        PORT_PREFIX=800
+        for NODE_NUM in {0..2}
+        do
+            REDIS_DIR=/tmp/sentinel-$NODE_NUM
+            mkdir -p $REDIS_DIR
+            cp e2e/redis/sentinel.conf ${REDIS_DIR}/sentinel.conf
+            echo "tls-port ${PORT_PREFIX}${NODE_NUM}" >> ${REDIS_DIR}/sentinel.conf
+            echo "sentinel announce-port ${PORT_PREFIX}${NODE_NUM}" >> ${REDIS_DIR}/sentinel.conf
+            cp e2e/redis/{ca.crt,redis.crt,redis.key} $REDIS_DIR
+            pushd $REDIS_DIR
+            redis-sentinel ./sentinel.conf &
+            popd
+        done
 
-          sleep 3
-      - name: "Run Tests"
-        run: |
-          kubectl logs -l app=keycloak --tail=100
-          sleep 300
-          kubectl logs -l app=keycloak --tail=100
-          go test -v -timeout=30m -race -coverprofile=profile.cov ./...
-      # Run Go benchmarks
-      - name: Benchmark
-        run: |
-          go test -run=^$ -bench=. -benchmem ./...
+        sleep 3
+    - name: "Run Tests"
+      run: |
+        kubectl logs -l app=keycloak --tail=100
+        sleep 300
+        kubectl logs -l app=keycloak --tail=100
+        go install github.com/onsi/ginkgo/v2/ginkgo@v2.27.1
+        go test -v -timeout=30m -race -coverprofile=profile.cov $(go list ./...|grep -v e2e)
+        ginkgo -p --output-interceptor-mode=none -timeout=30m e2e/...
+    # Run Go benchmarks
+    - name: Benchmark
+      run: |
+        go test -run=^$ -bench=. -benchmem ./...
 
   # Run the linter as a separate job
   golangci:
@@ -131,20 +133,20 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: ["1.25"]
+        go: [ "1.25" ]
     steps:
-      - uses: actions/setup-go@v6
-        with:
-          go-version: ${{ matrix.go }}
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v7
-        with:
-          version: v2.5.0
-          args: "--timeout=3m"
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-      - name: Check Golang sources with Aligo
-        uses: essentialkaos/aligo-action@v2
-        with:
-          files: ./...
+    - uses: actions/setup-go@v6
+      with:
+        go-version: ${{ matrix.go }}
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v7
+      with:
+        version: v2.5.0
+        args: "--timeout=3m"
+        github-token: "${{ secrets.GITHUB_TOKEN }}"
+    - name: Check Golang sources with Aligo
+      uses: essentialkaos/aligo-action@v2
+      with:
+        files: ./...
