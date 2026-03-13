@@ -39,7 +39,7 @@ import (
 
 var _ core.Configs = &Config{}
 
-//nolint:tagalign,lll
+//nolint:tagalign,lll,gosec
 type Config struct {
 	CommonConfig                       core.CommonConfig         `json:"-"`
 	MatchClaims                        map[string]string         `json:"match-claims,omitempty" usage:"keypair values for matching access token claims e.g. aud=myapp, iss=http://example.*" yaml:"match-claims"`
