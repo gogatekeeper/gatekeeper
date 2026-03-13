@@ -146,12 +146,14 @@ jobs:
     - name: "Run Tests"
       run: |
         go install github.com/onsi/ginkgo/v2/ginkgo@v2.27.1
-        go test -v -timeout=30m -race -coverprofile=profile.cov $(go list ./...|grep -v e2e)
+        go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
+        go test -v -json -timeout=30m -race $(go list ./...|grep -v e2e) 2>&1 | tee /tmp/gotest.log | gotestfmt
         ginkgo -p --output-interceptor-mode=none -timeout=30m e2e/...
         pkill redis-server
         sleep 3
         rm -rf /tmp/redis-*
         rm kubeconfig-testcluster.yaml
+        rm /tmp/gotest.log
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v6
       with:
