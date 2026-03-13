@@ -314,6 +314,19 @@ func AuthenticationMiddleware(
 							return
 						}
 					}
+				} else {
+					if enableCompressToken {
+						accessToken, err = session.CompressToken(accessToken, compressTokenPool)
+						if err != nil {
+							lLog.Error(
+								apperrors.ErrCompressAccessToken.Error(),
+								zap.Error(err),
+							)
+							accessForbidden(wrt, req)
+
+							return
+						}
+					}
 				}
 
 				// step: inject the refreshed access token

@@ -1274,6 +1274,41 @@ var _ = Describe("Code Flow PKCE login/logout with token compression and encrypt
 				_, err = jwt.ParseSigned(refreshCookieLogin, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
 
+				By("wait for access token expiration")
+				time.Sleep(32 * time.Second)
+				resp, err = rClient.R().Get(proxyAddress + anyURI)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				body = resp.Body()
+				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+				Expect(err).NotTo(HaveOccurred())
+				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
+
+				var accessCookieAfterRefresh string
+				var refreshCookieAfterRefresh string
+				for _, cook := range cookiesAfterRefresh {
+					if cook.Name == constant.AccessCookie {
+						accessCookieAfterRefresh = cook.Value
+					}
+					if cook.Name == constant.RefreshCookie {
+						refreshCookieAfterRefresh = cook.Value
+					}
+				}
+
+				By("check if access token cookie has changed")
+				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
+
+				accessCookieAfterRefresh, err = session.DecryptAndDecompressToken(accessCookieAfterRefresh, testKey)
+				Expect(err).NotTo(HaveOccurred())
+				_, err = jwt.ParseSigned(accessCookieAfterRefresh, constant.SignatureAlgs[:])
+				Expect(err).NotTo(HaveOccurred())
+
+				refreshCookieAfterRefresh, err = session.DecryptAndDecompressToken(refreshCookieAfterRefresh, testKey)
+				Expect(err).NotTo(HaveOccurred())
+				_, err = jwt.ParseSigned(refreshCookieAfterRefresh, constant.SignatureAlgs[:])
+				Expect(err).NotTo(HaveOccurred())
+
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -1294,7 +1329,7 @@ var _ = Describe("Code Flow PKCE login/logout with token compression and encrypt
 	})
 })
 
-var _ = Describe("Code Flow PKCE login/logout only with access token compression", func() {
+var _ = Describe("Code Flow PKCE login/logout with compression and without access token encryption", func() {
 	var portNum string
 	var proxyAddress string
 	errGroup, _ := errgroup.WithContext(context.Background())
@@ -1373,6 +1408,7 @@ var _ = Describe("Code Flow PKCE login/logout only with access token compression
 
 				var accessCookieLogin string
 				var refreshCookieLogin string
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
@@ -1388,6 +1424,41 @@ var _ = Describe("Code Flow PKCE login/logout only with access token compression
 				Expect(err).NotTo(HaveOccurred())
 
 				_, err = session.DecryptAndDecompressToken(refreshCookieLogin, testKey)
+				Expect(err).NotTo(HaveOccurred())
+
+				By("wait for access token expiration")
+				time.Sleep(32 * time.Second)
+				resp, err = rClient.R().Get(proxyAddress + anyURI)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				body = resp.Body()
+				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+				Expect(err).NotTo(HaveOccurred())
+				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
+
+				var accessCookieAfterRefresh string
+				var refreshCookieAfterRefresh string
+				for _, cook := range cookiesAfterRefresh {
+					if cook.Name == constant.AccessCookie {
+						accessCookieAfterRefresh = cook.Value
+					}
+					if cook.Name == constant.RefreshCookie {
+						refreshCookieAfterRefresh = cook.Value
+					}
+				}
+
+				By("check if access token cookie has changed")
+				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
+
+				accessCookieAfterRefresh, err = session.DecompressToken(accessCookieAfterRefresh)
+				Expect(err).NotTo(HaveOccurred())
+				_, err = jwt.ParseSigned(accessCookieAfterRefresh, constant.SignatureAlgs[:])
+				Expect(err).NotTo(HaveOccurred())
+
+				refreshCookieAfterRefresh, err = session.DecryptAndDecompressToken(refreshCookieAfterRefresh, testKey)
+				Expect(err).NotTo(HaveOccurred())
+				_, err = jwt.ParseSigned(refreshCookieAfterRefresh, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
 
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
@@ -1509,6 +1580,7 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS CLUSTER", func() {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
