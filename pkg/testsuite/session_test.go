@@ -172,6 +172,7 @@ func TestGetIndentity(t *testing.T) {
 			cfg.EnableCompressToken,
 			cfg.CompressTokenOnlyAuthScheme,
 			cfg.EncryptionKey,
+			-1,
 		)
 
 		var rawToken string

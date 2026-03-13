@@ -30,6 +30,7 @@ var (
 	ErrUMATokenExpired                = errors.New("uma token expired")
 	ErrTokenVerificationFailure       = errors.New("token verification failed")
 	ErrDecryption                     = errors.New("failed to decrypt token")
+	ErrTokenMaxSize                   = errors.New("token is bigger than max size")
 	ErrDefaultDenyWhitelistConflict   = errors.New("you've asked for a default denial but whitelisted everything")
 	ErrDefaultDenyUserDefinedConflict = errors.New("you've enabled default deny " +
 		"and at the same time defined own rules for /*")
