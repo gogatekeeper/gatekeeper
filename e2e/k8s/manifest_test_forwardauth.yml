@@ -2367,25 +2367,25 @@ spec:
         app: mock
     spec:
       containers:
-        - name: mock
-          image: stoplight/prism:4.6.2
-          args:
-            - -h
-            - 0.0.0.0
-            - mock
-            - /tmp/mock.yaml
-          ports:
-            - containerPort: 4010
-              name: mock
+      - name: mock
+        image: stoplight/prism:4.6.2
+        args:
+        - -h
+        - 0.0.0.0
+        - mock
+        - /tmp/mock.yaml
+        ports:
+        - containerPort: 4010
+          name: mock
 
-          volumeMounts:
-            - name: mock-config
-              mountPath: /tmp/mock.yaml
-              subPath: mock.yaml
-      volumes:
+        volumeMounts:
         - name: mock-config
-          configMap:
-            name: mock-config
+          mountPath: /tmp/mock.yaml
+          subPath: mock.yaml
+      volumes:
+      - name: mock-config
+        configMap:
+          name: mock-config
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -2402,25 +2402,25 @@ spec:
         app: mockk
     spec:
       containers:
-        - name: mockk
-          image: stoplight/prism:4.6.2
-          args:
-            - -h
-            - 0.0.0.0
-            - mock
-            - /tmp/mock.yaml
-          ports:
-            - containerPort: 4010
-              name: mockk
+      - name: mockk
+        image: stoplight/prism:4.6.2
+        args:
+        - -h
+        - 0.0.0.0
+        - mock
+        - /tmp/mock.yaml
+        ports:
+        - containerPort: 4010
+          name: mockk
 
-          volumeMounts:
-            - name: mock-configg
-              mountPath: /tmp/mock.yaml
-              subPath: mock.yaml
-      volumes:
+        volumeMounts:
         - name: mock-configg
-          configMap:
-            name: mock-configg
+          mountPath: /tmp/mock.yaml
+          subPath: mock.yaml
+      volumes:
+      - name: mock-configg
+        configMap:
+          name: mock-configg
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -2437,60 +2437,57 @@ spec:
         app: keycloak
     spec:
       containers:
-        - name: keycloak
-          image: quay.io/keycloak/keycloak:26.2.3
-          command: 
-            - /opt/keycloak/bin/kc.sh
-            - start-dev
-            - --features=preview
-            - --import-realm
-          env:
-            - name: KEYCLOAK_USER
-              value: admin
-            - name: KEYCLOAK_PASSWORD
-              value: admin
-            - name: KEYCLOAK_ADMIN
-              value: admin
-            - name: KEYCLOAK_ADMIN_PASSWORD
-              value: admin
-            - name: JAVA_OPTS
-              value: >-
-                -Dkeycloak.profile.feature.scripts=enabled
-                -Dkeycloak.profile.feature.upload_scripts=enabled
-                -Dkeycloak.profile.feature.account_api=enabled
-                -Dkeycloak.profile.feature.account2=enabled
-          ports:
-            - containerPort: 8080
-              name: keycloak
-          livenessProbe:
-            httpGet:
-              path: /realms/test
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            successThreshold: 1
-            failureThreshold: 3
-          readinessProbe:
-            httpGet:
-              path: /realms/test
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            successThreshold: 1
-            failureThreshold: 6
-          startupProbe:
-            tcpSocket:
-              port: keycloak
-            failureThreshold: 30
-            periodSeconds: 10
-          volumeMounts:
-            - name: keycloak-config
-              mountPath: /opt/keycloak/data/import/test.json
-              subPath: test.json
-      volumes:
+      - name: keycloak
+        image: quay.io/keycloak/keycloak:26.2.3
+        command:
+        - /opt/keycloak/bin/kc.sh
+        - start-dev
+        - --features=preview
+        - --import-realm
+        env:
+        - name: KEYCLOAK_USER
+          value: admin
+        - name: KEYCLOAK_PASSWORD
+          value: admin
+        - name: KEYCLOAK_ADMIN
+          value: admin
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          value: admin
+        - name: JAVA_OPTS
+          value: >-
+            -Dkeycloak.profile.feature.scripts=enabled -Dkeycloak.profile.feature.upload_scripts=enabled -Dkeycloak.profile.feature.account_api=enabled -Dkeycloak.profile.feature.account2=enabled
+        ports:
+        - containerPort: 8080
+          name: keycloak
+        livenessProbe:
+          httpGet:
+            path: /realms/test
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /realms/test
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 6
+        startupProbe:
+          tcpSocket:
+            port: keycloak
+          failureThreshold: 30
+          periodSeconds: 10
+        volumeMounts:
         - name: keycloak-config
-          configMap:
-            name: keycloak-config
+          mountPath: /opt/keycloak/data/import/test.json
+          subPath: test.json
+      volumes:
+      - name: keycloak-config
+        configMap:
+          name: keycloak-config
 ---
 apiVersion: v1
 kind: Service
@@ -2499,10 +2496,10 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - name: mock
-      port: 4010
-      targetPort: 4010
-      protocol: TCP
+  - name: mock
+    port: 4010
+    targetPort: 4010
+    protocol: TCP
   selector:
     app: mock
 ---
@@ -2513,10 +2510,10 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - name: mockk
-      port: 4010
-      targetPort: 4010
-      protocol: TCP
+  - name: mockk
+    port: 4010
+    targetPort: 4010
+    protocol: TCP
   selector:
     app: mockk
 ---
@@ -2527,10 +2524,10 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - name: keycloak
-      port: 8081
-      targetPort: 8080
-      protocol: TCP
+  - name: keycloak
+    port: 8081
+    targetPort: 8080
+    protocol: TCP
   selector:
     app: keycloak
 ---
@@ -2541,65 +2538,78 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - name: gate
-      port: 8081
-      targetPort: 3000
-      protocol: TCP
+  - name: gate
+    port: 8081
+    targetPort: 3000
+    protocol: TCP
   selector:
     name: proxy
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  name: nginxx
-  annotations:
-    ingress.kubernetes.io/ssl-redirect: "false"
-    traefik.ingress.kubernetes.io/router.entryPoints: web
+  name: keycloak-route
 spec:
+  parentRefs:
+  - name: traefik-gateway
+    sectionName: web
+    kind: Gateway
+    namespace: kube-system
   rules:
-  - http:
-      paths:
-      - path: /oauth
-        pathType: Prefix
-        backend:
-          service:
-            name: gate
-            port:
-              number: 8081
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: keycloak
-            port:
-              number: 8081
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: keycloak
+      port: 8081
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /oauth
+    backendRefs:
+    - name: gate
+      port: 8081
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  name: nginx
-  annotations:
-    ingress.kubernetes.io/ssl-redirect: "false"
-    traefik.ingress.kubernetes.io/router.entryPoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: default-testauth@kubernetescrd
+  name: mock-route
 spec:
+  parentRefs:
+  - name: traefik-gateway
+    sectionName: web
+    kind: Gateway
+    namespace: kube-system
+  hostnames:
+  - "localhost"
   rules:
-  - http:
-      paths:
-      - path: /pets
-        pathType: Prefix
-        backend:
-          service:
-            name: mock
-            port:
-              number: 4010
-      - path: /cats
-        pathType: Prefix
-        backend:
-          service:
-            name: mockk
-            port:
-              number: 4010
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /pets
+    backendRefs:
+    - name: mock
+      port: 4010
+    filters:
+    - type: ExtensionRef
+      extensionRef:
+        group: traefik.io
+        kind: Middleware
+        name: testauth
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /cats
+    backendRefs:
+    - name: mockk
+      port: 4010
+    filters:
+    - type: ExtensionRef
+      extensionRef:
+        group: traefik.io
+        kind: Middleware
+        name: testauth
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -2618,38 +2628,38 @@ spec:
         repository: https://github.com/gogatekeeper/gatekeeper
     spec:
       containers:
-        - name: inspect
-          image: ubuntu
-          command:
-            - /bin/bash
-          args:
-            - -c
-            - "while true;do sleep 10;done"
-        - name: proxy
-          image: quay.io/gogatekeeper/gatekeeper:4.6.0
-          imagePullPolicy: Never
-          args:
-            - --client-id=test-client
-            - --client-secret=6447d0c0-d510-42a7-b654-6e3a16b2d7e2
-            - --discovery-url=http://keycloak:8081/realms/test/.well-known/openid-configuration
-            - --enable-default-deny=true
-            - --enable-json-logging=true
-            - --enable-logging=true
-            - --enable-request-id=true
-            - --no-redirects=false
-            - --enable-refresh-tokens=true
-            - --enable-encrypted-token=true
-            - --encryption-key=sdkljfalisujeoir
-            - --listen=0.0.0.0:3000
-            - --skip-access-token-clientid-check=true
-            - --no-proxy=true
-          securityContext:
-            readOnlyRootFilesystem: true
-          ports:
-            - containerPort: 3000
-              name: gate
+      - name: inspect
+        image: ubuntu
+        command:
+        - /bin/bash
+        args:
+        - -c
+        - "while true;do sleep 10;done"
+      - name: proxy
+        image: quay.io/gogatekeeper/gatekeeper:4.6.0
+        imagePullPolicy: IfNotPresent
+        args:
+        - --client-id=test-client
+        - --client-secret=6447d0c0-d510-42a7-b654-6e3a16b2d7e2
+        - --discovery-url=http://keycloak:8081/realms/test/.well-known/openid-configuration
+        - --enable-default-deny=true
+        - --enable-json-logging=true
+        - --enable-logging=true
+        - --enable-request-id=true
+        - --no-redirects=false
+        - --enable-refresh-tokens=true
+        - --enable-encrypted-token=true
+        - --encryption-key=sdkljfalisujeoir
+        - --listen=0.0.0.0:3000
+        - --skip-access-token-clientid-check=true
+        - --no-proxy=true
+        securityContext:
+          readOnlyRootFilesystem: true
+        ports:
+        - containerPort: 3000
+          name: gate
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: testauth
@@ -2657,8 +2667,38 @@ spec:
   forwardAuth:
     address: http://gate.default.svc.cluster.local:8081
     authResponseHeaders:
-      - Set-Cookie
+    - Set-Cookie
     authRequestHeaders:
-      - "Accept"
-      - "Authorization"
-      - "Cookie"
+    - "Accept"
+    - "Authorization"
+    - "Cookie"
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    logs:
+      general:
+        format: json
+        level: DEBUG
+      access:
+        enabled: true
+        format: json
+    providers:
+      kubernetesGateway:
+        enabled: true
+      kubernetesIngress:
+        enabled: true
+    additionalArguments:
+      - --entryPoints.web.proxyProtocol.insecure
+      - --entryPoints.web.forwardedHeaders.insecure
+    gateway:
+      enabled: true
+      listeners:
+        web:
+          port: 8000
+          protocol: HTTP
+          namespacePolicy: All

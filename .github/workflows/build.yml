@@ -28,14 +28,22 @@ jobs:
       uses: AbsaOSS/k3d-action@v2.4.0
       with:
         cluster-name: "testcluster"
-        k3d-version: v5.8.3
+        k3d-version: v5.9.0-rc.0
         args: >-
           -p "8443:443@loadbalancer"
-    - name: "Deploy keycloak"
+    - name: "Deploy infra"
       run: |
         k3d kubeconfig get testcluster > kubeconfig-testcluster.yaml
         export KUBECONFIG=kubeconfig-testcluster.yaml
+        while [[ $(kubectl get pods -n kube-system | sed -n '/^traefik/p') == "" ]]
+        do
+          sleep 3
+          echo "Retrying"
+        done
+        kubectl wait --for=condition=Available -n kube-system deploy/traefik
         kubectl apply -f ./e2e/k8s/manifest.yml
+        kubectl wait --for=condition=Available -n kube-system deploy/traefik
+        kubectl wait --for=condition=Available deploy/keycloak --timeout=120s
     - name: "Deploy Redis"
       run: |
         sudo apt update
@@ -116,9 +124,14 @@ jobs:
         sleep 3
     - name: "Run Tests"
       run: |
+        kubectl get gateway -A
+        kubectl get gateway -A -o yaml
         kubectl logs -l app=keycloak --tail=100
-        sleep 300
-        kubectl logs -l app=keycloak --tail=100
+        echo "--------"
+        kubectl get pods -A
+        echo "--------"
+        curl -v -k https://localhost:8443
+        echo "--------"
         go install github.com/onsi/ginkgo/v2/ginkgo@v2.27.1
         go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
         go test -v -json -timeout=30m -race $(go list ./...|grep -v e2e) 2>&1 | tee /tmp/gotest.log | gotestfmt

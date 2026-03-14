@@ -44,6 +44,44 @@ data:
     bApKYVBhN2w0Q0lIc3MwWDE3NTJSZU5EOEZZL05JMTFHa1BWV1phRTFIUHVKMTBTYk9vZyszCi0t
     LS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
 ---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    logs:
+      general:
+        format: json
+        level: DEBUG
+      access:
+        enabled: true
+        format: json
+    providers:
+      kubernetesGateway:
+        enabled: true
+    additionalArguments:
+      - --entryPoints.web.proxyProtocol.insecure
+      - --entryPoints.web.forwardedHeaders.insecure
+      - --entryPoints.websecure.proxyProtocol.insecure
+      - --entryPoints.websecure.forwardedHeaders.insecure
+    gateway:
+      enabled: true
+      listeners:
+        web:
+          port: 8000
+          protocol: HTTP
+          namespacePolicy: All
+        websecure:
+          port: 8443
+          protocol: HTTPS
+          certificateRefs:
+            - name: tls
+              namespace: default
+          mode: Terminate
+          namespacePolicy: All
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -2979,45 +3017,67 @@ spec:
   selector:
     app: keycloak
 ---
-# apiVersion: networking.k8s.io/v1beta1 # for k3s < v1.19
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  name: nginx
-  annotations:
-    ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
+  name: keycloak-route
 spec:
-  tls:
-  - hosts:
-      - localhost
-    secretName: tls
+  parentRefs:
+  - name: traefik-gateway
+    sectionName: websecure
+    kind: Gateway
+    namespace: kube-system
   rules:
-  - host: localhost
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: keycloak
-            port:
-              number: 8080
-      - path: /pets
-        pathType: Prefix
-        backend:
-          service:
-            name: mock
-            port:
-              number: 4010
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: keycloak
+      port: 8080
 ---
-apiVersion: helm.cattle.io/v1
-kind: HelmChartConfig
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  name: traefik
-  namespace: kube-system
+  name: mock-route
 spec:
-  valuesContent: |-
-    additionalArguments:
-      - "--entryPoints.web.proxyProtocol.insecure"
-      - "--entryPoints.web.forwardedHeaders.insecure"
+  parentRefs:
+  - name: traefik-gateway
+    sectionName: web
+    kind: Gateway
+    namespace: kube-system
+  hostnames:
+  - "localhost"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /pets
+    backendRefs:
+    - name: mock
+      port: 4010
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: secret-grant
+  namespace: default
+spec:
+  from:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    namespace: kube-system
+  to:
+  - group: ""
+    kind: Secret
+# ---
+# apiVersion: traefik.io/v1alpha1
+# kind: TLSOption
+# metadata:
+#   name: request-client-cert
+#   namespace: default
+# spec:
+#   clientAuth:
+#     secretNames:
+#       - tls # CA certificate used by the server to verify the client certificates against
+#     clientAuthType: RequireAndVerifyClientCert
