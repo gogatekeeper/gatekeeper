@@ -64,6 +64,7 @@ jobs:
       run: |
         k3d kubeconfig get testcluster > kubeconfig-testcluster.yaml
         export KUBECONFIG=kubeconfig-testcluster.yaml
+        kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml
         kubectl apply -f ./e2e/k8s/manifest.yml
     - name: "Deploy Redis"
       run: |
