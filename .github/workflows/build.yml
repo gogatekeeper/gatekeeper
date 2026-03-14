@@ -35,6 +35,7 @@ jobs:
       run: |
         k3d kubeconfig get testcluster > kubeconfig-testcluster.yaml
         export KUBECONFIG=kubeconfig-testcluster.yaml
+        kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml
         kubectl apply -f ./e2e/k8s/manifest.yml
     - name: "Deploy Redis"
       run: |
@@ -117,8 +118,11 @@ jobs:
     - name: "Run Tests"
       run: |
         kubectl logs -l app=keycloak --tail=100
-        sleep 300
-        kubectl logs -l app=keycloak --tail=100
+        echo "--------"
+        kubectl get pods -A
+        echo "--------"
+        curl -v -k https://localhost:8443
+        echo "--------"
         go install github.com/onsi/ginkgo/v2/ginkgo@v2.27.1
         go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
         go test -v -json -timeout=30m -race $(go list ./...|grep -v e2e) 2>&1 | tee /tmp/gotest.log | gotestfmt

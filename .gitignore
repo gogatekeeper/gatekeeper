@@ -46,3 +46,4 @@ _testmain.go
 __debug_bin
 .env
 godeps/*
+NOTES.md
