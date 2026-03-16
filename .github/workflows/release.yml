@@ -57,14 +57,22 @@ jobs:
       uses: AbsaOSS/k3d-action@v2.4.0
       with:
         cluster-name: "testcluster"
-        k3d-version: v5.8.3
+        k3d-version: v5.9.0-rc.0
         args: >-
           -p "8443:443@loadbalancer"
-    - name: "Deploy keycloak"
+    - name: "Deploy infra"
       run: |
         k3d kubeconfig get testcluster > kubeconfig-testcluster.yaml
         export KUBECONFIG=kubeconfig-testcluster.yaml
+        while [[ $(kubectl get pods -n kube-system | sed -n '/^traefik/p') == "" ]]
+        do
+          sleep 3
+          echo "Retrying"
+        done
+        kubectl wait --for=condition=Available -n kube-system deploy/traefik
         kubectl apply -f ./e2e/k8s/manifest.yml
+        kubectl wait --for=condition=Available -n kube-system deploy/traefik
+        kubectl wait --for=condition=Available deploy/keycloak --timeout=120s
     - name: "Deploy Redis"
       run: |
         sudo apt update
