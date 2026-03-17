@@ -95,7 +95,7 @@ data:
       "notBefore": 0,
       "revokeRefreshToken": false,
       "refreshTokenMaxReuse": 0,
-      "accessTokenLifespan": 30,
+      "accessTokenLifespan": 5,
       "accessTokenLifespanForImplicitFlow": 900,
       "ssoSessionIdleTimeout": 1800,
       "ssoSessionMaxLifespan": 36000,
@@ -3070,14 +3070,14 @@ spec:
   to:
   - group: ""
     kind: Secret
-# ---
-# apiVersion: traefik.io/v1alpha1
-# kind: TLSOption
-# metadata:
-#   name: request-client-cert
-#   namespace: default
-# spec:
-#   clientAuth:
-#     secretNames:
-#       - tls # CA certificate used by the server to verify the client certificates against
-#     clientAuthType: RequireAndVerifyClientCert
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+spec:
+  clientAuth:
+    secretNames:
+      - tls # CA certificate used by the server to verify the client certificates against
+    clientAuthType: VerifyClientCertIfGiven
