@@ -54,6 +54,7 @@ const (
 	testKey                 = "trksjblzqsujshex"
 	timeout                 = time.Second * 300
 	tlsTimeout              = 10 * time.Second
+	testAccessTokenExp      = 5 * time.Second
 	idpURI                  = "https://localhost:8443"
 	localURI                = "https://localhost:"
 	httpLocalURI            = "http://localhost:"
@@ -449,16 +450,20 @@ func startAndWaitTestUpstream(
 }
 
 var _ = Describe("NoRedirects Simple login/logout", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -466,12 +471,15 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -544,16 +552,20 @@ var _ = Describe("NoRedirects Simple login/logout", func() {
 })
 
 var _ = Describe("Code Flow login/logout", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -561,12 +573,15 @@ var _ = Describe("Code Flow login/logout", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -615,25 +630,29 @@ var _ = Describe("Code Flow login/logout", func() {
 			Label("basic_case"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
 				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieLogin string
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
 					}
 				}
 
-				By("wait for access token expiration")
-				time.Sleep(32 * time.Second)
+				time.Sleep(testAccessTokenExp)
+
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -641,27 +660,30 @@ var _ = Describe("Code Flow login/logout", func() {
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
 
-				var accessCookieAfterRefresh string
-				var testCookie string
+				var (
+					accessCookieAfterRefresh string
+					testCookie               string
+				)
+
 				for _, cook := range cookiesAfterRefresh {
 					if cook.Name == constant.AccessCookie {
 						accessCookieAfterRefresh = cook.Value
 					}
+
 					if cook.Name == testCookieValue {
 						testCookie = cook.Value
 					}
 				}
 
 				Expect(testCookie).To(Equal("test_value"))
+
 				_, err = jwt.ParseSigned(accessCookieAfterRefresh, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
-
-				By("check if access token cookie has changed")
 				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
 
-				By("make another request with new access token")
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -672,7 +694,6 @@ var _ = Describe("Code Flow login/logout", func() {
 				Expect(body).To(ContainSubstring(`"X-Auth-Email-Verified":["true"]`))
 				Expect(body).To(ContainSubstring(`"X-Auth-Email":["somebody@somewhere.com"]`))
 
-				By("log out")
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
@@ -691,14 +712,17 @@ var _ = Describe("Code Flow login/logout", func() {
 			Label("attack"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
 				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
 				tok := testsuite_test.NewTestToken("example")
@@ -707,6 +731,7 @@ var _ = Describe("Code Flow login/logout", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				badlySignedToken := unsignedToken + testsuite_test.FakeSignature
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						cook.Value = badlySignedToken
@@ -714,14 +739,11 @@ var _ = Describe("Code Flow login/logout", func() {
 				}
 
 				rClient.GetClient().Jar.SetCookies(jarURI, cookiesLogin)
-
-				By("make another request with forged access token")
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(strings.Contains(string(body), anyURI)).To(BeFalse())
 				Expect(resp.StatusCode()).To(Equal(http.StatusForbidden))
 
-				By("log out")
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusForbidden))
@@ -735,26 +757,32 @@ var _ = Describe("Code Flow login/logout", func() {
 			Label("register_case"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
+
 				reqAddress := proxyAddress + registerURI
 				resp := registerLogin(rClient, reqAddress, http.StatusOK, testRegisterUser, testRegisterPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
+
 				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieLogin string
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
 					}
 				}
 
-				By("wait for access token expiration")
-				time.Sleep(32 * time.Second)
+				time.Sleep(testAccessTokenExp)
+
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -762,9 +790,11 @@ var _ = Describe("Code Flow login/logout", func() {
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieAfterRefresh string
+
 				for _, cook := range cookiesAfterRefresh {
 					if cook.Name == constant.AccessCookie {
 						accessCookieAfterRefresh = cook.Value
@@ -773,11 +803,8 @@ var _ = Describe("Code Flow login/logout", func() {
 
 				_, err = jwt.ParseSigned(accessCookieAfterRefresh, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
-
-				By("check if access token cookie has changed")
 				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
 
-				By("make another request with new access token")
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -785,7 +812,6 @@ var _ = Describe("Code Flow login/logout", func() {
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 
-				By("log out")
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
@@ -799,16 +825,20 @@ var _ = Describe("Code Flow login/logout", func() {
 })
 
 var _ = Describe("Code Flow login/logout", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -816,12 +846,15 @@ var _ = Describe("Code Flow login/logout", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -871,25 +904,29 @@ var _ = Describe("Code Flow login/logout", func() {
 			Label("override_destination_headers"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
 				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieLogin string
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
 					}
 				}
 
-				By("wait for access token expiration")
-				time.Sleep(32 * time.Second)
+				time.Sleep(testAccessTokenExp)
+
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -897,38 +934,40 @@ var _ = Describe("Code Flow login/logout", func() {
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
 
-				var accessCookieAfterRefresh string
-				var testCookie string
+				var (
+					accessCookieAfterRefresh string
+					testCookie               string
+				)
+
 				for _, cook := range cookiesAfterRefresh {
 					if cook.Name == constant.AccessCookie {
 						accessCookieAfterRefresh = cook.Value
 					}
+
 					if cook.Name == testCookieValue {
 						testCookie = cook.Value
 					}
 				}
 
 				Expect(testCookie).To(Equal("test_value"))
+
 				_, err = jwt.ParseSigned(accessCookieAfterRefresh, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
-
-				By("check if access token cookie has changed")
 				Expect(accessCookieLogin).To(Equal(accessCookieAfterRefresh))
 
-				By("make another request with new access token")
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body = resp.Body()
-				By(string(body))
+
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(body).To(ContainSubstring(`"X-Auth-Email-Verified":["true"]`))
 				Expect(body).To(ContainSubstring(`"X-Auth-Email":["somebody@somewhere.com"]`))
 
-				By("log out")
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
@@ -942,16 +981,20 @@ var _ = Describe("Code Flow login/logout", func() {
 })
 
 var _ = Describe("Code Flow login/logout mTLS", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -959,12 +1002,15 @@ var _ = Describe("Code Flow login/logout mTLS", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, true, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -1014,8 +1060,8 @@ var _ = Describe("Code Flow login/logout mTLS", func() {
 			Label("code_flow", "basic_case", "mtls"),
 			func(_ context.Context) {
 				var err error
-				rClient := resty.New()
 
+				rClient := resty.New()
 				// we are using same cert/key as for server tls also to test client auth
 				// this is just to make it more easier for us
 				clientPair, err := tls.LoadX509KeyPair(tlsCertificate, tlsPrivateKey)
@@ -1031,12 +1077,16 @@ var _ = Describe("Code Flow login/logout mTLS", func() {
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
+
 				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieLogin string
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
@@ -1044,7 +1094,9 @@ var _ = Describe("Code Flow login/logout mTLS", func() {
 				}
 
 				By("wait for access token expiration")
-				time.Sleep(32 * time.Second)
+
+				time.Sleep(testAccessTokenExp)
+
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -1052,9 +1104,11 @@ var _ = Describe("Code Flow login/logout mTLS", func() {
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieAfterRefresh string
+
 				for _, cook := range cookiesAfterRefresh {
 					if cook.Name == constant.AccessCookie {
 						accessCookieAfterRefresh = cook.Value
@@ -1063,11 +1117,8 @@ var _ = Describe("Code Flow login/logout mTLS", func() {
 
 				_, err = jwt.ParseSigned(accessCookieAfterRefresh, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
-
-				By("check if access token cookie has changed")
 				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
 
-				By("make another request with new access token")
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -1076,7 +1127,6 @@ var _ = Describe("Code Flow login/logout mTLS", func() {
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(body).To(ContainSubstring(`"X-Auth-Email":[""]`))
 
-				By("log out")
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
@@ -1090,10 +1140,13 @@ var _ = Describe("Code Flow login/logout mTLS", func() {
 })
 
 var _ = Describe("Code Flow PKCE login/logout", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 	baseURI := "/base"
 
 	AfterEach(func() {
@@ -1101,6 +1154,7 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -1108,12 +1162,15 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -1154,6 +1211,7 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 			Label("pkce"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 
@@ -1177,16 +1235,20 @@ var _ = Describe("Code Flow PKCE login/logout", func() {
 })
 
 var _ = Describe("Code Flow PKCE login/logout with token compression and encryption", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -1194,12 +1256,15 @@ var _ = Describe("Code Flow PKCE login/logout with token compression and encrypt
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -1240,6 +1305,7 @@ var _ = Describe("Code Flow PKCE login/logout with token compression and encrypt
 			Label("code_flow", "pkce", "redis"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 
@@ -1251,14 +1317,19 @@ var _ = Describe("Code Flow PKCE login/logout with token compression and encrypt
 
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
-				var accessCookieLogin string
-				var refreshCookieLogin string
+				var (
+					accessCookieLogin  string
+					refreshCookieLogin string
+				)
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
 					}
+
 					if cook.Name == constant.RefreshCookie {
 						refreshCookieLogin = cook.Value
 					}
@@ -1274,8 +1345,8 @@ var _ = Describe("Code Flow PKCE login/logout with token compression and encrypt
 				_, err = jwt.ParseSigned(refreshCookieLogin, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
 
-				By("wait for access token expiration")
-				time.Sleep(32 * time.Second)
+				time.Sleep(testAccessTokenExp)
+
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -1283,20 +1354,24 @@ var _ = Describe("Code Flow PKCE login/logout with token compression and encrypt
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
 
-				var accessCookieAfterRefresh string
-				var refreshCookieAfterRefresh string
+				var (
+					accessCookieAfterRefresh  string
+					refreshCookieAfterRefresh string
+				)
+
 				for _, cook := range cookiesAfterRefresh {
 					if cook.Name == constant.AccessCookie {
 						accessCookieAfterRefresh = cook.Value
 					}
+
 					if cook.Name == constant.RefreshCookie {
 						refreshCookieAfterRefresh = cook.Value
 					}
 				}
 
-				By("check if access token cookie has changed")
 				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
 
 				accessCookieAfterRefresh, err = session.DecryptAndDecompressToken(accessCookieAfterRefresh, testKey)
@@ -1330,16 +1405,20 @@ var _ = Describe("Code Flow PKCE login/logout with token compression and encrypt
 })
 
 var _ = Describe("Code Flow PKCE login/logout with compression and without access token encryption", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -1347,12 +1426,15 @@ var _ = Describe("Code Flow PKCE login/logout with compression and without acces
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -1393,6 +1475,7 @@ var _ = Describe("Code Flow PKCE login/logout with compression and without acces
 			Label("code_flow", "pkce", "redis"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 
@@ -1404,15 +1487,19 @@ var _ = Describe("Code Flow PKCE login/logout with compression and without acces
 
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
-				var accessCookieLogin string
-				var refreshCookieLogin string
+				var (
+					accessCookieLogin  string
+					refreshCookieLogin string
+				)
 
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
 					}
+
 					if cook.Name == constant.RefreshCookie {
 						refreshCookieLogin = cook.Value
 					}
@@ -1426,8 +1513,8 @@ var _ = Describe("Code Flow PKCE login/logout with compression and without acces
 				_, err = session.DecryptAndDecompressToken(refreshCookieLogin, testKey)
 				Expect(err).NotTo(HaveOccurred())
 
-				By("wait for access token expiration")
-				time.Sleep(32 * time.Second)
+				time.Sleep(testAccessTokenExp)
+
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -1435,20 +1522,24 @@ var _ = Describe("Code Flow PKCE login/logout with compression and without acces
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
 
-				var accessCookieAfterRefresh string
-				var refreshCookieAfterRefresh string
+				var (
+					accessCookieAfterRefresh  string
+					refreshCookieAfterRefresh string
+				)
+
 				for _, cook := range cookiesAfterRefresh {
 					if cook.Name == constant.AccessCookie {
 						accessCookieAfterRefresh = cook.Value
 					}
+
 					if cook.Name == constant.RefreshCookie {
 						refreshCookieAfterRefresh = cook.Value
 					}
 				}
 
-				By("check if access token cookie has changed")
 				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
 
 				accessCookieAfterRefresh, err = session.DecompressToken(accessCookieAfterRefresh)
@@ -1482,16 +1573,20 @@ var _ = Describe("Code Flow PKCE login/logout with compression and without acces
 })
 
 var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -1499,12 +1594,15 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -1548,6 +1646,7 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS", func() {
 			Label("code_flow", "pkce", "redis"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 
@@ -1570,10 +1669,13 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS", func() {
 })
 
 var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS CLUSTER", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
@@ -1588,8 +1690,10 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS CLUSTER", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		redisClusterURL := "rediss://" + redisUser + ":" + redisClusterPass + "@127.0.0.1:" + redisClusterMaster1Port
 		redisClusterURL += "?dial_timeout=3&read_timeout=6s&addr=127.0.0.1:" + redisClusterMaster2Port
@@ -1598,6 +1702,7 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS CLUSTER", func() {
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -1644,6 +1749,7 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS CLUSTER", func() {
 			Label("code_flow", "pkce", "redis_cluster"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 
@@ -1666,16 +1772,20 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS CLUSTER", func() {
 })
 
 var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS SENTINEL", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -1683,8 +1793,10 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS SENTINEL", func() 
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		redisSentinelURL := "rediss://" + redisUser + ":" + redisClusterPass + "@127.0.0.1:" + redisSentinel1Port
 		redisSentinelURL += "?master_name=mymaster&dial_timeout=3&read_timeout=6s&addr=127.0.0.1:" + redisSentinel2Port
@@ -1693,6 +1805,7 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS SENTINEL", func() 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -1739,6 +1852,7 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS SENTINEL", func() 
 			Label("code_flow", "pkce", "redis_cluster"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 
@@ -1761,17 +1875,21 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS SENTINEL", func() 
 })
 
 var _ = Describe("Code Flow login/logout with session check", func() {
-	var portNum string
-	var proxyAddressFirst string
-	var proxyAddressSec string
+	var (
+		portNum           string
+		proxyAddressFirst string
+		proxyAddressSec   string
+		server            *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -1779,12 +1897,15 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddressFirst = "https://127.0.0.1:" + portNum
 
 		proxyArgs := []string{
@@ -1820,6 +1941,7 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddressSec = localURI + portNum
 
 		proxyArgs = []string{
@@ -1858,6 +1980,7 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 	When("Login user with one browser client on two clients/app and logout on one of them", func() {
 		It("should logout on both successfully", func(_ context.Context) {
 			var err error
+
 			rClient := resty.New()
 			rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 			resp := codeFlowLogin(rClient, proxyAddressFirst, http.StatusOK, testUser, testPass)
@@ -1867,6 +1990,7 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 
 			resp, err = rClient.R().Get(proxyAddressFirst + testPath)
 			Expect(err).NotTo(HaveOccurred())
+
 			body := resp.Body()
 			Expect(strings.Contains(string(body), testPath)).To(BeTrue())
 
@@ -1877,6 +2001,7 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 			Expect(strings.Contains(string(body), testPath)).To(BeTrue())
 
 			By("Logout user on first client")
+
 			resp, err = rClient.R().Get(proxyAddressFirst + logoutURI)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(resp.StatusCode()).To(Equal(http.StatusOK))
@@ -1895,16 +2020,20 @@ var _ = Describe("Code Flow login/logout with session check", func() {
 })
 
 var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -1912,12 +2041,15 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -1964,25 +2096,30 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 			Label("loa"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testLoAUser, testLoAPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
+
 				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieLogin string
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
 					}
 				}
 
-				By("wait for access token expiration")
-				time.Sleep(32 * time.Second)
+				time.Sleep(testAccessTokenExp)
+
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -1990,9 +2127,11 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieAfterRefresh string
+
 				for _, cook := range cookiesAfterRefresh {
 					if cook.Name == constant.AccessCookie {
 						accessCookieAfterRefresh = cook.Value
@@ -2002,10 +2141,8 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 				_, err = jwt.ParseSigned(accessCookieAfterRefresh, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
 
-				By("check if access token cookie has changed")
 				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
 
-				By("make another request with new access token")
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -2014,15 +2151,15 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 
 				By("verify access token contains default acr value")
+
 				token, err := jwt.ParseSigned(accessCookieLogin, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
-				customClaims := models.CustClaims{}
 
+				customClaims := models.CustClaims{}
 				err = token.UnsafeClaimsWithoutVerification(&customClaims)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(customClaims.Acr).To(Equal(loaDefaultLevel))
 
-				By("log out")
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
@@ -2041,17 +2178,22 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 			Label("loa"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testLoAUser, testLoAPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
+
 				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieLogin string
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
@@ -2059,17 +2201,20 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 				}
 
 				By("verify access token contains default acr value")
+
 				token, err := jwt.ParseSigned(accessCookieLogin, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
-				customClaims := models.CustClaims{}
 
+				customClaims := models.CustClaims{}
 				err = token.UnsafeClaimsWithoutVerification(&customClaims)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(customClaims.Acr).To(Equal(loaDefaultLevel))
 
 				By("make step up request")
+
 				resp, err = rClient.R().Get(proxyAddress + loaStepUpPath)
 				Expect(err).NotTo(HaveOccurred())
+
 				body = resp.Body()
 
 				doc, err := goquery.NewDocumentFromReader(bytes.NewReader(body))
@@ -2099,24 +2244,26 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 					Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 
 					By("verify access token contains raised acr value")
+
 					cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
 					var accessCookieLogin string
+
 					for _, cook := range cookiesLogin {
 						if cook.Name == constant.AccessCookie {
 							accessCookieLogin = cook.Value
 						}
 					}
+
 					token, err = jwt.ParseSigned(accessCookieLogin, constant.SignatureAlgs[:])
 					Expect(err).NotTo(HaveOccurred())
-					customClaims := models.CustClaims{}
 
+					customClaims := models.CustClaims{}
 					err = token.UnsafeClaimsWithoutVerification(&customClaims)
 					Expect(err).NotTo(HaveOccurred())
 					Expect(customClaims.Acr).To(Equal(loaStepUpLevel))
 				})
 
-				By("log out")
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
@@ -2130,16 +2277,20 @@ var _ = Describe("Level Of Authentication Code Flow login/logout", func() {
 })
 
 var _ = Describe("User/password login/logout", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -2147,12 +2298,15 @@ var _ = Describe("User/password login/logout", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -2196,6 +2350,7 @@ var _ = Describe("User/password login/logout", func() {
 			Label("basic_case"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := userPasswordLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
@@ -2203,14 +2358,19 @@ var _ = Describe("User/password login/logout", func() {
 
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
-				var accessCookieLogin string
-				var refreshCookieLogin string
+				var (
+					accessCookieLogin  string
+					refreshCookieLogin string
+				)
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
 					}
+
 					if cook.Name == constant.RefreshCookie {
 						refreshCookieLogin = cook.Value
 					}
@@ -2219,8 +2379,8 @@ var _ = Describe("User/password login/logout", func() {
 				Expect(strings.Contains(string(body), accessCookieLogin)).To(BeTrue())
 				Expect(strings.Contains(string(body), refreshCookieLogin)).To(BeTrue())
 
-				By("wait for access token expiration")
-				time.Sleep(32 * time.Second)
+				time.Sleep(testAccessTokenExp)
+
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -2228,9 +2388,11 @@ var _ = Describe("User/password login/logout", func() {
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieAfterRefresh string
+
 				for _, cook := range cookiesAfterRefresh {
 					if cook.Name == constant.AccessCookie {
 						accessCookieAfterRefresh = cook.Value
@@ -2239,19 +2401,16 @@ var _ = Describe("User/password login/logout", func() {
 
 				_, err = jwt.ParseSigned(accessCookieAfterRefresh, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
-
-				By("check if access token cookie has changed")
 				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
 
-				By("make another request with new access token")
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body = resp.Body()
+
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 
-				By("log out")
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
@@ -2269,17 +2428,21 @@ var _ = Describe("User/password login/logout", func() {
 			Label("basic_case"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLoginSaveStateCookie(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
 				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var codeAccessCookieLogin string
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						codeAccessCookieLogin = cook.Value
@@ -2291,14 +2454,19 @@ var _ = Describe("User/password login/logout", func() {
 
 				jarURI, err = url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin = rClient.GetClient().Jar.Cookies(jarURI)
 
-				var accessCookieLogin string
-				var refreshCookieLogin string
+				var (
+					accessCookieLogin  string
+					refreshCookieLogin string
+				)
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
 					}
+
 					if cook.Name == constant.RefreshCookie {
 						refreshCookieLogin = cook.Value
 					}
@@ -2308,8 +2476,8 @@ var _ = Describe("User/password login/logout", func() {
 				Expect(strings.Contains(string(body), accessCookieLogin)).To(BeTrue())
 				Expect(strings.Contains(string(body), refreshCookieLogin)).To(BeTrue())
 
-				By("wait for access token expiration")
-				time.Sleep(32 * time.Second)
+				time.Sleep(testAccessTokenExp)
+
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -2317,9 +2485,11 @@ var _ = Describe("User/password login/logout", func() {
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieAfterRefresh string
+
 				for _, cook := range cookiesAfterRefresh {
 					if cook.Name == constant.AccessCookie {
 						accessCookieAfterRefresh = cook.Value
@@ -2328,11 +2498,8 @@ var _ = Describe("User/password login/logout", func() {
 
 				_, err = jwt.ParseSigned(accessCookieAfterRefresh, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
-
-				By("check if access token cookie has changed")
 				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
 
-				By("make another request with new access token")
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -2340,7 +2507,6 @@ var _ = Describe("User/password login/logout", func() {
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 
-				By("log out")
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
@@ -2356,18 +2522,22 @@ var _ = Describe("User/password login/logout", func() {
 // forwarding proxy (tls client auth enabled, supplied CA cert/private key used for server cert generation for MITM)
 // ---> backend proxy (tls client auth enabled) ---> backend service (tls client auth enabled).
 var _ = Describe("No-redirects authorization with forwarding direct access grant mTLS", func() {
-	var portNum string
-	var proxyAddress string
-	var fwdPortNum string
-	var fwdProxyAddress string
+	var (
+		portNum         string
+		proxyAddress    string
+		fwdPortNum      string
+		fwdProxyAddress string
+		server          *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -2375,14 +2545,17 @@ var _ = Describe("No-redirects authorization with forwarding direct access grant
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, true, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 		fwdPortNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 		fwdProxyAddress = httpLocalURI + fwdPortNum
 
@@ -2480,16 +2653,20 @@ var _ = Describe("No-redirects authorization with forwarding direct access grant
 })
 
 var _ = Describe("Code Flow With signing login/logout", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -2497,12 +2674,15 @@ var _ = Describe("Code Flow With signing login/logout", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -2548,6 +2728,7 @@ var _ = Describe("Code Flow With signing login/logout", func() {
 			Label("signing_case"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
@@ -2570,6 +2751,7 @@ var _ = Describe("Code Flow With signing login/logout", func() {
 				Expect(hmacHeader).NotTo(BeEmpty())
 
 				By("verify signing token test client")
+
 				token, err := jwt.ParseSigned(signinToken, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
 
@@ -2581,17 +2763,19 @@ var _ = Describe("Code Flow With signing login/logout", func() {
 
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieLogin string
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
 					}
 				}
 
-				By("wait for access token expiration")
-				time.Sleep(32 * time.Second)
+				time.Sleep(testAccessTokenExp)
+
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -2599,9 +2783,11 @@ var _ = Describe("Code Flow With signing login/logout", func() {
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieAfterRefresh string
+
 				for _, cook := range cookiesAfterRefresh {
 					if cook.Name == constant.AccessCookie {
 						accessCookieAfterRefresh = cook.Value
@@ -2609,11 +2795,8 @@ var _ = Describe("Code Flow With signing login/logout", func() {
 				}
 
 				Expect(accessCookieAfterRefresh).NotTo(BeEmpty())
-
-				By("check if access token cookie has changed")
 				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
 
-				By("make another request with new access token")
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -2621,7 +2804,6 @@ var _ = Describe("Code Flow With signing login/logout", func() {
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 
-				By("log out")
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
@@ -2635,16 +2817,20 @@ var _ = Describe("Code Flow With signing login/logout", func() {
 })
 
 var _ = Describe("Reverse proxy signing", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -2652,12 +2838,15 @@ var _ = Describe("Reverse proxy signing", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -2703,10 +2892,12 @@ var _ = Describe("Reverse proxy signing", func() {
 			Label("reverse_proxy_signing_case"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp, err := rClient.R().Get(proxyAddress + testPath)
 				Expect(err).NotTo(HaveOccurred())
+
 				body := resp.Body()
 
 				upstreamResp := &testsuite_test.FakeUpstreamResponse{}
@@ -2717,12 +2908,13 @@ var _ = Describe("Reverse proxy signing", func() {
 				signinToken := strings.Replace(signingHeader, constant.AuthorizationType, "", 1)
 				signinToken = strings.TrimSpace(signinToken)
 				tokenHeader := upstreamResp.Headers.Get("X-Auth-Token")
+
 				hmacHeader := upstreamResp.Headers.Get(constant.HeaderXHMAC)
+
 				Expect(signinToken).NotTo(BeEmpty())
 				Expect(tokenHeader).To(BeEmpty())
 				Expect(hmacHeader).NotTo(BeEmpty())
 
-				By("verify signing token test client")
 				token, err := jwt.ParseSigned(signinToken, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
 
@@ -2737,16 +2929,20 @@ var _ = Describe("Reverse proxy signing", func() {
 })
 
 var _ = Describe("Code Flow login/logout EnableOptionalEncryption", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -2754,12 +2950,15 @@ var _ = Describe("Code Flow login/logout EnableOptionalEncryption", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -2804,22 +3003,29 @@ var _ = Describe("Code Flow login/logout EnableOptionalEncryption", func() {
 			Label("enable_optional_encryption"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
 				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
-				var accessCookieLogin string
-				var refreshCookieLogin string
+				var (
+					accessCookieLogin  string
+					refreshCookieLogin string
+				)
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
 					}
+
 					if cook.Name == constant.RefreshCookie {
 						refreshCookieLogin = cook.Value
 					}
@@ -2831,49 +3037,55 @@ var _ = Describe("Code Flow login/logout EnableOptionalEncryption", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				cookiesLogin = rClient.GetClient().Jar.Cookies(jarURI)
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						cook.Value = accessTokenDecr
 					}
+
 					if cook.Name == constant.RefreshCookie {
 						cook.Value = refreshTokenDecr
 					}
 				}
+
 				rClient.GetClient().Jar.SetCookies(jarURI, cookiesLogin)
 
-				By("wait for access token expiration")
-				time.Sleep(32 * time.Second)
-				By("make request with decrypted refresh/access token")
+				time.Sleep(testAccessTokenExp)
+
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+
 				body = resp.Body()
+
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieAfterRefresh string
+
 				for _, cook := range cookiesAfterRefresh {
 					if cook.Name == constant.AccessCookie {
 						accessCookieAfterRefresh = cook.Value
 					}
 				}
 
-				By("check if access token cookie has changed")
 				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
 				accessTokenDecr, err = encryption.DecodeText(accessCookieAfterRefresh, testKey)
 				Expect(err).NotTo(HaveOccurred())
 				_, err = jwt.ParseSigned(accessTokenDecr, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
 
-				By("make another request with decrypted access token")
 				cookiesLogin = rClient.GetClient().Jar.Cookies(jarURI)
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						cook.Value = accessTokenDecr
 					}
 				}
+
 				rClient.GetClient().Jar.SetCookies(jarURI, cookiesLogin)
 
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
@@ -2883,7 +3095,6 @@ var _ = Describe("Code Flow login/logout EnableOptionalEncryption", func() {
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 
-				By("log out")
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
@@ -2897,16 +3108,20 @@ var _ = Describe("Code Flow login/logout EnableOptionalEncryption", func() {
 })
 
 var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -2914,12 +3129,15 @@ var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -2967,6 +3185,7 @@ var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
 			Label("disable_logout_auth"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
@@ -2975,7 +3194,6 @@ var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
 				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
 				Expect(err).NotTo(HaveOccurred())
 
-				By("make another request with access token")
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -2983,7 +3201,6 @@ var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 
-				By("log out")
 				//nolint:gosec
 				rClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
@@ -3005,17 +3222,23 @@ var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
 			Label("fail_case"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+
 				body := resp.Body()
+
 				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var IDCookieLogin string
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.IDTokenCookie {
 						IDCookieLogin = cook.Value
@@ -3026,14 +3249,15 @@ var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				cookiesLogin = rClient.GetClient().Jar.Cookies(jarURI)
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.IDTokenCookie {
 						cook.Value = IDTokenDescr
 					}
 				}
+
 				rClient.GetClient().Jar.SetCookies(jarURI, cookiesLogin)
 
-				By("log out")
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusForbidden))
@@ -3047,16 +3271,20 @@ var _ = Describe("Code Flow login/logout DisableLogoutAuth", func() {
 })
 
 var _ = Describe("Code Flow login/logout compressed and encrypted ID token", func() {
-	var portNum string
-	var proxyAddress string
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -3064,12 +3292,15 @@ var _ = Describe("Code Flow login/logout compressed and encrypted ID token", fun
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 
 		proxyArgs := []string{
@@ -3118,6 +3349,7 @@ var _ = Describe("Code Flow login/logout compressed and encrypted ID token", fun
 			Label("compressed_encrypted_id_token"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
@@ -3127,6 +3359,7 @@ var _ = Describe("Code Flow login/logout compressed and encrypted ID token", fun
 				Expect(err).NotTo(HaveOccurred())
 
 				By("make another request with access token")
+
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
@@ -3151,23 +3384,28 @@ var _ = Describe("Code Flow login/logout compressed and encrypted ID token", fun
 })
 
 var _ = Describe("Code Flow Request Upstream Compression", func() {
-	var portNum1 string
-	var proxyAddress1 string
-	var portNum2 string
-	var proxyAddress2 string
+	var (
+		portNum1      string
+		proxyAddress1 string
+		portNum2      string
+		proxyAddress2 string
+		server1       *http.Server
+		server2       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server1 *http.Server
-	var server2 *http.Server
 
 	AfterEach(func() {
 		if server1 != nil {
 			err := server1.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if server2 != nil {
 			err := server2.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -3175,18 +3413,22 @@ var _ = Describe("Code Flow Request Upstream Compression", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort1 string
-		var upstreamSvcPort2 string
+		var (
+			err              error
+			upstreamSvcPort1 string
+			upstreamSvcPort2 string
+		)
 
 		server1, upstreamSvcPort1 = startAndWaitTestUpstream(errGroup, false, true, true)
 		portNum1, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress1 = localURI + portNum1
 
 		server2, upstreamSvcPort2 = startAndWaitTestUpstream(errGroup, false, true, false)
 		portNum2, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress2 = localURI + portNum2
 
 		proxyArgs1 := []string{
@@ -3253,6 +3495,7 @@ var _ = Describe("Code Flow Request Upstream Compression", func() {
 		osArgs2 := make([]string, 0, 1+len(proxyArgs2))
 		osArgs2 = append(osArgs2, os.Args[0])
 		osArgs2 = append(osArgs2, proxyArgs2...)
+
 		startAndWait(portNum1, osArgs1)
 		startAndWait(portNum2, osArgs2)
 	})
@@ -3263,6 +3506,7 @@ var _ = Describe("Code Flow Request Upstream Compression", func() {
 			Label("disable_request_upstream_compression"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetHeader("Content-Type", "application/json")
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
@@ -3271,6 +3515,7 @@ var _ = Describe("Code Flow Request Upstream Compression", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				body := string(enflated)
+
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				Expect(strings.Contains(body, postLoginRedirectPath)).To(BeTrue())
 				Expect(err).NotTo(HaveOccurred())
@@ -3284,6 +3529,7 @@ var _ = Describe("Code Flow Request Upstream Compression", func() {
 			Label("enable_request_upstream_compression"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetHeader("Content-Type", "application/json")
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
@@ -3299,23 +3545,28 @@ var _ = Describe("Code Flow Request Upstream Compression", func() {
 })
 
 var _ = Describe("Code Flow Accept-Encoding header", func() {
-	var portNum1 string
-	var proxyAddress1 string
-	var portNum2 string
-	var proxyAddress2 string
+	var (
+		portNum1      string
+		proxyAddress1 string
+		portNum2      string
+		proxyAddress2 string
+		server1       *http.Server
+		server2       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server1 *http.Server
-	var server2 *http.Server
 
 	AfterEach(func() {
 		if server1 != nil {
 			err := server1.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if server2 != nil {
 			err := server2.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -3323,18 +3574,22 @@ var _ = Describe("Code Flow Accept-Encoding header", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort1 string
-		var upstreamSvcPort2 string
+		var (
+			err              error
+			upstreamSvcPort1 string
+			upstreamSvcPort2 string
+		)
 
 		server1, upstreamSvcPort1 = startAndWaitTestUpstream(errGroup, false, true, true)
 		portNum1, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress1 = localURI + portNum1
 
 		server2, upstreamSvcPort2 = startAndWaitTestUpstream(errGroup, false, true, false)
 		portNum2, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress2 = localURI + portNum2
 
 		proxyArgs1 := []string{
@@ -3403,6 +3658,7 @@ var _ = Describe("Code Flow Accept-Encoding header", func() {
 		osArgs2 := make([]string, 0, 1+len(proxyArgs2))
 		osArgs2 = append(osArgs2, os.Args[0])
 		osArgs2 = append(osArgs2, proxyArgs2...)
+
 		startAndWait(portNum1, osArgs1)
 		startAndWait(portNum2, osArgs2)
 	})
@@ -3413,6 +3669,7 @@ var _ = Describe("Code Flow Accept-Encoding header", func() {
 			Label("disable_accept_encoding_header"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetHeader("Content-Type", "application/json")
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
@@ -3422,6 +3679,7 @@ var _ = Describe("Code Flow Accept-Encoding header", func() {
 				Expect(resp.Header().Get("Content-Encoding")).To(Equal(testCompressionType))
 
 				body := string(compressed)
+
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				Expect(strings.Contains(body, postLoginRedirectPath)).To(BeTrue())
 				Expect(err).NotTo(HaveOccurred())
@@ -3435,8 +3693,11 @@ var _ = Describe("Code Flow Accept-Encoding header", func() {
 			Label("enable_accept_encoding_header"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
+
 				By("make request with Accept-Encoding: deflate")
+
 				rClient.SetHeader("Content-Type", "application/json")
 				rClient.SetHeader("Accept-Encoding", testCompressionType)
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
@@ -3445,12 +3706,14 @@ var _ = Describe("Code Flow Accept-Encoding header", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				body := string(compressed)
+
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				Expect(resp.Header().Get("Content-Encoding")).To(Equal(testCompressionType))
 				Expect(strings.Contains(body, postLoginRedirectPath)).To(BeTrue())
 				Expect(err).NotTo(HaveOccurred())
 
 				body = string(compressed)
+
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				Expect(strings.Contains(body, postLoginRedirectPath)).To(BeTrue())
 				Expect(err).NotTo(HaveOccurred())

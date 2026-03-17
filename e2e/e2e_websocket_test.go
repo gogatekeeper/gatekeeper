@@ -21,17 +21,21 @@ import (
 )
 
 var _ = Describe("NoRedirects Websocket login/logout", func() {
-	var portNum string
-	var proxyAddress string
-	var proxyAddr string
+	var (
+		portNum      string
+		proxyAddress string
+		proxyAddr    string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -39,12 +43,15 @@ var _ = Describe("NoRedirects Websocket login/logout", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 		proxyAddr = localAddr + portNum
 
@@ -73,6 +80,7 @@ var _ = Describe("NoRedirects Websocket login/logout", func() {
 		osArgs := make([]string, 0, 1+len(proxyArgs))
 		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
+
 		startAndWait(portNum, osArgs)
 	})
 
@@ -99,6 +107,7 @@ var _ = Describe("NoRedirects Websocket login/logout", func() {
 				wSocketURL := url.URL{Scheme: "wss", Host: proxyAddr, Path: "/"}
 
 				var headers http.Header = map[string][]string{}
+
 				headers.Add("Cookie", "kc-access="+respToken.AccessToken)
 
 				websocket.DefaultDialer.TLSClientConfig = &tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13}
@@ -163,6 +172,7 @@ var _ = Describe("NoRedirects Websocket login/logout", func() {
 				wSocketURL := url.URL{Scheme: "wss", Host: proxyAddr, Path: "/"}
 
 				var headers http.Header = map[string][]string{}
+
 				headers.Add("Cookie", "kc-access="+respToken.AccessToken)
 				headers.Add("Websocketfail", "true")
 
@@ -190,17 +200,21 @@ var _ = Describe("NoRedirects Websocket login/logout", func() {
 })
 
 var _ = Describe("Code Flow websocket login/logout", func() {
-	var portNum string
-	var proxyAddress string
-	var proxyAddr string
+	var (
+		portNum      string
+		proxyAddress string
+		proxyAddr    string
+		server       *http.Server
+	)
+
 	errGroup, _ := errgroup.WithContext(context.Background())
-	var server *http.Server
 
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 		}
+
 		if errGroup != nil {
 			err := errGroup.Wait()
 			Expect(err).NotTo(HaveOccurred())
@@ -208,12 +222,15 @@ var _ = Describe("Code Flow websocket login/logout", func() {
 	})
 
 	BeforeEach(func() {
-		var err error
-		var upstreamSvcPort string
+		var (
+			err             error
+			upstreamSvcPort string
+		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
+
 		proxyAddress = localURI + portNum
 		proxyAddr = localAddr + portNum
 
@@ -249,6 +266,7 @@ var _ = Describe("Code Flow websocket login/logout", func() {
 		osArgs := make([]string, 0, 1+len(proxyArgs))
 		osArgs = append(osArgs, os.Args[0])
 		osArgs = append(osArgs, proxyArgs...)
+
 		startAndWait(portNum, osArgs)
 	})
 
@@ -258,17 +276,23 @@ var _ = Describe("Code Flow websocket login/logout", func() {
 			Label("basic_case"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+
 				body := resp.Body()
+
 				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieLogin string
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
@@ -278,6 +302,7 @@ var _ = Describe("Code Flow websocket login/logout", func() {
 				wSocketURL := url.URL{Scheme: "wss", Host: proxyAddr, Path: "/"}
 
 				var headers http.Header = map[string][]string{}
+
 				headers.Add("Cookie", "kc-access="+accessCookieLogin)
 
 				websocket.DefaultDialer.TLSClientConfig = &tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13}
@@ -308,7 +333,6 @@ var _ = Describe("Code Flow websocket login/logout", func() {
 				err = testErrGroup.Wait()
 				Expect(err).NotTo(HaveOccurred())
 
-				By("log out")
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
@@ -326,17 +350,23 @@ var _ = Describe("Code Flow websocket login/logout", func() {
 			Label("websocket"),
 			func(_ context.Context) {
 				var err error
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+
 				body := resp.Body()
+
 				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+
 				jarURI, err := url.Parse(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
+
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
 				var accessCookieLogin string
+
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
@@ -346,6 +376,7 @@ var _ = Describe("Code Flow websocket login/logout", func() {
 				wSocketURL := url.URL{Scheme: "wss", Host: proxyAddr, Path: "/"}
 
 				var headers http.Header = map[string][]string{}
+
 				headers.Add("Cookie", "kc-access="+accessCookieLogin)
 				headers.Add("Websocketfail", "true")
 
@@ -357,6 +388,7 @@ var _ = Describe("Code Flow websocket login/logout", func() {
 				Expect(wConn).To(BeNil())
 
 				By("log out")
+
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
