@@ -216,7 +216,9 @@ func AdmissionMiddleware(
 				zap.String("access", "permitted"),
 				zap.String("email", user.Email),
 				zap.Duration("expires", time.Until(user.ExpiresAt)),
-				zap.String("resource", resource.URL))
+				zap.String("resource", resource.URL),
+				zap.Any("claims", user.Claims),
+			)
 
 			next.ServeHTTP(wrt, req)
 		})
