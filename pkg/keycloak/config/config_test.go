@@ -3362,6 +3362,30 @@ func TestIsEnableCompressTokenValid(t *testing.T) {
 			},
 			Valid: false,
 		},
+		{
+			Name: "ValidCompressTokenWithValidAuthScheme",
+			Config: &Config{
+				EnableCompressToken:         true,
+				CompressTokenOnlyAuthScheme: "cookie",
+			},
+			Valid: true,
+		},
+		{
+			Name: "InValidCompressTokenWithAuthSchemeWithoutEnableCompressToken",
+			Config: &Config{
+				EnableCompressToken:         false,
+				CompressTokenOnlyAuthScheme: "cookie",
+			},
+			Valid: false,
+		},
+		{
+			Name: "InValidCompressTokenWithAuthScheme",
+			Config: &Config{
+				EnableCompressToken:         true,
+				CompressTokenOnlyAuthScheme: "invalid",
+			},
+			Valid: false,
+		},
 	}
 
 	for _, testCase := range testCases {

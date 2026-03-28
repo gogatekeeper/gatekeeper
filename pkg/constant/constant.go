@@ -6,7 +6,10 @@ import (
 	"github.com/go-jose/go-jose/v4"
 )
 
-type contextKey int8
+type (
+	contextKey int8
+	AuthScheme string
+)
 
 const (
 	_ contextKey = iota
@@ -126,9 +129,13 @@ const (
 	HTTPStatusHeaderLen = 42
 	SwitchProtoHeader   = "HTTP/1.1 101 Switching Protocols"
 	CRLF                = "\r\n\r\n"
+
+	Cookie AuthScheme = "cookie"
+	Bearer AuthScheme = "bearer"
 )
 
 //nolint:gochecknoglobals
 var (
 	SignatureAlgs = [3]jose.SignatureAlgorithm{jose.RS256, jose.HS256, jose.HS512}
+	AuthSchemes   = []AuthScheme{Cookie, Bearer}
 )

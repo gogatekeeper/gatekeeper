@@ -65,13 +65,16 @@ func authorizationMiddleware(
 	clientID string,
 	skipClientIDCheck bool,
 	skipIssuerCheck bool,
-	compressedToken bool,
+	enableCompressToken bool,
+	compressTokenOnlyAuthScheme string,
 	compressTokenPool *utils.LimitedBufferPool,
-	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, error),
+	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, bool, error),
 	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
+			enableCompressToken := enableCompressToken
+
 			scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
 			if !assertOk {
 				logger.Error(apperrors.ErrAssertionFailed.Error())
@@ -174,8 +177,13 @@ func authorizationMiddleware(
 					if err == nil {
 						umaToken := umaUser.RawToken
 
+						if compressTokenOnlyAuthScheme != "" &&
+							compressTokenOnlyAuthScheme != string(constant.Cookie) {
+							enableCompressToken = false
+						}
+
 						if enableEncryptedToken || forceEncryptedCookie {
-							if compressedToken {
+							if enableCompressToken {
 								umaToken, err = session.EncryptAndCompressToken(umaToken, encryptionKey, compressTokenPool)
 								if err != nil {
 									scope.Logger.Error(err.Error())
@@ -191,7 +199,7 @@ func authorizationMiddleware(
 								}
 							}
 						} else {
-							if compressedToken {
+							if enableCompressToken {
 								umaToken, err = session.CompressToken(umaToken, compressTokenPool)
 								if err != nil {
 									scope.Logger.Error(err.Error())

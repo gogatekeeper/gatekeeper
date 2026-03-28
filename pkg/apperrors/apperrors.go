@@ -254,4 +254,9 @@ var (
 	ErrEnableTokenCompression           = errors.New("cannot enable token compression " +
 		"with optional token encryption")
 	ErrEnableIDTokenClaims = errors.New("enable id token claims requires also enable-id-token-cookie option")
+	ErrEnableCompressToken = errors.New("cannot enable token compression " +
+		"and optional encryption")
+	ErrCompressTokenAuthScheme = errors.New("cannot choose compress token auth scheme and " +
+		"have compress token disabled")
+	ErrInvalidCompressTokenAuthScheme = errors.New("invalid compress token auth scheme, valid are cookie, bearer")
 )

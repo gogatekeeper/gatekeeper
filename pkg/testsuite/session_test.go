@@ -170,6 +170,7 @@ func TestGetIndentity(t *testing.T) {
 			cfg.ForceEncryptedCookie,
 			cfg.EnableOptionalEncryption,
 			cfg.EnableCompressToken,
+			cfg.CompressTokenOnlyAuthScheme,
 			cfg.EncryptionKey,
 		)
 
@@ -181,16 +182,16 @@ func TestGetIndentity(t *testing.T) {
 				compressedToken, errC := session.EncryptAndCompressToken(token, TestEncryptionKey, bufPool)
 				require.NoError(t, errC)
 
-				rawToken, err = getIdentity(testCase.Request(compressedToken), cfg.CookieAccessName, "")
+				rawToken, _, err = getIdentity(testCase.Request(compressedToken), cfg.CookieAccessName, "")
 			} else {
 				bufPool := utils.NewLimitedBufferPool(100)
 				compressedToken, errC := session.CompressToken(token, bufPool)
 				require.NoError(t, errC)
 
-				rawToken, err = getIdentity(testCase.Request(compressedToken), cfg.CookieAccessName, "")
+				rawToken, _, err = getIdentity(testCase.Request(compressedToken), cfg.CookieAccessName, "")
 			}
 		} else {
-			rawToken, err = getIdentity(testCase.Request(token), cfg.CookieAccessName, "")
+			rawToken, _, err = getIdentity(testCase.Request(token), cfg.CookieAccessName, "")
 		}
 
 		if err != nil && testCase.Ok {

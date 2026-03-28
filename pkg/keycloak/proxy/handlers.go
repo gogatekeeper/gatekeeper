@@ -187,7 +187,8 @@ func oauthCallbackHandler(
 	enableEncryptedToken bool,
 	forceEncryptedCookie bool,
 	enablePKCE bool,
-	compressedToken bool,
+	enableCompressToken bool,
+	compressTokenOnlyAuthScheme string,
 	provider *oidc3.Provider,
 	cookManager *cookie.Manager,
 	pat *PAT,
@@ -200,6 +201,8 @@ func oauthCallbackHandler(
 	accessError func(wrt http.ResponseWriter, req *http.Request) context.Context,
 ) func(writer http.ResponseWriter, req *http.Request) {
 	return func(writer http.ResponseWriter, req *http.Request) {
+		enableCompressToken := enableCompressToken
+
 		scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
 		if !assertOk {
 			logger.Error(apperrors.ErrAssertionFailed.Error())
@@ -207,6 +210,10 @@ func oauthCallbackHandler(
 		}
 
 		scope.Logger.Debug("callback handler")
+
+		if compressTokenOnlyAuthScheme != "" && compressTokenOnlyAuthScheme != string(constant.Cookie) {
+			enableCompressToken = false
+		}
 
 		accessToken, identityToken, refreshToken, err := session.GetCodeFlowTokens(
 			scope,
@@ -284,7 +291,7 @@ func oauthCallbackHandler(
 
 			oidcTokensCookiesExp = time.Until(stdRefreshClaims.Expiry.Time())
 
-			if compressedToken {
+			if enableCompressToken {
 				encrypted, err = session.EncryptAndCompressToken(refreshToken, encryptionKey, compressTokenPool)
 				if err != nil {
 					scope.Logger.Error(apperrors.ErrEncryptAndCompressRefreshToken.Error(), zap.Error(err))
@@ -369,9 +376,9 @@ func oauthCallbackHandler(
 			}
 		}
 
-		encryptOnly := !compressedToken && (enableEncryptedToken || forceEncryptedCookie)
-		encryptedAndCompressed := compressedToken && (enableEncryptedToken || forceEncryptedCookie)
-		compressedOnly := compressedToken && !enableEncryptedToken && !forceEncryptedCookie
+		encryptOnly := !enableCompressToken && (enableEncryptedToken || forceEncryptedCookie)
+		encryptedAndCompressed := enableCompressToken && (enableEncryptedToken || forceEncryptedCookie)
+		compressedOnly := enableCompressToken && !enableEncryptedToken && !forceEncryptedCookie
 
 		switch {
 		case encryptOnly:
@@ -468,12 +475,15 @@ func loginHandler(
 	enableRefreshTokens bool,
 	enableIDTokenCookie bool,
 	enableCompressToken bool,
+	compressTokenOnlyAuthScheme string,
 	cookManager *cookie.Manager,
 	accessTokenDuration time.Duration,
 	store storage.Storage,
 	compressTokenPool *utils.LimitedBufferPool,
 ) func(wrt http.ResponseWriter, req *http.Request) {
 	return func(writer http.ResponseWriter, req *http.Request) {
+		enableCompressToken := enableCompressToken
+
 		scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
 
 		if !assertOk {
@@ -561,6 +571,10 @@ func loginHandler(
 				plainIDToken     string
 				plainAccessToken string
 			)
+
+			if compressTokenOnlyAuthScheme != "" && compressTokenOnlyAuthScheme != string(constant.Cookie) {
+				enableCompressToken = false
+			}
 
 			encrypt := enableEncryptedToken || forceEncryptedCookie
 			encryptAndCompress := enableCompressToken && encrypt
@@ -782,7 +796,8 @@ func logoutHandler(
 	enableOptionalEncryption bool,
 	enableLogoutAuth bool,
 	enableCompressToken bool,
-	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, error),
+	compressTokenOnlyAuthScheme string,
+	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, bool, error),
 	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
 	provider *oidc3.Provider,
 	store storage.Storage,
@@ -797,6 +812,8 @@ func logoutHandler(
 			identityToken string
 			idToken       string
 		)
+
+		enableCompressToken := enableCompressToken
 
 		scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
 		if !assertOk {
@@ -829,6 +846,7 @@ func logoutHandler(
 				req,
 				enableOptionalEncryption,
 				enableCompressToken,
+				compressTokenOnlyAuthScheme,
 			)
 			// we are doing it so that in case with no-redirects=true, we can pass
 			// id token in authorization header
@@ -844,7 +862,7 @@ func logoutHandler(
 
 			if !enableLogoutAuth {
 				if idToken == "" {
-					idToken, err = getIdentity(req, cookieAccessName, "")
+					idToken, _, err = getIdentity(req, cookieAccessName, "")
 					if err != nil {
 						scope.Logger.Error(err.Error())
 						accessForbidden(writer, req)
@@ -889,6 +907,7 @@ func logoutHandler(
 				user,
 				enableOptionalEncryption,
 				enableCompressToken,
+				compressTokenOnlyAuthScheme,
 			)
 			if err == nil {
 				identityToken = refresh

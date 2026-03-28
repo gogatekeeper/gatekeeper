@@ -134,7 +134,7 @@ func (r *Resource) Parse(resource string) (*Resource, error) {
 			r.Acr = strings.Split(keyPair[1], ",")
 		default:
 			return nil,
-				errors.New("invalid identifier, should be uri|roles|headers|methods|acr|white-listed")
+				errors.New("invalid identifier, should be uri|roles|headers|methods|acr|white-listed|no-redirect")
 		}
 	}
 

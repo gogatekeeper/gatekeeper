@@ -96,7 +96,7 @@ func ProxyMetricsHandler(
 	}
 }
 
-// RetrieveIDToken retrieves the id token from cookie.
+//nolint:cyclop
 func RetrieveIDToken(
 	cookieIDTokenName string,
 	enableEncryptedToken bool,
@@ -105,6 +105,7 @@ func RetrieveIDToken(
 	req *http.Request,
 	enableOptionalEncryption bool,
 	enableCompressToken bool,
+	compressTokenOnlyAuthScheme string,
 ) (string, string, error) {
 	var (
 		token     string
@@ -115,6 +116,10 @@ func RetrieveIDToken(
 	token, err = session.GetTokenInCookie(req, cookieIDTokenName)
 	if err != nil {
 		return token, "", err
+	}
+
+	if compressTokenOnlyAuthScheme != "" && compressTokenOnlyAuthScheme != string(constant.Cookie) {
+		enableCompressToken = false
 	}
 
 	if enableEncryptedToken || forceEncryptedCookie {
@@ -250,11 +255,11 @@ func ExpirationHandler(
 	clientID string,
 	skipAccessTokenClientIDCheck bool,
 	skipAccessTokenIssuerCheck bool,
-	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, error),
+	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, bool, error),
 	cookieAccessName string,
 ) func(wrt http.ResponseWriter, req *http.Request) {
 	return func(wrt http.ResponseWriter, req *http.Request) {
-		token, err := getIdentity(req, cookieAccessName, "")
+		token, _, err := getIdentity(req, cookieAccessName, "")
 		if err != nil {
 			wrt.WriteHeader(http.StatusUnauthorized)
 			return
@@ -304,12 +309,12 @@ func ExpirationHandler(
 
 // TokenHandler display access token to screen.
 func TokenHandler(
-	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, error),
+	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, bool, error),
 	cookieAccessName string,
 	accessError func(wrt http.ResponseWriter, req *http.Request) context.Context,
 ) func(wrt http.ResponseWriter, req *http.Request) {
 	return func(wrt http.ResponseWriter, req *http.Request) {
-		rawToken, err := getIdentity(req, cookieAccessName, "")
+		rawToken, _, err := getIdentity(req, cookieAccessName, "")
 		if err != nil {
 			accessError(wrt, req)
 			return
