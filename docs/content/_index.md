@@ -1492,6 +1492,10 @@ There is option for compressing tokens `--enable-compress-token`. It compresses,
 simply restore original token body by using e.g. `echo "yourtoken" | awk '{print $2}'| base64 -d | gzip -d`. In case
 token encryption is used, original token body is base64 decoded, compressed, encrypted, base64 encoded.
 
+There are some cases when you might e.g. want to have compressed token for cookie based flow and non-compressed cookie
+for api flow or vice versa. For such cases you might want to use option `--compress-token-only-auth-scheme`, which might
+have value: `cookie` or `bearer` or empty string (default).
+
 ## Request tracing
 
 Usually when there are multiple http services involved in serving user requests

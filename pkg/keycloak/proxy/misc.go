@@ -195,10 +195,10 @@ func WithUMAIdentity(
 	clientID string,
 	skipClientIDCheck bool,
 	skipIssuerCheck bool,
-	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, error),
+	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, bool, error),
 	authzFunc func(targetPath string, userPerms models.Permissions) (authorization.AuthzDecision, error),
 ) (authorization.AuthzDecision, error) {
-	token, err := getIdentity(req, cookieUMAName, constant.UMAHeader)
+	token, _, err := getIdentity(req, cookieUMAName, constant.UMAHeader)
 	if err != nil {
 		return authorization.DeniedAuthz, err
 	}

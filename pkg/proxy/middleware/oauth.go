@@ -30,7 +30,7 @@ func AuthenticationMiddleware(
 	logger *zap.Logger,
 	cookieAccessName string,
 	cookieRefreshName string,
-	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, error),
+	getIdentity func(req *http.Request, tokenCookie string, tokenHeader string) (string, bool, error),
 	httpClient *http.Client,
 	enableIDPSessionCheck bool,
 	provider *oidc3.Provider,
@@ -49,12 +49,15 @@ func AuthenticationMiddleware(
 	accessTokenDuration time.Duration,
 	enableOptionalEncryption bool,
 	enableCompressToken bool,
+	compressTokenOnlyAuthScheme string,
 	enableIDTokenClaims bool,
 	enableUserInfoClaims bool,
 	compressTokenPool *utils.LimitedBufferPool,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
+			enableCompressToken := enableCompressToken
+
 			scope, assertOk := req.Context().Value(constant.ContextScopeName).(*models.RequestScope)
 			if !assertOk {
 				logger.Error(apperrors.ErrAssertionFailed.Error())
@@ -68,7 +71,7 @@ func AuthenticationMiddleware(
 
 			ctx := context.WithValue(req.Context(), constant.ContextScopeName, scope)
 			// grab the user identity from the request
-			token, err := getIdentity(req, cookieAccessName, "")
+			token, isBearer, err := getIdentity(req, cookieAccessName, "")
 			if err != nil {
 				scope.Logger.Error(err.Error())
 				core.RevokeProxy(logger, req)
@@ -89,7 +92,7 @@ func AuthenticationMiddleware(
 			if enableIDTokenClaims {
 				var idErr error
 
-				idToken, idErr = getIdentity(req, cookMgr.CookieIDTokenName, "")
+				idToken, _, idErr = getIdentity(req, cookMgr.CookieIDTokenName, "")
 				if idErr != nil {
 					scope.Logger.Error(idErr.Error())
 					core.RevokeProxy(logger, req)
@@ -139,7 +142,7 @@ func AuthenticationMiddleware(
 					return
 				}
 
-				if !enableRefreshTokens {
+				if !enableRefreshTokens || isBearer {
 					lLog.Error(apperrors.ErrSessionExpiredRefreshOff.Error())
 					core.RevokeProxy(logger, req)
 					next.ServeHTTP(wrt, req)
@@ -174,6 +177,7 @@ func AuthenticationMiddleware(
 					user,
 					enableOptionalEncryption,
 					enableCompressToken,
+					compressTokenOnlyAuthScheme,
 				)
 				if err != nil {
 					scope.Logger.Error(
@@ -288,6 +292,10 @@ func AuthenticationMiddleware(
 					accessForbidden(wrt, req)
 
 					return
+				}
+
+				if compressTokenOnlyAuthScheme != "" && compressTokenOnlyAuthScheme != string(constant.Cookie) {
+					enableCompressToken = false
 				}
 
 				if enableEncryptedToken || forceEncryptedCookie {

@@ -14,6 +14,7 @@ weight: 2
 |    \--client-id value                       | client id used to authenticate to the oauth service | | PROXY_CLIENT_ID
 |    \--client-secret value                   | client secret used to authenticate to the oauth service | | PROXY_CLIENT_SECRET
 |    \--redirection-url value                 | redirection url for the oauth callback url, defaults to host header if absent | | PROXY_REDIRECTION_URL
+|    \--compress-token-only-auth-scheme       | compress token only for chosen auth scheme: cookie, bearer, default is empty | | PROXY_COMPRESS_TOKEN_ONLY_AUTH_SCHEME
 |    \--post-logout-redirect-uri value        | url to which client is redirected after successful logout | | PROXY_POST_LOGOUT_REDIRECT_URI
 |    \--post-login-redirect-path value        | post-login-redirect-path" usage:"path to which client is redirected after successful login, in case user access / | | PROXY_POST_LOGIN_REDIRECT_PATH
 |    \--revocation-url value                  | url for the revocation endpoint to revoke refresh token | | PROXY_REVOCATION_URL

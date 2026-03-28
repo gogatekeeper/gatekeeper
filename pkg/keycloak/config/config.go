@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -110,6 +111,7 @@ type Config struct {
 	ClientID                           string                    `env:"CLIENT_ID" json:"client-id,omitempty" usage:"client id used to authenticate to the oauth service" yaml:"client-id"`
 	ClientSecret                       string                    `env:"CLIENT_SECRET" json:"client-secret,omitempty" usage:"client secret used to authenticate to the oauth service" yaml:"client-secret"`
 	RedirectionURL                     string                    `env:"REDIRECTION_URL" json:"redirection-url,omitempty" usage:"redirection url for the oauth callback url, defaults to host header if absent" yaml:"redirection-url"`
+	CompressTokenOnlyAuthScheme        string                    `env:"COMPRESS_TOKEN_ONLY_AUTH_SCHEME" json:"compress-token-only-auth-scheme" usage:"compress token only for chosen auth scheme: cookie, bearer, default is empty" yaml:"compress-token-only-auth-scheme"`
 	Hostnames                          []string                  `json:"hostnames,omitempty" usage:"list of hostnames the service will respond to" yaml:"hostnames"`
 	ForwardingDomains                  []string                  `json:"forwarding-domains,omitempty" usage:"list of domains which should be signed; everything else is relayed unsigned" yaml:"forwarding-domains"`
 	CorsExposedHeaders                 []string                  `json:"cors-exposed-headers,omitempty" usage:"expose cors headers access control (Access-Control-Expose-Headers)" yaml:"cors-exposed-headers"`
@@ -121,7 +123,7 @@ type Config struct {
 	CustomHTTPMethods                  []string                  `json:"custom-http-methods,omitempty" usage:"list of additional non-standard http methods" yaml:"custom-http-methods"`
 	Resources                          []*authorization.Resource `json:"resources,omitempty" usage:"list of resources 'uri=/admin*|methods=GET,PUT|roles=role1,role2'" yaml:"resources"`
 	Scopes                             []string                  `json:"scopes,omitempty" usage:"list of scopes requested when authenticating the user" yaml:"scopes"`
-	OpaTimeout                         time.Duration             `env:"OPA_TIMEOUT"              json:"opa-timeout,omitempty"              usage:"timeout for connection to OPA"                                                                       yaml:"opa-timeout"`
+	OpaTimeout                         time.Duration             `env:"OPA_TIMEOUT"              json:"opa-timeout,omitempty"              usage:"timeout for connection to OPA" yaml:"opa-timeout"`
 	PatRetryInterval                   time.Duration             `env:"PAT_RETRY_INTERVAL" json:"pat-retry-interval,omitempty" usage:"interval between retries to get PAT" yaml:"pat-retry-interval"`
 	AccessTokenDuration                time.Duration             `env:"ACCESS_TOKEN_DURATION" json:"access-token-duration,omitempty" usage:"fallback cookie duration for the access token when using refresh tokens" yaml:"access-token-duration"`
 	PatRetryCount                      int                       `env:"PAT_RETRY_COUNT"    json:"pat-retry-count,omitempty"    usage:"number of retries to get PAT"        yaml:"pat-retry-count"`
@@ -1178,7 +1180,16 @@ func (r *Config) isPatRetryCountValid() error {
 
 func (r *Config) isEnableCompressTokenValid() error {
 	if r.EnableOptionalEncryption && r.EnableCompressToken {
-		return apperrors.ErrEnableRequestUpstreamCompression
+		return apperrors.ErrEnableCompressToken
+	}
+
+	if r.CompressTokenOnlyAuthScheme != "" && !r.EnableCompressToken {
+		return apperrors.ErrCompressTokenAuthScheme
+	}
+
+	if r.CompressTokenOnlyAuthScheme != "" &&
+		!slices.Contains(constant.AuthSchemes, constant.AuthScheme(r.CompressTokenOnlyAuthScheme)) {
+		return apperrors.ErrInvalidCompressTokenAuthScheme
 	}
 
 	return nil

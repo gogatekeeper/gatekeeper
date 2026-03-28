@@ -144,10 +144,14 @@ func GetIdentity(
 	forceEncryptedCookie bool,
 	enableOptionalEncryption bool,
 	enableCompressToken bool,
+	compressTokenOnlyAuthScheme string,
 	encKey string,
-) func(req *http.Request, tokenCookie string, tokenHeader string) (string, error) {
-	return func(req *http.Request, tokenCookie string, tokenHeader string) (string, error) {
+) func(req *http.Request, tokenCookie string, tokenHeader string) (string, bool, error) {
+	return func(req *http.Request, tokenCookie string, tokenHeader string) (string, bool, error) {
 		var isBearer bool
+
+		enableCompressToken := enableCompressToken
+
 		// step: check for a bearer token or cookie with jwt token
 		token, isBearer, err := GetTokenInRequest(
 			req,
@@ -156,35 +160,47 @@ func GetIdentity(
 			tokenHeader,
 		)
 		if err != nil {
-			return "", err
+			return "", isBearer, err
 		}
 
-		if enableEncryptedToken || forceEncryptedCookie && !isBearer {
+		if compressTokenOnlyAuthScheme != "" {
+			matchBearer := isBearer && compressTokenOnlyAuthScheme == string(constant.Bearer)
+			matchCookie := !isBearer && compressTokenOnlyAuthScheme == string(constant.Cookie)
+
+			if !matchBearer && !matchCookie {
+				enableCompressToken = false
+			}
+		}
+
+		encryptOnly := !enableCompressToken && (enableEncryptedToken || (forceEncryptedCookie && !isBearer))
+		encryptedAndCompressed := enableCompressToken && (enableEncryptedToken || (forceEncryptedCookie && !isBearer))
+		compressedOnly := enableCompressToken && !enableEncryptedToken && (!forceEncryptedCookie || isBearer)
+
+		switch {
+		case encryptOnly:
 			origToken := token
 
-			if enableCompressToken {
-				token, err = DecryptAndDecompressToken(token, encKey)
-				if err != nil {
-					return "", errors.Join(apperrors.ErrDecryptAndDecompressToken, err)
+			token, err = encryption.DecodeText(token, encKey)
+			if err != nil {
+				if enableOptionalEncryption {
+					return origToken, isBearer, nil
 				}
-			} else {
-				token, err = encryption.DecodeText(token, encKey)
-				if err != nil {
-					if enableOptionalEncryption {
-						return origToken, nil
-					}
 
-					return "", apperrors.ErrDecryption
-				}
+				return "", isBearer, apperrors.ErrDecryption
 			}
-		} else if enableCompressToken {
+		case encryptedAndCompressed:
+			token, err = DecryptAndDecompressToken(token, encKey)
+			if err != nil {
+				return "", isBearer, errors.Join(apperrors.ErrDecryptAndDecompressToken, err)
+			}
+		case compressedOnly:
 			token, err = DecompressToken(token)
 			if err != nil {
-				return "", errors.Join(apperrors.ErrDecompressToken, err)
+				return "", isBearer, errors.Join(apperrors.ErrDecompressToken, err)
 			}
 		}
 
-		return token, nil
+		return token, isBearer, nil
 	}
 }
 
@@ -283,6 +299,7 @@ func RetrieveRefreshToken(
 	user *models.UserContext,
 	enableOptionalEncryption bool,
 	enableCompressToken bool,
+	compressTokenOnlyAuthScheme string,
 ) (string, string, error) {
 	var (
 		token string
@@ -301,6 +318,10 @@ func RetrieveRefreshToken(
 	}
 
 	encrypted := token // returns encrypted, avoids encoding twice
+
+	if compressTokenOnlyAuthScheme != "" && compressTokenOnlyAuthScheme != string(constant.Cookie) {
+		enableCompressToken = false
+	}
 
 	if enableCompressToken {
 		token, err = DecryptAndDecompressToken(token, encryptionKey)
