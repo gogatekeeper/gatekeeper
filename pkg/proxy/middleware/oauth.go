@@ -527,10 +527,10 @@ func RedirectToAuthorizationMiddleware(
 								}
 							}
 
-							builder.WriteString(fmt.Sprintf("&%s=%s", key, param))
+							fmt.Fprintf(&builder, "&%s=%s", key, param)
 						} else {
 							if val, ok := defaultAllowedQueryParams[key]; ok {
-								builder.WriteString(fmt.Sprintf("&%s=%s", key, val))
+								fmt.Fprintf(&builder, "&%s=%s", key, val)
 							}
 						}
 					}

@@ -261,7 +261,7 @@ func TestGetTokenInRequest(t *testing.T) {
 			Error:                           nil,
 			SkipAuthorizationHeaderIdentity: true,
 		},
-		{
+		{ //nolint:gosec
 			Token:                           "QWxhZGRpbjpPcGVuU2VzYW1l",
 			AuthScheme:                      "Basic",
 			Error:                           apperrors.ErrSessionNotFound,
@@ -315,7 +315,7 @@ func TestIsExpired(t *testing.T) {
 }
 
 func TestGetUserContext(t *testing.T) {
-	realmRoles := []string{"realm:realm"}
+	realmRoles := []string{"realm:realm"} //nolint:prealloc
 	clientRoles := []string{"client:client"}
 	token := NewTestToken("test")
 	token.addRealmRoles(realmRoles)

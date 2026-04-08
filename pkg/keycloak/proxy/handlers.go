@@ -755,7 +755,7 @@ func loginHandler(
 				}
 			}
 
-			err = json.NewEncoder(writer).Encode(resp)
+			err = json.NewEncoder(writer).Encode(resp) //nolint:gosec
 			if err != nil {
 				return http.StatusInternalServerError, err
 			}
@@ -998,7 +998,7 @@ func logoutHandler(
 
 			start := time.Now()
 
-			response, err := httpClient.Do(request)
+			response, err := httpClient.Do(request) //nolint:gosec
 			if err != nil {
 				scope.Logger.Error(apperrors.ErrRevocationReqFailure.Error(), zap.Error(err))
 				writer.WriteHeader(http.StatusInternalServerError)

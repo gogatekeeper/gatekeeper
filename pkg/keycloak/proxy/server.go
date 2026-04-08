@@ -121,7 +121,7 @@ func NewProxy(config *config.Config, log *zap.Logger, upstream core.ReverseProxy
 		dup.EncryptionKey = ""
 		dup.ForwardingPassword = ""
 
-		out, err := json.Marshal(dup)
+		out, err := json.Marshal(dup) //nolint:gosec
 		if err != nil {
 			return nil, err
 		}

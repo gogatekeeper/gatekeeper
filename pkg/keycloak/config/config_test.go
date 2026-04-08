@@ -1986,7 +1986,7 @@ func TestIsStoreURLValid(t *testing.T) {
 	}{
 		{
 			Name: "ValidIsStoreURL",
-			Config: &Config{
+			Config: &Config{ //nolint:gosec
 				StoreURL: "redis://user:secret@localhost:6379/4?protocol=3",
 			},
 			Valid: true,
@@ -2008,7 +2008,7 @@ func TestIsStoreURLValid(t *testing.T) {
 		},
 		{
 			Name: "ValidEnableHA",
-			Config: &Config{
+			Config: &Config{ //nolint:gosec
 				StoreURL:      "redis://user:secret@localhost:6379/4?protocol=3",
 				EnableStoreHA: true,
 			},

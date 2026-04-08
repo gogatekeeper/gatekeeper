@@ -39,7 +39,6 @@ type SelfSignedCertificate struct {
 	certificate  tls.Certificate
 	privateKey   *ed25519.PrivateKey
 	log          *zap.Logger
-	cancel       context.CancelFunc
 	hostnames    []string
 	expiration   time.Duration
 	sync.RWMutex //nolint:embeddedstructfieldcheck
@@ -77,7 +76,7 @@ func NewSelfSignedCertificate(
 	}
 
 	// @step: create a context to run under
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx := context.Background()
 
 	svc := &SelfSignedCertificate{
 		certificate: certificate,
@@ -85,7 +84,6 @@ func NewSelfSignedCertificate(
 		hostnames:   hostnames,
 		log:         log,
 		privateKey:  &key,
-		cancel:      cancel,
 	}
 
 	svc.rotate(ctx)
