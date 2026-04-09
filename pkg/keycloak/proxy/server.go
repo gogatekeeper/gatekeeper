@@ -562,7 +562,6 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.EncryptionKey,
 		newOAuth2Config,
 		r.Store,
-		r.Config.AccessTokenDuration,
 		r.Config.EnableOptionalEncryption,
 		r.Config.EnableCompressToken,
 		r.Config.CompressTokenOnlyAuthScheme,
@@ -586,7 +585,6 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.EnableCompressToken,
 		r.Config.CompressTokenOnlyAuthScheme,
 		r.Cm,
-		r.Config.AccessTokenDuration,
 		r.Store,
 		compressTokenPool,
 	)

@@ -981,6 +981,175 @@ var _ = Describe("Code Flow login/logout", func() {
 	})
 })
 
+var _ = Describe("Code Flow login/logout", func() {
+	var (
+		portNum      string
+		proxyAddress string
+		server       *http.Server
+	)
+
+	errGroup, _ := errgroup.WithContext(context.Background())
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
+
+	BeforeEach(func() {
+		var (
+			err             error
+			upstreamSvcPort string
+		)
+
+		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
+
+		proxyAddress = localURI + portNum
+
+		proxyArgs := []string{
+			"--discovery-url=" + idpRealmURI,
+			"--openid-provider-timeout=300s",
+			"--tls-openid-provider-ca-certificate=" + tlsCaCertificate,
+			"--tls-openid-provider-client-certificate=" + tlsCertificate,
+			"--tls-openid-provider-client-private-key=" + tlsPrivateKey,
+			"--listen=" + allInterfaces + portNum,
+			"--client-id=" + testClient,
+			"--client-secret=" + testClientSecret,
+			"--upstream-url=" + localURI + upstreamSvcPort,
+			"--no-redirects=false",
+			"--skip-access-token-clientid-check=true",
+			"--skip-access-token-issuer-check=true",
+			"--enable-idp-session-check=false",
+			"--enable-default-deny=false",
+			"--resources=uri=/*|roles=uma_authorization,offline_access",
+			"--openid-provider-retry-count=30",
+			"--enable-refresh-tokens=true",
+			"--encryption-key=" + testKey,
+			"--secure-cookie=false",
+			"--post-login-redirect-path=" + postLoginRedirectPath,
+			"--enable-register-handler=true",
+			"--enable-encrypted-token=false",
+			"--enable-id-token-claims=true",
+			"--enable-id-token-cookie=true",
+			"--enable-user-info-claims=true",
+			"--add-claims=email_verified",
+			"--add-claims=email",
+			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--upstream-ca=" + tlsCaCertificate,
+			"--enable-session-cookies=false",
+		}
+
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
+		osArgs = append(osArgs, proxyArgs...)
+		startAndWait(portNum, osArgs)
+	})
+
+	When("Performing standard login with session cookies disabled", func() {
+		It("should login with user/password and logout successfully",
+			Label("code_flow"),
+			Label("session_cookies_disabled"),
+			func(_ context.Context) {
+				var err error
+
+				rClient := resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
+				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				body := resp.Body()
+				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+
+				jarURI, err := url.Parse(proxyAddress)
+				Expect(err).NotTo(HaveOccurred())
+
+				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
+
+				var accessCookieLogin string
+
+				for _, cook := range cookiesLogin {
+					if cook.Name == constant.AccessCookie {
+						accessCookieLogin = cook.Value
+					}
+				}
+
+				time.Sleep(testAccessTokenExp)
+
+				resp, err = rClient.R().Get(proxyAddress + anyURI)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				body = resp.Body()
+				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+				Expect(err).NotTo(HaveOccurred())
+
+				cookiesAfterRefresh := resp.Cookies()
+
+				var (
+					accessCookieAfterRefresh  *http.Cookie
+					refreshCookieAfterRefresh *http.Cookie
+					testCookie                string
+				)
+
+				for _, cook := range cookiesAfterRefresh {
+					if cook.Name == constant.AccessCookie {
+						accessCookieAfterRefresh = cook
+					}
+
+					if cook.Name == constant.RefreshCookie {
+						refreshCookieAfterRefresh = cook
+					}
+
+					if cook.Name == testCookieValue {
+						testCookie = cook.Value
+					}
+				}
+
+				Expect(testCookie).To(Equal("test_value"))
+
+				_, err = jwt.ParseSigned(accessCookieAfterRefresh.Value, constant.SignatureAlgs[:])
+				Expect(err).NotTo(HaveOccurred())
+				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh.Value))
+
+				refresh, err := encryption.DecodeText(refreshCookieAfterRefresh.Value, testKey)
+				Expect(err).NotTo(HaveOccurred())
+
+				_, err = jwt.ParseSigned(refresh, constant.SignatureAlgs[:])
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(accessCookieAfterRefresh.Expires).To(Equal(refreshCookieAfterRefresh.Expires))
+
+				resp, err = rClient.R().Get(proxyAddress + anyURI)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				body = resp.Body()
+				By(string(body))
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
+				Expect(body).To(ContainSubstring(`"X-Auth-Email-Verified":["true"]`))
+				Expect(body).To(ContainSubstring(`"X-Auth-Email":["somebody@somewhere.com"]`))
+
+				resp, err = rClient.R().Get(proxyAddress + logoutURI)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+
+				rClient.SetRedirectPolicy(resty.NoRedirectPolicy())
+				resp, _ = rClient.R().Get(proxyAddress)
+				Expect(resp.StatusCode()).To(Equal(http.StatusSeeOther))
+			},
+		)
+	})
+})
+
 var _ = Describe("Code Flow login/logout mTLS", func() {
 	var (
 		portNum      string

@@ -125,7 +125,6 @@ type Config struct {
 	Scopes                             []string                  `json:"scopes,omitempty" usage:"list of scopes requested when authenticating the user" yaml:"scopes"`
 	OpaTimeout                         time.Duration             `env:"OPA_TIMEOUT"              json:"opa-timeout,omitempty"              usage:"timeout for connection to OPA" yaml:"opa-timeout"`
 	PatRetryInterval                   time.Duration             `env:"PAT_RETRY_INTERVAL" json:"pat-retry-interval,omitempty" usage:"interval between retries to get PAT" yaml:"pat-retry-interval"`
-	AccessTokenDuration                time.Duration             `env:"ACCESS_TOKEN_DURATION" json:"access-token-duration,omitempty" usage:"fallback cookie duration for the access token when using refresh tokens" yaml:"access-token-duration"`
 	PatRetryCount                      int                       `env:"PAT_RETRY_COUNT"    json:"pat-retry-count,omitempty"    usage:"number of retries to get PAT"        yaml:"pat-retry-count"`
 	CorsMaxAge                         time.Duration             `env:"CORS_MAX_AGE" json:"cors-max-age,omitempty" usage:"max age applied to cors headers (Access-Control-Max-Age)" yaml:"cors-max-age"`
 	UpstreamTimeout                    time.Duration             `env:"UPSTREAM_TIMEOUT" json:"upstream-timeout,omitempty" usage:"maximum amount of time a dial will wait for a connect to complete" yaml:"upstream-timeout"`
@@ -219,7 +218,6 @@ func NewDefaultConfig() *Config {
 	hostnames = append(hostnames, []string{"localhost", "127.0.0.1", "::1"}...)
 
 	return &Config{
-		AccessTokenDuration:              time.Duration(constant.FallbackAccessTokenDuration) * time.Hour,
 		CookieAccessName:                 constant.AccessCookie,
 		CookieIDTokenName:                constant.IDTokenCookie,
 		CookieRefreshName:                constant.RefreshCookie,
