@@ -526,7 +526,7 @@ func (r *fakeAuthServer) revocationHandler(wrt http.ResponseWriter, req *http.Re
 	// according RFC revocation endpoint can be access/refresh token, keycloak
 	// implementation https://github.com/keycloak/keycloak/pull/6704, accepts
 	// refresh/offline tokens
-	if token := req.FormValue("token"); token == "" {
+	if token := req.FormValue("token"); token == "" { //nolint:gosec
 		wrt.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -578,7 +578,7 @@ func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Requ
 	refreshToken.Claims.Aud = defTestTokenClaims.Aud
 	codeVerifier := ""
 
-	if req.FormValue("grant_type") == configcore.GrantTypeUmaTicket {
+	if req.FormValue("grant_type") == configcore.GrantTypeUmaTicket { //nolint:gosec
 		token.Claims.Authorization = models.Permissions{
 			Permissions: []models.Permission{
 				{
@@ -591,7 +591,7 @@ func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Requ
 	}
 
 	if r.fakeAuthConfig.EnablePKCE {
-		codeVerifier = req.FormValue("code_verifier")
+		codeVerifier = req.FormValue("code_verifier") //nolint:gosec
 		if codeVerifier == "" {
 			writer.WriteHeader(http.StatusBadRequest)
 			return
@@ -612,10 +612,10 @@ func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	switch req.FormValue("grant_type") {
+	switch req.FormValue("grant_type") { //nolint:gosec
 	case configcore.GrantTypeUserCreds:
-		username := req.FormValue("username")
-		password := req.FormValue("password")
+		username := req.FormValue("username") //nolint:gosec
+		password := req.FormValue("password") //nolint:gosec
 
 		if username == "" || password == "" {
 			writer.WriteHeader(http.StatusBadRequest)
@@ -639,8 +639,8 @@ func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Requ
 			"error_description": "invalid user credentials",
 		})
 	case configcore.GrantTypeClientCreds:
-		clientID := req.FormValue("client_id")
-		clientSecret := req.FormValue("client_secret")
+		clientID := req.FormValue("client_id")         //nolint:gosec
+		clientSecret := req.FormValue("client_secret") //nolint:gosec
 
 		if clientID == "" || clientSecret == "" {
 			u, p, ok := req.BasicAuth()
@@ -670,6 +670,7 @@ func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Requ
 			"error_description": "invalid client credentials",
 		})
 	case configcore.GrantTypeRefreshToken:
+		//nolint:gosec
 		oldRefreshToken, err := jwt.ParseSigned(req.FormValue("refresh_token"), constant.SignatureAlgs[:])
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
