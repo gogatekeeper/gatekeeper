@@ -477,7 +477,6 @@ func loginHandler(
 	enableCompressToken bool,
 	compressTokenOnlyAuthScheme string,
 	cookManager *cookie.Manager,
-	accessTokenDuration time.Duration,
 	store storage.Storage,
 	compressTokenPool *utils.LimitedBufferPool,
 ) func(wrt http.ResponseWriter, req *http.Request) {
@@ -649,8 +648,15 @@ func loginHandler(
 					}
 				}
 
-				refreshExpiry := session.GetAccessCookieExpiration(scope.Logger, accessTokenDuration, token.RefreshToken)
-				// drop in the access token - cookie expiration = access token
+				stdRefreshClaims, err := utils.ParseRefreshToken(token.RefreshToken)
+				if err != nil {
+					scope.Logger.Error(apperrors.ErrEncryptRefreshToken.Error(), zap.Error(err))
+
+					return http.StatusInternalServerError,
+						errors.Join(apperrors.ErrParseRefreshToken, err)
+				}
+
+				refreshExpiry := time.Until(stdRefreshClaims.Expiry.Time())
 				cookManager.DropAccessTokenCookie(
 					req,
 					writer,
@@ -667,30 +673,12 @@ func loginHandler(
 					)
 				}
 
-				var expiration time.Duration
-				// notes: not all idp refresh tokens are readable, google for example, so we attempt to decode into
-				// a jwt and if possible extract the expiration, else we default to 10 days
-				refreshTokenObj, errRef := jwt.ParseSigned(token.RefreshToken, constant.SignatureAlgs[:])
-				if errRef != nil {
-					return http.StatusInternalServerError,
-						errors.Join(apperrors.ErrParseRefreshToken, errRef)
-				}
-
-				stdRefreshClaims := &jwt.Claims{}
-
-				err = refreshTokenObj.UnsafeClaimsWithoutVerification(stdRefreshClaims)
-				if err != nil {
-					expiration = 0
-				} else {
-					expiration = time.Until(stdRefreshClaims.Expiry.Time())
-				}
-
 				switch store != nil {
 				case true:
 					rCtx, rCancel := context.WithTimeout(ctx, constant.RedisTimeout)
 					defer rCancel()
 
-					err = store.Set(rCtx, identity.ID, refreshToken, expiration)
+					err = store.Set(rCtx, identity.ID, refreshToken, refreshExpiry)
 					if err != nil {
 						scope.Logger.Error(
 							apperrors.ErrSaveTokToStore.Error(),
@@ -698,7 +686,7 @@ func loginHandler(
 						)
 					}
 				default:
-					cookManager.DropRefreshTokenCookie(req, writer, refreshToken, expiration)
+					cookManager.DropRefreshTokenCookie(req, writer, refreshToken, refreshExpiry)
 				}
 			} else {
 				cookManager.DropAccessTokenCookie(

@@ -20,12 +20,8 @@ package testsuite_test
 import (
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/keycloak/config"
-	"github.com/gogatekeeper/gatekeeper/pkg/proxy/session"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRedirectToAuthorization(t *testing.T) {
@@ -96,66 +92,4 @@ func TestRedirectToAuthorization(t *testing.T) {
 			},
 		)
 	}
-}
-
-func assertAlmostEquals(t *testing.T, expected time.Duration, actual time.Duration) {
-	t.Helper()
-
-	delta := expected - actual
-	if delta < 0 {
-		delta = -delta
-	}
-
-	assert.Less(t, delta, time.Duration(1)*time.Minute, "Diff should be less than a minute but delta is %s", delta)
-}
-
-func TestGetAccessCookieExpiration_NoExp(t *testing.T) {
-	token, err := NewTestToken("foo").GetToken()
-	require.NoError(t, err)
-
-	c := newFakeKeycloakConfig()
-	c.AccessTokenDuration = time.Duration(1) * time.Hour
-	proxy := newFakeProxy(c, &fakeAuthConfig{}).proxy
-	duration := session.GetAccessCookieExpiration(proxy.Log, c.AccessTokenDuration, token)
-	assertAlmostEquals(t, c.AccessTokenDuration, duration)
-}
-
-func TestGetAccessCookieExpiration_ZeroExp(t *testing.T) {
-	ft := NewTestToken("foo")
-	ft.SetExpiration(time.Unix(0, 0))
-	token, err := ft.GetToken()
-	require.NoError(t, err)
-
-	c := newFakeKeycloakConfig()
-	c.AccessTokenDuration = time.Duration(1) * time.Hour
-	proxy := newFakeProxy(c, &fakeAuthConfig{}).proxy
-	duration := session.GetAccessCookieExpiration(proxy.Log, c.AccessTokenDuration, token)
-	assert.Greater(t, duration, 0*time.Second, "duration should be positive")
-	assertAlmostEquals(t, c.AccessTokenDuration, duration)
-}
-
-func TestGetAccessCookieExpiration_PastExp(t *testing.T) {
-	ft := NewTestToken("foo")
-	ft.SetExpiration(time.Now().AddDate(-1, 0, 0))
-	token, err := ft.GetToken()
-	require.NoError(t, err)
-
-	c := newFakeKeycloakConfig()
-	c.AccessTokenDuration = time.Duration(1) * time.Hour
-	proxy := newFakeProxy(c, &fakeAuthConfig{}).proxy
-	duration := session.GetAccessCookieExpiration(proxy.Log, c.AccessTokenDuration, token)
-	assertAlmostEquals(t, c.AccessTokenDuration, duration)
-}
-
-func TestGetAccessCookieExpiration_ValidExp(t *testing.T) {
-	fToken := NewTestToken("foo")
-	token, err := fToken.GetToken()
-	require.NoError(t, err)
-
-	c := newFakeKeycloakConfig()
-	c.AccessTokenDuration = time.Duration(1) * time.Hour
-	proxy := newFakeProxy(c, &fakeAuthConfig{}).proxy
-	duration := session.GetAccessCookieExpiration(proxy.Log, c.AccessTokenDuration, token)
-	expectedDuration := time.Until(time.Unix(fToken.Claims.Exp, 0))
-	assertAlmostEquals(t, expectedDuration, duration)
 }
