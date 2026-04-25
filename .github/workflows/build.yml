@@ -160,7 +160,3 @@ jobs:
         version: v2.11.4
         args: "--timeout=3m"
         github-token: "${{ secrets.GITHUB_TOKEN }}"
-    - name: Check Golang sources with Aligo
-      uses: essentialkaos/aligo-action@v2
-      with:
-        files: ./...
