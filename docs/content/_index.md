@@ -864,6 +864,15 @@ will successfully match
 }
 ```
 
+From version 4.9.0 it is possible to negate match by using `!` mark at the beginning of match regex.
+
+```yaml
+match-claims:
+  email: !perm1
+```
+
+This example will match only if NONE of email claim values matches `perm1`
+
 ## Group claims
 
 You can match on the group claims within a token via the `groups`
