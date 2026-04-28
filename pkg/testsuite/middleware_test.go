@@ -2395,6 +2395,57 @@ func TestRolesAdmissionHandlerClaims(t *testing.T) {
 				ExpectedCode:  http.StatusOK,
 			},
 		},
+		{
+			Matches: map[string]string{
+				"item1": "!^t.*t",
+				"item2": "^another",
+			},
+			Request: fakeRequest{
+				URI:      testAdminURI,
+				HasToken: true,
+				TokenClaims: map[string]any{
+					"item1": []string{"randomItem", "test"},
+					"item2": []string{"randomItem", "anotherItem"},
+					"item3": []string{"randomItem2", "anotherItem3"},
+				},
+				ExpectedProxy: false,
+				ExpectedCode:  http.StatusForbidden,
+			},
+		},
+		{
+			Matches: map[string]string{
+				"item1": "!^t.*t",
+				"item2": "^another",
+			},
+			Request: fakeRequest{
+				URI:      testAdminURI,
+				HasToken: true,
+				TokenClaims: map[string]any{
+					"item1": []string{"randomItem", "zest"},
+					"item2": []string{"randomItem", "anotherItem"},
+					"item3": []string{"randomItem2", "anotherItem3"},
+				},
+				ExpectedProxy: true,
+				ExpectedCode:  http.StatusOK,
+			},
+		},
+		{
+			Matches: map[string]string{
+				"item1": "!^t.*t",
+				"item2": "!^another",
+			},
+			Request: fakeRequest{
+				URI:      testAdminURI,
+				HasToken: true,
+				TokenClaims: map[string]any{
+					"item1": []string{"randomItem", "zest"},
+					"item2": []string{"randomItem", "notherItem"},
+					"item3": []string{"randomItem2", "anotherItem3"},
+				},
+				ExpectedProxy: true,
+				ExpectedCode:  http.StatusOK,
+			},
+		},
 	}
 	for _, c := range requests {
 		cfg := newFakeKeycloakConfig()

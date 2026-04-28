@@ -17,6 +17,11 @@ import (
 	"go.uber.org/zap"
 )
 
+type claimMatch struct {
+	reg    *regexp.Regexp
+	negate bool
+}
+
 // SecurityMiddleware performs numerous security checks on the request.
 func SecurityMiddleware(
 	logger *zap.Logger,
@@ -114,10 +119,20 @@ func AdmissionMiddleware(
 	resourceHeaderVals := make(map[string]bool, len(resource.Headers))
 	resourceRoles := make(map[string]bool, len(resource.Roles))
 	resourceGroups := make(map[string]bool, len(resource.Groups))
+	claimMatches := make(map[string]claimMatch)
 
-	claimMatches := make(map[string]*regexp.Regexp)
-	for k, v := range matchClaims {
-		claimMatches[k] = regexp.MustCompile(v)
+	for claimName, claimRegex := range matchClaims {
+		match := claimMatch{}
+
+		if strings.HasPrefix(claimRegex, constant.NegateRegexChar) {
+			match.negate = true
+			claimRegex := strings.TrimPrefix(claimRegex, constant.NegateRegexChar)
+			match.reg = regexp.MustCompile(claimRegex)
+		} else {
+			match.reg = regexp.MustCompile(claimRegex)
+		}
+
+		claimMatches[claimName] = match
 	}
 
 	for idx, resVal := range resource.Headers {
@@ -206,7 +221,13 @@ func AdmissionMiddleware(
 
 			// step: if we have any claim matching, lets validate the tokens has the claims
 			for claimName, match := range claimMatches {
-				if !utils.CheckClaim(scope.Logger, user, claimName, match, resource.URL) {
+				isClaimMatched := utils.CheckClaim(scope.Logger, user, claimName, match.reg, resource.URL)
+				if !isClaimMatched && !match.negate {
+					accessForbidden(wrt, req)
+					return
+				}
+
+				if isClaimMatched && match.negate {
 					accessForbidden(wrt, req)
 					return
 				}

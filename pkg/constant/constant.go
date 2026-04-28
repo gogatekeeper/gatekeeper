@@ -132,6 +132,8 @@ const (
 
 	Cookie AuthScheme = "cookie"
 	Bearer AuthScheme = "bearer"
+
+	NegateRegexChar = "!"
 )
 
 //nolint:gochecknoglobals
