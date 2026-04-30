@@ -263,6 +263,10 @@ func ToHeader(v string) string {
 	return strings.Join(list, "-")
 }
 
+func ToXHeader(v string) string {
+	return "X-Auth-" + ToHeader(v)
+}
+
 // Capitalize capitalizes the first letter of a word.
 func Capitalize(word string) string {
 	if word == "" {

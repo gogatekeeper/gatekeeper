@@ -119,6 +119,7 @@ type Config struct {
 	CorsMethods                        []string                  `json:"cors-methods,omitempty" usage:"methods permitted in the access control (Access-Control-Allow-Methods)" yaml:"cors-methods"`
 	CorsOrigins                        []string                  `json:"cors-origins,omitempty" usage:"origins to add to the CORE origins control (Access-Control-Allow-Origin)" yaml:"cors-origins"`
 	AddClaims                          []string                  `json:"add-claims,omitempty" usage:"extra claims from the token and inject into headers, e.g given_name -> X-Auth-Given-Name" yaml:"add-claims"`
+	ExcludeClaims                      []string                  `json:"exclude-claims,omitempty" usage:"do not add these claims as headers, can be one of: audience, email, expiresin, groups, roles, subject, userid, username" yaml:"exclude-claims"`
 	SelfSignedTLSHostnames             []string                  `json:"self-signed-tls-hostnames,omitempty" usage:"a list of hostnames to place on the self-signed certificate" yaml:"self-signed-tls-hostnames"`
 	CustomHTTPMethods                  []string                  `json:"custom-http-methods,omitempty" usage:"list of additional non-standard http methods" yaml:"custom-http-methods"`
 	Resources                          []*authorization.Resource `json:"resources,omitempty" usage:"list of resources 'uri=/admin*|methods=GET,PUT|roles=role1,role2'" yaml:"resources"`
@@ -673,6 +674,7 @@ func (r *Config) isReverseProxySettingsValid() error {
 			r.isEnableOptionalEncryptionValid,
 			r.isEnableLogoutAuthValid,
 			r.isEnableIDTokenClaimsValid,
+			r.isExcludeClaimsValid,
 		}
 
 		for _, validationFunc := range validationRegistry {
@@ -1196,6 +1198,23 @@ func (r *Config) isEnableCompressTokenValid() error {
 func (r *Config) isEnableIDTokenClaimsValid() error {
 	if r.EnableIDTokenClaims && !r.EnableIDTokenCookie {
 		return apperrors.ErrEnableIDTokenClaims
+	}
+
+	return nil
+}
+
+func (r *Config) isExcludeClaimsValid() error {
+	if len(r.ExcludeClaims) > 0 {
+		baseHeaderSet := constant.GetBaseIdentityHeaderSet()
+
+		for _, excludeClaim := range r.ExcludeClaims {
+			excludeHeader := utils.ToXHeader(excludeClaim)
+
+			_, ok := baseHeaderSet[excludeHeader]
+			if !ok {
+				return apperrors.ErrInvalidExcludeClaim
+			}
+		}
 	}
 
 	return nil

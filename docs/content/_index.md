@@ -786,6 +786,19 @@ X-Auth-Given-Name: Beloved
 X-Auth-Name: Beloved User
 ```
 
+It is also possible to have custom names for claim headers e.g.:
+
+```yaml
+add-claims:
+- given_name|MY-CUSTOM-GIVEN-NAME
+```
+
+would result in:
+
+```bash
+MY-CUSTOM-GIVEN-NAME: Beloved
+```
+
 ## Custom headers
 
 You can inject custom headers using the `--headers="name=value"` option

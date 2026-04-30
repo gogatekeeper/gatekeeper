@@ -2017,11 +2017,13 @@ func TestAccessTokenEncryption(t *testing.T) {
 
 func TestCustomHeadersHandler(t *testing.T) {
 	requests := []struct {
-		Match   []string
-		Request fakeRequest
+		Match         []string
+		ExcludeClaims []string
+		Request       fakeRequest
 	}{
 		{
-			Match: []string{"subject", "userid", "email", "username"},
+			Match:         []string{"subject", "userid", "email", "username"},
+			ExcludeClaims: []string{},
 			Request: fakeRequest{
 				URI:      FakeAuthAllURL,
 				HasToken: true,
@@ -2042,7 +2044,8 @@ func TestCustomHeadersHandler(t *testing.T) {
 			},
 		},
 		{
-			Match: []string{"given_name", "family_name", "preferred_username|Custom-Header"},
+			Match:         []string{"given_name", "family_name", "preferred_username|Custom-Header"},
+			ExcludeClaims: []string{"groups"},
 			Request: fakeRequest{
 				URI:      FakeAuthAllURL,
 				HasToken: true,
@@ -2058,14 +2061,16 @@ func TestCustomHeadersHandler(t *testing.T) {
 					"X-Auth-Family-Name": "Jayawardene",
 					"Custom-Header":      "rjayawardene",
 				},
-				ExpectedProxy: true,
-				ExpectedCode:  http.StatusOK,
+				ExpectedNoProxyHeaders: []string{"X-Auth-Groups"},
+				ExpectedProxy:          true,
+				ExpectedCode:           http.StatusOK,
 			},
 		},
 	}
 	for _, c := range requests {
 		cfg := newFakeKeycloakConfig()
 		cfg.AddClaims = c.Match
+		cfg.ExcludeClaims = c.ExcludeClaims
 		newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, []fakeRequest{c.Request})
 	}
 }
