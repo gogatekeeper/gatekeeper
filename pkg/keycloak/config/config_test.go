@@ -3453,3 +3453,55 @@ func TestIsEnableIDTokenClaimsValid(t *testing.T) {
 		)
 	}
 }
+
+func TestIsExcludeClaimsValid(t *testing.T) {
+	testCases := []struct {
+		Config *Config
+		Name   string
+		Valid  bool
+	}{
+		{
+			Name:   "ValidEmptyExcludeClaims",
+			Config: &Config{},
+			Valid:  true,
+		},
+		{
+			Name: "ValidExcludeClaimsWithAddClaims",
+			Config: &Config{
+				AddClaims:     []string{"some"},
+				ExcludeClaims: []string{"audience"},
+			},
+			Valid: true,
+		},
+		{
+			Name: "ValidCapitalizedExcludeClaims",
+			Config: &Config{
+				ExcludeClaims: []string{"Username"},
+			},
+			Valid: true,
+		},
+		{
+			Name: "InValidExcludeClaims",
+			Config: &Config{
+				ExcludeClaims: []string{"Nonvalid"},
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isExcludeClaimsValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}

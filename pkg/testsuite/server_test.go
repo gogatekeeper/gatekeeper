@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -2145,7 +2146,7 @@ func TestCustomHTTPMethod(t *testing.T) {
 				c.Resources = []*authorization.Resource{
 					{
 						URL:         "/public/*",
-						Methods:     utils.AllHTTPMethods,
+						Methods:     slices.Clone(utils.AllHTTPMethods),
 						WhiteListed: true,
 					},
 				}
@@ -2167,7 +2168,7 @@ func TestCustomHTTPMethod(t *testing.T) {
 				c.Resources = []*authorization.Resource{
 					{
 						URL:         "/public/*",
-						Methods:     utils.AllHTTPMethods,
+						Methods:     slices.Clone(utils.AllHTTPMethods),
 						WhiteListed: true,
 					},
 				}

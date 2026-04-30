@@ -1,9 +1,11 @@
 package constant
 
 import (
+	"strings"
 	"time"
 
 	"github.com/go-jose/go-jose/v4"
+	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 )
 
 type (
@@ -22,11 +24,12 @@ const (
 	Email       = ""
 	Description = "is a proxy using the keycloak service for auth and authorization"
 
+	XHeaderPrefix       = "X-Auth-"
 	AuthorizationHeader = "Authorization"
 	AuthorizationType   = "Bearer"
 	EnvPrefix           = "PROXY_"
 	HeaderUpgrade       = "Upgrade"
-	VersionHeader       = "X-Auth-Proxy-Version"
+	VersionHeader       = XHeaderPrefix + "Proxy-Version"
 	UMATicketHeader     = "WWW-Authenticate"
 
 	AuthorizationURL = "/authorize"
@@ -53,6 +56,7 @@ const (
 	// UMAHeader case is like this because go net package canonicalizes it
 	// to this form, see net package.
 	UMAHeader      = "X-Uma-Token"
+	TokenHeader    = XHeaderPrefix + "Token"
 	UnsecureScheme = "http"
 	SecureScheme   = "https"
 	AnyMethod      = "ANY"
@@ -134,6 +138,8 @@ const (
 	Bearer AuthScheme = "bearer"
 
 	NegateRegexChar = "!"
+
+	IdentityHeaderEncoding = "UTF-8"
 )
 
 //nolint:gochecknoglobals
@@ -141,3 +147,32 @@ var (
 	SignatureAlgs = [3]jose.SignatureAlgorithm{jose.RS256, jose.HS256, jose.HS512}
 	AuthSchemes   = []AuthScheme{Cookie, Bearer}
 )
+
+func GetBaseIdentityHeaderSet() map[string]func(user *models.UserContext) string {
+	return map[string]func(user *models.UserContext) string{
+		XHeaderPrefix + "Audience": func(user *models.UserContext) string {
+			return strings.Join(user.Audiences, ",")
+		},
+		XHeaderPrefix + "Email": func(user *models.UserContext) string {
+			return user.Email
+		},
+		XHeaderPrefix + "Expiresin": func(user *models.UserContext) string {
+			return user.ExpiresAt.String()
+		},
+		XHeaderPrefix + "Groups": func(user *models.UserContext) string {
+			return strings.Join(user.Groups, ",")
+		},
+		XHeaderPrefix + "Roles": func(user *models.UserContext) string {
+			return strings.Join(user.Roles, ",")
+		},
+		XHeaderPrefix + "Subject": func(user *models.UserContext) string {
+			return user.ID
+		},
+		XHeaderPrefix + "Userid": func(user *models.UserContext) string {
+			return user.Name
+		},
+		XHeaderPrefix + "Username": func(user *models.UserContext) string {
+			return user.Name
+		},
+	}
+}

@@ -259,4 +259,7 @@ var (
 	ErrCompressTokenAuthScheme = errors.New("cannot choose compress token auth scheme and " +
 		"have compress token disabled")
 	ErrInvalidCompressTokenAuthScheme = errors.New("invalid compress token auth scheme, valid are cookie, bearer")
+
+	ErrInvalidExcludeClaim = errors.New("you can only exclude one of base claims: " +
+		"audience, email, expiresin, groups, roles, subject, userid, username")
 )

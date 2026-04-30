@@ -856,6 +856,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		identityMiddleware := gmiddleware.IdentityHeadersMiddleware(
 			r.Log,
 			r.Config.AddClaims,
+			r.Config.ExcludeClaims,
 			r.Config.CookieAccessName,
 			r.Config.CookieRefreshName,
 			r.Config.NoProxy,

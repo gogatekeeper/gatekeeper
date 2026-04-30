@@ -28,7 +28,6 @@ const (
 	normalizeFlags purell.NormalizationFlags = purell.FlagRemoveDotSegments | purell.FlagRemoveDuplicateSlashes
 )
 
-// EntrypointMiddleware is custom filtering for incoming requests.
 func EntrypointMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
@@ -219,6 +218,7 @@ func MethodCheckMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 func IdentityHeadersMiddleware(
 	logger *zap.Logger,
 	custom []string,
+	excludeClaims []string,
 	cookieAccessName string,
 	cookieRefreshName string,
 	noProxy bool,
@@ -242,9 +242,11 @@ func IdentityHeadersMiddleware(
 		if len(xslices) > minSliceLength {
 			customClaims[val] = utils.ToHeader(xslices[1])
 		} else {
-			customClaims[val] = "X-Auth-" + utils.ToHeader(val)
+			customClaims[val] = utils.ToXHeader(val)
 		}
 	}
+
+	baseHeaderSet := getFilteredBaseIdentityHeaderSet(excludeClaims)
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
@@ -264,30 +266,23 @@ func IdentityHeadersMiddleware(
 			if scope.Identity != nil {
 				user := scope.Identity
 
-				const encoding = "UTF-8"
-				if enableHeaderEncoding {
-					headers.Set("X-Auth-Audience", mime.BEncoding.Encode(encoding, strings.Join(user.Audiences, ",")))
-					headers.Set("X-Auth-Email", mime.BEncoding.Encode(encoding, user.Email))
-					headers.Set("X-Auth-Expiresin", mime.BEncoding.Encode(encoding, user.ExpiresAt.String()))
-					headers.Set("X-Auth-Groups", mime.BEncoding.Encode(encoding, strings.Join(user.Groups, ",")))
-					headers.Set("X-Auth-Roles", mime.BEncoding.Encode(encoding, strings.Join(user.Roles, ",")))
-					headers.Set("X-Auth-Subject", mime.BEncoding.Encode(encoding, user.ID))
-					headers.Set("X-Auth-Userid", mime.BEncoding.Encode(encoding, user.Name))
-					headers.Set("X-Auth-Username", mime.BEncoding.Encode(encoding, user.Name))
-				} else {
-					headers.Set("X-Auth-Audience", strings.Join(user.Audiences, ","))
-					headers.Set("X-Auth-Email", user.Email)
-					headers.Set("X-Auth-Expiresin", user.ExpiresAt.String())
-					headers.Set("X-Auth-Groups", strings.Join(user.Groups, ","))
-					headers.Set("X-Auth-Roles", strings.Join(user.Roles, ","))
-					headers.Set("X-Auth-Subject", user.ID)
-					headers.Set("X-Auth-Userid", user.Name)
-					headers.Set("X-Auth-Username", user.Name)
+				for headerName, headerValFunc := range baseHeaderSet {
+					if enableHeaderEncoding {
+						headers.Set(
+							headerName,
+							mime.BEncoding.Encode(
+								constant.IdentityHeaderEncoding,
+								headerValFunc(user),
+							),
+						)
+					} else {
+						headers.Set(headerName, headerValFunc(user))
+					}
 				}
 
 				// should we add the token header?
 				if enableTokenHeader {
-					headers.Set("X-Auth-Token", user.RawToken)
+					headers.Set(constant.TokenHeader, user.RawToken)
 				}
 				// add the authorization header if requested
 				if enableAuthzHeader {
@@ -302,7 +297,7 @@ func IdentityHeadersMiddleware(
 					if claim, found := user.Claims[claim]; found {
 						val := fmt.Sprintf("%v", claim)
 						if enableHeaderEncoding {
-							val = mime.BEncoding.Encode(encoding, val)
+							val = mime.BEncoding.Encode(constant.IdentityHeaderEncoding, val)
 						}
 
 						headers.Set(header, val)
@@ -312,7 +307,7 @@ func IdentityHeadersMiddleware(
 						if claim, found := user.IDTokenClaims[claim]; found {
 							val := fmt.Sprintf("%v", claim)
 							if enableHeaderEncoding {
-								val = mime.BEncoding.Encode(encoding, val)
+								val = mime.BEncoding.Encode(constant.IdentityHeaderEncoding, val)
 							}
 
 							headers.Set(header, val)
@@ -323,7 +318,7 @@ func IdentityHeadersMiddleware(
 						if claim, found := user.UserInfoClaims[claim]; found {
 							val := fmt.Sprintf("%v", claim)
 							if enableHeaderEncoding {
-								val = mime.BEncoding.Encode(encoding, val)
+								val = mime.BEncoding.Encode(constant.IdentityHeaderEncoding, val)
 							}
 
 							headers.Set(header, val)
@@ -466,4 +461,16 @@ func ForwardAuthMiddleware(logger *zap.Logger, oAuthURI string) func(http.Handle
 			next.ServeHTTP(wrt, req)
 		})
 	}
+}
+
+func getFilteredBaseIdentityHeaderSet(excludeClaims []string) map[string]func(user *models.UserContext) string {
+	headerSet := constant.GetBaseIdentityHeaderSet()
+
+	if len(excludeClaims) > 0 {
+		for _, excludedClaim := range excludeClaims {
+			delete(headerSet, utils.ToXHeader(excludedClaim))
+		}
+	}
+
+	return headerSet
 }
