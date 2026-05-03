@@ -93,6 +93,7 @@ weight: 2
 |    \--enable-id-token-cookie                | enable id token cookie | false | PROXY_ENABLE_IDTOKEN_COOKIE
 |    \--match-claims value                    | keypair values for matching access token claims e.g. aud=myapp, iss=http://example.* | |
 |    \--add-claims value                      | extra claims from the token and inject into headers, e.g given_name -> X-Auth-Given-Name | |
+| 	 \--exclude-claims                        | do not add these claims as headers, can be one of: audience, email, expiresin, groups, roles, subject, userid, username | | 
 |    \--enable-uma-method-scope               | enables passing request method as 'method:GET' scope to keycloak for authorization | false | PROXY_ENABLE_UMA_METHOD_SCOPE
 |    \--tls-min-version                       | specify server minimal TLS version one of tlsv1.2,tlsv1.3 | | TLS_MIN_VERSION |
 |    \--tls-cert                              | path to the TLS certificate | tls-cert | | PROXY_TLS_CERTIFICATE

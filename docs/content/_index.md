@@ -486,7 +486,35 @@ You can protect also websocket servers with gatekeeper proxy. You must use stand
 There are additional considerations you need to take into account when protecting websocket backend. Browsers doesn't have built-in protection against CORS for websocket protocol like they have for HTTP. That means you need
 to consider enabling additional methods for verifying that browsers connect only to your backend and receives response only from your backend.
 For this we recommend to turn-on `--enable-encrypted-token` and `--encryption-key` options and also verify `Origin` header with headers matching, please
-refer to [Headers matching](#headers-matching).
+refer to [Headers matching](#headers-matching). Otherwise from gatekeeper perspective websocket connections don't
+need any special setup.
+
+## Server-side events
+
+With gatekeeper you can also protect servers with Server-Side events support. There is one thing which you need to
+know when setting up such setup. Gatekeeper uses two settings `--server-write-timeout` and `--server-idle-timeout`.
+These correspond to two settings present in golang http server implementation:
+
+```
+	// WriteTimeout is the maximum duration before timing out
+	// writes of the response. It is reset whenever a new
+	// request's header is read. Like ReadTimeout, it does not
+	// let Handlers make decisions on a per-request basis.
+	// A zero or negative value means there will be no timeout.
+	WriteTimeout time.Duration
+
+	// IdleTimeout is the maximum amount of time to wait for the
+	// next request when keep-alives are enabled. If zero, the value
+	// of ReadTimeout is used. If negative, or if zero and ReadTimeout
+	// is zero or negative, there is no timeout.
+	IdleTimeout time.Duration
+```
+
+From above settings is clear that during SSE there are no request header sent, thus WriteTimeout will be not
+reset during SSE events and thus it will be triggered. So in this case, if you don't want to client to have to
+reconnect you can disable WriteTimeout by setting `--server-write-timeout=-1s`. Similar situation will happen
+with `--server-idle-timeout`. Of course all this depends on how you want to handle client timeouts and situation
+where SSE server might go down and in this case you have to somehow handle non-working connections.
 
 ## HMAC Signature, signing and verification
 
@@ -748,6 +776,19 @@ To control the `Authorization` header use the
 `enable-authorization-header` YAML configuration or the
 `--enable-authorization-header` command line option. By default, this
 option is set to `true`.
+
+Sometimes you might want to exclude some of these base claims from headers sent to upstream, e.g. because
+they are big. You can do that with `--exclude-claims`:
+
+```yaml
+exclude-claims:
+- subject
+- email
+```
+
+```bash
+--exclude-claims=subject,email
+```
 
 ## Custom claim headers
 
