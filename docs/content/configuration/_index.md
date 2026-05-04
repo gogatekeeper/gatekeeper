@@ -44,6 +44,7 @@ weight: 2
 |    \--enable-self-signed-tls                | create self signed certificates for the proxy | false | PROXY_ENABLE_SELF_SIGNED_TLS
 |    \--self-signed-tls-hostnames value       | a list of hostnames to place on the self-signed certificate | |
 |    \--self-signed-tls-expiration value      | the expiration of the certificate before rotation | 3h0m0s | PROXY_SELF_SIGNED_TLS_EXPIRATION
+|    \--max-token-size                        | maximum size of token in bytes | 0 | PROXY_MAX_TOKEN_SIZE
 |    \--enable-request-id                     | indicates we should add a request id if none found | false | PROXY_ENABLE_REQUEST_ID |
 |    \--enable-logout-redirect                | indicates we should redirect to the identity provider for logging out | false | PROXY_ENABLE_LOGOUT_REDIRECT
 |    \--enable-default-deny                   | enables a default denial on all requests, requests with valid token are permitted, you have to explicitly say what is permitted | true | PROXY_ENABLE_DEFAULT_DENY

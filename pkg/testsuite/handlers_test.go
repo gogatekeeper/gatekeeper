@@ -637,6 +637,34 @@ func TestLogoutHandlerGood(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "TestLogoutWithoutRedirectAndWithoutAuth",
+			ProxySettings: func(c *config.Config) {
+				c.MaxTokenSize = 1500
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:          logoutURL,
+					HasToken:     true,
+					ExpectedCode: http.StatusOK,
+				},
+			},
+		},
+		{
+			Name: "TestLogoutWithEnabledLogoutRedirectAndWithAuth",
+			ProxySettings: func(c *config.Config) {
+				c.EnableLogoutRedirect = true
+				c.MaxTokenSize = 1500
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:              logoutURL,
+					HasToken:         true,
+					ExpectedCode:     http.StatusSeeOther,
+					ExpectedLocation: "http://127.0.0.1",
+				},
+			},
+		},
 	}
 
 	for _, testCase := range testCases {

@@ -263,4 +263,5 @@ var (
 
 	ErrInvalidExcludeClaim = errors.New("you can only exclude one of base claims: " +
 		"audience, email, expiresin, groups, roles, subject, userid, username")
+	ErrInvalidTokenMaxSize = errors.New("max token size must be greater than zero")
 )

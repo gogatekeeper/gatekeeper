@@ -3505,3 +3505,47 @@ func TestIsExcludeClaimsValid(t *testing.T) {
 		)
 	}
 }
+
+func TestIsMaxTokenSizeValid(t *testing.T) {
+	testCases := []struct {
+		Config *Config
+		Name   string
+		Valid  bool
+	}{
+		{
+			Name:   "ValidEmptyMaxTokenSize",
+			Config: &Config{},
+			Valid:  true,
+		},
+		{
+			Name: "ValidMaxTokenSize",
+			Config: &Config{
+				MaxTokenSize: 1000,
+			},
+			Valid: true,
+		},
+		{
+			Name: "InValidMaxTokenSize",
+			Config: &Config{
+				MaxTokenSize: -2,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isMaxTokenSizeValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}

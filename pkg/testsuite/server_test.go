@@ -1725,7 +1725,7 @@ func TestXForwarded(t *testing.T) {
 func TestTokenEncryption(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.EnableEncryptedToken = true
-	cfg.EncryptionKey = "US36S5kubc4BXbfzCIKTQcTzG6lvixVv"
+	cfg.EncryptionKey = TestEncryptionKey
 
 	testCases := []struct {
 		Name              string
@@ -2393,6 +2393,139 @@ func TestGraceTimeout(t *testing.T) {
 
 				proxy.RunTests(t, requests)
 				waitShutdown.Wait()
+			},
+		)
+	}
+}
+
+func TestMaxTokenSize(t *testing.T) {
+	cfg := newFakeKeycloakConfig()
+
+	testCases := []struct {
+		Name              string
+		ProxySettings     func(c *config.Config)
+		ExecutionSettings []fakeRequest
+	}{
+		{
+			Name: "TestMaxTokenSizeEnoughNoRedirects",
+			ProxySettings: func(conf *config.Config) {
+				conf.NoRedirects = true
+				conf.MaxTokenSize = 1500
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAdminTestURL,
+					HasToken:      true,
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+				},
+			},
+		},
+		{
+			Name: "TestMaxTokenSizeEnoughRedirects",
+			ProxySettings: func(conf *config.Config) {
+				conf.NoRedirects = false
+				conf.MaxTokenSize = 1500
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAdminTestURL,
+					HasLogin:      true,
+					ExpectedProxy: true,
+					Redirects:     true,
+					ExpectedProxyHeaders: map[string]string{
+						"X-Auth-Email":               "gambol99@gmail.com",
+						"X-Auth-Userid":              "rjayawardene",
+						"X-Auth-Username":            "rjayawardene",
+						constant.HeaderXForwardedFor: "127.0.0.1",
+					},
+					ExpectedCode: http.StatusOK,
+				},
+			},
+		},
+		{
+			Name: "TestMaxTokenSizeLimitNoRedirects",
+			ProxySettings: func(conf *config.Config) {
+				conf.NoRedirects = true
+				conf.MaxTokenSize = 1000
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAdminTestURL,
+					HasToken:      true,
+					ExpectedProxy: false,
+					ExpectedCode:  http.StatusUnauthorized,
+				},
+			},
+		},
+		{
+			Name: "TestMaxTokenSizeLimitRedirects",
+			ProxySettings: func(conf *config.Config) {
+				conf.NoRedirects = false
+				conf.MaxTokenSize = 1000
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAdminTestURL,
+					HasLogin:      true,
+					ExpectedProxy: false,
+					Redirects:     true,
+					ExpectedCode:  http.StatusSeeOther,
+				},
+			},
+		},
+		{
+			Name: "TestMaxTokenSizeEnoughRedirectsEncrypted",
+			ProxySettings: func(conf *config.Config) {
+				conf.NoRedirects = false
+				conf.MaxTokenSize = 2000
+				conf.EnableEncryptedToken = true
+				conf.EncryptionKey = TestEncryptionKey
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAdminTestURL,
+					HasLogin:      true,
+					ExpectedProxy: true,
+					Redirects:     true,
+					ExpectedProxyHeaders: map[string]string{
+						"X-Auth-Email":               "gambol99@gmail.com",
+						"X-Auth-Userid":              "rjayawardene",
+						"X-Auth-Username":            "rjayawardene",
+						constant.HeaderXForwardedFor: "127.0.0.1",
+					},
+					ExpectedCode: http.StatusOK,
+				},
+			},
+		},
+		{
+			Name: "TestMaxTokenSizeLimitRedirects",
+			ProxySettings: func(conf *config.Config) {
+				conf.NoRedirects = false
+				conf.MaxTokenSize = 1000
+				conf.EnableEncryptedToken = true
+				conf.EncryptionKey = TestEncryptionKey
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAdminTestURL,
+					HasLogin:      true,
+					ExpectedProxy: false,
+					Redirects:     true,
+					ExpectedCode:  http.StatusSeeOther,
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		cfg := *cfg
+
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				testCase.ProxySettings(&cfg)
+				newFakeProxy(&cfg, &fakeAuthConfig{}).RunTests(t, testCase.ExecutionSettings)
 			},
 		)
 	}
