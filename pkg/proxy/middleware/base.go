@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"mime"
 	"net/http"
 	"net/url"
@@ -197,7 +198,7 @@ func ProxyDenyMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 
 func MethodCheckMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		logger.Info("enabling the method check middleware")
+		logger.Info("enabling method check middleware")
 
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
 			if !utils.IsValidHTTPMethod(req.Method) {
@@ -473,4 +474,51 @@ func getFilteredBaseIdentityHeaderSet(excludeClaims []string) map[string]func(us
 	}
 
 	return headerSet
+}
+
+func MaxBodySizeMiddleware(
+	logger *zap.Logger,
+	maxBodySize int,
+) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		logger.Info("enabling max body size middleware")
+
+		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
+			maxReader := http.MaxBytesReader(wrt, req.Body, int64(maxBodySize))
+			contentLength := req.Header.Get("Content-Length")
+
+			if contentLength != "" {
+				contentSize, err := strconv.ParseUint(contentLength, 10, 32)
+				if err != nil {
+					err = errors.Join(apperrors.ErrParseContentLength, err)
+
+					logger.Error(
+						err.Error(),
+						zap.String("length", contentLength),
+					)
+
+					wrt.WriteHeader(http.StatusInternalServerError)
+
+					return
+				}
+
+				if int(contentSize) >= maxBodySize {
+					logger.Warn("request body too large")
+					wrt.WriteHeader(http.StatusRequestEntityTooLarge)
+
+					return
+				}
+			}
+
+			_, err := io.ReadAll(maxReader)
+			if err != nil {
+				logger.Warn("request body too large")
+				wrt.WriteHeader(http.StatusRequestEntityTooLarge)
+
+				return
+			}
+
+			next.ServeHTTP(wrt, req)
+		})
+	}
 }

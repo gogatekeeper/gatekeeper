@@ -2531,6 +2531,135 @@ func TestMaxTokenSize(t *testing.T) {
 	}
 }
 
+func TestMaxBodySize(t *testing.T) {
+	cfg := newFakeKeycloakConfig()
+
+	testCases := []struct {
+		Name              string
+		ProxySettings     func(c *config.Config)
+		ExecutionSettings []fakeRequest
+	}{
+		{
+			Name: "TestMaxBodySizeEnoughNoRedirects",
+			ProxySettings: func(conf *config.Config) {
+				conf.NoRedirects = true
+				conf.MaxBodySize = 1500
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAdminTestURL,
+					HasToken:      true,
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					Method:        http.MethodPost,
+					FormValues: map[string]string{
+						"password": "test",
+						"username": "test",
+					},
+				},
+			},
+		},
+		{
+			Name: "TestMaxBodySizeEnoughRedirects",
+			ProxySettings: func(conf *config.Config) {
+				conf.NoRedirects = false
+				conf.MaxBodySize = 1500
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAdminTestURL,
+					HasLogin:      true,
+					ExpectedProxy: true,
+					Redirects:     true,
+					ExpectedProxyHeaders: map[string]string{
+						"X-Auth-Email":               "gambol99@gmail.com",
+						"X-Auth-Userid":              "rjayawardene",
+						"X-Auth-Username":            "rjayawardene",
+						constant.HeaderXForwardedFor: "127.0.0.1",
+					},
+					ExpectedCode: http.StatusOK,
+				},
+				{
+					URI:           FakeAdminTestURL,
+					HasToken:      true,
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					Method:        http.MethodPost,
+					FormValues: map[string]string{
+						"password": "test",
+						"username": "test",
+					},
+				},
+			},
+		},
+		{
+			Name: "TestMaxBodySizeNoRedirects",
+			ProxySettings: func(conf *config.Config) {
+				conf.NoRedirects = true
+				conf.MaxBodySize = 10
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAdminTestURL,
+					HasToken:      true,
+					ExpectedProxy: false,
+					ExpectedCode:  http.StatusRequestEntityTooLarge,
+					Method:        http.MethodPost,
+					FormValues: map[string]string{
+						"password": "test",
+						"username": "test",
+					},
+				},
+			},
+		},
+		{
+			Name: "TestMaxBodySizeRedirects",
+			ProxySettings: func(conf *config.Config) {
+				conf.NoRedirects = false
+				conf.MaxBodySize = 10
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAdminTestURL,
+					HasLogin:      true,
+					ExpectedProxy: true,
+					Redirects:     true,
+					ExpectedProxyHeaders: map[string]string{
+						"X-Auth-Email":               "gambol99@gmail.com",
+						"X-Auth-Userid":              "rjayawardene",
+						"X-Auth-Username":            "rjayawardene",
+						constant.HeaderXForwardedFor: "127.0.0.1",
+					},
+					ExpectedCode: http.StatusOK,
+				},
+				{
+					URI:           FakeAdminTestURL,
+					HasToken:      true,
+					ExpectedProxy: false,
+					ExpectedCode:  http.StatusRequestEntityTooLarge,
+					Method:        http.MethodPost,
+					FormValues: map[string]string{
+						"password": "test",
+						"username": "test",
+					},
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		cfg := *cfg
+
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				testCase.ProxySettings(&cfg)
+				newFakeProxy(&cfg, &fakeAuthConfig{}).RunTests(t, testCase.ExecutionSettings)
+			},
+		)
+	}
+}
+
 // commented out because of see https://github.com/golang/go/issues/51416
 // func TestUpstreamProxy(t *testing.T) {
 // 	errChan := make(chan error)

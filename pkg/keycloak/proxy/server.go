@@ -315,6 +315,10 @@ func (r *OauthProxy) useDefaultStack(
 		engine.MethodNotAllowed(handlers.EmptyHandler)
 	}
 
+	if r.Config.MaxBodySize > 0 {
+		engine.Use(gmiddleware.MaxBodySizeMiddleware(r.Log, r.Config.MaxBodySize))
+	}
+
 	engine.Use(middleware.Recoverer)
 
 	// @check if the request tracking id middleware is enabled
