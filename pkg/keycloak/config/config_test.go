@@ -3549,3 +3549,47 @@ func TestIsMaxTokenSizeValid(t *testing.T) {
 		)
 	}
 }
+
+func TestIsMaxBodySizeValid(t *testing.T) {
+	testCases := []struct {
+		Config *Config
+		Name   string
+		Valid  bool
+	}{
+		{
+			Name:   "ValidEmptyMaxBodySize",
+			Config: &Config{},
+			Valid:  true,
+		},
+		{
+			Name: "ValidMaxBodySize",
+			Config: &Config{
+				MaxBodySize: 1000,
+			},
+			Valid: true,
+		},
+		{
+			Name: "InValidMaxBodySize",
+			Config: &Config{
+				MaxBodySize: -2,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isMaxBodySizeValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}

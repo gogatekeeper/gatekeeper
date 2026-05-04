@@ -116,6 +116,8 @@ var (
 
 	ErrConnectionUpgrade = errors.New("connection upgrade failed")
 
+	ErrParseContentLength = errors.New("failed to parse content-length header")
+
 	// config errors.
 
 	ErrNoRedirectsWithEnableRefreshTokensInvalid = errors.New("no-redirects true cannot be enabled with refresh tokens")
@@ -264,4 +266,5 @@ var (
 	ErrInvalidExcludeClaim = errors.New("you can only exclude one of base claims: " +
 		"audience, email, expiresin, groups, roles, subject, userid, username")
 	ErrInvalidTokenMaxSize = errors.New("max token size must be greater than zero")
+	ErrInvalidBodyMaxSize  = errors.New("max body size must be greater than zero")
 )

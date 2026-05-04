@@ -227,12 +227,12 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 			client.SetCookies(reqCfg.Cookies)
 		}
 
-		if len(reqCfg.Headers) > 0 {
-			client.SetHeaders(reqCfg.Headers)
-		}
-
 		if reqCfg.FormValues != nil {
 			client.SetFormData(reqCfg.FormValues)
+		}
+
+		if len(reqCfg.Headers) > 0 {
+			client.SetHeaders(reqCfg.Headers)
 		}
 
 		if reqCfg.HasToken {

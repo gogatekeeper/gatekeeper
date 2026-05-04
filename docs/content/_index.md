@@ -71,6 +71,8 @@ enable-pkce: true
 enable-refresh-tokens: true
 # maximum token size in bytes
 max-token-size: 2000
+# maximum body size in bytes
+max-body-size: 3000
 # you can set up custom templates for forbidden/error/sign-in pages, gatekeeper
 # also provides these already builtin (but they are not set by default)
 forbidden-page: templates/forbidden.html.tmpl

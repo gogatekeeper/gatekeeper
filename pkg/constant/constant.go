@@ -94,6 +94,7 @@ const (
 	IdpClientIDURI     = "/clients"
 
 	CompressTokenPoolSize   = 100
+	MaxBodyPoolSize         = 100
 	InvalidCookieDuration   = -10 * time.Hour
 	PKCECodeVerifierLength  = 96
 	PATRefreshInPercent     = 0.85
