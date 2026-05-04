@@ -146,6 +146,7 @@ func GetIdentity(
 	enableCompressToken bool,
 	compressTokenOnlyAuthScheme string,
 	encKey string,
+	maxTokenSize int,
 ) func(req *http.Request, tokenCookie string, tokenHeader string) (string, bool, error) {
 	return func(req *http.Request, tokenCookie string, tokenHeader string) (string, bool, error) {
 		var isBearer bool
@@ -161,6 +162,10 @@ func GetIdentity(
 		)
 		if err != nil {
 			return "", isBearer, err
+		}
+
+		if maxTokenSize > 0 && 0 < len(token) && len(token) > maxTokenSize {
+			return "", isBearer, apperrors.ErrTokenMaxSize
 		}
 
 		if compressTokenOnlyAuthScheme != "" {

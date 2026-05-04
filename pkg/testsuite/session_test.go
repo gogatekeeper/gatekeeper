@@ -22,6 +22,7 @@ import (
 
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
+	"github.com/gogatekeeper/gatekeeper/pkg/encryption"
 	"github.com/gogatekeeper/gatekeeper/pkg/keycloak/config"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/session"
@@ -30,7 +31,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//nolint:cyclop
+//nolint:cyclop,funlen
 func TestGetIndentity(t *testing.T) {
 	testCases := []struct {
 		Request       func(token string) *http.Request
@@ -48,6 +49,57 @@ func TestGetIndentity(t *testing.T) {
 			Ok: true,
 			ProxySettings: func(c *config.Config) {
 				c.SkipAuthorizationHeaderIdentity = false
+				c.MaxTokenSize = 1500
+			},
+		},
+		{
+			Request: func(token string) *http.Request {
+				encrypted, _ := encryption.EncodeText(token, TestEncryptionKey)
+
+				return &http.Request{
+					Header: http.Header{
+						constant.AuthorizationHeader: []string{"Bearer " + encrypted},
+					},
+				}
+			},
+			Ok: true,
+			ProxySettings: func(c *config.Config) {
+				c.SkipAuthorizationHeaderIdentity = false
+				c.EnableEncryptedToken = true
+				c.EncryptionKey = TestEncryptionKey
+				c.MaxTokenSize = 2000
+			},
+		},
+		{
+			Request: func(token string) *http.Request {
+				encrypted, _ := encryption.EncodeText(token, TestEncryptionKey)
+
+				return &http.Request{
+					Header: http.Header{
+						constant.AuthorizationHeader: []string{"Bearer " + encrypted},
+					},
+				}
+			},
+			Ok: false,
+			ProxySettings: func(c *config.Config) {
+				c.SkipAuthorizationHeaderIdentity = false
+				c.EnableEncryptedToken = true
+				c.EncryptionKey = TestEncryptionKey
+				c.MaxTokenSize = 1500
+			},
+		},
+		{
+			Request: func(token string) *http.Request {
+				return &http.Request{
+					Header: http.Header{
+						constant.AuthorizationHeader: []string{"Bearer " + token},
+					},
+				}
+			},
+			Ok: false,
+			ProxySettings: func(c *config.Config) {
+				c.SkipAuthorizationHeaderIdentity = false
+				c.MaxTokenSize = 100
 			},
 		},
 		{
@@ -172,6 +224,7 @@ func TestGetIndentity(t *testing.T) {
 			cfg.EnableCompressToken,
 			cfg.CompressTokenOnlyAuthScheme,
 			cfg.EncryptionKey,
+			cfg.MaxTokenSize,
 		)
 
 		var rawToken string

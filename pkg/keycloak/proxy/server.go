@@ -453,6 +453,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.EnableCompressToken,
 		r.Config.CompressTokenOnlyAuthScheme,
 		r.Config.EncryptionKey,
+		r.Config.MaxTokenSize,
 	)
 
 	getRedirectionURL := handlers.GetRedirectionURL(

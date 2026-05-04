@@ -140,6 +140,7 @@ type Config struct {
 	ServerWriteTimeout                 time.Duration             `env:"SERVER_WRITE_TIMEOUT" json:"server-write-timeout,omitempty" usage:"the server write timeout on the http server" yaml:"server-write-timeout"`
 	ServerIdleTimeout                  time.Duration             `env:"SERVER_IDLE_TIMEOUT" json:"server-idle-timeout,omitempty" usage:"the server idle timeout on the http server" yaml:"server-idle-timeout"`
 	SelfSignedTLSExpiration            time.Duration             `env:"SELF_SIGNED_TLS_EXPIRATION" json:"self-signed-tls-expiration,omitempty" usage:"the expiration of the certificate before rotation" yaml:"self-signed-tls-expiration"`
+	MaxTokenSize                       int                       `env:"MAX_TOKEN_SIZE" json:"max-token-size,omitempty" usage:"maximum size of token in bytes" yaml:"max-token-size"`
 	OpenIDProviderRetryCount           int                       `env:"OPENID_PROVIDER_RETRY_COUNT" json:"openid-provider-retry-count,omitempty" usage:"number of retries for retrieving openid configuration" yaml:"openid-provider-retry-count"`
 	OpenIDProviderTimeout              time.Duration             `env:"OPENID_PROVIDER_TIMEOUT" json:"openid-provider-timeout,omitempty" usage:"timeout for openid configuration on .well-known/openid-configuration" yaml:"openid-provider-timeout"`
 	EnableProfiling                    bool                      `env:"ENABLE_PROFILING" json:"enable-profiling" usage:"switching on the golang profiling via pprof on /debug/pprof, /debug/pprof/heap etc" yaml:"enable-profiling"`
@@ -675,6 +676,7 @@ func (r *Config) isReverseProxySettingsValid() error {
 			r.isEnableLogoutAuthValid,
 			r.isEnableIDTokenClaimsValid,
 			r.isExcludeClaimsValid,
+			r.isMaxTokenSizeValid,
 		}
 
 		for _, validationFunc := range validationRegistry {
@@ -1215,6 +1217,14 @@ func (r *Config) isExcludeClaimsValid() error {
 				return apperrors.ErrInvalidExcludeClaim
 			}
 		}
+	}
+
+	return nil
+}
+
+func (r *Config) isMaxTokenSizeValid() error {
+	if r.MaxTokenSize < 0 {
+		return apperrors.ErrInvalidTokenMaxSize
 	}
 
 	return nil
