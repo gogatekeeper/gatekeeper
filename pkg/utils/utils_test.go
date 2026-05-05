@@ -18,6 +18,7 @@ limitations under the License.
 package utils_test
 
 import (
+	"bytes"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -539,4 +540,15 @@ func TestBufferPool(t *testing.T) {
 	assert.Equal(t, totalTextLen, resultLen, "Expected result len %d, actual %s", totalTextLen, resultLen)
 	assert.Equal(t, int32(1), bufPool.Capacity(),
 		"Expected buffer pool size %d, actual %d", 1, 1)
+}
+
+func BenchmarkMaxSize(bench *testing.B) {
+	data, err := utils.GetRandomString(1000000)
+	require.NoError(bench, err, "generating string data should not fail")
+
+	reader := bytes.NewReader([]byte(data))
+
+	for bench.Loop() {
+		_ = utils.CheckMaxSize(reader, 900)
+	}
 }

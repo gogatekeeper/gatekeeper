@@ -1,13 +1,11 @@
 package testsuite_test
 
 import (
-	"crypto/rand"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -22,6 +20,7 @@ import (
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/session"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/grokify/go-pkce"
 	"github.com/jochasinga/relay"
 )
@@ -507,7 +506,7 @@ func (r *fakeAuthServer) authHandler(wrt http.ResponseWriter, req *http.Request)
 		state = "/"
 	}
 
-	randString, err := getRandomString(OAuthCodeLength)
+	randString, err := utils.GetRandomString(OAuthCodeLength)
 	if err != nil {
 		wrt.WriteHeader(http.StatusInternalServerError)
 		return
@@ -740,22 +739,6 @@ func (r *fakeAuthServer) tokenHandler(writer http.ResponseWriter, req *http.Requ
 	default:
 		writer.WriteHeader(http.StatusBadRequest)
 	}
-}
-
-func getRandomString(n int) (string, error) {
-	letterRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-	runes := make([]rune, n)
-	for idx := range runes {
-		num, err := rand.Int(rand.Reader, big.NewInt(int64(n)))
-		if err != nil {
-			return "", err
-		}
-
-		runes[idx] = letterRunes[num.Int64()]
-	}
-
-	return string(runes), nil
 }
 
 func renderJSON(code int, wrt http.ResponseWriter, data any) {

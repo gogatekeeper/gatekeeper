@@ -116,7 +116,11 @@ var (
 
 	ErrConnectionUpgrade = errors.New("connection upgrade failed")
 
-	ErrParseContentLength = errors.New("failed to parse content-length header")
+	ErrParseContentLength              = errors.New("failed to parse content-length header")
+	ErrEmptyContentLengthAndTransferer = errors.New("both content-length and transfer-encoding are empty")
+	ErrBothContentLengthAndTransfer    = errors.New("only one of content-length or transfer-encoding " +
+		"must be specified not both")
+	ErrContentSize = errors.New("content greater then maximum size")
 
 	// config errors.
 

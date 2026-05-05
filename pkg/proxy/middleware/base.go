@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"mime"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -476,6 +476,7 @@ func getFilteredBaseIdentityHeaderSet(excludeClaims []string) map[string]func(us
 	return headerSet
 }
 
+//nolint:cyclop
 func MaxBodySizeMiddleware(
 	logger *zap.Logger,
 	maxBodySize int,
@@ -483,9 +484,30 @@ func MaxBodySizeMiddleware(
 	return func(next http.Handler) http.Handler {
 		logger.Info("enabling max body size middleware")
 
+		bodyMethods := []string{http.MethodPatch, http.MethodPost, http.MethodPut}
+
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
-			maxReader := http.MaxBytesReader(wrt, req.Body, int64(maxBodySize))
 			contentLength := req.Header.Get("Content-Length")
+			transferEncoding := req.Header.Get("Transfer-Encoding")
+
+			if contentLength == "" && transferEncoding == "" && slices.Contains(bodyMethods, req.Method) {
+				logger.Error(apperrors.ErrEmptyContentLengthAndTransferer.Error())
+				wrt.WriteHeader(http.StatusBadRequest)
+
+				return
+			}
+
+			if contentLength != "" && transferEncoding != "" {
+				logger.Error(
+					apperrors.ErrBothContentLengthAndTransfer.Error(),
+					zap.String("content-length", contentLength),
+					zap.String("transfer-encoding", transferEncoding),
+				)
+
+				wrt.WriteHeader(http.StatusBadRequest)
+
+				return
+			}
 
 			if contentLength != "" {
 				contentSize, err := strconv.ParseUint(contentLength, 10, 32)
@@ -510,10 +532,17 @@ func MaxBodySizeMiddleware(
 				}
 			}
 
-			_, err := io.ReadAll(maxReader)
+			err := utils.CheckMaxSize(req.Body, maxBodySize)
 			if err != nil {
-				logger.Warn("request body too large")
-				wrt.WriteHeader(http.StatusRequestEntityTooLarge)
+				req.Body.Close()
+
+				if errors.Is(err, apperrors.ErrContentSize) {
+					logger.Warn("request body too large")
+					wrt.WriteHeader(http.StatusRequestEntityTooLarge)
+				}
+
+				logger.Error(err.Error())
+				wrt.WriteHeader(http.StatusInternalServerError)
 
 				return
 			}
