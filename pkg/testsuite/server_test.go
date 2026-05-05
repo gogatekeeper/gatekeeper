@@ -2642,6 +2642,9 @@ func TestMaxBodySize(t *testing.T) {
 						"password": "test",
 						"username": "test",
 					},
+					ExpectedContent: func(body string, _ int) {
+						assert.Empty(t, body)
+					},
 				},
 			},
 		},

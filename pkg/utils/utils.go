@@ -19,7 +19,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/hmac"
-	cryptorand "crypto/rand"
+	"crypto/rand"
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/hex"
@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"math/big"
 	"net"
 	"net/http"
 	"net/url"
@@ -158,7 +159,7 @@ func TryDialEndpoint(location *url.URL) (net.Conn, error) {
 		return net.Dial("tcp", dialAddress)
 	default:
 		return tls.Dial("tcp", dialAddress, &tls.Config{
-			Rand: cryptorand.Reader,
+			Rand: rand.Reader,
 			//nolint:gosec
 			InsecureSkipVerify: true,
 		})
@@ -699,4 +700,54 @@ func (limPool *LimitedBufferPool) Put(buf *bytes.Buffer) {
 
 func (limPool *LimitedBufferPool) Capacity() int32 {
 	return atomic.LoadInt32(&limPool.count)
+}
+
+func CheckMaxSize(reader io.Reader, maxSize int) error {
+	startSize := 512
+	buf := make([]byte, 0, startSize)
+	finalSize := 0
+	nextGrowBy := 256
+	expFactor := 2
+
+	for {
+		n, err := reader.Read(buf[0:cap(buf)])
+		finalSize += n
+
+		if err != nil {
+			if !errors.Is(err, io.EOF) {
+				return err
+			}
+
+			if finalSize >= maxSize {
+				return apperrors.ErrContentSize
+			}
+
+			return nil
+		}
+
+		if finalSize >= maxSize {
+			return apperrors.ErrContentSize
+		}
+
+		if cap(buf)-len(buf) < cap(buf)/16 {
+			buf = append([]byte(nil), make([]byte, nextGrowBy)...)[:0]
+			nextGrowBy += nextGrowBy / expFactor
+		}
+	}
+}
+
+func GetRandomString(n int) (string, error) {
+	letterRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+	runes := make([]rune, n)
+	for idx := range runes {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letterRunes))))
+		if err != nil {
+			return "", err
+		}
+
+		runes[idx] = letterRunes[num.Int64()]
+	}
+
+	return string(runes), nil
 }
