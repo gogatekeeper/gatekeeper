@@ -2560,6 +2560,22 @@ func TestMaxBodySize(t *testing.T) {
 			},
 		},
 		{
+			Name: "TestMaxBodySizeEnoughNoRedirectsEmptyPOST",
+			ProxySettings: func(conf *config.Config) {
+				conf.NoRedirects = true
+				conf.MaxBodySize = 1500
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAdminTestURL,
+					HasToken:      true,
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					Method:        http.MethodPost,
+				},
+			},
+		},
+		{
 			Name: "TestMaxBodySizeEnoughRedirects",
 			ProxySettings: func(conf *config.Config) {
 				conf.NoRedirects = false

@@ -227,14 +227,6 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 			client.SetCookies(reqCfg.Cookies)
 		}
 
-		if reqCfg.FormValues != nil {
-			client.SetFormData(reqCfg.FormValues)
-		}
-
-		if len(reqCfg.Headers) > 0 {
-			client.SetHeaders(reqCfg.Headers)
-		}
-
 		if reqCfg.HasToken {
 			token := NewTestToken(f.idp.getLocation())
 
@@ -277,6 +269,14 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 		}
 
 		request := client.R()
+
+		if len(reqCfg.Headers) > 0 {
+			request.SetHeaders(reqCfg.Headers)
+		}
+
+		if reqCfg.FormValues != nil {
+			request.SetFormData(reqCfg.FormValues)
+		}
 
 		if reqCfg.ExpectedProxy {
 			request.SetResult(&upstream)
