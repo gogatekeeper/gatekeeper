@@ -484,7 +484,7 @@ func MaxBodySizeMiddleware(
 	return func(next http.Handler) http.Handler {
 		logger.Info("enabling max body size middleware")
 
-		bodyMethods := []string{http.MethodPatch, http.MethodPost, http.MethodPut}
+		bodyMethods := []string{http.MethodPost}
 
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
 			contentLength := req.Header.Get("Content-Length")
