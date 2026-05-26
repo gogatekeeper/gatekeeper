@@ -142,6 +142,7 @@ type Config struct {
 	SelfSignedTLSExpiration            time.Duration             `env:"SELF_SIGNED_TLS_EXPIRATION" json:"self-signed-tls-expiration,omitempty" usage:"the expiration of the certificate before rotation" yaml:"self-signed-tls-expiration"`
 	MaxTokenSize                       int                       `env:"MAX_TOKEN_SIZE" json:"max-token-size,omitempty" usage:"maximum size of token in bytes" yaml:"max-token-size"`
 	MaxBodySize                        int                       `env:"MAX_BODY_SIZE" json:"max-body-size,omitempty" usage:"maximum body size in bytes" yaml:"max-body-size"`
+	MaxHeaderSize                      int                       `env:"MAX_HEADER_SIZE" json:"max-header-size,omitempty" usage:"maximum total headers size in bytes" yaml:"max-header-size"`
 	OpenIDProviderRetryCount           int                       `env:"OPENID_PROVIDER_RETRY_COUNT" json:"openid-provider-retry-count,omitempty" usage:"number of retries for retrieving openid configuration" yaml:"openid-provider-retry-count"`
 	OpenIDProviderTimeout              time.Duration             `env:"OPENID_PROVIDER_TIMEOUT" json:"openid-provider-timeout,omitempty" usage:"timeout for openid configuration on .well-known/openid-configuration" yaml:"openid-provider-timeout"`
 	EnableProfiling                    bool                      `env:"ENABLE_PROFILING" json:"enable-profiling" usage:"switching on the golang profiling via pprof on /debug/pprof, /debug/pprof/heap etc" yaml:"enable-profiling"`
@@ -260,6 +261,7 @@ func NewDefaultConfig() *Config {
 		ServerIdleTimeout:                constant.DefaultServerIdleTimeout,
 		ServerReadTimeout:                constant.DefaultServerReadTimeout,
 		ServerWriteTimeout:               constant.DefaultServerWriteTimeout,
+		MaxHeaderSize:                    constant.DefaultMaxHeaderSize,
 		SkipOpenIDProviderTLSVerify:      false,
 		SkipUpstreamTLSVerify:            false,
 		SkipAccessTokenIssuerCheck:       true,

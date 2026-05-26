@@ -114,6 +114,7 @@ const (
 	DefaultServerIdleTimeout             = 120 * time.Second
 	DefaultServerReadTimeout             = 10 * time.Second
 	DefaultServerWriteTimeout            = 10 * time.Second
+	DefaultMaxHeaderSize                 = 1 << 20
 	DefaultUpstreamExpectContinueTimeout = 10 * time.Second
 	DefaultUpstreamKeepaliveTimeout      = 10 * time.Second
 	DefaultUpstreamResponseHeaderTimeout = 10 * time.Second
