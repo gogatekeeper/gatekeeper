@@ -1194,11 +1194,12 @@ func (r *OauthProxy) Run() (context.Context, error) {
 
 	// step: create the main http(s) server
 	server := &http.Server{
-		Addr:         r.Config.Listen,
-		Handler:      r.Router,
-		ReadTimeout:  r.Config.ServerReadTimeout,
-		WriteTimeout: r.Config.ServerWriteTimeout,
-		IdleTimeout:  r.Config.ServerIdleTimeout,
+		Addr:           r.Config.Listen,
+		Handler:        r.Router,
+		ReadTimeout:    r.Config.ServerReadTimeout,
+		WriteTimeout:   r.Config.ServerWriteTimeout,
+		IdleTimeout:    r.Config.ServerIdleTimeout,
+		MaxHeaderBytes: r.Config.MaxHeaderSize,
 	}
 
 	r.Server = server
@@ -1264,11 +1265,12 @@ func (r *OauthProxy) Run() (context.Context, error) {
 		}
 
 		httpsvc := &http.Server{
-			Addr:         r.Config.ListenHTTP,
-			Handler:      r.Router,
-			ReadTimeout:  r.Config.ServerReadTimeout,
-			WriteTimeout: r.Config.ServerWriteTimeout,
-			IdleTimeout:  r.Config.ServerIdleTimeout,
+			Addr:           r.Config.ListenHTTP,
+			Handler:        r.Router,
+			ReadTimeout:    r.Config.ServerReadTimeout,
+			WriteTimeout:   r.Config.ServerWriteTimeout,
+			IdleTimeout:    r.Config.ServerIdleTimeout,
+			MaxHeaderBytes: r.Config.MaxHeaderSize,
 		}
 
 		r.HTTPServer = httpsvc
@@ -1329,11 +1331,12 @@ func (r *OauthProxy) Run() (context.Context, error) {
 		}
 
 		adminsvc := &http.Server{
-			Addr:         r.Config.ListenAdmin,
-			Handler:      r.adminRouter,
-			ReadTimeout:  r.Config.ServerReadTimeout,
-			WriteTimeout: r.Config.ServerWriteTimeout,
-			IdleTimeout:  r.Config.ServerIdleTimeout,
+			Addr:           r.Config.ListenAdmin,
+			Handler:        r.adminRouter,
+			ReadTimeout:    r.Config.ServerReadTimeout,
+			WriteTimeout:   r.Config.ServerWriteTimeout,
+			IdleTimeout:    r.Config.ServerIdleTimeout,
+			MaxHeaderBytes: r.Config.MaxHeaderSize,
 		}
 
 		r.AdminServer = adminsvc
