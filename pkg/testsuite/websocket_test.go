@@ -52,8 +52,8 @@ func TestWebSocket(t *testing.T) {
 	}
 	cfg.Resources = append(cfg.Resources, res)
 
-	_, proxyServer, proxyURL := newTestProxyService(cfg)
-	defer proxyServer.Close()
+	proxy := newFakeProxy(cfg, &fakeAuthConfig{})
+	proxyURL := proxy.getServiceURL()
 
 	resp, _, err := makeTestCodeFlowLogin(proxyURL+FakeAdminURL, false)
 	require.NoError(t, err)

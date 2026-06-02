@@ -153,16 +153,12 @@ func ContainsSubString(value string, list []string) bool {
 }
 
 // TryDialEndpoint dials the upstream endpoint via plain HTTP.
-func TryDialEndpoint(location *url.URL) (net.Conn, error) {
+func TryDialEndpoint(location *url.URL, tlsConfig *tls.Config) (net.Conn, error) {
 	switch dialAddress := DialAddress(location); location.Scheme {
 	case constant.UnsecureScheme:
 		return net.Dial("tcp", dialAddress)
 	default:
-		return tls.Dial("tcp", dialAddress, &tls.Config{
-			Rand: rand.Reader,
-			//nolint:gosec
-			InsecureSkipVerify: true,
-		})
+		return tls.Dial("tcp", dialAddress, tlsConfig)
 	}
 }
 
@@ -177,8 +173,13 @@ func TransferBytes(src io.Reader, dest io.Writer, wg *sync.WaitGroup) (int64, er
 }
 
 // TryUpdateConnection attempt to upgrade the connection to a http pdy stream.
-func TryUpdateConnection(req *http.Request, writer http.ResponseWriter, endpoint *url.URL) error {
-	server, err := TryDialEndpoint(endpoint)
+func TryUpdateConnection(
+	req *http.Request,
+	writer http.ResponseWriter,
+	endpoint *url.URL,
+	tlsConfig *tls.Config,
+) error {
+	server, err := TryDialEndpoint(endpoint, tlsConfig)
 	if err != nil {
 		return err
 	}

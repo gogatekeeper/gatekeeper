@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/purell"
+	"github.com/elazarl/goproxy"
 	"github.com/go-chi/chi/v5/middleware"
 	uuid "github.com/gofrs/uuid"
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
@@ -415,7 +416,20 @@ func ProxyMiddleware(
 					zap.String("remote_addr", req.RemoteAddr),
 				)
 
-				err := utils.TryUpdateConnection(req, wrt, endpoint)
+				upstreamProxy, assertOk := upstream.(*goproxy.ProxyHttpServer)
+				if !assertOk {
+					logger.Error(
+						apperrors.ErrAssertionFailed.Error(),
+						zap.String("assert", "goproxy"),
+					)
+					wrt.WriteHeader(http.StatusInternalServerError)
+
+					return
+				}
+
+				tlsConfig := upstreamProxy.Tr.TLSClientConfig
+
+				err := utils.TryUpdateConnection(req, wrt, endpoint, tlsConfig)
 				if err != nil {
 					logger.Error("failed to upgrade connection", zap.Error(err))
 
