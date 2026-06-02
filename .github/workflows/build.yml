@@ -21,6 +21,13 @@ jobs:
     # Checkout the repository
     - name: Checkout
       uses: actions/checkout@v6
+    - name: Check Golang sources with Aligo
+      uses: essentialkaos/aligo-action@v2
+      with:
+        files: ./...
+    - name: Check for malicious invisible characters - GlassWorm
+      run: |
+        grep -rP '[\x{FE00}-\x{FE0F}\x{E0100}-\x{E01EF}]' .
     # Verify downloaded dependencies
     - name: Verify dependencies
       run: go mod verify
