@@ -222,6 +222,7 @@ var (
 	ErrCATLSStoreURLMissing                = errors.New("CA present, store url non-TLS")
 	ErrClientCertTLSStoreURLMissing        = errors.New("store client certificate present, store url non-TLS")
 	ErrClientPrivKeyTLSStoreURLMissing     = errors.New("store client private key present, store url non-TLS")
+	ErrTLSUpstreamCANotExists              = errors.New("tls upstream CA, file does not exist")
 	ErrTLSCertificateNotExists             = errors.New("tls server certificate, file does not exist")
 	ErrTLSPrivateKeyNotExists              = errors.New("tls server private key, file does not exist")
 	ErrTLSClientCertificateNotExists       = errors.New("tls client certificate, file does not exist")
