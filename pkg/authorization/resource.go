@@ -104,7 +104,7 @@ func (r *Resource) Parse(resource string) (*Resource, error) {
 			value, err := strconv.ParseBool(keyPair[1])
 			if err != nil {
 				return nil, errors.New(
-					"the value of whitelisted must be " +
+					"value of white-listed must be " +
 						"true|TRUE|T or it's false equivalent",
 				)
 			}
@@ -114,7 +114,7 @@ func (r *Resource) Parse(resource string) (*Resource, error) {
 			value, err := strconv.ParseBool(keyPair[1])
 			if err != nil {
 				return nil, errors.New(
-					"the value of whitelisted must be " +
+					"value of white-listed-anon must be " +
 						"true|TRUE|T or it's false equivalent",
 				)
 			}
@@ -124,7 +124,7 @@ func (r *Resource) Parse(resource string) (*Resource, error) {
 			value, err := strconv.ParseBool(keyPair[1])
 			if err != nil {
 				return nil, errors.New(
-					"the value of no-redirect must be " +
+					"value of no-redirect must be " +
 						"true|TRUE|T or it's false equivalent",
 				)
 			}
