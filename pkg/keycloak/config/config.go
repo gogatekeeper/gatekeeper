@@ -470,6 +470,10 @@ func (r *Config) isTLSFilesValid(fileCheckEnable bool) error {
 	}
 
 	if fileCheckEnable {
+		if r.UpstreamCA != "" && !utils.FileExists(r.UpstreamCA) {
+			return apperrors.ErrTLSUpstreamCANotExists
+		}
+
 		if r.TLSCertificate != "" && !utils.FileExists(r.TLSCertificate) {
 			return apperrors.ErrTLSCertificateNotExists
 		}
