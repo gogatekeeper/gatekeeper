@@ -564,7 +564,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:4.9.0
+  image: quay.io/gogatekeeper/gatekeeper:4.10.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -591,7 +591,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:4.9.0
+  image: quay.io/gogatekeeper/gatekeeper:4.10.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -922,7 +922,7 @@ will successfully match
 }
 ```
 
-From version 4.9.0 it is possible to negate match by using `!` mark at the beginning of match regex.
+From version 4.10.0 it is possible to negate match by using `!` mark at the beginning of match regex.
 
 ```yaml
 match-claims:
