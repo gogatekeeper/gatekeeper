@@ -2569,8 +2569,8 @@ func TestMaxBodySize(t *testing.T) {
 				{
 					URI:           FakeAdminTestURL,
 					HasToken:      true,
-					ExpectedProxy: true,
-					ExpectedCode:  http.StatusOK,
+					ExpectedProxy: false,
+					ExpectedCode:  http.StatusBadRequest,
 					Method:        http.MethodPost,
 				},
 			},
