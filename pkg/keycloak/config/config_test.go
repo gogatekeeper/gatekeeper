@@ -28,7 +28,6 @@ import (
 	"time"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
-	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 	"github.com/gogatekeeper/gatekeeper/pkg/config/core"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 )
@@ -2077,7 +2076,7 @@ func TestIsResourceValid(t *testing.T) {
 		{
 			Name: "ValidResource",
 			Config: &Config{
-				Resources: []*authorization.Resource{
+				Resources: []*core.Resource{
 					{
 						URL:     fakeAdminRoleURL,
 						Methods: []string{"GET"},
@@ -2096,7 +2095,7 @@ func TestIsResourceValid(t *testing.T) {
 			Name: "ValidResourceWithCustomHTTP",
 			Config: &Config{
 				CustomHTTPMethods: []string{"SOME"},
-				Resources: []*authorization.Resource{
+				Resources: []*core.Resource{
 					{
 						URL:     fakeAdminRoleURL,
 						Methods: []string{"SOME"},
@@ -2114,7 +2113,7 @@ func TestIsResourceValid(t *testing.T) {
 		{
 			Name: "InValidResourceWithCustomHTTP",
 			Config: &Config{
-				Resources: []*authorization.Resource{
+				Resources: []*core.Resource{
 					{
 						URL:     fakeAdminRoleURL,
 						Methods: []string{"SOMER"},
@@ -2132,7 +2131,7 @@ func TestIsResourceValid(t *testing.T) {
 		{
 			Name: "InValidResourceMissingURL",
 			Config: &Config{
-				Resources: []*authorization.Resource{
+				Resources: []*core.Resource{
 					{
 						URL:     "",
 						Methods: []string{"GET"},
@@ -2151,7 +2150,7 @@ func TestIsResourceValid(t *testing.T) {
 			Name: "InValidResourceDefaultDenyWhitelistConflict",
 			Config: &Config{
 				EnableDefaultDeny: true,
-				Resources: []*authorization.Resource{
+				Resources: []*core.Resource{
 					{
 						URL:     fakeAdminRoleURL,
 						Methods: []string{"GET"},
@@ -2171,7 +2170,7 @@ func TestIsResourceValid(t *testing.T) {
 			Name: "InValidResourceDefaultDenyUserDefinedConflict",
 			Config: &Config{
 				EnableDefaultDeny: true,
-				Resources: []*authorization.Resource{
+				Resources: []*core.Resource{
 					{
 						URL:     fakeAdminRoleURL,
 						Methods: []string{"GET"},

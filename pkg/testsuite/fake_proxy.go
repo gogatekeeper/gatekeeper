@@ -16,7 +16,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/gofrs/uuid"
-	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
+	"github.com/gogatekeeper/gatekeeper/pkg/config/core"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/keycloak/config"
 	"github.com/gogatekeeper/gatekeeper/pkg/keycloak/proxy"
@@ -727,7 +727,7 @@ func newFakeKeycloakConfig() *config.Config {
 		SkipUpstreamTLSVerify:       false,
 		Scopes:                      []string{},
 		Verbose:                     false,
-		Resources: []*authorization.Resource{
+		Resources: []*core.Resource{
 			{
 				URL:     FakeAdminAllURL,
 				Methods: []string{"GET"},

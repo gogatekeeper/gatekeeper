@@ -4,8 +4,6 @@ import (
 	"io/fs"
 	"os"
 	"testing"
-
-	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
 )
 
 const (
@@ -21,8 +19,8 @@ type OpenIDProviderRetryCount int
 type Configs interface {
 	ReadConfigFile(filename string) error
 	IsValid(fileCheckEnable bool) error
-	GetResources() []*authorization.Resource
-	SetResources(resources []*authorization.Resource)
+	GetResources() []*Resource
+	SetResources(resources []*Resource)
 	GetHeaders() map[string]string
 	GetMatchClaims() map[string]string
 	GetTags() map[string]string

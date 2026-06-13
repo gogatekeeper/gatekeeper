@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
-	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
+	"github.com/gogatekeeper/gatekeeper/pkg/config/core"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
@@ -111,7 +111,7 @@ func HmacMiddleware(logger *zap.Logger, encKey string) func(http.Handler) http.H
 //nolint:cyclop
 func AdmissionMiddleware(
 	logger *zap.Logger,
-	resource *authorization.Resource,
+	resource *core.Resource,
 	matchClaims map[string]string,
 	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
 ) func(http.Handler) http.Handler {
