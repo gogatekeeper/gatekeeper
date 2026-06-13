@@ -44,7 +44,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
-	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
+	configcore "github.com/gogatekeeper/gatekeeper/pkg/config/core"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/encryption"
 	keycloak_client "github.com/gogatekeeper/gatekeeper/pkg/keycloak/client"
@@ -836,7 +836,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 
 		r.Config.Resources = append(
 			r.Config.Resources,
-			&authorization.Resource{URL: constant.AllPath, Methods: utils.AllHTTPMethods},
+			&configcore.Resource{URL: constant.AllPath, Methods: utils.AllHTTPMethods},
 		)
 	}
 

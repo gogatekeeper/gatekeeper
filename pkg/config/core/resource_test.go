@@ -15,13 +15,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package authorization_test
+package core_test
 
 import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
+	"github.com/gogatekeeper/gatekeeper/pkg/config/core"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,7 +39,7 @@ func TestDecodeResourceBad(t *testing.T) {
 		{Option: "uri=/|require-any-role=BAD"},
 	}
 	for i, testCase := range testCases {
-		_, err := authorization.NewResource().Parse(testCase.Option)
+		_, err := core.NewResource().Parse(testCase.Option)
 		if err == nil {
 			t.Errorf("case %d should have errored", i)
 		}
@@ -48,13 +48,13 @@ func TestDecodeResourceBad(t *testing.T) {
 
 func TestResourceParseOk(t *testing.T) {
 	testCases := []struct {
-		Resource *authorization.Resource
+		Resource *core.Resource
 		Option   string
 		Ok       bool
 	}{
 		{
 			Option: "uri=/admin",
-			Resource: &authorization.Resource{
+			Resource: &core.Resource{
 				URL:     "/admin",
 				Methods: utils.AllHTTPMethods,
 			},
@@ -62,7 +62,7 @@ func TestResourceParseOk(t *testing.T) {
 		},
 		{
 			Option: "uri=/",
-			Resource: &authorization.Resource{
+			Resource: &core.Resource{
 				URL:     "/",
 				Methods: utils.AllHTTPMethods,
 			},
@@ -70,7 +70,7 @@ func TestResourceParseOk(t *testing.T) {
 		},
 		{
 			Option: "uri=/admin/sso|roles=test,test1",
-			Resource: &authorization.Resource{
+			Resource: &core.Resource{
 				URL:     "/admin/sso",
 				Roles:   []string{"test", "test1"},
 				Methods: utils.AllHTTPMethods,
@@ -79,7 +79,7 @@ func TestResourceParseOk(t *testing.T) {
 		},
 		{
 			Option: "uri=/admin/sso|roles=test,test1|headers=x-test:val",
-			Resource: &authorization.Resource{
+			Resource: &core.Resource{
 				URL:     "/admin/sso",
 				Roles:   []string{"test", "test1"},
 				Headers: []string{"x-test:val"},
@@ -89,7 +89,7 @@ func TestResourceParseOk(t *testing.T) {
 		},
 		{
 			Option: "uri=/admin/sso|roles=test,test1|headers=x-test:val,x-test1val",
-			Resource: &authorization.Resource{
+			Resource: &core.Resource{
 				URL:     "/admin/sso",
 				Roles:   []string{"test", "test1"},
 				Headers: []string{"x-test:val", "x-test1:val"},
@@ -99,7 +99,7 @@ func TestResourceParseOk(t *testing.T) {
 		},
 		{
 			Option: "uri=/admin/sso|roles=test,test1|methods=GET,POST",
-			Resource: &authorization.Resource{
+			Resource: &core.Resource{
 				URL:     "/admin/sso",
 				Roles:   []string{"test", "test1"},
 				Methods: []string{"GET", "POST"},
@@ -108,7 +108,7 @@ func TestResourceParseOk(t *testing.T) {
 		},
 		{
 			Option: "uri=/allow_me|white-listed=true",
-			Resource: &authorization.Resource{
+			Resource: &core.Resource{
 				URL:         "/allow_me",
 				WhiteListed: true,
 				Methods:     utils.AllHTTPMethods,
@@ -117,7 +117,7 @@ func TestResourceParseOk(t *testing.T) {
 		},
 		{
 			Option: "uri=/allow_me_anon|white-listed-anon=true",
-			Resource: &authorization.Resource{
+			Resource: &core.Resource{
 				URL:             "/allow_me_anon",
 				WhiteListedAnon: true,
 				Methods:         utils.AllHTTPMethods,
@@ -126,7 +126,7 @@ func TestResourceParseOk(t *testing.T) {
 		},
 		{
 			Option: "uri=/*|methods=any",
-			Resource: &authorization.Resource{
+			Resource: &core.Resource{
 				URL:     "/*",
 				Methods: utils.AllHTTPMethods,
 			},
@@ -134,7 +134,7 @@ func TestResourceParseOk(t *testing.T) {
 		},
 		{
 			Option: "uri=/*|methods=any",
-			Resource: &authorization.Resource{
+			Resource: &core.Resource{
 				URL:     "/*",
 				Methods: utils.AllHTTPMethods,
 			},
@@ -142,7 +142,7 @@ func TestResourceParseOk(t *testing.T) {
 		},
 		{
 			Option: "uri=/*|groups=admin,test",
-			Resource: &authorization.Resource{
+			Resource: &core.Resource{
 				URL:     "/*",
 				Methods: utils.AllHTTPMethods,
 				Groups:  []string{"admin", "test"},
@@ -151,7 +151,7 @@ func TestResourceParseOk(t *testing.T) {
 		},
 		{
 			Option: "uri=/*|groups=admin",
-			Resource: &authorization.Resource{
+			Resource: &core.Resource{
 				URL:     "/*",
 				Methods: utils.AllHTTPMethods,
 				Groups:  []string{"admin"},
@@ -160,7 +160,7 @@ func TestResourceParseOk(t *testing.T) {
 		},
 		{
 			Option: "uri=/*|require-any-role=true",
-			Resource: &authorization.Resource{
+			Resource: &core.Resource{
 				URL:            "/*",
 				Methods:        utils.AllHTTPMethods,
 				RequireAnyRole: true,
@@ -169,7 +169,7 @@ func TestResourceParseOk(t *testing.T) {
 		},
 	}
 	for i, testCase := range testCases {
-		r, err := authorization.NewResource().Parse(testCase.Option)
+		r, err := core.NewResource().Parse(testCase.Option)
 
 		if testCase.Ok {
 			require.NoError(t, err, "case %d should not have errored with: %s", i, err)
@@ -182,36 +182,36 @@ func TestResourceParseOk(t *testing.T) {
 
 func TestIsValid(t *testing.T) {
 	testCases := []struct {
-		Resource          *authorization.Resource
+		Resource          *core.Resource
 		CustomHTTPMethods []string
 		Ok                bool
 	}{
 		{
-			Resource: &authorization.Resource{URL: "/test"},
+			Resource: &core.Resource{URL: "/test"},
 			Ok:       true,
 		},
 		{
-			Resource: &authorization.Resource{URL: "/test", Methods: []string{"GET"}},
+			Resource: &core.Resource{URL: "/test", Methods: []string{"GET"}},
 			Ok:       true,
 		},
 		{
-			Resource: &authorization.Resource{URL: "/", Methods: utils.AllHTTPMethods},
+			Resource: &core.Resource{URL: "/", Methods: utils.AllHTTPMethods},
 			Ok:       true,
 		},
 		{
-			Resource: &authorization.Resource{URL: "/admin/", Methods: utils.AllHTTPMethods},
+			Resource: &core.Resource{URL: "/admin/", Methods: utils.AllHTTPMethods},
 		},
 		{
-			Resource: &authorization.Resource{},
+			Resource: &core.Resource{},
 		},
 		{
-			Resource: &authorization.Resource{
+			Resource: &core.Resource{
 				URL:     "/test",
 				Methods: []string{"NO_SUCH_METHOD"},
 			},
 		},
 		{
-			Resource: &authorization.Resource{
+			Resource: &core.Resource{
 				URL:     "/test",
 				Methods: []string{"PROPFIND"},
 			},
@@ -239,7 +239,7 @@ const rolesList = "1,2,3"
 func TestResourceString(t *testing.T) {
 	expectedRoles := []string{"1", "2", "3"}
 
-	resource := &authorization.Resource{
+	resource := &core.Resource{
 		Roles: expectedRoles,
 	}
 	if s := resource.String(); s == "" {
@@ -249,7 +249,7 @@ func TestResourceString(t *testing.T) {
 
 func TestGetRoles(t *testing.T) {
 	expectedRoles := []string{"1", "2", "3"}
-	resource := &authorization.Resource{
+	resource := &core.Resource{
 		Roles: expectedRoles,
 	}
 

@@ -28,6 +28,7 @@ import (
 	oidc3 "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/gogatekeeper/gatekeeper/pkg/authorization"
+	"github.com/gogatekeeper/gatekeeper/pkg/config/core"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/encryption"
 	keycloak_client "github.com/gogatekeeper/gatekeeper/pkg/keycloak/client"
@@ -305,7 +306,7 @@ func levelOfAuthenticationMiddleware(
 	newOAuth2Config func(redirectionURL string) *oauth2.Config,
 	getRedirectionURL func(wrt http.ResponseWriter, req *http.Request) string,
 	customSignInPage func(wrt http.ResponseWriter, authURL string),
-	resource *authorization.Resource,
+	resource *core.Resource,
 	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
 ) func(http.Handler) http.Handler {
 	resourceAcr := make(map[string]bool, len(resource.Acr))
