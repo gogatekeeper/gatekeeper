@@ -7,104 +7,105 @@ release:
 # Prune any dependencies that are no longer needed before the build starts
 before:
   hooks:
-    - go mod tidy
+  - go mod tidy
 builds:
-  - id: macos
-    goos: [darwin]
-    goarch: [amd64]
-    # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
-    env:
-      - CGO_ENABLED=0
-    # Adds some metadata to the build like version, commit reference and the date of the build
-    ldflags:
-      - -s -w -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.release={{.Version}}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.gitsha={{ .FullCommit }}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.compiled={{ .Timestamp }}"
-    main: ./cmd/keycloak/gatekeeper-keycloak.go
-    binary: gatekeeper
-  - id: macos-fips
-    goos: [darwin]
-    goarch: [amd64]
-    # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
-    env:
-      - CGO_ENABLED=0
-      - GOFIPS140=v1.0.0
-    # Adds some metadata to the build like version, commit reference and the date of the build
-    ldflags:
-      - -s -w -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.release={{.Version}}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.gitsha={{ .FullCommit }}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.compiled={{ .Timestamp }}"
-    main: ./cmd/keycloak/gatekeeper-keycloak.go
-    binary: gatekeeper
+- id: macos
+  goos: [ darwin ]
+  goarch:
+  - amd64
+  - arm64
+  # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
+  env:
+  - CGO_ENABLED=0
+  - GOAMD64=v2
+  # Adds some metadata to the build like version, commit reference and the date of the build
+  ldflags:
+  - -s -w -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.release={{.Version}}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.gitsha={{ .FullCommit }}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.compiled={{ .Timestamp }}"
+  main: ./cmd/keycloak/gatekeeper-keycloak.go
+  binary: gatekeeper
+- id: macos-fips
+  goos: [ darwin ]
+  goarch:
+  - amd64
+  - arm64
+  # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
+  env:
+  - CGO_ENABLED=0
+  - GOFIPS140=v1.0.0
+  - GOAMD64=v2
+  # Adds some metadata to the build like version, commit reference and the date of the build
+  ldflags:
+  - -s -w -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.release={{.Version}}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.gitsha={{ .FullCommit }}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.compiled={{ .Timestamp }}"
+  main: ./cmd/keycloak/gatekeeper-keycloak.go
+  binary: gatekeeper
 
-  - id: linux
-    goos: [linux]
-    goarch:
-      - amd64
-      - arm
-      - arm64
-    goarm:
-      - 6
-      - 7
-    # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
-    env:
-      - CGO_ENABLED=0
-    # Adds some metadata to the build like version, commit reference and the date of the build
-    ldflags:
-      - -s -w -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.release={{.Version}}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.gitsha={{ .FullCommit }}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.compiled={{ .Timestamp }}"
-    main: ./cmd/keycloak/gatekeeper-keycloak.go
-    binary: gatekeeper
-  - id: linux-fips
-    goos: [linux]
-    goarch:
-      - amd64
-      - arm
-      - arm64
-    goarm:
-      - 6
-      - 7
-    # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
-    env:
-      - CGO_ENABLED=0
-      - GOFIPS140=v1.0.0
-    # Adds some metadata to the build like version, commit reference and the date of the build
-    ldflags:
-      - -s -w -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.release={{.Version}}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.gitsha={{ .FullCommit }}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.compiled={{ .Timestamp }}"
-    main: ./cmd/keycloak/gatekeeper-keycloak.go
-    binary: gatekeeper
+- id: linux
+  goos: [ linux ]
+  goarch:
+  - amd64
+  - arm
+  - arm64
+  goarm:
+  - 6
+  - 7
+  # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
+  env:
+  - CGO_ENABLED=0
+  - GOAMD64=v2
+  # Adds some metadata to the build like version, commit reference and the date of the build
+  ldflags:
+  - -s -w -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.release={{.Version}}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.gitsha={{ .FullCommit }}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.compiled={{ .Timestamp }}"
+  main: ./cmd/keycloak/gatekeeper-keycloak.go
+  binary: gatekeeper
+- id: linux-fips
+  goos: [ linux ]
+  goarch:
+  - amd64
+  - arm
+  - arm64
+  goarm:
+  - 6
+  - 7
+  # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
+  env:
+  - CGO_ENABLED=0
+  - GOFIPS140=v1.0.0
+  - GOAMD64=v2
+  # Adds some metadata to the build like version, commit reference and the date of the build
+  ldflags:
+  - -s -w -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.release={{.Version}}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.gitsha={{ .FullCommit }}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.compiled={{ .Timestamp }}"
+  main: ./cmd/keycloak/gatekeeper-keycloak.go
+  binary: gatekeeper
 
-  - id: windows
-    goos: [windows]
-    goarch: [amd64]
-    # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
-    env:
-      - CGO_ENABLED=0
-    # Adds some metadata to the build like version, commit reference and the date of the build
-    ldflags:
-      - -s -w -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.release={{.Version}}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.gitsha={{ .FullCommit }}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.compiled={{ .Timestamp }}"
-    main: ./cmd/keycloak/gatekeeper-keycloak.go
-    binary: gatekeeper
-  - id: windows-fips
-    goos: [windows]
-    goarch: [amd64]
-    # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
-    env:
-      - CGO_ENABLED=0
-      - GOFIPS140=v1.0.0
-    # Adds some metadata to the build like version, commit reference and the date of the build
-    ldflags:
-      - -s -w -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.release={{.Version}}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.gitsha={{ .FullCommit }}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.compiled={{ .Timestamp }}"
-    main: ./cmd/keycloak/gatekeeper-keycloak.go
-    binary: gatekeeper
+- id: windows
+  goos: [ windows ]
+  goarch: [ amd64 ]
+  # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
+  env:
+  - CGO_ENABLED=0
+  - GOAMD64=v2
+  # Adds some metadata to the build like version, commit reference and the date of the build
+  ldflags:
+  - -s -w -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.release={{.Version}}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.gitsha={{ .FullCommit }}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.compiled={{ .Timestamp }}"
+  main: ./cmd/keycloak/gatekeeper-keycloak.go
+  binary: gatekeeper
+- id: windows-fips
+  goos: [ windows ]
+  goarch: [ amd64 ]
+  # Make sure that cgo is disabled. See: https://golang.org/cmd/cgo/
+  env:
+  - CGO_ENABLED=0
+  - GOFIPS140=v1.0.0
+  - GOAMD64=v2
+  # Adds some metadata to the build like version, commit reference and the date of the build
+  ldflags:
+  - -s -w -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.release={{.Version}}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.gitsha={{ .FullCommit }}" -X "github.com/gogatekeeper/gatekeeper/pkg/proxy/core.compiled={{ .Timestamp }}"
+  main: ./cmd/keycloak/gatekeeper-keycloak.go
+  binary: gatekeeper
 
 signs:
-  - artifacts: checksum
-    args:
-      [
-        "--batch",
-        "-u",
-        "{{ .Env.GPG_FINGERPRINT }}",
-        "--output",
-        "${signature}",
-        "--detach-sign",
-        "${artifact}",
-      ]
+- artifacts: checksum
+  args: [ "--batch", "-u", "{{ .Env.GPG_FINGERPRINT }}", "--output", "${signature}", "--detach-sign", "${artifact}" ]
 
 # Generate the checksum for each file
 checksum:
@@ -116,49 +117,40 @@ changelog:
   filters:
     # Exclude commit messages matching the regex listed below
     exclude:
-      - "^test:"
-      - Merge pull request
-      - Merge branch
+    - "^test:"
+    - Merge pull request
+    - Merge branch
 # The artifacts to be uploaded
 archives:
-  - id: nix
-    ids: [macos, linux]
-    # Generate the compresed files based on the following templates
-    name_template: >-
-      {{ .ProjectName }}_
-      {{- .Version }}_
-      {{- if eq .Os "darwin" }}macOS{{- else }}{{ .Os }}{{ end }}_
-      {{- .Arch }}{{- .Arm }}
-    # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
-    wrap_in_directory: true
-    formats: 
-      - tar.gz
-  - id: windows
-    ids: [windows]
-    # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
-    wrap_in_directory: true
-    formats:
-      - zip
-  - id: nix-fips
-    ids: [macos-fips, linux-fips]
-    # Generate the compresed files based on the following templates
-    name_template: >-
-      {{ .ProjectName }}_
-      {{- .Version }}_
-      {{- if eq .Os "darwin" }}macOS{{- else }}{{ .Os }}{{ end }}_
-      {{- .Arch }}{{- .Arm }}_fips
-    # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
-    wrap_in_directory: true
-    formats: 
-      - tar.gz
-  - id: windows-fips
-    ids: [windows-fips]
-    name_template: >-
-      {{ .ProjectName }}_
-      {{- .Version }}_
-      windows_
-      {{- .Arch }}{{- .Arm }}_fips
-    # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
-    wrap_in_directory: true
-    formats:
-      - zip
+- id: nix
+  ids: [ macos, linux ]
+  # Generate the compresed files based on the following templates
+  name_template: >-
+    {{ .ProjectName }}_ {{- .Version }}_ {{- if eq .Os "darwin" }}macOS{{- else }}{{ .Os }}{{ end }}_ {{- .Arch }}{{- .Arm }}
+  # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
+  wrap_in_directory: true
+  formats:
+  - tar.gz
+- id: windows
+  ids: [ windows ]
+  # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
+  wrap_in_directory: true
+  formats:
+  - zip
+- id: nix-fips
+  ids: [ macos-fips, linux-fips ]
+  # Generate the compresed files based on the following templates
+  name_template: >-
+    {{ .ProjectName }}_ {{- .Version }}_ {{- if eq .Os "darwin" }}macOS{{- else }}{{ .Os }}{{ end }}_ {{- .Arch }}{{- .Arm }}_fips
+  # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
+  wrap_in_directory: true
+  formats:
+  - tar.gz
+- id: windows-fips
+  ids: [ windows-fips ]
+  name_template: >-
+    {{ .ProjectName }}_ {{- .Version }}_ windows_ {{- .Arch }}{{- .Arm }}_fips
+  # All files will be in a single directory. For example: gatekeeper_0.0.1_linux_amd64
+  wrap_in_directory: true
+  formats:
+  - zip
