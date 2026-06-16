@@ -1070,6 +1070,7 @@ func (r *OauthProxy) createForwardingProxy() error {
 	if err != nil {
 		return err
 	}
+
 	//nolint:bodyclose
 	forwardingHandler := forwardProxyHandler(
 		r.Log,
@@ -1679,13 +1680,6 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 	proxy.KeepAcceptEncoding = r.Config.EnableAcceptEncodingHeader
 	r.Upstream = proxy
 
-	// update the tls configuration of the reverse proxy
-	upstreamProxy, assertOk := r.Upstream.(*goproxy.ProxyHttpServer)
-
-	if !assertOk {
-		return apperrors.ErrAssertionFailed
-	}
-
 	var upstreamProxyFunc func(*http.Request) (*url.URL, error)
 
 	if r.Config.UpstreamProxy != "" {
@@ -1703,7 +1697,7 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 		}
 	}
 
-	upstreamProxy.Tr = &http.Transport{
+	proxy.Tr = &http.Transport{
 		Dial:                  dialer,
 		Proxy:                 upstreamProxyFunc,
 		DisableKeepAlives:     !r.Config.UpstreamKeepalives,
@@ -1716,7 +1710,7 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 	}
 
 	if !r.Config.EnableRequestUpstreamCompression {
-		upstreamProxy.Tr.DisableCompression = true
+		proxy.Tr.DisableCompression = true
 	}
 
 	return nil
