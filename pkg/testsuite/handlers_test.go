@@ -303,7 +303,7 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 						cfg.CookieAccessName:  "",
 						cfg.CookieIDTokenName: "",
 					},
-					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+					ExpectedCookiesValueValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						cfg.CookieAccessName:  checkAccessTokenEncryption,
 						cfg.CookieIDTokenName: checkAccessTokenEncryption,
 					},
@@ -338,7 +338,7 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 						"username": "test",
 					},
 					ExpectedCookies: map[string]string{cfg.CookieAccessName: ""},
-					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+					ExpectedCookiesValueValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						cfg.CookieAccessName:  checkAccessTokenEncryption,
 						cfg.CookieRefreshName: checkRefreshTokenEncryption,
 					},
@@ -372,7 +372,7 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 						"username": "test",
 					},
 					ExpectedCookies: map[string]string{cfg.CookieAccessName: ""},
-					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+					ExpectedCookiesValueValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						cfg.CookieAccessName: checkAccessTokenEncryption,
 					},
 					ExpectedContent: func(body string, _ int) {
@@ -406,7 +406,7 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 						"username": "test",
 					},
 					ExpectedCookies: map[string]string{cfg.CookieAccessName: ""},
-					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+					ExpectedCookiesValueValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						cfg.CookieAccessName:  checkAccessTokenEncryption,
 						cfg.CookieRefreshName: checkRefreshTokenEncryption,
 					},
@@ -440,7 +440,7 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 						"username": "test",
 					},
 					ExpectedCookies: map[string]string{cfg.CookieAccessName: ""},
-					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+					ExpectedCookiesValueValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						cfg.CookieAccessName: func(t *testing.T, _ *config.Config, rawToken string) bool {
 							t.Helper()
 
@@ -487,7 +487,7 @@ func TestTokenEncryptionLoginHandler(t *testing.T) {
 						cfg.CookieAccessName:  "",
 						cfg.CookieIDTokenName: "",
 					},
-					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+					ExpectedCookiesValueValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						cfg.CookieAccessName: func(t *testing.T, _ *config.Config, rawToken string) bool {
 							t.Helper()
 

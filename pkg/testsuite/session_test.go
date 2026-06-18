@@ -212,8 +212,9 @@ func TestGetIndentity(t *testing.T) {
 		cfg := newFakeKeycloakConfig()
 		testCase.ProxySettings(cfg)
 
-		_, idp, _ := newTestProxyService(cfg)
-		token, err := NewTestToken(idp.getLocation()).GetToken()
+		fProxy := newFakeProxy(cfg, &fakeAuthConfig{})
+
+		token, err := NewTestToken(fProxy.idp.getLocation()).GetToken()
 		require.NoError(t, err)
 
 		getIdentity := session.GetIdentity(

@@ -21,124 +21,150 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/keycloak/config"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestCookieDomainHostHeader(t *testing.T) {
-	svc := newTestService()
-	resp, _, err := makeTestCodeFlowLogin(svc+FakeAdminURL, false)
-	require.NoError(t, err)
-	assert.NotNil(t, resp)
+	testCases := []struct {
+		Name              string
+		ProxySettings     func(cfg *config.Config)
+		ExecutionSettings []fakeRequest
+	}{
+		{
+			Name: "TestCookieDomainDefaultEmpty",
+			ProxySettings: func(conf *config.Config) {
+				conf.EnableRefreshTokens = true
+				conf.EncryptionKey = TestEncryptionKey
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAuthAllURL,
+					HasLogin:      true,
+					Redirects:     true,
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					OnResponse: func(int, *resty.Request, *resty.Response) {
+						<-time.After(time.Duration(int64(2500)) * time.Millisecond)
+					},
+				},
+				{
+					URI:             FakeAuthAllURL,
+					Redirects:       false,
+					ExpectedProxy:   true,
+					ExpectedCode:    http.StatusOK,
+					ExpectedCookies: map[string]string{constant.AccessCookie: ""},
+					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, *http.Cookie) bool{
+						constant.AccessCookie: func(t *testing.T, _ *config.Config, cookie *http.Cookie) bool {
+							t.Helper()
+							notEmpty := assert.NotEmpty(t, cookie.Value)
+							isDomainEmpty := assert.Empty(t, cookie.Domain)
+							baseURIPath := assert.Equal(t, "/", cookie.Path)
 
-	var cookie *http.Cookie
+							return notEmpty && isDomainEmpty && baseURIPath
+						},
+					},
+				},
+			},
+		},
+		{
+			Name: "TestCookiePathWithBaseURIAndDomain",
+			ProxySettings: func(conf *config.Config) {
+				conf.EnableRefreshTokens = true
+				conf.EncryptionKey = TestEncryptionKey
+				conf.BaseURI = TestBaseURI
+				conf.CookieDomain = "domain.com"
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAuthAllURL,
+					HasLogin:      true,
+					Redirects:     true,
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					OnResponse: func(int, *resty.Request, *resty.Response) {
+						<-time.After(time.Duration(int64(2500)) * time.Millisecond)
+					},
+				},
+				{
+					URI:             FakeAuthAllURL,
+					Redirects:       false,
+					ExpectedProxy:   true,
+					ExpectedCode:    http.StatusOK,
+					ExpectedCookies: map[string]string{constant.AccessCookie: ""},
+					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, *http.Cookie) bool{
+						constant.AccessCookie: func(t *testing.T, config *config.Config, cookie *http.Cookie) bool {
+							t.Helper()
+							notEmpty := assert.NotEmpty(t, cookie.Value)
+							baseURIPath := assert.Equal(t, config.BaseURI, cookie.Path)
+							cookieDomain := assert.Equal(t, config.CookieDomain, cookie.Domain)
 
-	for _, c := range resp.Cookies() {
-		if c.Name == constant.AccessCookie {
-			cookie = c
-		}
+							return notEmpty && baseURIPath && cookieDomain
+						},
+					},
+				},
+			},
+		},
+		{
+			Name: "TestCookiePath",
+			ProxySettings: func(conf *config.Config) {
+				conf.EnableRefreshTokens = true
+				conf.EncryptionKey = TestEncryptionKey
+				conf.CookiePath = FakeAdminURL
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           FakeAuthAllURL,
+					HasLogin:      true,
+					Redirects:     true,
+					ExpectedProxy: true,
+					ExpectedCode:  http.StatusOK,
+					OnResponse: func(int, *resty.Request, *resty.Response) {
+						<-time.After(time.Duration(int64(2500)) * time.Millisecond)
+					},
+				},
+				{
+					URI:             FakeAuthAllURL,
+					Redirects:       false,
+					ExpectedProxy:   true,
+					ExpectedCode:    http.StatusOK,
+					ExpectedCookies: map[string]string{constant.AccessCookie: ""},
+					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, *http.Cookie) bool{
+						constant.AccessCookie: func(t *testing.T, _ *config.Config, cookie *http.Cookie) bool {
+							t.Helper()
+							notEmpty := assert.NotEmpty(t, cookie.Value)
+							baseURIPath := assert.Equal(t, FakeAdminURL, cookie.Path)
+
+							return notEmpty && baseURIPath
+						},
+					},
+				},
+			},
+		},
 	}
-	defer resp.Body.Close()
 
-	assert.NotNil(t, cookie)
-	assert.Empty(t, cookie.Domain)
-}
-
-func TestCookieBasePath(t *testing.T) {
-	const baseURI = "/base-uri"
-
-	cfg := newFakeKeycloakConfig()
-	cfg.BaseURI = baseURI
-
-	_, _, svc := newTestProxyService(cfg)
-
-	resp, _, err := makeTestCodeFlowLogin(svc+FakeAdminURL, false)
-	require.NoError(t, err)
-	assert.NotNil(t, resp)
-
-	var cookie *http.Cookie
-
-	for _, c := range resp.Cookies() {
-		if c.Name == constant.AccessCookie {
-			cookie = c
-		}
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				cfg := newFakeKeycloakConfig()
+				testCase.ProxySettings(cfg)
+				fProxy := newFakeProxy(cfg, &fakeAuthConfig{Expiration: 2000 * time.Millisecond})
+				fProxy.RunTests(t, testCase.ExecutionSettings)
+			},
+		)
 	}
-	defer resp.Body.Close()
-
-	assert.NotNil(t, cookie)
-	assert.Equal(t, baseURI, cookie.Path)
-}
-
-func TestCookieWithoutBasePath(t *testing.T) {
-	cfg := newFakeKeycloakConfig()
-
-	_, _, svc := newTestProxyService(cfg)
-
-	resp, _, err := makeTestCodeFlowLogin(svc+FakeAdminURL, false)
-	require.NoError(t, err)
-	assert.NotNil(t, resp)
-
-	var cookie *http.Cookie
-
-	for _, c := range resp.Cookies() {
-		if c.Name == constant.AccessCookie {
-			cookie = c
-		}
-	}
-	defer resp.Body.Close()
-
-	assert.NotNil(t, cookie)
-	assert.Equal(t, "/", cookie.Path)
-}
-
-func TestCookieDomain(t *testing.T) {
-	p, _, svc := newTestProxyService(nil)
-	p.Cm.CookieDomain = "domain.com"
-	resp, _, err := makeTestCodeFlowLogin(svc+FakeAdminURL, false)
-	require.NoError(t, err)
-	assert.NotNil(t, resp)
-
-	var cookie *http.Cookie
-
-	for _, c := range resp.Cookies() {
-		if c.Name == constant.AccessCookie {
-			cookie = c
-		}
-	}
-	defer resp.Body.Close()
-
-	assert.NotNil(t, cookie)
-	assert.Equal(t, "domain.com", cookie.Domain)
-}
-
-func TestCookiePath(t *testing.T) {
-	p, _, svc := newTestProxyService(nil)
-	p.Cm.CookiePath = FakeAdminURL
-	resp, _, err := makeTestCodeFlowLogin(svc+FakeAdminURL, false)
-	require.NoError(t, err)
-	assert.NotNil(t, resp)
-
-	var cookie *http.Cookie
-
-	for _, c := range resp.Cookies() {
-		if c.Path == FakeAdminURL {
-			cookie = c
-		}
-	}
-	defer resp.Body.Close()
-
-	assert.NotNil(t, cookie)
-	assert.Equal(t, FakeAdminURL, cookie.Path)
 }
 
 func TestDropCookie(t *testing.T) {
-	proxy, _, _ := newTestProxyService(nil)
-
+	cfg := newFakeKeycloakConfig()
+	fProxy := newFakeProxy(cfg, &fakeAuthConfig{})
+	proxy := fProxy.proxy
 	resp := httptest.NewRecorder()
-	proxy.Cm.DropCookie(resp, "test-cookie", "test-value", 0)
 
+	proxy.Cm.DropCookie(resp, "test-cookie", "test-value", 0)
 	assert.Equal(t,
 		"test-cookie=test-value; Path=/",
 		resp.Header().Get(TestSetCookieHeader),
@@ -172,11 +198,13 @@ func TestDropCookie(t *testing.T) {
 }
 
 func TestDropRefreshCookie(t *testing.T) {
-	p, _, _ := newTestProxyService(nil)
+	cfg := newFakeKeycloakConfig()
+	fProxy := newFakeProxy(cfg, &fakeAuthConfig{})
+	proxy := fProxy.proxy
 
 	req := newFakeHTTPRequest("GET", FakeAdminURL)
 	resp := httptest.NewRecorder()
-	p.Cm.DropRefreshTokenCookie(req, resp, "test", 0)
+	proxy.Cm.DropRefreshTokenCookie(req, resp, "test", 0)
 
 	assert.Equal(t,
 		constant.RefreshCookie+"=test; Path=/",
@@ -185,11 +213,13 @@ func TestDropRefreshCookie(t *testing.T) {
 }
 
 func TestSessionOnlyCookie(t *testing.T) {
-	p, _, _ := newTestProxyService(nil)
-	p.Cm.EnableSessionCookies = true
+	cfg := newFakeKeycloakConfig()
+	fProxy := newFakeProxy(cfg, &fakeAuthConfig{})
+	proxy := fProxy.proxy
+	proxy.Cm.EnableSessionCookies = true
 
 	resp := httptest.NewRecorder()
-	p.Cm.DropCookie(resp, "test-cookie", "test-value", 1*time.Hour)
+	proxy.Cm.DropCookie(resp, "test-cookie", "test-value", 1*time.Hour)
 
 	assert.Equal(t,
 		"test-cookie=test-value; Path=/",
@@ -198,7 +228,9 @@ func TestSessionOnlyCookie(t *testing.T) {
 }
 
 func TestSameSiteCookie(t *testing.T) {
-	proxy, _, _ := newTestProxyService(nil)
+	cfg := newFakeKeycloakConfig()
+	fProxy := newFakeProxy(cfg, &fakeAuthConfig{})
+	proxy := fProxy.proxy
 
 	resp := httptest.NewRecorder()
 	proxy.Cm.DropCookie(resp, "test-cookie", "test-value", 0)
@@ -237,7 +269,9 @@ func TestSameSiteCookie(t *testing.T) {
 }
 
 func TestHTTPOnlyCookie(t *testing.T) {
-	proxy, _, _ := newTestProxyService(nil)
+	cfg := newFakeKeycloakConfig()
+	fProxy := newFakeProxy(cfg, &fakeAuthConfig{})
+	proxy := fProxy.proxy
 
 	resp := httptest.NewRecorder()
 	proxy.Cm.DropCookie(resp, "test-cookie", "test-value", 0)
@@ -258,9 +292,13 @@ func TestHTTPOnlyCookie(t *testing.T) {
 }
 
 func TestClearAccessTokenCookie(t *testing.T) {
-	proxy, _, _ := newTestProxyService(nil)
+	cfg := newFakeKeycloakConfig()
+	fProxy := newFakeProxy(cfg, &fakeAuthConfig{})
+	proxy := fProxy.proxy
 
 	req := newFakeHTTPRequest("GET", FakeAdminURL)
+	req.Header.Set("Set-Cookie", constant.AccessCookie+"=; Path=/; Expires=")
+
 	resp := httptest.NewRecorder()
 	proxy.Cm.ClearAccessTokenCookie(req, resp)
 	assert.Contains(t,
@@ -270,10 +308,15 @@ func TestClearAccessTokenCookie(t *testing.T) {
 }
 
 func TestClearRefreshAccessTokenCookie(t *testing.T) {
-	p, _, _ := newTestProxyService(nil)
+	cfg := newFakeKeycloakConfig()
+	fProxy := newFakeProxy(cfg, &fakeAuthConfig{})
+	proxy := fProxy.proxy
+
 	req := newFakeHTTPRequest("GET", FakeAdminURL)
+	req.Header.Set("Set-Cookie", constant.RefreshCookie+"=; Path=/; Expires=")
+
 	resp := httptest.NewRecorder()
-	p.Cm.ClearRefreshTokenCookie(req, resp)
+	proxy.Cm.ClearRefreshTokenCookie(req, resp)
 	assert.Contains(t,
 		resp.Header().Get(TestSetCookieHeader),
 		constant.RefreshCookie+"=; Path=/; Expires=",
@@ -281,10 +324,16 @@ func TestClearRefreshAccessTokenCookie(t *testing.T) {
 }
 
 func TestClearAllCookies(t *testing.T) {
-	p, _, _ := newTestProxyService(nil)
+	cfg := newFakeKeycloakConfig()
+	fProxy := newFakeProxy(cfg, &fakeAuthConfig{})
+	proxy := fProxy.proxy
+
 	req := newFakeHTTPRequest("GET", FakeAdminURL)
+	req.Header.Set("Set-Cookie", constant.RefreshCookie+"=; Path=/; Expires=")
+	req.Header.Set("Set-Cookie", constant.AccessCookie+"=; Path=/; Expires=")
+
 	resp := httptest.NewRecorder()
-	p.Cm.ClearAllCookies(req, resp)
+	proxy.Cm.ClearAllCookies(req, resp)
 	assert.Contains(t,
 		resp.Header().Get(TestSetCookieHeader),
 		constant.AccessCookie+"=; Path=/; Expires=",
@@ -292,7 +341,10 @@ func TestClearAllCookies(t *testing.T) {
 }
 
 func TestGetMaxCookieChunkLength(t *testing.T) {
-	proxy, _, _ := newTestProxyService(nil)
+	cfg := newFakeKeycloakConfig()
+	fProxy := newFakeProxy(cfg, &fakeAuthConfig{})
+	proxy := fProxy.proxy
+
 	req := newFakeHTTPRequest("GET", FakeAdminURL)
 
 	proxy.Cm.HTTPOnlyCookie = true

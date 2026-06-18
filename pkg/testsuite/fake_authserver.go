@@ -446,15 +446,6 @@ func (r *fakeAuthServer) getLocation() string {
 	)
 }
 
-func (r *fakeAuthServer) getRevocationURL() string {
-	return fmt.Sprintf(
-		"%s://%s%s/realms/hod-test/protocol/openid-connect/revoke",
-		r.location.Scheme,
-		r.location.Host,
-		r.fakeAuthConfig.DiscoveryURLPrefix,
-	)
-}
-
 func (r *fakeAuthServer) setTokenExpiration(tm time.Duration) {
 	r.expiration = tm
 }

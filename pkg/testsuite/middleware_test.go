@@ -315,20 +315,20 @@ func TestAdminListener(t *testing.T) {
 
 func TestOauthRequestsWithBaseURI(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
-	cfg.BaseURI = "/base-uri"
+	cfg.BaseURI = TestBaseURI
 	requests := []fakeRequest{
 		{
-			URI:          "/base-uri/oauth/authorize",
+			URI:          TestBaseURI + "/oauth/authorize",
 			Redirects:    true,
 			ExpectedCode: http.StatusSeeOther,
 		},
 		{
-			URI:          "/base-uri/oauth/callback",
+			URI:          TestBaseURI + "/oauth/callback",
 			Redirects:    true,
 			ExpectedCode: http.StatusBadRequest,
 		},
 		{
-			URI:          "/base-uri/oauth/health",
+			URI:          TestBaseURI + "/oauth/health",
 			Redirects:    true,
 			ExpectedCode: http.StatusOK,
 		},
@@ -1922,7 +1922,7 @@ func TestAccessTokenEncryption(t *testing.T) {
 					ExpectedProxy:   true,
 					ExpectedCode:    http.StatusOK,
 					ExpectedCookies: map[string]string{cfg.CookieAccessName: ""},
-					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+					ExpectedCookiesValueValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						cfg.CookieAccessName: checkAccessTokenEncryption,
 					},
 				},
@@ -1957,7 +1957,7 @@ func TestAccessTokenEncryption(t *testing.T) {
 					ExpectedProxy:   true,
 					ExpectedCode:    http.StatusOK,
 					ExpectedCookies: map[string]string{cfg.CookieAccessName: ""},
-					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+					ExpectedCookiesValueValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						cfg.CookieAccessName: checkAccessTokenEncryption,
 					},
 				},
@@ -1993,7 +1993,7 @@ func TestAccessTokenEncryption(t *testing.T) {
 					ExpectedProxy:   true,
 					ExpectedCode:    http.StatusOK,
 					ExpectedCookies: map[string]string{cfg.CookieAccessName: ""},
-					ExpectedCookiesValidator: map[string]func(*testing.T, *config.Config, string) bool{
+					ExpectedCookiesValueValidator: map[string]func(*testing.T, *config.Config, string) bool{
 						cfg.CookieAccessName: checkAccessTokenEncryption,
 					},
 				},

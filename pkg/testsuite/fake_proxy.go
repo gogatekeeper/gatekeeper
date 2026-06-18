@@ -8,7 +8,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
@@ -32,7 +31,8 @@ import (
 type fakeRequest struct {
 	FormValues                    map[string]string
 	ExpectedLoginCookiesValidator map[string]func(*testing.T, *config.Config, string) bool
-	ExpectedCookiesValidator      map[string]func(*testing.T, *config.Config, string) bool
+	ExpectedCookiesValueValidator map[string]func(*testing.T, *config.Config, string) bool
+	ExpectedCookiesValidator      map[string]func(*testing.T, *config.Config, *http.Cookie) bool
 	ExpectedProxyHeadersValidator map[string]func(*testing.T, *config.Config, string)
 	ExpectedProxyHeaders          map[string]string
 	ExpectedHeadersValidator      map[string]func(*testing.T, *config.Config, string)
@@ -514,8 +514,8 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 			}
 		}
 
-		if len(reqCfg.ExpectedCookiesValidator) > 0 {
-			for cookName, cookValidator := range reqCfg.ExpectedCookiesValidator {
+		if len(reqCfg.ExpectedCookiesValueValidator) > 0 {
+			for cookName, cookValidator := range reqCfg.ExpectedCookiesValueValidator {
 				cookie := cookie.FindCookie(cookName, resp.Cookies())
 
 				if !assert.NotNil(
@@ -535,6 +535,32 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 						"case %d, invalid cookie value: %s in expected cookie validator",
 						idx,
 						cookie.Value,
+					)
+				}
+			}
+		}
+
+		if len(reqCfg.ExpectedCookiesValidator) > 0 {
+			for cookName, cookValidator := range reqCfg.ExpectedCookiesValidator {
+				cookie := cookie.FindCookie(cookName, resp.Cookies())
+
+				if !assert.NotNil(
+					t,
+					cookie,
+					"case %d, expected cookie %s not found",
+					idx,
+					cookName,
+				) {
+					continue
+				}
+
+				if cookValidator != nil {
+					assert.True(
+						t,
+						cookValidator(t, f.config, cookie),
+						"case %d, invalid cookie: %v in expected cookie validator",
+						idx,
+						cookie,
 					)
 				}
 			}
@@ -633,51 +659,6 @@ func setRequestAuthentication(
 	default:
 		client.SetAuthToken(token)
 	}
-}
-
-func newTestService() string {
-	_, _, u := newTestProxyService(nil)
-	return u
-}
-
-func newTestProxyService(config *config.Config) (*proxy.OauthProxy, *fakeAuthServer, string) {
-	if config == nil {
-		config = newFakeKeycloakConfig()
-	}
-
-	authConfig := &fakeAuthConfig{}
-	if config.SkipOpenIDProviderTLSVerify {
-		authConfig.EnableTLS = true
-	}
-
-	auth := newFakeAuthServer(authConfig)
-
-	config.DiscoveryURL = auth.getLocation()
-	config.RevocationEndpoint = auth.getRevocationURL()
-	config.Verbose = false
-	config.EnableLogging = false
-
-	err := config.Update()
-	if err != nil {
-		panic(errors.Join(ErrCreateFakeProxy, err).Error())
-	}
-
-	proxy, err := proxy.NewProxy(config, nil, &FakeUpstreamService{})
-	if err != nil {
-		panic(errors.Join(ErrCreateFakeProxy, err).Error())
-	}
-
-	// step: create an fake upstream endpoint
-	service := httptest.NewServer(proxy.Router)
-	config.RedirectionURL = service.URL
-
-	// step: we need to update the client config
-	proxy.Provider, proxy.IdpClient, err = proxy.NewOpenIDProvider()
-	if err != nil {
-		panic("failed to recreate the openid client, error: " + err.Error())
-	}
-
-	return proxy, auth, service.URL
 }
 
 //nolint:unparam
