@@ -29,8 +29,10 @@ import (
 )
 
 func TestGetUserinfo(t *testing.T) {
-	proxy, idp, _ := newTestProxyService(nil)
-	token, err := NewTestToken(idp.getLocation()).GetToken()
+	cfg := newFakeKeycloakConfig()
+	fProxy := newFakeProxy(cfg, &fakeAuthConfig{})
+	proxy := fProxy.proxy
+	token, err := NewTestToken(fProxy.idp.getLocation()).GetToken()
 	require.NoError(t, err)
 
 	tokenSource := oauth2.StaticTokenSource(
@@ -51,8 +53,10 @@ func TestGetUserinfo(t *testing.T) {
 }
 
 func TestTokenExpired(t *testing.T) {
-	proxy, idp, _ := newTestProxyService(nil)
-	token := NewTestToken(idp.getLocation())
+	cfg := newFakeKeycloakConfig()
+	fProxy := newFakeProxy(cfg, &fakeAuthConfig{})
+	proxy := fProxy.proxy
+	token := NewTestToken(fProxy.idp.getLocation())
 
 	testCases := []struct {
 		Expire time.Duration

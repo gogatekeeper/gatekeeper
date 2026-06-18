@@ -35,6 +35,7 @@ const (
 	DefaultOpenIDProviderRetryCount = 3
 	DefaultIat                      = 1450372669
 	OAuthCodeLength                 = 32
+	TestBaseURI                     = "/base-uri"
 )
 
 var (
