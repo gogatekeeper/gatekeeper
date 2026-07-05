@@ -42,7 +42,13 @@ func newTestCertificateRotator(t *testing.T) *encryption.CertificationRotation {
 			Help: "The total amount of times the certificate has been rotated",
 		},
 	)
-	rotation, err := encryption.NewCertificateRotator(testCertificateFile, testPrivateKeyFile, zap.NewNop(), &counter)
+	rotation, err := encryption.NewCertificateRotator(
+		testCertificateFile,
+		testPrivateKeyFile,
+		zap.NewNop(),
+		&counter,
+		"",
+	)
 	assert.NotNil(t, rotation)
 	require.NoError(t, err, "unable to create the certificate rotator")
 
@@ -56,8 +62,14 @@ func TestNewCeritifacteRotator(t *testing.T) {
 			Help: "The total amount of times the certificate has been rotated",
 		},
 	)
-	c, err := encryption.NewCertificateRotator(testCertificateFile, testPrivateKeyFile, zap.NewNop(), &counter)
-	assert.NotNil(t, c)
+	certRot, err := encryption.NewCertificateRotator(
+		testCertificateFile,
+		testPrivateKeyFile,
+		zap.NewNop(),
+		&counter,
+		"",
+	)
+	assert.NotNil(t, certRot)
 	require.NoError(t, err)
 }
 
@@ -68,8 +80,14 @@ func TestNewCeritifacteRotatorFailure(t *testing.T) {
 			Help: "The total amount of times the certificate has been rotated",
 		},
 	)
-	c, err := encryption.NewCertificateRotator("./tests/does_not_exist", testPrivateKeyFile, zap.NewNop(), &counter)
-	assert.Nil(t, c)
+	certRot, err := encryption.NewCertificateRotator(
+		"./tests/does_not_exist",
+		testPrivateKeyFile,
+		zap.NewNop(),
+		&counter,
+		"",
+	)
+	assert.Nil(t, certRot)
 	require.Error(t, err)
 }
 

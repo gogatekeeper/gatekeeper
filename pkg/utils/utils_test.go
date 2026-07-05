@@ -368,7 +368,7 @@ func TestIdValidHTTPMethod(t *testing.T) {
 }
 
 func TestFileExists(t *testing.T) {
-	if utils.FileExists("no_such_file_exsit_32323232") {
+	if utils.FileExists("", "no_such_file_exsit_32323232") {
 		t.Error("we should have received false")
 	}
 
@@ -382,7 +382,7 @@ func TestFileExists(t *testing.T) {
 
 	defer os.Remove(tmpfile.Name())
 
-	if !utils.FileExists(tmpfile.Name()) {
+	if !utils.FileExists("", tmpfile.Name()) {
 		t.Error("we should have received a true")
 	}
 }

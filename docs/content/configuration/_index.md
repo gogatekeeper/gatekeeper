@@ -36,6 +36,7 @@ weight: 2
 |    \--resources value                       | list of resources 'uri=/admin*\|methods=GET,PUT\|roles=role1,role2' | |
 |    \--headers value                         | custom headers to the upstream request, key=value | |
 |    \--preserve-host                         | preserve the host header of the proxied request in the upstream request | false | PROXY_PRESERVE_HOST
+|    \--file-root                             | file root for loading of files | | PROXY_FILE_ROOT
 |    \--request-id-header value               | the http header name for request id | X-Request-ID | PROXY_REQUEST_ID_HEADER
 |    \--response-headers value                | custom headers to added to the http response key=value | | PROXY_RESPONSE_HEADERS
 |    \--custom-http-methods                   | list of additional non-standard http methods | |

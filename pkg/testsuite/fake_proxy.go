@@ -122,7 +122,7 @@ func newFakeProxy(cfg *config.Config, authConfig *fakeAuthConfig) *fakeProxy {
 	// proxy.log = zap.NewNop()
 	_, err = oProxy.Run()
 	if err != nil {
-		panic("failed to create the proxy service, error: " + err.Error())
+		panic(errors.Join(ErrRunFakeProxy, err).Error())
 	}
 
 	cfg.RedirectionURL = "http://" + oProxy.Listener.Addr().String()

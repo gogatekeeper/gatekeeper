@@ -26,12 +26,12 @@ import (
 	"encoding/pem"
 	"math/big"
 	"net"
-	"os"
 	"sync"
 	"time"
 
 	"github.com/gogatekeeper/gatekeeper/pkg/apperrors"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"go.uber.org/zap"
 )
 
@@ -151,13 +151,13 @@ func CreateCertificate(key *ed25519.PrivateKey, hostnames []string, expire time.
 }
 
 // LoadKeyPair loads the tls key pair.
-func LoadKeyPair(certPath, keyPath string) (*tls.Certificate, error) {
-	cert, err := os.ReadFile(certPath)
+func LoadKeyPair(fileRoot, certPath, keyPath string) (*tls.Certificate, error) {
+	cert, err := utils.ReadFile(fileRoot, certPath)
 	if err != nil {
 		return nil, err
 	}
 
-	key, err := os.ReadFile(keyPath)
+	key, err := utils.ReadFile(fileRoot, keyPath)
 	if err != nil {
 		return nil, err
 	}
@@ -172,8 +172,8 @@ func LoadKeyPair(certPath, keyPath string) (*tls.Certificate, error) {
 	return &pair, err
 }
 
-func LoadCert(certPath string) (*x509.CertPool, error) {
-	cert, err := os.ReadFile(certPath)
+func LoadCert(fileRoot, certPath string) (*x509.CertPool, error) {
+	cert, err := utils.ReadFile(fileRoot, certPath)
 	if err != nil {
 		return nil, err
 	}

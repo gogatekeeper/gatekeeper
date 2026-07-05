@@ -23,6 +23,7 @@ import (
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
@@ -42,9 +43,10 @@ func NewCertificateRotator(
 	key string,
 	log *zap.Logger,
 	metric *prometheus.Counter,
+	fileRoot string,
 ) (*CertificationRotation, error) {
 	// step: attempt to load the certificate
-	certificate, err := tls.LoadX509KeyPair(cert, key)
+	certificate, err := utils.LoadX509KeyPairFromRoot(fileRoot, cert, key)
 	if err != nil {
 		return nil, err
 	}
