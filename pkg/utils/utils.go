@@ -110,7 +110,25 @@ func DefaultTo(v, d string) string {
 	return d
 }
 
-func FileExists(filename string) bool {
+func FileExists(fileRoot, filename string) bool {
+	if fileRoot != "" {
+		root, err := os.OpenRoot(fileRoot)
+		if err != nil {
+			return false
+		}
+
+		defer root.Close()
+
+		_, err = root.Stat(filename)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return false
+			}
+		}
+
+		return true
+	}
+
 	_, err := os.Stat(filename)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -751,4 +769,46 @@ func GetRandomString(n int) (string, error) {
 	}
 
 	return string(runes), nil
+}
+
+func ReadFile(fileRoot, filename string) ([]byte, error) {
+	var (
+		err     error
+		content []byte
+	)
+
+	if fileRoot != "" {
+		root, err := os.OpenRoot(fileRoot)
+		if err != nil {
+			return nil, err
+		}
+
+		defer root.Close()
+
+		content, err = root.ReadFile(filename)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		content, err = os.ReadFile(filename)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return content, nil
+}
+
+func LoadX509KeyPairFromRoot(fileRoot, certFile, keyFile string) (tls.Certificate, error) {
+	certPEMBlock, err := ReadFile(fileRoot, certFile)
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+
+	keyPEMBlock, err := ReadFile(fileRoot, keyFile)
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+
+	return tls.X509KeyPair(certPEMBlock, keyPEMBlock)
 }

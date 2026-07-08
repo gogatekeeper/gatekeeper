@@ -159,6 +159,7 @@ func NewProxy(config *config.Config, log *zap.Logger, upstream core.ReverseProxy
 			config.TLSStoreClientCertificate,
 			config.TLSStoreClientPrivateKey,
 			config.OpenIDProviderTimeout,
+			config.FileRoot,
 		)
 		if err != nil {
 			svc.Log.Error("failed to setup store", zap.Error(err))
@@ -218,6 +219,7 @@ func setupStore(
 	tlsStoreClientCertificate string,
 	tlsStoreClientPrivateKey string,
 	timeout time.Duration,
+	fileRoot string,
 ) (storage.Storage, error) {
 	var (
 		certPool *x509.CertPool
@@ -226,7 +228,7 @@ func setupStore(
 	)
 
 	if tlsStoreCaCertificate != "" {
-		certPool, err = encryption.LoadCert(tlsStoreCaCertificate)
+		certPool, err = encryption.LoadCert(fileRoot, tlsStoreCaCertificate)
 		if err != nil {
 			return nil, errors.Join(apperrors.ErrLoadStoreCA, err)
 		}
@@ -234,6 +236,7 @@ func setupStore(
 
 	if tlsStoreClientCertificate != "" && tlsStoreClientPrivateKey != "" {
 		keyPair, err = encryption.LoadKeyPair(
+			fileRoot,
 			tlsStoreClientCertificate,
 			tlsStoreClientPrivateKey,
 		)
@@ -1098,7 +1101,11 @@ func (r *OauthProxy) createForwardingProxy() error {
 	if r.Config.TLSForwardingCACertificate != "" && r.Config.TLSForwardingCAPrivateKey != "" {
 		r.Log.Info("enabling generating server certificate from CA")
 
-		cAuthority, err := encryption.LoadKeyPair(r.Config.TLSForwardingCACertificate, r.Config.TLSForwardingCAPrivateKey)
+		cAuthority, err := encryption.LoadKeyPair(
+			r.Config.FileRoot,
+			r.Config.TLSForwardingCACertificate,
+			r.Config.TLSForwardingCAPrivateKey,
+		)
 		if err != nil {
 			return fmt.Errorf("unable to load certificate/private key pair for CA, error: %w", err)
 		}
@@ -1108,7 +1115,7 @@ func (r *OauthProxy) createForwardingProxy() error {
 		if r.Config.TLSClientCACertificate != "" {
 			r.Log.Info("enabling tls client authentication")
 
-			clientCA, err = encryption.LoadCert(r.Config.TLSClientCACertificate)
+			clientCA, err = encryption.LoadCert(r.Config.FileRoot, r.Config.TLSClientCACertificate)
 			if err != nil {
 				return err
 			}
@@ -1461,7 +1468,7 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 	if strings.HasPrefix(config.listen, "unix://") {
 		socket := config.listen[7:]
 
-		if exists := utils.FileExists(socket); exists {
+		if exists := utils.FileExists(r.Config.FileRoot, socket); exists {
 			err = os.Remove(socket)
 			if err != nil {
 				return nil, err
@@ -1563,6 +1570,7 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 				config.privateKey,
 				r.Log,
 				&metrics.CertificateRotationMetric,
+				r.Config.FileRoot,
 			)
 			if err != nil {
 				return nil, err
@@ -1591,7 +1599,7 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 
 		// @check if we doing mutual tls
 		if config.clientCACert != "" {
-			caCert, err := os.ReadFile(config.clientCACert)
+			caCert, err := utils.ReadFile(r.Config.FileRoot, config.clientCACert)
 			if err != nil {
 				return nil, err
 			}
@@ -1642,7 +1650,7 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 			zap.String("path", r.Config.UpstreamCA),
 		)
 
-		cAuthority, err := os.ReadFile(r.Config.UpstreamCA)
+		cAuthority, err := utils.ReadFile(r.Config.FileRoot, r.Config.UpstreamCA)
 		if err != nil {
 			return err
 		}
@@ -1659,7 +1667,11 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 			zap.String("client key path", r.Config.TLSClientPrivateKey),
 		)
 
-		clientPair, err := encryption.LoadKeyPair(r.Config.TLSClientCertificate, r.Config.TLSClientPrivateKey)
+		clientPair, err := encryption.LoadKeyPair(
+			r.Config.FileRoot,
+			r.Config.TLSClientCertificate,
+			r.Config.TLSClientPrivateKey,
+		)
 		if err != nil {
 			return fmt.Errorf("unable to load certificate/private client key pair error: %w", err)
 		}
@@ -1836,7 +1848,7 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *keycloak_client.Clie
 			zap.String("path", r.Config.TLSOpenIDProviderCACertificate),
 		)
 
-		pool, err := encryption.LoadCert(r.Config.TLSOpenIDProviderCACertificate)
+		pool, err := encryption.LoadCert(r.Config.FileRoot, r.Config.TLSOpenIDProviderCACertificate)
 		if err != nil {
 			return nil, nil, errors.Join(apperrors.ErrLoadIDPCA, err)
 		}
@@ -1852,6 +1864,7 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *keycloak_client.Clie
 		)
 
 		clientKeyPair, err := encryption.LoadKeyPair(
+			r.Config.FileRoot,
 			r.Config.TLSOpenIDProviderClientCertificate,
 			r.Config.TLSOpenIDProviderClientPrivateKey,
 		)

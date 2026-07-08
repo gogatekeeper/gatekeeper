@@ -111,6 +111,7 @@ type Config struct {
 	ClientSecret                       string            `env:"CLIENT_SECRET" json:"client-secret,omitempty" usage:"client secret used to authenticate to the oauth service" yaml:"client-secret"`
 	RedirectionURL                     string            `env:"REDIRECTION_URL" json:"redirection-url,omitempty" usage:"redirection url for the oauth callback url, defaults to host header if absent" yaml:"redirection-url"`
 	CompressTokenOnlyAuthScheme        string            `env:"COMPRESS_TOKEN_ONLY_AUTH_SCHEME" json:"compress-token-only-auth-scheme" usage:"compress token only for chosen auth scheme: cookie, bearer, default is empty" yaml:"compress-token-only-auth-scheme"`
+	FileRoot                           string            `env:"FILE_ROOT" json:"file-root,omitempty" usage:"file root fixes directory for all files specified, prevents traversal attacks" yaml:"file-root"`
 	Hostnames                          []string          `json:"hostnames,omitempty" usage:"list of hostnames the service will respond to" yaml:"hostnames"`
 	ForwardingDomains                  []string          `json:"forwarding-domains,omitempty" usage:"list of domains which should be signed; everything else is relayed unsigned" yaml:"forwarding-domains"`
 	CorsExposedHeaders                 []string          `json:"cors-exposed-headers,omitempty" usage:"expose cors headers access control (Access-Control-Expose-Headers)" yaml:"cors-exposed-headers"`
@@ -469,59 +470,59 @@ func (r *Config) isTLSFilesValid(fileCheckEnable bool) error {
 	}
 
 	if fileCheckEnable {
-		if r.UpstreamCA != "" && !utils.FileExists(r.UpstreamCA) {
+		if r.UpstreamCA != "" && !utils.FileExists(r.FileRoot, r.UpstreamCA) {
 			return apperrors.ErrTLSUpstreamCANotExists
 		}
 
-		if r.TLSCertificate != "" && !utils.FileExists(r.TLSCertificate) {
+		if r.TLSCertificate != "" && !utils.FileExists(r.FileRoot, r.TLSCertificate) {
 			return apperrors.ErrTLSCertificateNotExists
 		}
 
-		if r.TLSPrivateKey != "" && !utils.FileExists(r.TLSPrivateKey) {
+		if r.TLSPrivateKey != "" && !utils.FileExists(r.FileRoot, r.TLSPrivateKey) {
 			return apperrors.ErrTLSPrivateKeyNotExists
 		}
 
-		if r.TLSClientCertificate != "" && !utils.FileExists(r.TLSClientCertificate) {
+		if r.TLSClientCertificate != "" && !utils.FileExists(r.FileRoot, r.TLSClientCertificate) {
 			return apperrors.ErrTLSClientCertificateNotExists
 		}
 
-		if r.TLSClientPrivateKey != "" && !utils.FileExists(r.TLSClientPrivateKey) {
+		if r.TLSClientPrivateKey != "" && !utils.FileExists(r.FileRoot, r.TLSClientPrivateKey) {
 			return apperrors.ErrTLSClientPrivateKeyNotExists
 		}
 
-		if r.TLSClientCACertificate != "" && !utils.FileExists(r.TLSClientCACertificate) {
+		if r.TLSClientCACertificate != "" && !utils.FileExists(r.FileRoot, r.TLSClientCACertificate) {
 			return apperrors.ErrTLSClientCACertificateNotExists
 		}
 
-		if r.TLSForwardingCACertificate != "" && !utils.FileExists(r.TLSForwardingCACertificate) {
+		if r.TLSForwardingCACertificate != "" && !utils.FileExists(r.FileRoot, r.TLSForwardingCACertificate) {
 			return apperrors.ErrTLSForwardingCACertificateNotExists
 		}
 
-		if r.TLSForwardingCAPrivateKey != "" && !utils.FileExists(r.TLSForwardingCAPrivateKey) {
+		if r.TLSForwardingCAPrivateKey != "" && !utils.FileExists(r.FileRoot, r.TLSForwardingCAPrivateKey) {
 			return apperrors.ErrTLSForwardingCAPrivateKeyNotExists
 		}
 
-		if r.TLSStoreCACertificate != "" && !utils.FileExists(r.TLSStoreCACertificate) {
+		if r.TLSStoreCACertificate != "" && !utils.FileExists(r.FileRoot, r.TLSStoreCACertificate) {
 			return apperrors.ErrTLSStoreCACertificateNotExists
 		}
 
-		if r.TLSStoreClientCertificate != "" && !utils.FileExists(r.TLSStoreClientCertificate) {
+		if r.TLSStoreClientCertificate != "" && !utils.FileExists(r.FileRoot, r.TLSStoreClientCertificate) {
 			return apperrors.ErrTLSStoreClientCertificateNotExists
 		}
 
-		if r.TLSStoreClientPrivateKey != "" && !utils.FileExists(r.TLSStoreClientPrivateKey) {
+		if r.TLSStoreClientPrivateKey != "" && !utils.FileExists(r.FileRoot, r.TLSStoreClientPrivateKey) {
 			return apperrors.ErrTLSStoreClientPrivateKeyNotExists
 		}
 
-		if r.TLSOpenIDProviderCACertificate != "" && !utils.FileExists(r.TLSOpenIDProviderCACertificate) {
+		if r.TLSOpenIDProviderCACertificate != "" && !utils.FileExists(r.FileRoot, r.TLSOpenIDProviderCACertificate) {
 			return apperrors.ErrTLSOpenIDPCACertificateNotExists
 		}
 
-		if r.TLSOpenIDProviderClientCertificate != "" && !utils.FileExists(r.TLSOpenIDProviderClientCertificate) {
+		if r.TLSOpenIDProviderClientCertificate != "" && !utils.FileExists(r.FileRoot, r.TLSOpenIDProviderClientCertificate) {
 			return apperrors.ErrTLSOpenIDPClientCertificateNotExists
 		}
 
-		if r.TLSOpenIDProviderClientPrivateKey != "" && !utils.FileExists(r.TLSOpenIDProviderClientPrivateKey) {
+		if r.TLSOpenIDProviderClientPrivateKey != "" && !utils.FileExists(r.FileRoot, r.TLSOpenIDProviderClientPrivateKey) {
 			return apperrors.ErrTLSOpenIDPClientPrivateKeyNotExists
 		}
 	}
@@ -568,21 +569,21 @@ func (r *Config) isAdminTLSFilesValid(fileCheckEnable bool) error {
 	}
 
 	if fileCheckEnable {
-		if r.TLSAdminCertificate != "" && !utils.FileExists(r.TLSAdminCertificate) {
+		if r.TLSAdminCertificate != "" && !utils.FileExists(r.FileRoot, r.TLSAdminCertificate) {
 			return fmt.Errorf(
 				"the tls certificate %s does not exist for admin endpoint",
 				r.TLSAdminCertificate,
 			)
 		}
 
-		if r.TLSAdminPrivateKey != "" && !utils.FileExists(r.TLSAdminPrivateKey) {
+		if r.TLSAdminPrivateKey != "" && !utils.FileExists(r.FileRoot, r.TLSAdminPrivateKey) {
 			return fmt.Errorf(
 				"the tls private key %s does not exist for admin endpoint",
 				r.TLSAdminPrivateKey,
 			)
 		}
 
-		if r.TLSAdminClientCACertificate != "" && !utils.FileExists(r.TLSAdminClientCACertificate) {
+		if r.TLSAdminClientCACertificate != "" && !utils.FileExists(r.FileRoot, r.TLSAdminClientCACertificate) {
 			return fmt.Errorf(
 				"the tls client CA certificate %s does not exist for admin endpoint",
 				r.TLSAdminClientCACertificate,

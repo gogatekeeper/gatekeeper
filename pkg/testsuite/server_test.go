@@ -759,7 +759,7 @@ func TestEnableHmacForwardingProxy(t *testing.T) {
 
 func TestForbiddenTemplate(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
-	cfg.ForbiddenPage = "../../templates/forbidden.html.tmpl"
+	cfg.ForbiddenPage = ForbiddenPagePath
 	cfg.Resources = []*core.Resource{
 		{
 			URL:     "/*",
@@ -2673,6 +2673,130 @@ func TestMaxBodySize(t *testing.T) {
 			func(t *testing.T) {
 				testCase.ProxySettings(&cfg)
 				newFakeProxy(&cfg, &fakeAuthConfig{}).RunTests(t, testCase.ExecutionSettings)
+			},
+		)
+	}
+}
+
+//nolint:cyclop
+func TestFileRoot(t *testing.T) {
+	tmpDir := os.TempDir()
+
+	testCases := []struct {
+		Name          string
+		ProxySettings func(conf *config.Config)
+		Panic         bool
+	}{
+		{
+			Name: "TestFileRootMatch",
+			ProxySettings: func(conf *config.Config) {
+				conf.FileRoot = tmpDir
+				conf.EnableDefaultDeny = true
+				//nolint:gosec
+				conf.TLSCertificate = strings.TrimPrefix(FakeCertFilePrefix, "/") + strconv.Itoa(rand.Intn(10000))
+				//nolint:gosec
+				conf.TLSPrivateKey = strings.TrimPrefix(FakePrivFilePrefix, "/") + strconv.Itoa(rand.Intn(10000))
+				//nolint:gosec
+				conf.TLSClientCertificate = strings.TrimPrefix(FakeCaFilePrefix, "/") + strconv.Itoa(rand.Intn(10000))
+				conf.NoRedirects = true
+			},
+		},
+		{
+			Name: "TestFileRootDiffer",
+			ProxySettings: func(conf *config.Config) {
+				conf.FileRoot = "/var/lib"
+				conf.EnableDefaultDeny = true
+				//nolint:gosec
+				conf.TLSCertificate = tmpDir + FakeCertFilePrefix + strconv.Itoa(rand.Intn(10000))
+				//nolint:gosec
+				conf.TLSPrivateKey = tmpDir + FakePrivFilePrefix + strconv.Itoa(rand.Intn(10000))
+				//nolint:gosec
+				conf.TLSClientCertificate = tmpDir + FakeCaFilePrefix + strconv.Itoa(rand.Intn(10000))
+				conf.TLSMinVersion = constant.TLS13
+				conf.NoRedirects = true
+			},
+			Panic: true,
+		},
+	}
+
+	for idx, testCase := range testCases {
+		cfg := newFakeKeycloakConfig()
+
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				testCase.ProxySettings(cfg)
+
+				certFile := ""
+				privFile := ""
+				caFile := ""
+
+				if cfg.TLSCertificate != "" {
+					certFile = cfg.TLSCertificate
+				}
+
+				if cfg.TLSPrivateKey != "" {
+					privFile = cfg.TLSPrivateKey
+				}
+
+				if cfg.TLSClientCertificate != "" {
+					caFile = cfg.TLSClientCertificate
+				}
+
+				if certFile != "" {
+					fakeCertByte := []byte(fakeCert)
+
+					if !testCase.Panic {
+						certFile = tmpDir + "/" + certFile
+					}
+
+					err := os.WriteFile(certFile, fakeCertByte, 0o600)
+					if err != nil {
+						t.Fatalf("Problem writing certificate %s", err)
+					}
+					defer os.Remove(certFile)
+				}
+
+				if privFile != "" {
+					fakeKeyByte := []byte(fakePrivateKey)
+
+					if !testCase.Panic {
+						privFile = tmpDir + "/" + privFile
+					}
+
+					err := os.WriteFile(privFile, fakeKeyByte, 0o600)
+					if err != nil {
+						t.Fatalf("Problem writing privateKey %s", err)
+					}
+					defer os.Remove(privFile)
+				}
+
+				if caFile != "" {
+					fakeCAByte := []byte(fakeCA)
+
+					if !testCase.Panic {
+						caFile = tmpDir + "/" + caFile
+					}
+
+					err := os.WriteFile(caFile, fakeCAByte, 0o600)
+					if err != nil {
+						t.Fatalf("Problem writing cacertificate %s", err)
+					}
+					defer os.Remove(caFile)
+				}
+
+				defer func() {
+					rec := recover()
+					if testCase.Panic {
+						assert.NotNil(t, rec, "Expected recover from panic, test: %d", idx)
+						assert.Contains(t, rec, ErrRunFakeProxy.Error())
+						assert.Contains(t, rec, "path escapes from parent")
+					} else {
+						assert.Nil(t, rec, "Expected not panic, test: %d", idx)
+					}
+				}()
+
+				newFakeProxy(cfg, &fakeAuthConfig{})
 			},
 		)
 	}
