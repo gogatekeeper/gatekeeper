@@ -3592,3 +3592,60 @@ func TestIsMaxBodySizeValid(t *testing.T) {
 		)
 	}
 }
+
+func TestIsLogSamplingValid(t *testing.T) {
+	testCases := []struct {
+		Config *Config
+		Name   string
+		Valid  bool
+	}{
+		{
+			Name: "ValidLogSampling",
+			Config: &Config{
+				LogSamplingInitial: 10,
+				LogSamplingAfter:   1000,
+			},
+			Valid: true,
+		},
+		{
+			Name: "ValidLogSamplingZeros",
+			Config: &Config{
+				LogSamplingInitial: 0,
+				LogSamplingAfter:   0,
+			},
+			Valid: true,
+		},
+		{
+			Name: "InvalidLogSamplingInitial",
+			Config: &Config{
+				LogSamplingInitial: -10,
+				LogSamplingAfter:   10,
+			},
+			Valid: false,
+		},
+		{
+			Name: "InValidLogSamplingAfter",
+			Config: &Config{
+				LogSamplingInitial: 240,
+				LogSamplingAfter:   -100,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isLogSamplingValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}

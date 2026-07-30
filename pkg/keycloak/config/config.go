@@ -143,6 +143,8 @@ type Config struct {
 	MaxTokenSize                       int               `env:"MAX_TOKEN_SIZE" json:"max-token-size,omitempty" usage:"maximum size of token in bytes" yaml:"max-token-size"`
 	MaxBodySize                        int               `env:"MAX_BODY_SIZE" json:"max-body-size,omitempty" usage:"maximum body size in bytes" yaml:"max-body-size"`
 	MaxHeaderSize                      int               `env:"MAX_HEADER_SIZE" json:"max-header-size,omitempty" usage:"maximum total headers size in bytes" yaml:"max-header-size"`
+	LogSamplingInitial                 int               `env:"LOG_SAMPLING_INITIAL" json:"log-sampling-initial" usage:"initial number of messages logged, after that sampling turns on" yaml:"log-sampling-initial"`
+	LogSamplingAfter                   int               `env:"LOG_SAMPLING_AFTER" json:"log-sampling-after" usage:"each n-th number message is logged, after initial messages logged" yaml:"log-sampling-after"`
 	OpenIDProviderRetryCount           int               `env:"OPENID_PROVIDER_RETRY_COUNT" json:"openid-provider-retry-count,omitempty" usage:"number of retries for retrieving openid configuration" yaml:"openid-provider-retry-count"`
 	OpenIDProviderTimeout              time.Duration     `env:"OPENID_PROVIDER_TIMEOUT" json:"openid-provider-timeout,omitempty" usage:"timeout for openid configuration on .well-known/openid-configuration" yaml:"openid-provider-timeout"`
 	EnableProfiling                    bool              `env:"ENABLE_PROFILING" json:"enable-profiling" usage:"switching on the golang profiling via pprof on /debug/pprof, /debug/pprof/heap etc" yaml:"enable-profiling"`
@@ -279,6 +281,8 @@ func NewDefaultConfig() *Config {
 		PatRetryCount:                    constant.DefaultPatRetryCount,
 		PatRetryInterval:                 constant.DefaultPatRetryInterval,
 		OpaTimeout:                       constant.DefaultOpaTimeout,
+		LogSamplingInitial:               constant.DefaultLogSamplingInitial,
+		LogSamplingAfter:                 constant.DefaultLogSamplingAfter,
 	}
 }
 
@@ -372,6 +376,7 @@ func (r *Config) IsValid(fileCheckEnable bool) error {
 		r.isReverseProxySettingsValid,
 		r.isCookieValid,
 		r.isEnableCompressTokenValid,
+		r.isLogSamplingValid,
 	}
 
 	for _, validationFunc := range validationRegistry {
@@ -1240,6 +1245,14 @@ func (r *Config) isMaxTokenSizeValid() error {
 func (r *Config) isMaxBodySizeValid() error {
 	if r.MaxBodySize < 0 {
 		return apperrors.ErrInvalidBodyMaxSize
+	}
+
+	return nil
+}
+
+func (r *Config) isLogSamplingValid() error {
+	if r.LogSamplingInitial < 0 || r.LogSamplingAfter < 0 {
+		return apperrors.ErrInvalidLogSampling
 	}
 
 	return nil

@@ -272,4 +272,5 @@ var (
 		"audience, email, expiresin, groups, roles, subject, userid, username")
 	ErrInvalidTokenMaxSize = errors.New("max token size must be greater than zero")
 	ErrInvalidBodyMaxSize  = errors.New("max body size must be greater than zero")
+	ErrInvalidLogSampling  = errors.New("log sampling initial/after must be greater than zero")
 )

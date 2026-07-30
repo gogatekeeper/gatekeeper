@@ -284,6 +284,8 @@ func createLogger(config *config.Config) (*zap.Logger, error) {
 	cfg := zap.NewProductionConfig()
 	cfg.DisableStacktrace = true
 	cfg.DisableCaller = true
+	cfg.Sampling.Initial = config.LogSamplingInitial
+	cfg.Sampling.Thereafter = config.LogSamplingAfter
 
 	// Use human-readable timestamps in the logs until KEYCLOAK-12100 is fixed
 	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
