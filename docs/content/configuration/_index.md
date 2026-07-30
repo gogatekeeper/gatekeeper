@@ -48,6 +48,8 @@ weight: 2
 |    \--max-token-size                        | maximum size of token in bytes | 0 | PROXY_MAX_TOKEN_SIZE
 | 	 \--max-body-size                         | maximum body size in bytes     | 0 | PROXY_MAX_BODY_SIZE
 |    \--max-header-size                       | maximum total headers size in bytes | 1MB | PROXY_MAX_HEADER_SIZE
+|    \--log-sampling-initial                  | initial number of messages logged, after that sampling turns on | 100 | PROXY_LOG_SAMPLING_INITIAL
+|    \--log-sampling-after                    | each n-th number message is logged, after initial messages logged | 100 | PROXY_LOG_SAMPLING_AFTER
 |    \--enable-request-id                     | indicates we should add a request id if none found | false | PROXY_ENABLE_REQUEST_ID |
 |    \--enable-logout-redirect                | indicates we should redirect to the identity provider for logging out | false | PROXY_ENABLE_LOGOUT_REDIRECT
 |    \--enable-default-deny                   | enables a default denial on all requests, requests with valid token are permitted, you have to explicitly say what is permitted | true | PROXY_ENABLE_DEFAULT_DENY

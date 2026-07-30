@@ -83,6 +83,10 @@ register-page: register.html.tmpl
 tls-cert:
 # the location of a server side private key for gatekeeper
 tls-private-key:
+# first 100 msgs are logged
+log-sampling-initial: 100
+# after log-sampling-initial msgs logged, only this n-th message is logged
+log-sampling-after: 100
 # TLS options related to admin listener
 tls-admin-cert:
 tls-admin-private-key:

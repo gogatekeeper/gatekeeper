@@ -123,6 +123,8 @@ const (
 	DefaultPatRetryCount                 = 5
 	DefaultPatRetryInterval              = 10 * time.Second
 	DefaultOpaTimeout                    = 10 * time.Second
+	DefaultLogSamplingInitial            = 100
+	DefaultLogSamplingAfter              = 100
 
 	ForwardingGrantTypePassword = "password"
 
