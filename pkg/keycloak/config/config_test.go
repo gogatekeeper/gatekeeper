@@ -3649,3 +3649,47 @@ func TestIsLogSamplingValid(t *testing.T) {
 		)
 	}
 }
+
+func TestIsMaxHeadersValid(t *testing.T) {
+	testCases := []struct {
+		Config *Config
+		Name   string
+		Valid  bool
+	}{
+		{
+			Name:   "ValidEmptyMaxHeaders",
+			Config: &Config{},
+			Valid:  true,
+		},
+		{
+			Name: "ValidMaxHeaders",
+			Config: &Config{
+				MaxHeaders: 1000,
+			},
+			Valid: true,
+		},
+		{
+			Name: "InValidMaxHeaders",
+			Config: &Config{
+				MaxHeaders: -2,
+			},
+			Valid: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				err := testCase.Config.isMaxHeadersValid()
+				if err != nil && testCase.Valid {
+					t.Fatalf("Expected test not to fail")
+				}
+
+				if err == nil && !testCase.Valid {
+					t.Fatalf("Expected test to fail")
+				}
+			},
+		)
+	}
+}

@@ -73,6 +73,8 @@ enable-refresh-tokens: true
 max-token-size: 2000
 # maximum body size in bytes
 max-body-size: 3000
+# maximum number of headers
+max-headers: 20
 # you can set up custom templates for forbidden/error/sign-in pages, gatekeeper
 # also provides these already builtin (but they are not set by default)
 forbidden-page: templates/forbidden.html.tmpl

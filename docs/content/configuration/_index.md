@@ -47,6 +47,7 @@ weight: 2
 |    \--self-signed-tls-expiration value      | the expiration of the certificate before rotation | 3h0m0s | PROXY_SELF_SIGNED_TLS_EXPIRATION
 |    \--max-token-size                        | maximum size of token in bytes | 0 | PROXY_MAX_TOKEN_SIZE
 | 	 \--max-body-size                         | maximum body size in bytes     | 0 | PROXY_MAX_BODY_SIZE
+|	 \--max-headers                           | maximum number of headers in request | 0 | PROXY_MAX_HEADERS
 |    \--max-header-size                       | maximum total headers size in bytes | 1MB | PROXY_MAX_HEADER_SIZE
 |    \--log-sampling-initial                  | initial number of messages logged, after that sampling turns on | 100 | PROXY_LOG_SAMPLING_INITIAL
 |    \--log-sampling-after                    | each n-th number message is logged, after initial messages logged | 100 | PROXY_LOG_SAMPLING_AFTER
