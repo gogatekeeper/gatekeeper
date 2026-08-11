@@ -270,7 +270,8 @@ var (
 
 	ErrInvalidExcludeClaim = errors.New("you can only exclude one of base claims: " +
 		"audience, email, expiresin, groups, roles, subject, userid, username")
-	ErrInvalidTokenMaxSize = errors.New("max token size must be greater than zero")
-	ErrInvalidBodyMaxSize  = errors.New("max body size must be greater than zero")
-	ErrInvalidLogSampling  = errors.New("log sampling initial/after must be greater than zero")
+	ErrInvalidTokenMaxSize = errors.New("max token size must be greater than or equal zero")
+	ErrInvalidBodyMaxSize  = errors.New("max body size must be greater than or equal zero")
+	ErrInvalidLogSampling  = errors.New("log sampling initial/after must be greater than or equal zero")
+	ErrInvalidMaxHeaders   = errors.New("max headers must be greater than or equal zero")
 )

@@ -411,7 +411,8 @@ func ProxyMiddleware(
 
 			if utils.IsUpgradedConnection(req) {
 				clientIP := utils.RealIP(req)
-				logger.Debug("upgrading the connnection",
+				logger.Debug(
+					"upgrading the connnection",
 					zap.String("client_ip", clientIP),
 					zap.String("remote_addr", req.RemoteAddr),
 				)
@@ -557,6 +558,26 @@ func MaxBodySizeMiddleware(
 
 				logger.Error(err.Error())
 				wrt.WriteHeader(http.StatusInternalServerError)
+
+				return
+			}
+
+			next.ServeHTTP(wrt, req)
+		})
+	}
+}
+
+func MaxHeadersMiddleware(
+	logger *zap.Logger,
+	maxHeaders int,
+) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		logger.Info("enabling max headers middleware")
+
+		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
+			if len(req.Header) > maxHeaders {
+				logger.Warn("maxHeaders reached, too many headers")
+				wrt.WriteHeader(http.StatusForbidden)
 
 				return
 			}
