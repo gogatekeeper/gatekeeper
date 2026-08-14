@@ -245,6 +245,9 @@ but try to follow it as much as you can. This implies several things when config
 
   ```yaml
     resources:
+      - uri: /*
+        roles:
+          - DENY_ROLE # role which is not assigned to anyone
       - uri: /app/* # this must be most restrictive as it is catching all, even unknown cases
         roles:
           - DENY_ROLE # role which is not assigned to anyone
