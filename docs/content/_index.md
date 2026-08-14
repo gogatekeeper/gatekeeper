@@ -36,6 +36,8 @@ so that you better understand how it works
 Configuration can come from a YAML/JSON file or by using command line
 options. Here is a list of options.
 
+**IMPORTANT**: please check [best practices](#resources-best-practices)
+
 ``` yaml
 # is the URL for retrieve the OpenID configuration
 discovery-url: <DISCOVERY URL>
@@ -104,6 +106,7 @@ scopes:
 - vpn-user
 # a collection of resource i.e. URLs that you wish to protect, this are simple gatekeeper authorization rules,
 # to get more complex authorization you can look at external authorization section in our documentation
+# please check [best practices](#resources-best-practices)!
 resources:
 - uri: /admin/test
   # the methods on this URL that should be protected, uri is required when defining resource
@@ -164,6 +167,7 @@ redirection-url: http://127.0.0.1:3000
 upstream-url: http://127.0.0.1:80
 # a collection of resource i.e. URLs that you wish to protect, this are simple gatekeeper authorization rules,
 # to get more complex authorization you can look at external authorization section in our documentation
+# please check [best practices](#resources-best-practices) !
 resources:
 - uri: /admin*
   methods:
@@ -203,6 +207,8 @@ headers:
 Anything defined in a configuration file can also be configured using
 command line options, such as in this example.
 
+**IMPORTANT**: please check [best practices](#resources-best-practices)
+
 ``` bash
 bin/gatekeeper \
     --discovery-url=https://keycloak.example.com/realms/<REALM_NAME> \
@@ -224,6 +230,32 @@ bin/gatekeeper \
     --headers="myheader2=value2"
 ```
 
+## Resources Best Practices
+
+When designing rules for gatekeeper think about it as a firewall configuration. Firewall configuration and
+actually usually all security rules should follow main rule: forbbid everything and then allow only what is needed
+and be as much explicit as possible. Of course this is not always possible due to limitations on application side
+but try to follow it as much as you can. This implies several things when configuring gatekeeper:
+
+1. Match all rule `/*` should be defined as much restrictive as possible as it will catch all cases which you even don't think of right now, don't just use `--enable-default-deny`/`--enable-default-deny-strict` this is only convenient flag for starting working with gatekeeper, not serious protection
+
+2. point 1. also applies to nested wildcards/catch alls, e.g.:
+
+  ```yaml
+    resources:
+      - uri: /app/* # this must be most restrictive as it is catching all, even unknown cases
+        roles:
+          - DENY_ROLE # role which is not assigned to anyone
+      - uri: /app/admin # this will allow access to admin page only to admin role
+          - ONLY_ADMIN
+      - uri: /app/users
+          - ONLY_USER_MANAGER_ROLE
+      - uri: /app/topics
+          - ONLY_TOPICS_MANAGER_ROLE
+  ```
+3. rules which allow access should be as much explicit and specific as possible, try to avoid wild cards on allow rules
+    where possible
+
 ## Roles
 
 By default, the roles defined on a resource perform a logical `AND` so
@@ -232,6 +264,8 @@ altered by the `require-any-role` option, however, so as long as one
 role is present the permission is granted.
 
 You can match on realm roles or client roles:
+
+**IMPORTANT**: please check [best practices](#resources-best-practices)
 
 ```yaml
 resources:
@@ -291,6 +325,8 @@ resources:
 ```
 
 ## Default Deny
+
+**IMPORTANT**: please check [best practices](#resources-best-practices)
 
 `--enable-default-deny` - option blocks all requests without valid token on all basic HTTP methods,
 (DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, TRACE). **WARNING:** There are no additional requirements on
