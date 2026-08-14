@@ -248,16 +248,30 @@ but try to follow it as much as you can. This implies several things when config
       - uri: /*
         roles:
           - DENY_ROLE # role which is not assigned to anyone
-      - uri: /app/* # this must be most restrictive as it is catching all, even unknown cases
-        roles:
-          - DENY_ROLE # role which is not assigned to anyone
       - uri: /app/admin # this will allow access to admin page only to admin role
+        roles:
           - ONLY_ADMIN
       - uri: /app/users
+        roles:
           - ONLY_USER_MANAGER_ROLE
       - uri: /app/topics
+        roles:
           - ONLY_TOPICS_MANAGER_ROLE
   ```
+
+  DONT'T DO:
+
+  ```yaml
+    resources:
+      - uri: /app/admin/*
+        roles:
+          - ADMIN_ROLE
+      - uri: /app/* # you are matching all requests, even potential ATTACKs and you require only USER_ROLE, what if there will be vulnerability and USER_ROLE will gain access to all pages under app, even admin?
+        roles: 
+          - USER_ROLE
+  ```
+
+
 3. rules which allow access should be as much explicit and specific as possible, try to avoid wild cards on allow rules
     where possible
 
