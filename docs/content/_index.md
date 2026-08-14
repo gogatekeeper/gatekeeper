@@ -248,6 +248,9 @@ but try to follow it as much as you can. This implies several things when config
       - uri: /*
         roles:
           - DENY_ROLE # role which is not assigned to anyone
+      - uri: /app/*
+        roles:
+          - ONLY_APP_SUPERUSER # only most privileged user or just user role which is not assigned to anyone
       - uri: /app/admin # this will allow access to admin page only to admin role
         roles:
           - ONLY_ADMIN
