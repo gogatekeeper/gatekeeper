@@ -239,7 +239,7 @@ actually usually all security rules should follow main rule: forbbid everything 
 and be as much explicit as possible. Of course this is not always possible due to limitations on application side
 but try to follow it as much as you can. This implies several things when configuring gatekeeper:
 
-1. Match all rule `/*` should be defined as much restrictive as possible as it will catch all cases which you even don't think of right now, don't just use `--enable-default-deny`/`--enable-default-deny-strict` this is only convenient flag for starting working with gatekeeper, not serious protection
+1. Match all rule `/*` should be defined as much restrictive as possible as it will catch all cases which you even don't think of right now, don't just use `--enable-default-deny` this is only convenient flag for starting working with gatekeeper, not serious protection, best is to use `--enable-default-deny-strict` (it will be new default in next major release) + proper resource rules
 
 2. point 1. also applies to nested wildcards/catch alls, e.g.:
 
