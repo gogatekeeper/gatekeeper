@@ -269,7 +269,7 @@ but try to follow it as much as you can. This implies several things when config
       - uri: /app/admin/*
         roles:
           - ADMIN_ROLE
-      - uri: /app/* # you are matching all requests, even potential ATTACKs and you require only USER_ROLE, what if there will be vulnerability and USER_ROLE will gain access to all pages under app, even admin?
+      - uri: /app/* # you are matching all requests, even potential ATTACKs and you require only USER_ROLE, what if there will be vulnerability and USER_ROLE will gain access to all pages under app, even admin? What if there will be added new endpoint e.g. /app/financial to which user should not have access
         roles: 
           - USER_ROLE
   ```
