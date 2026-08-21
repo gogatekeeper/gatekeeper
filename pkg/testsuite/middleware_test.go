@@ -49,6 +49,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+//nolint:goconst
 func TestMetricsMiddleware(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.EnableMetrics = true
@@ -108,6 +109,7 @@ func TestMetricsMiddleware(t *testing.T) {
 	p.RunTests(t, requests)
 }
 
+//nolint:goconst
 func TestOauthRequests(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	requests := []fakeRequest{
@@ -130,7 +132,7 @@ func TestOauthRequests(t *testing.T) {
 	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
 }
 
-//nolint:cyclop
+//nolint:cyclop,goconst
 func TestAdminListener(t *testing.T) {
 	testCases := []struct {
 		Name              string
@@ -354,21 +356,22 @@ func TestOauthRequestsWithBaseURI(t *testing.T) {
 func TestMethodExclusions(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.NoRedirects = true
+	postPath := "/post"
 	cfg.Resources = []*core.Resource{
 		{
-			URL:     "/post",
+			URL:     postPath,
 			Methods: []string{http.MethodPost, http.MethodPut},
 		},
 	}
 	requests := []fakeRequest{
 		{ // we should get a 401
-			URI:          "/post",
+			URI:          postPath,
 			Method:       http.MethodPost,
 			ExpectedCode: http.StatusUnauthorized,
 			Redirects:    false,
 		},
 		{ // we should be permitted
-			URI:           "/post",
+			URI:           postPath,
 			Method:        http.MethodGet,
 			ExpectedProxy: true,
 			ExpectedCode:  http.StatusOK,
@@ -378,113 +381,965 @@ func TestMethodExclusions(t *testing.T) {
 	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
 }
 
-func TestPreserveURLEncoding(t *testing.T) {
+//nolint:funlen,goconst
+func TestPathNormalizationRedirects(t *testing.T) {
+	cfg := newFakeKeycloakConfig()
+	cfg.EnableLogging = true
+	cfg.NoRedirects = false
+
+	testCases := []struct {
+		Name              string
+		ProxySettings     func(c *config.Config)
+		ExecutionSettings []fakeRequest
+	}{
+		{
+			Name: "AllNormalizationDisabled",
+			ProxySettings: func(cfg *config.Config) {
+				cfg.NormalizePath = false
+				cfg.NormalizePathUpstream = false
+				cfg.MergeSlashes = false
+				cfg.MergeSlashesUpstream = false
+				cfg.PathEscapedSlashes = true
+				cfg.PathEscapedSlashesUpstream = true
+				cfg.Resources = []*core.Resource{
+					{
+						URL:     "/.%2e/../%2F/%5c/api/v1/%61uth/some*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"dev"},
+					},
+					{
+						URL:     "/api/v1/auth*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"admin"},
+					},
+					{
+						URL:     constant.AllPath,
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"user"},
+					},
+				}
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:                     "/api/v1/auth/ok",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/ok"`,
+				},
+				{
+					URI:                     "/.%2e/../%2F/%5c/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"dev"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/.%2e/../%2F/%5c/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+				},
+				//nolint:lll
+				{
+					URI:                     "/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"user"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"uri":"/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/"`,
+				},
+				{
+					URI:                     "/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"user"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"uri":"/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png"`,
+				},
+				{
+					URI:          "/../api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/.%2e/api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/api/v1/%2f/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/../%2e/.%2e/auth/%2F/%6akoper",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+			},
+		},
+		{
+			Name: "NormalizePathEnabled",
+			ProxySettings: func(cfg *config.Config) {
+				cfg.NormalizePath = true
+				cfg.NormalizePathUpstream = true
+				cfg.MergeSlashes = false
+				cfg.MergeSlashesUpstream = false
+				cfg.PathEscapedSlashes = true
+				cfg.PathEscapedSlashesUpstream = true
+				cfg.Resources = []*core.Resource{
+					{
+						URL:     "/%2F/%5C/api/v1/auth/some*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"dev"},
+					},
+					{
+						URL:     "/api/v1/auth*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"admin"},
+					},
+					{
+						URL:     constant.AllPath,
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"user"},
+					},
+				}
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:                     "/api/v1/auth/ok",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/ok"`,
+				},
+				{
+					URI:                     "/.%2e/../%2F/%5C/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"dev"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/%2F/%5C/api/v1/auth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+				},
+				{
+					URI:                     "/../api/v1/%61uth/some",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/some"`,
+				},
+				{
+					URI:                     "/.%2e/api/v1/%61uth/some",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/some"`,
+				},
+				{
+					URI:                     "/help/../api/v1/%61uth/some",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/some"`,
+				},
+				{
+					URI:                     "/help/.%2e/api/v1/%61uth/some",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/some"`,
+				},
+				{
+					URI:          "/api/v1/%2F/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/../%2e/.%2e/auth/%2F/%6akoper",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+			},
+		},
+		{
+			Name: "MergeSlashesEnabled",
+			ProxySettings: func(cfg *config.Config) {
+				cfg.NormalizePath = false
+				cfg.NormalizePathUpstream = false
+				cfg.MergeSlashes = true
+				cfg.MergeSlashesUpstream = true
+				cfg.PathEscapedSlashes = true
+				cfg.PathEscapedSlashesUpstream = true
+				cfg.Resources = []*core.Resource{
+					{
+						URL:     "/.%2e/../%2F/api/v1/%61uth/some*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"dev"},
+					},
+					{
+						URL:     "/api/v1/auth*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"admin"},
+					},
+					{
+						URL:     constant.AllPath,
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"user"},
+					},
+				}
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:                     "/api/v1/auth/ok",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/ok"`,
+				},
+				{
+					URI:                     "/.%2e/..///%2F//api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"dev"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+				},
+				{
+					URI:          "/../api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/.%2e/api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/api/v1/%2F/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/../%2e/.%2e/auth/%2F/%6akoper",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+			},
+		},
+		{
+			Name: "UnescapeSlashesEnabled",
+			ProxySettings: func(cfg *config.Config) {
+				cfg.NormalizePath = false
+				cfg.NormalizePathUpstream = false
+				cfg.MergeSlashes = false
+				cfg.MergeSlashesUpstream = false
+				cfg.PathEscapedSlashes = false
+				cfg.PathEscapedSlashesUpstream = false
+				cfg.Resources = []*core.Resource{
+					{
+						URL:     "/.%2e/../////api\\/v1/%61uth/some*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"dev"},
+					},
+					{
+						URL:     "/api/v1/auth*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"admin"},
+					},
+					{
+						URL:     constant.AllPath,
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"user"},
+					},
+				}
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:                     "/api/v1/auth/ok",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/ok"`,
+				},
+				{
+					URI:                     "/.%2e/..//%2F//api%5c/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"dev"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/.%2e/../////api\\/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+				},
+				{
+					URI:          "/../api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/.%2e/api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/api/v1/%2F/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/../%2e/.%2e/auth/%2F/%6akoper",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+			},
+		},
+		{
+			Name: "AllNormalizationEnabled",
+			ProxySettings: func(cfg *config.Config) {
+				cfg.NormalizePath = true
+				cfg.NormalizePathUpstream = true
+				cfg.MergeSlashes = true
+				cfg.MergeSlashesUpstream = true
+				cfg.PathEscapedSlashes = false
+				cfg.PathEscapedSlashesUpstream = false
+				cfg.Resources = []*core.Resource{
+					{
+						URL:     "/api/v1/auth/some*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"dev"},
+					},
+					{
+						URL:     "/api/v1/auth*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"admin"},
+					},
+					{
+						URL:     constant.AllPath,
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"user"},
+					},
+				}
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:                     "/api/v1/auth/ok",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/ok"`,
+				},
+				{
+					URI:                     "/.%2e/..//%2F//api//v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"dev"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+				},
+				{
+					URI:          "/../api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/.%2e/api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/api/v1/%2F/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/../%2e/.%2e/auth/%2F/%6akoper",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		cfg := *cfg
+
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				testCase.ProxySettings(&cfg)
+				newFakeProxy(&cfg, &fakeAuthConfig{}).RunTests(t, testCase.ExecutionSettings)
+			},
+		)
+	}
+}
+
+//nolint:funlen
+func TestPathNormalizationNoRedirects(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.EnableLogging = true
 	cfg.NoRedirects = true
-	cfg.Resources = []*core.Resource{
+
+	testCases := []struct {
+		Name              string
+		ProxySettings     func(c *config.Config)
+		ExecutionSettings []fakeRequest
+	}{
 		{
-			URL:     "/api/v2/*",
-			Methods: utils.AllHTTPMethods,
-			Roles:   []string{"dev"},
+			Name: "AllNormalizationDisabled",
+			ProxySettings: func(cfg *config.Config) {
+				cfg.NormalizePath = false
+				cfg.NormalizePathUpstream = false
+				cfg.MergeSlashes = false
+				cfg.MergeSlashesUpstream = false
+				cfg.PathEscapedSlashes = true
+				cfg.PathEscapedSlashesUpstream = true
+				cfg.Resources = []*core.Resource{
+					{
+						URL:     "/.%2e/../%2F/api/v1/%61uth/some*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"dev"},
+					},
+					{
+						URL:     "/api/v1/auth*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"admin"},
+					},
+					{
+						URL:     constant.AllPath,
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"user"},
+					},
+				}
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:                     "/api/v1/auth/ok",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/ok"`,
+				},
+				{
+					URI:                     "/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"dev"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+				},
+				//nolint:lll
+				{
+					URI:                     "/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"user"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"uri":"/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/"`,
+				},
+				{
+					URI:                     "/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"user"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"uri":"/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png"`,
+				},
+				{
+					URI:          "/../api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/.%2e/api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/api/v1/%2F/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/../%2e/.%2e/auth/%2F/%6akoper",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+			},
 		},
 		{
-			URL:     "/api/v1/auth*",
-			Methods: utils.AllHTTPMethods,
-			Roles:   []string{"admin"},
+			Name: "NormalizePathEnabled",
+			ProxySettings: func(cfg *config.Config) {
+				cfg.NormalizePath = true
+				cfg.NormalizePathUpstream = true
+				cfg.MergeSlashes = false
+				cfg.MergeSlashesUpstream = false
+				cfg.PathEscapedSlashes = true
+				cfg.PathEscapedSlashesUpstream = true
+				cfg.Resources = []*core.Resource{
+					{
+						URL:     "/%2F/api/v1/auth/some*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"dev"},
+					},
+					{
+						URL:     "/api/v1/auth*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"admin"},
+					},
+					{
+						URL:     constant.AllPath,
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"user"},
+					},
+				}
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:                     "/api/v1/auth/ok",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/ok"`,
+				},
+				{
+					URI:                     "/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"dev"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/%2F/api/v1/auth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+				},
+				{
+					URI:                     "/../api/v1/%61uth/some",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/some"`,
+				},
+				{
+					URI:                     "/.%2e/api/v1/%61uth/some",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/some"`,
+				},
+				{
+					URI:                     "/help/../api/v1/%61uth/some",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/some"`,
+				},
+				{
+					URI:                     "/help/.%2e/api/v1/%61uth/some",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/some"`,
+				},
+				{
+					URI:          "/api/v1/%2F/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/../%2e/.%2e/auth/%2F/%6akoper",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+			},
 		},
 		{
-			URL:         "/api/v1/*",
-			Methods:     utils.AllHTTPMethods,
-			WhiteListed: true,
+			Name: "MergeSlashesEnabled",
+			ProxySettings: func(cfg *config.Config) {
+				cfg.NormalizePath = false
+				cfg.NormalizePathUpstream = false
+				cfg.MergeSlashes = true
+				cfg.MergeSlashesUpstream = true
+				cfg.PathEscapedSlashes = true
+				cfg.PathEscapedSlashesUpstream = true
+				cfg.Resources = []*core.Resource{
+					{
+						URL:     "/.%2e/../%2F/api/v1/%61uth/some*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"dev"},
+					},
+					{
+						URL:     "/api/v1/auth*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"admin"},
+					},
+					{
+						URL:     constant.AllPath,
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"user"},
+					},
+				}
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:                     "/api/v1/auth/ok",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/ok"`,
+				},
+				{
+					URI:                     "/.%2e/..///%2F//api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"dev"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+				},
+				{
+					URI:          "/../api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/.%2e/api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/api/v1/%2F/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/../%2e/.%2e/auth/%2F/%6akoper",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+			},
 		},
 		{
-			URL:     "/*",
-			Methods: utils.AllHTTPMethods,
-			Roles:   []string{"user"},
+			Name: "UnescapeSlashesEnabled",
+			ProxySettings: func(cfg *config.Config) {
+				cfg.NormalizePath = false
+				cfg.NormalizePathUpstream = false
+				cfg.MergeSlashes = false
+				cfg.MergeSlashesUpstream = false
+				cfg.PathEscapedSlashes = false
+				cfg.PathEscapedSlashesUpstream = false
+				cfg.Resources = []*core.Resource{
+					{
+						URL:     "/.%2e/../////api//v1/%61uth/some*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"dev"},
+					},
+					{
+						URL:     "/api/v1/auth*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"admin"},
+					},
+					{
+						URL:     constant.AllPath,
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"user"},
+					},
+				}
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:                     "/api/v1/auth/ok",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/ok"`,
+				},
+				{
+					URI:                     "/.%2e/..//%2F//api//v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"dev"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/.%2e/../////api//v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+				},
+				{
+					URI:          "/../api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/.%2e/api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/api/v1/%2F/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/../%2e/.%2e/auth/%2F/%6akoper",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+			},
+		},
+		{
+			Name: "AllNormalizationEnabled",
+			ProxySettings: func(cfg *config.Config) {
+				cfg.NormalizePath = true
+				cfg.NormalizePathUpstream = true
+				cfg.MergeSlashes = true
+				cfg.MergeSlashesUpstream = true
+				cfg.PathEscapedSlashes = false
+				cfg.PathEscapedSlashesUpstream = false
+				cfg.Resources = []*core.Resource{
+					{
+						URL:     "/api/v1/auth/some*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"dev"},
+					},
+					{
+						URL:     "/api/v1/auth*",
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"admin"},
+					},
+					{
+						URL:     constant.AllPath,
+						Methods: utils.AllHTTPMethods,
+						Roles:   []string{"user"},
+					},
+				}
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:                     "/api/v1/auth/ok",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"admin"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/ok"`,
+				},
+				{
+					URI:                     "/.%2e/..//%2F//api//v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"dev"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"/api/v1/auth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+				},
+				{
+					URI:          "/../api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/.%2e/api/v1/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/api/v1/%2F/%61uth/some",
+					HasToken:     true,
+					Redirects:    true,
+					Roles:        []string{"admin"},
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "/../%2e/.%2e/auth/%2F/%6akoper",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+				{
+					URI:          "",
+					HasToken:     true,
+					Redirects:    true,
+					ExpectedCode: http.StatusForbidden,
+				},
+			},
 		},
 	}
 
-	requests := []fakeRequest{
-		{
-			URI:          FakeTestURL,
-			HasToken:     true,
-			Roles:        []string{"nothing"},
-			ExpectedCode: http.StatusForbidden,
-			Redirects:    false,
-		},
-		{
-			URI:          "/",
-			ExpectedCode: http.StatusUnauthorized,
-			Redirects:    false,
-		},
-		{ // See KEYCLOAK-10864
-			//nolint:lll
-			URI: "/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/",
-			//nolint:lll
-			ExpectedContentContains: `"uri":"/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/"`,
-			HasToken:                true,
-			Roles:                   []string{"user"},
-			ExpectedProxy:           true,
-			ExpectedCode:            http.StatusOK,
-			Redirects:               false,
-		},
-		{ // See KEYCLOAK-11276
-			URI:                     "/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png",
-			ExpectedContentContains: `"uri":"/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png"`,
-			HasToken:                true,
-			Roles:                   []string{"user"},
-			ExpectedProxy:           true,
-			ExpectedCode:            http.StatusOK,
-			Redirects:               false,
-		},
-		{ // See KEYCLOAK-13315
-			URI:                     "/rabbitmqui/%2F/replicate-to-central",
-			ExpectedContentContains: `"uri":"/rabbitmqui/%2F/replicate-to-central"`,
-			HasToken:                true,
-			Roles:                   []string{"user"},
-			ExpectedProxy:           true,
-			ExpectedCode:            http.StatusOK,
-			Redirects:               false,
-		},
-		{ // should work
-			URI:           "/api/v1/auth",
-			HasToken:      true,
-			Roles:         []string{"admin"},
-			ExpectedProxy: true,
-			ExpectedCode:  http.StatusOK,
-			Redirects:     false,
-		},
-		{ // should work
-			URI:                     "/api/v1/auth?referer=https%3A%2F%2Fwww.example.com%2Fauth",
-			ExpectedContentContains: `"uri":"/api/v1/auth?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
-			HasToken:                true,
-			Roles:                   []string{"admin"},
-			ExpectedProxy:           true,
-			ExpectedCode:            http.StatusOK,
-			Redirects:               false,
-		},
-		{
-			URI:          "/api/v1/auth?referer=https%3A%2F%2Fwww.example.com%2Fauth",
-			HasToken:     true,
-			Roles:        []string{"user"},
-			ExpectedCode: http.StatusForbidden,
-			Redirects:    false,
-		},
-		{ // should work
-			URI:                     "/api/v3/auth?referer=https%3A%2F%2Fwww.example.com%2Fauth",
-			ExpectedContentContains: `"uri":"/api/v3/auth?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
-			HasToken:                true,
-			Roles:                   []string{"user"},
-			ExpectedProxy:           true,
-			ExpectedCode:            http.StatusOK,
-			Redirects:               false,
-		},
-	}
+	for _, testCase := range testCases {
+		cfg := *cfg
 
-	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				testCase.ProxySettings(&cfg)
+				newFakeProxy(&cfg, &fakeAuthConfig{}).RunTests(t, testCase.ExecutionSettings)
+			},
+		)
+	}
 }
 
+//nolint:goconst
 func TestStrangeRoutingError(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.Resources = []*core.Resource{
@@ -504,7 +1359,7 @@ func TestStrangeRoutingError(t *testing.T) {
 			Roles:   []string{"auditor", "dev"},
 		},
 		{
-			URL:     "/*",
+			URL:     constant.AllPath,
 			Methods: utils.AllHTTPMethods,
 			Roles:   []string{"dev"},
 		},
@@ -530,19 +1385,19 @@ func TestStrangeRoutingError(t *testing.T) {
 					ExpectedCode:  http.StatusOK,
 				},
 				{ // this should fail with no roles - hits catch all
-					URI:          "/api/v1/event/1000",
+					URI:          "/api/v1/event/1001",
 					Redirects:    false,
 					ExpectedCode: http.StatusUnauthorized,
 				},
 				{ // this should fail with bad role - hits catch all
-					URI:          "/api/v1/event/1000",
+					URI:          "/api/v1/event/1002",
 					Redirects:    false,
 					HasToken:     true,
 					Roles:        []string{"bad"},
 					ExpectedCode: http.StatusForbidden,
 				},
 				{ // should work with catch-all
-					URI:           "/api/v1/event/1000",
+					URI:           "/api/v1/event/1003",
 					Redirects:     false,
 					HasToken:      true,
 					Roles:         []string{"dev"},
@@ -590,147 +1445,14 @@ func TestStrangeRoutingError(t *testing.T) {
 	}
 }
 
-func TestNoProxyingRequests(t *testing.T) {
-	cfg := newFakeKeycloakConfig()
-	cfg.Resources = []*core.Resource{
-		{
-			URL:     "/*",
-			Methods: utils.AllHTTPMethods,
-		},
-	}
-	requests := []fakeRequest{
-		{ // check for escaping
-			URI:          "/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/etc/passwd",
-			Redirects:    true,
-			ExpectedCode: http.StatusSeeOther,
-		},
-		{ // check for escaping
-			URI:          "/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/",
-			Redirects:    true,
-			ExpectedCode: http.StatusSeeOther,
-		},
-		{ // check for escaping
-			URI:          "/../%2e",
-			Redirects:    true,
-			ExpectedCode: http.StatusSeeOther,
-		},
-		{ // check for escaping
-			URI:          "",
-			Redirects:    true,
-			ExpectedCode: http.StatusSeeOther,
-		},
-	}
-	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
-}
-
 const testAdminURI = "/admin/test"
 
-func TestStrangeAdminRequests(t *testing.T) {
-	cfg := newFakeKeycloakConfig()
-	cfg.Resources = []*core.Resource{
-		{
-			URL:     "/admin*",
-			Methods: utils.AllHTTPMethods,
-			Roles:   []string{FakeAdminRole},
-		},
-	}
-
-	testCases := []struct {
-		Name              string
-		ProxySettings     func(c *config.Config)
-		ExecutionSettings []fakeRequest
-	}{
-		{
-			Name: "TestNoRedirects",
-			ProxySettings: func(conf *config.Config) {
-				conf.NoRedirects = true
-			},
-			ExecutionSettings: []fakeRequest{
-				{ // check for double slashs no redirects
-					URI:          "/admin//test",
-					Redirects:    false,
-					HasToken:     true,
-					ExpectedCode: http.StatusForbidden,
-				},
-				{
-					URI:          "/help/../admin/test/21",
-					Redirects:    false,
-					ExpectedCode: http.StatusUnauthorized,
-				},
-			},
-		},
-		{
-			Name: "TestRedirects",
-			ProxySettings: func(conf *config.Config) {
-				conf.NoRedirects = false
-			},
-			ExecutionSettings: []fakeRequest{
-				{ // check for escaping
-					URI:          "//admin%2Ftest",
-					Redirects:    true,
-					ExpectedCode: http.StatusSeeOther,
-				},
-				{ // check for escaping
-					URI:          "///admin/../admin//%2Ftest",
-					Redirects:    true,
-					ExpectedCode: http.StatusSeeOther,
-				},
-				{ // check for escaping
-					URI:          "/admin%2Ftest",
-					Redirects:    true,
-					ExpectedCode: http.StatusSeeOther,
-				},
-				{ // check for prefix slashs
-					URI:          "/" + testAdminURI,
-					Redirects:    true,
-					ExpectedCode: http.StatusSeeOther,
-				},
-				{ // check for double slashs
-					URI:          testAdminURI,
-					Redirects:    true,
-					ExpectedCode: http.StatusSeeOther,
-				},
-				{ // check for dodgy url
-					URI:          "//admin/.." + testAdminURI,
-					Redirects:    true,
-					ExpectedCode: http.StatusSeeOther,
-				},
-				{ // check for it works
-					URI:           "/" + testAdminURI,
-					HasToken:      true,
-					Roles:         []string{FakeAdminRole},
-					ExpectedProxy: true,
-					ExpectedCode:  http.StatusOK,
-				},
-				{ // check for is doens't work
-					URI:          "//admin//test",
-					HasToken:     true,
-					Roles:        []string{"bad"},
-					ExpectedCode: http.StatusForbidden,
-				},
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		cfg := *cfg
-
-		t.Run(
-			testCase.Name,
-			func(t *testing.T) {
-				testCase.ProxySettings(&cfg)
-				newFakeProxy(&cfg, &fakeAuthConfig{}).RunTests(t, testCase.ExecutionSettings)
-			},
-		)
-	}
-}
-
-//nolint:funlen
+//nolint:funlen,goconst
 func TestWhiteListedRequests(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.Resources = []*core.Resource{
 		{
-			URL:     "/*",
+			URL:     constant.AllPath,
 			Methods: utils.AllHTTPMethods,
 			Roles:   []string{"default"}, // this role is in our fakeauth server
 		},
@@ -981,9 +1703,11 @@ func TestWhiteListedRequests(t *testing.T) {
 func TestRequireAnyRoles(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.NoRedirects = true
+	reqAnyRolePath := "/require_any_role"
+
 	cfg.Resources = []*core.Resource{
 		{
-			URL:            "/require_any_role/*",
+			URL:            reqAnyRolePath + "/*",
 			Methods:        utils.AllHTTPMethods,
 			RequireAnyRole: true,
 			Roles:          []string{"admin", "guest"},
@@ -991,12 +1715,12 @@ func TestRequireAnyRoles(t *testing.T) {
 	}
 	requests := []fakeRequest{
 		{
-			URI:          "/require_any_role/test",
+			URI:          reqAnyRolePath + "/test",
 			ExpectedCode: http.StatusUnauthorized,
 			Redirects:    false,
 		},
 		{
-			URI:           "/require_any_role/test",
+			URI:           reqAnyRolePath + "/test",
 			HasToken:      true,
 			Roles:         []string{"guest"},
 			ExpectedCode:  http.StatusOK,
@@ -1004,7 +1728,7 @@ func TestRequireAnyRoles(t *testing.T) {
 			Redirects:     false,
 		},
 		{
-			URI:          "/require_any_role/test",
+			URI:          reqAnyRolePath + "/test",
 			HasToken:     true,
 			Roles:        []string{"guest1"},
 			ExpectedCode: http.StatusForbidden,
@@ -1014,7 +1738,7 @@ func TestRequireAnyRoles(t *testing.T) {
 	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
 }
 
-//nolint:funlen
+//nolint:funlen,goconst
 func TestHeaderPermissionsMiddleware(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 
@@ -1246,6 +1970,7 @@ func TestHeaderPermissionsMiddleware(t *testing.T) {
 	}
 }
 
+//nolint:goconst
 func TestGroupPermissionsMiddleware(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.NoRedirects = true
@@ -1267,7 +1992,7 @@ func TestGroupPermissionsMiddleware(t *testing.T) {
 			Groups:  []string{"admin", "user", "tester"},
 		},
 		{
-			URL:     "/*",
+			URL:     constant.AllPath,
 			Methods: utils.AllHTTPMethods,
 			Roles:   []string{"user"},
 		},
@@ -1372,7 +2097,7 @@ func TestGroupPermissionsMiddleware(t *testing.T) {
 	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
 }
 
-//nolint:funlen
+//nolint:funlen,goconst
 func TestRolePermissionsMiddleware(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.Resources = []*core.Resource{
@@ -1407,7 +2132,7 @@ func TestRolePermissionsMiddleware(t *testing.T) {
 			Roles:   []string{},
 		},
 		{
-			URL:     "/*",
+			URL:     constant.AllPath,
 			Methods: utils.AllHTTPMethods,
 			Roles:   []string{FakeTestRole},
 		},
@@ -1528,23 +2253,24 @@ func TestRolePermissionsMiddleware(t *testing.T) {
 					Redirects:     false,
 					HasToken:      true,
 					Roles:         []string{FakeAdminRole},
-					ExpectedCode:  http.StatusOK,
-					ExpectedProxy: true,
+					ExpectedCode:  http.StatusForbidden,
+					ExpectedProxy: false,
 				},
 				{ // strange url, token, but good token
 					URI:           "/test/../admin",
 					Redirects:     false,
 					HasToken:      true,
 					Roles:         []string{FakeAdminRole},
-					ExpectedCode:  http.StatusOK,
-					ExpectedProxy: true,
+					ExpectedCode:  http.StatusForbidden,
+					ExpectedProxy: false,
 				},
 				{ // strange url, token, wrong roles
-					URI:          "/test/../admin",
-					Redirects:    false,
-					HasToken:     true,
-					Roles:        []string{FakeTestRole},
-					ExpectedCode: http.StatusForbidden,
+					URI:           "/test/../admin",
+					Redirects:     false,
+					HasToken:      true,
+					Roles:         []string{FakeTestRole},
+					ExpectedCode:  http.StatusOK,
+					ExpectedProxy: true,
 				},
 				{ // check with a token admin test role
 					URI:          "/test_admin_role",
@@ -1627,6 +2353,7 @@ func TestRolePermissionsMiddleware(t *testing.T) {
 	}
 }
 
+//nolint:goconst
 func TestCrossSiteHandler(t *testing.T) {
 	cases := []struct {
 		Cors    cors.Options
@@ -2016,6 +2743,7 @@ func TestAccessTokenEncryption(t *testing.T) {
 	}
 }
 
+//nolint:goconst
 func TestCustomHeadersHandler(t *testing.T) {
 	requests := []struct {
 		Match         []string
@@ -2216,6 +2944,8 @@ func TestAdmissionHandlerRoles(t *testing.T) {
 }
 
 // check to see if custom headers are hitting the upstream.
+//
+//nolint:goconst
 func TestCustomHeaders(t *testing.T) {
 	requests := []struct {
 		Headers map[string]string
@@ -2270,6 +3000,7 @@ func TestCustomHeaders(t *testing.T) {
 	}
 }
 
+//nolint:goconst
 func TestRolesAdmissionHandlerClaims(t *testing.T) {
 	requests := []struct {
 		Matches map[string]string
@@ -2461,6 +3192,7 @@ func TestRolesAdmissionHandlerClaims(t *testing.T) {
 	}
 }
 
+//nolint:goconst
 func TestGzipCompression(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	server := httptest.NewServer(&FakeUpstreamService{})
@@ -2580,6 +3312,7 @@ func TestGzipCompression(t *testing.T) {
 	}
 }
 
+//nolint:goconst
 func TestEnableUma(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 
@@ -2785,6 +3518,7 @@ func TestEnableUma(t *testing.T) {
 	}
 }
 
+//nolint:goconst
 func TestLogRealIP(t *testing.T) {
 	testCases := []struct {
 		Headers    map[string]string
@@ -2865,7 +3599,7 @@ func TestLogRealIP(t *testing.T) {
 	}
 }
 
-//nolint:funlen
+//nolint:funlen,goconst
 func TestEnableOpa(t *testing.T) {
 	upstreamService := httptest.NewServer(&FakeUpstreamService{})
 	upstreamURL := upstreamService.URL

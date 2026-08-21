@@ -34,6 +34,7 @@ import (
 	"os"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -66,7 +67,38 @@ var (
 		http.MethodTrace,
 	}
 	symbolsFilter = regexp.MustCompilePOSIX("[_$><\\[\\].,\\+-/'%^&*()!\\\\]+")
+
+	hexCharsTable = [256]bool{
+		'0': true,
+		'1': true,
+		'2': true,
+		'3': true,
+		'4': true,
+		'5': true,
+		'6': true,
+		'7': true,
+		'8': true,
+		'9': true,
+		'A': true,
+		'B': true,
+		'C': true,
+		'D': true,
+		'E': true,
+		'F': true,
+		'a': true,
+		'b': true,
+		'c': true,
+		'd': true,
+		'e': true,
+		'f': true,
+	}
 )
+
+type UnescapeError string
+
+func (e UnescapeError) Error() string {
+	return "problem unescaping string: " + strconv.Quote(string(e))
+}
 
 func GetRequestHostURL(req *http.Request) string {
 	scheme := constant.UnsecureScheme
@@ -811,4 +843,141 @@ func LoadX509KeyPairFromRoot(fileRoot, certFile, keyFile string) (tls.Certificat
 	}
 
 	return tls.X509KeyPair(certPEMBlock, keyPEMBlock)
+}
+
+type UnescapeMode int
+
+const (
+	SlashOmit UnescapeMode = iota
+	SlashOnly UnescapeMode = iota
+)
+
+//nolint:cyclop
+func UnescapePath(path string, mode UnescapeMode) (string, error) {
+	// Count %, check that they're well-formed.
+	escapeCount := 0
+	escapeSeqLen := 3
+	slashCount := 0
+
+	for idx := 0; idx < len(path); {
+		switch path[idx] {
+		case '%':
+			escapeCount++
+			isSlash := path[idx+1] == '2' && (path[idx+2] == 'F' || path[idx+2] == 'f')
+			isBackSlash := path[idx+1] == '5' && (path[idx+2] == 'C' || path[idx+2] == 'c')
+
+			if isSlash || isBackSlash {
+				slashCount++
+			}
+
+			invalidHex := mode == SlashOmit && (idx+2 >= len(path) || !ishex(path[idx+1]) || !ishex(path[idx+2]))
+			if invalidHex {
+				path = path[idx:]
+				if len(path) > escapeSeqLen {
+					path = path[:escapeSeqLen]
+				}
+
+				return "", UnescapeError(path)
+			}
+
+			idx += escapeSeqLen
+		case '+':
+			idx++
+		default:
+			idx++
+		}
+	}
+
+	if escapeCount == 0 || (mode == SlashOmit && escapeCount == slashCount) {
+		return path, nil
+	}
+
+	var unescapedPlusSign byte = '+'
+
+	var out strings.Builder
+	out.Grow(escapeCount)
+
+	for idx := 0; idx < len(path); idx++ {
+		switch path[idx] {
+		case '%':
+			hexSeq := path[idx : idx+3]
+			isSlash := path[idx+1] == '2' && (path[idx+2] == 'F' || path[idx+2] == 'f')
+			isBackSlash := path[idx+1] == '5' && (path[idx+2] == 'C' || path[idx+2] == 'c')
+
+			switch mode {
+			case SlashOmit:
+				if isSlash || isBackSlash {
+					out.WriteString(hexSeq)
+				} else {
+					out.WriteByte(unhex(path[idx+1])<<4 | unhex(path[idx+2]))
+				}
+			case SlashOnly:
+				switch {
+				case isSlash:
+					out.WriteByte('/')
+				case isBackSlash:
+					out.WriteByte('\\')
+				default:
+					out.WriteString(hexSeq)
+				}
+			}
+
+			idx += 2
+		case '+':
+			out.WriteByte(unescapedPlusSign)
+		default:
+			out.WriteByte(path[idx])
+		}
+	}
+
+	return out.String(), nil
+}
+
+func ishex(c byte) bool {
+	return hexCharsTable[c]
+}
+
+// Precondition: ishex(c) is true.
+//
+//nolint:mnd
+func unhex(c byte) byte {
+	return 9*(c>>6) + (c & 15)
+}
+
+func RemovePathDotSegments(path string) string {
+	if len(path) > 0 {
+		var (
+			dotFree   []string
+			lastIsDot bool
+		)
+
+		const (
+			dot    = "."
+			twoDot = ".."
+		)
+
+		for section := range strings.SplitSeq(path, "/") {
+			if section == twoDot {
+				if len(dotFree) > 0 {
+					dotFree = dotFree[:len(dotFree)-1]
+				}
+			} else if section != "." {
+				dotFree = append(dotFree, section)
+			}
+
+			lastIsDot = (section == dot || section == twoDot)
+		}
+
+		path = strings.Join(dotFree, "/")
+		if !strings.HasPrefix(path, "/") {
+			path = "/" + path
+		}
+
+		// Special case if the last segment was a dot, make sure the path ends with a slash
+		if lastIsDot && !strings.HasSuffix(path, "/") {
+			path += "/"
+		}
+	}
+
+	return path
 }

@@ -403,7 +403,7 @@ func (r *fakeAuthServer) ResourceHandler(wrt http.ResponseWriter, _ *http.Reques
 		OwnerManagedAccess: false,
 		Attributes:         struct{}{},
 		ID:                 "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",
-		URIS:               []string{"/*"},
+		URIS:               []string{constant.AllPath},
 		ResourceScopes: []struct {
 			Name string `json:"name"`
 		}{{Name: "test"}},

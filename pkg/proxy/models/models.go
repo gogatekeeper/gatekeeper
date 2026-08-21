@@ -8,6 +8,7 @@ type RequestScope struct {
 	Logger       *zap.Logger
 	Path         string
 	RawPath      string
+	Opaque       string
 	AccessDenied bool
 	NoProxy      bool
 }

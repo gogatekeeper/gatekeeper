@@ -256,7 +256,8 @@ var _ = Describe("UMA Code Flow authorization with method scope", func() {
 				rClient.SetRedirectPolicy(resty.NoRedirectPolicy())
 				resp, _ = rClient.R().Get(proxyAddress + umaAllowedPath)
 				Expect(resp.StatusCode()).To(Equal(http.StatusSeeOther))
-			})
+			},
+		)
 	})
 })
 

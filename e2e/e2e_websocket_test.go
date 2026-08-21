@@ -85,7 +85,8 @@ var _ = Describe("NoRedirects Websocket login/logout", func() {
 	})
 
 	When("Performing standard login", func() {
-		It("should login with service account and logout successfully",
+		It(
+			"should login with service account and logout successfully",
 			Label("api_flow"),
 			Label("websocket"),
 			func(ctx context.Context) {
@@ -98,7 +99,8 @@ var _ = Describe("NoRedirects Websocket login/logout", func() {
 
 				rClient := resty.New()
 				hClient := rClient.SetTLSClientConfig(
-					&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13}).GetClient()
+					&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13},
+				).GetClient()
 				oidcLibCtx := context.WithValue(ctx, oauth2.HTTPClient, hClient)
 
 				respToken, err := conf.Token(oidcLibCtx)
@@ -150,7 +152,8 @@ var _ = Describe("NoRedirects Websocket login/logout", func() {
 	})
 
 	When("Performing websocket connection on http backend", func() {
-		It("websocket upgrade should fail",
+		It(
+			"websocket upgrade should fail",
 			Label("api_flow"),
 			Label("websocket_fail"),
 			func(ctx context.Context) {
@@ -163,7 +166,8 @@ var _ = Describe("NoRedirects Websocket login/logout", func() {
 
 				rClient := resty.New()
 				hClient := rClient.SetTLSClientConfig(
-					&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13}).GetClient()
+					&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13},
+				).GetClient()
 				oidcLibCtx := context.WithValue(ctx, oauth2.HTTPClient, hClient)
 
 				respToken, err := conf.Token(oidcLibCtx)
@@ -189,7 +193,8 @@ var _ = Describe("NoRedirects Websocket login/logout", func() {
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 
 				request := rClient.SetRedirectPolicy(
-					resty.NoRedirectPolicy()).R().SetAuthToken(respToken.AccessToken)
+					resty.NoRedirectPolicy(),
+				).R().SetAuthToken(respToken.AccessToken)
 				resp, err := request.Get(proxyAddress)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
@@ -271,7 +276,8 @@ var _ = Describe("Code Flow websocket login/logout", func() {
 	})
 
 	When("Performing standard websocket login", func() {
-		It("should login with user/password and logout successfully",
+		It(
+			"should login with user/password and logout successfully",
 			Label("code_flow"),
 			Label("basic_case"),
 			func(_ context.Context) {
@@ -345,7 +351,8 @@ var _ = Describe("Code Flow websocket login/logout", func() {
 	})
 
 	When("Performing websocket connection on http backend", func() {
-		It("websocket upgrade should fail",
+		It(
+			"websocket upgrade should fail",
 			Label("code_flow"),
 			Label("websocket"),
 			func(_ context.Context) {

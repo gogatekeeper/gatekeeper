@@ -147,6 +147,12 @@ type Config struct {
 	LogSamplingAfter                   int               `env:"LOG_SAMPLING_AFTER" json:"log-sampling-after" usage:"each n-th number message is logged, after initial messages logged" yaml:"log-sampling-after"`
 	OpenIDProviderRetryCount           int               `env:"OPENID_PROVIDER_RETRY_COUNT" json:"openid-provider-retry-count,omitempty" usage:"number of retries for retrieving openid configuration" yaml:"openid-provider-retry-count"`
 	OpenIDProviderTimeout              time.Duration     `env:"OPENID_PROVIDER_TIMEOUT" json:"openid-provider-timeout,omitempty" usage:"timeout for openid configuration on .well-known/openid-configuration" yaml:"openid-provider-timeout"`
+	NormalizePath                      bool              `env:"NORMALIZE_PATH" json:"normalize-path" usage:"normalizes path according RFC 3986, except slashes, at start of processing chain, used in internal chains" yaml:"normalize-path"`
+	NormalizePathUpstream              bool              `env:"NORMALIZE_PATH_UPSTREAM" json:"normalize-path-upstream" usage:"normalizes path for upstream according RFC 3986, except slashes" yaml:"normalize-path-upstream"`
+	MergeSlashes                       bool              `env:"MERGE_SLASHES" json:"merge-slashes" usage:"merges slashes at start of processing, at start of processing chain, used in internal chains" yaml:"merge-slashes"`
+	MergeSlashesUpstream               bool              `env:"MERGE_SLASHES_UPSTREAM" json:"merge-slashes-upstream" usage:"merges slashes for path to upstream" yaml:"merge-slashes-upstream"`
+	PathEscapedSlashes                 bool              `env:"PATH_ESCAPED_SLASHES" json:"path-escaped-slashes" usage:"escape slashes, means preserve hex encoding, at start of processing chain, used in internal chains" yaml:"path-escaped-slashes"`
+	PathEscapedSlashesUpstream         bool              `env:"PATH_ESCAPED_SLASHES_UPSTREAM" json:"path-escaped-slashes-upstream" usage:"escape slashes, means preserve hex encoding for path sent upstream" yaml:"path-escaped-slashes-upstream"`
 	EnableProfiling                    bool              `env:"ENABLE_PROFILING" json:"enable-profiling" usage:"switching on the golang profiling via pprof on /debug/pprof, /debug/pprof/heap etc" yaml:"enable-profiling"`
 	EnableIDPSessionCheck              bool              `env:"ENABLE_IDP_SESSION_CHECK" json:"enable-idp-session-check" usage:"during token validation it also checks if user session is still present, useful for multiapp logout" yaml:"enable-idp-session-check"`
 	EnabledSelfSignedTLS               bool              `env:"ENABLE_SELF_SIGNED_TLS" json:"enable-self-signed-tls" usage:"create self signed certificates for the proxy" yaml:"enable-self-signed-tls"`
@@ -283,6 +289,12 @@ func NewDefaultConfig() *Config {
 		OpaTimeout:                       constant.DefaultOpaTimeout,
 		LogSamplingInitial:               constant.DefaultLogSamplingInitial,
 		LogSamplingAfter:                 constant.DefaultLogSamplingAfter,
+		NormalizePath:                    true,
+		NormalizePathUpstream:            true,
+		MergeSlashes:                     true,
+		MergeSlashesUpstream:             true,
+		PathEscapedSlashes:               false,
+		PathEscapedSlashesUpstream:       false,
 	}
 }
 

@@ -762,7 +762,7 @@ func TestForbiddenTemplate(t *testing.T) {
 	cfg.ForbiddenPage = ForbiddenPagePath
 	cfg.Resources = []*core.Resource{
 		{
-			URL:     "/*",
+			URL:     constant.AllPath,
 			Methods: utils.AllHTTPMethods,
 			Roles:   []string{FakeAdminRole},
 		},
@@ -1452,7 +1452,7 @@ func TestNoProxy(t *testing.T) {
 				c.NoProxy = true
 				c.Resources = []*core.Resource{
 					{
-						URL:     "/*",
+						URL:     constant.AllPath,
 						Methods: utils.AllHTTPMethods,
 						Roles:   []string{"user"},
 					},
@@ -1524,7 +1524,7 @@ func TestAuthorizationTemplate(t *testing.T) {
 	uri := utils.WithOAuthURI(cfg.BaseURI, cfg.OAuthURI)(constant.AuthorizationURL)
 	cfg.Resources = []*core.Resource{
 		{
-			URL:     "/*",
+			URL:     constant.AllPath,
 			Methods: utils.AllHTTPMethods,
 			Roles:   []string{FakeAdminRole},
 		},
