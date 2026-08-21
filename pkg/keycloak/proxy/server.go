@@ -337,7 +337,15 @@ func (r *OauthProxy) useDefaultStack(
 	}
 
 	// @step: enable the entrypoint middleware
-	engine.Use(gmiddleware.EntrypointMiddleware(r.Log))
+	engine.Use(gmiddleware.EntrypointMiddleware(
+		r.Log,
+		r.Config.NormalizePath,
+		r.Config.NormalizePathUpstream,
+		r.Config.MergeSlashes,
+		r.Config.MergeSlashesUpstream,
+		r.Config.PathEscapedSlashes,
+		r.Config.PathEscapedSlashesUpstream,
+	))
 
 	if r.Config.NoProxy {
 		engine.Use(gmiddleware.ForwardAuthMiddleware(r.Log, r.Config.OAuthURI))

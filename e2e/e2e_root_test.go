@@ -105,7 +105,8 @@ var _ = Describe("Code Flow login/logout compression and encryption Auth Scheme 
 	})
 
 	When("Performing standard login", func() {
-		It("should login with user/password and logout successfully",
+		It(
+			"should login with user/password and logout successfully",
 			Label("code_flow"),
 			Label("compression_auth_scheme"),
 			Label("auth_scheme_cookie"),
