@@ -83,7 +83,8 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS", func() {
 	})
 
 	When("Peforming standard login", func() {
-		It("should login with user/password and logout successfully",
+		It(
+			"should login with user/password and logout successfully",
 			Label("code_flow", "pkce", "redis"),
 			func(_ context.Context) {
 				var err error
@@ -186,7 +187,8 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS CLUSTER", func() {
 	})
 
 	When("Peforming standard login", func() {
-		It("should login with user/password and logout successfully",
+		It(
+			"should login with user/password and logout successfully",
 			Label("code_flow", "pkce", "redis_cluster"),
 			func(_ context.Context) {
 				var err error
@@ -289,7 +291,8 @@ var _ = Describe("Code Flow PKCE login/logout with mTLS REDIS SENTINEL", func() 
 	})
 
 	When("Peforming standard login", func() {
-		It("should login with user/password and logout successfully",
+		It(
+			"should login with user/password and logout successfully",
 			Label("code_flow", "pkce", "redis_cluster"),
 			func(_ context.Context) {
 				var err error

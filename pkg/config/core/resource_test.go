@@ -22,6 +22,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/gogatekeeper/gatekeeper/pkg/config/core"
+	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	"github.com/gogatekeeper/gatekeeper/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -127,7 +128,7 @@ func TestResourceParseOk(t *testing.T) {
 		{
 			Option: "uri=/*|methods=any",
 			Resource: &core.Resource{
-				URL:     "/*",
+				URL:     constant.AllPath,
 				Methods: utils.AllHTTPMethods,
 			},
 			Ok: true,
@@ -135,7 +136,7 @@ func TestResourceParseOk(t *testing.T) {
 		{
 			Option: "uri=/*|methods=any",
 			Resource: &core.Resource{
-				URL:     "/*",
+				URL:     constant.AllPath,
 				Methods: utils.AllHTTPMethods,
 			},
 			Ok: true,
@@ -143,7 +144,7 @@ func TestResourceParseOk(t *testing.T) {
 		{
 			Option: "uri=/*|groups=admin,test",
 			Resource: &core.Resource{
-				URL:     "/*",
+				URL:     constant.AllPath,
 				Methods: utils.AllHTTPMethods,
 				Groups:  []string{"admin", "test"},
 			},
@@ -152,7 +153,7 @@ func TestResourceParseOk(t *testing.T) {
 		{
 			Option: "uri=/*|groups=admin",
 			Resource: &core.Resource{
-				URL:     "/*",
+				URL:     constant.AllPath,
 				Methods: utils.AllHTTPMethods,
 				Groups:  []string{"admin"},
 			},
@@ -161,7 +162,7 @@ func TestResourceParseOk(t *testing.T) {
 		{
 			Option: "uri=/*|require-any-role=true",
 			Resource: &core.Resource{
-				URL:            "/*",
+				URL:            constant.AllPath,
 				Methods:        utils.AllHTTPMethods,
 				RequireAnyRole: true,
 			},
