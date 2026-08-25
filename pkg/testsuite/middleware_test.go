@@ -421,6 +421,15 @@ func TestPathNormalizationRedirects(t *testing.T) {
 			},
 			ExecutionSettings: []fakeRequest{
 				{
+					URI:                     "//",
+					HasToken:                true,
+					Redirects:               true,
+					Roles:                   []string{"user"},
+					ExpectedProxy:           true,
+					ExpectedCode:            http.StatusOK,
+					ExpectedContentContains: `"//"`,
+				},
+				{
 					URI:                     "/api/v1/auth/ok",
 					HasToken:                true,
 					Redirects:               true,

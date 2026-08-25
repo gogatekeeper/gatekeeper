@@ -91,6 +91,7 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 			"--merge-slashes-upstream=false",
 			"--path-escaped-slashes=true",
 			"--path-escaped-slashes-upstream=true",
+			"--enable-logging=true",
 		}
 
 		osArgs := make([]string, 0, 1+len(proxyArgs))
@@ -104,6 +105,7 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 			"should login with user/password and logout successfully",
 			Label("code_flow"),
 			Label("basic_case"),
+			Label("normalization_disabled"),
 			func(_ context.Context) {
 				var err error
 
@@ -146,17 +148,39 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 					}
 				}
 
-				tricky := "/.%2e/../%2F/api/v1/%61uth/some%"
+				tricky := "/.%2e/../%2F/api/v1/%61uth/some"
 				rawRequest := "GET " + tricky + " HTTP/1.1\r\n"
-				rawRequest += "Host: localhost\r\n"
-				rawRequest += "Cookie: " + constant.AccessCookie + "=" + accessCookieLogin + "; "
-				rawRequest += constant.IDTokenCookie + "=" + idCookieLogin
-				rawRequest += "\r\n\r\n"
+				repeatRaw := "Host: localhost\r\n"
+				repeatRaw += "Cookie: " + constant.AccessCookie + "=" + accessCookieLogin + "; "
+				repeatRaw += constant.IDTokenCookie + "=" + idCookieLogin
+				repeatRaw += "\r\n\r\n"
+				rawRequest += repeatRaw
 
 				_, err = conn.Write([]byte(rawRequest))
 				Expect(err).NotTo(HaveOccurred())
 
 				rawResp := make([]byte, 1024)
+				_, err = conn.Read(rawResp)
+
+				cancel()
+				conn.Close()
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(strings.Contains(string(rawResp), tricky)).To(BeTrue())
+				Expect(strings.Contains(string(rawResp), "200")).To(BeTrue())
+
+				ctx, cancel = context.WithTimeout(context.Background(), tlsTimeout)
+				conn, err = dialer.DialContext(ctx, "tcp", ":"+portNum)
+				Expect(err).NotTo(HaveOccurred())
+
+				tricky = "//"
+				rawRequest = "GET " + tricky + " HTTP/1.1\r\n"
+				rawRequest += repeatRaw
+
+				_, err = conn.Write([]byte(rawRequest))
+				Expect(err).NotTo(HaveOccurred())
+
+				rawResp = make([]byte, 1024)
 				_, err = conn.Read(rawResp)
 
 				cancel()
@@ -274,6 +298,7 @@ var _ = Describe("Code Flow login/logout all normalization enabled", func() {
 			"should login with user/password and logout successfully",
 			Label("code_flow"),
 			Label("basic_case"),
+			Label("normalization_enabled"),
 			func(_ context.Context) {
 				var err error
 

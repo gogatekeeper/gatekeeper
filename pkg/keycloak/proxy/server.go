@@ -734,15 +734,16 @@ func (r *OauthProxy) CreateReverseProxy() error {
 			}
 
 			eng.Get(constant.CallbackURL, oauthCallbackHand)
-			eng.Get(constant.ExpiredURL, handlers.ExpirationHandler(
-				r.Log,
-				r.Provider,
-				r.Config.ClientID,
-				r.Config.SkipAccessTokenClientIDCheck,
-				r.Config.SkipAccessTokenIssuerCheck,
-				getIdentity,
-				r.Config.CookieAccessName,
-			),
+			eng.Get(
+				constant.ExpiredURL, handlers.ExpirationHandler(
+					r.Log,
+					r.Provider,
+					r.Config.ClientID,
+					r.Config.SkipAccessTokenClientIDCheck,
+					r.Config.SkipAccessTokenIssuerCheck,
+					getIdentity,
+					r.Config.CookieAccessName,
+				),
 			)
 
 			if r.Config.EnableLogoutAuth {
@@ -895,7 +896,8 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		if r.Config.EnableLoA && res.NoRedirect {
 			r.Log.Warn(
 				"disabling LoA for resource, no-redirect=true for resource",
-				zap.String("resource", res.URL))
+				zap.String("resource", res.URL),
+			)
 		}
 
 		var loAMid func(http.Handler) http.Handler
@@ -951,7 +953,8 @@ func (r *OauthProxy) CreateReverseProxy() error {
 
 				r.Log.Warn(
 					"disabling EnableUma for resource, no-redirect=true for resource",
-					zap.String("resource", res.URL))
+					zap.String("resource", res.URL),
+				)
 			}
 
 			authzMiddleware := authorizationMiddleware(

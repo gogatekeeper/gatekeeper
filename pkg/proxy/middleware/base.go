@@ -123,7 +123,10 @@ func EntrypointMiddleware(
 
 			scope.Path = normalizedPathUpstream
 			scope.RawPath = normalizedPathUpstream
-			scope.Opaque = normalizedPathUpstream
+
+			if normalizedPathUpstream != constant.DoubleSlash {
+				scope.Opaque = normalizedPathUpstream
+			}
 
 			logger.Debug("Upstream, normalized path", zap.String("path", scope.Path))
 			logger.Debug("Upstream, normalized raw path", zap.String("path", scope.RawPath))
@@ -494,7 +497,10 @@ func ProxyMiddleware(
 			if scope != nil {
 				req.URL.Path = scope.Path
 				req.URL.RawPath = scope.RawPath
-				req.URL.Opaque = scope.Opaque
+
+				if scope.Opaque != constant.DoubleSlash {
+					req.URL.Opaque = scope.Opaque
+				}
 			}
 
 			if v := req.Header.Get("Host"); v != "" {

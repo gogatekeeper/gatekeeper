@@ -177,7 +177,7 @@ func (cm *Manager) DropStateParameterCookie(req *http.Request, wrt http.Response
 		wrt.WriteHeader(http.StatusInternalServerError)
 	}
 
-	requestURI := req.URL.RequestURI()
+	requestURI := req.URL.RawPath
 
 	if cm.NoProxy && !cm.NoRedirects {
 		xReqURI := req.Header.Get(constant.HeaderXForwardedURI)
