@@ -863,14 +863,8 @@ func UnescapePath(path string, mode UnescapeMode) (string, error) {
 		switch path[idx] {
 		case '%':
 			escapeCount++
-			isSlash := path[idx+1] == '2' && (path[idx+2] == 'F' || path[idx+2] == 'f')
-			isBackSlash := path[idx+1] == '5' && (path[idx+2] == 'C' || path[idx+2] == 'c')
 
-			if isSlash || isBackSlash {
-				slashCount++
-			}
-
-			invalidHex := mode == SlashOmit && (idx+2 >= len(path) || !ishex(path[idx+1]) || !ishex(path[idx+2]))
+			invalidHex := idx+2 >= len(path) || !ishex(path[idx+1]) || !ishex(path[idx+2])
 			if invalidHex {
 				path = path[idx:]
 				if len(path) > escapeSeqLen {
@@ -878,6 +872,13 @@ func UnescapePath(path string, mode UnescapeMode) (string, error) {
 				}
 
 				return "", UnescapeError(path)
+			}
+
+			isSlash := path[idx+1] == '2' && (path[idx+2] == 'F' || path[idx+2] == 'f')
+			isBackSlash := path[idx+1] == '5' && (path[idx+2] == 'C' || path[idx+2] == 'c')
+
+			if isSlash || isBackSlash {
+				slashCount++
 			}
 
 			idx += escapeSeqLen

@@ -56,10 +56,26 @@ func EntrypointMiddleware(
 
 			scope.Logger = logger
 
-			logger.Debug("Original, received path", zap.String("path", scope.Path))
-			logger.Debug("OriginalRawPath, received raw path", zap.String("path", scope.RawPath))
+			logger.Debug("Original, received path", zap.String("path", originalPath))
+			logger.Debug("OriginalRawPath, received raw path", zap.String("path", originalRawPath))
 
 			var err error
+
+			if !pathEscapedSlashes {
+				normalizedPath, err = utils.UnescapePath(normalizedPath, utils.SlashOnly)
+				if err != nil {
+					logger.Error(
+						"failed unescaping slashes in path",
+						zap.String("path", normalizedPath),
+					)
+
+					return
+				}
+			}
+
+			if mergeSlashes {
+				normalizedPath = rxDupSlashes.ReplaceAllString(normalizedPath, "/")
+			}
 
 			if normalizePath {
 				normalizedPath, err = utils.UnescapePath(normalizedPath, utils.SlashOmit)
@@ -75,16 +91,20 @@ func EntrypointMiddleware(
 				normalizedPath = utils.RemovePathDotSegments(normalizedPath)
 			}
 
-			if !pathEscapedSlashes {
-				normalizedPath, err = utils.UnescapePath(normalizedPath, utils.SlashOnly)
+			if !pathEscapedSlashesUpstream {
+				normalizedPathUpstream, err = utils.UnescapePath(normalizedPathUpstream, utils.SlashOnly)
 				if err != nil {
 					logger.Error(
-						"failed unescaping slashes in path",
-						zap.String("path", normalizedPath),
+						"failed unescaping slashes in upstream path",
+						zap.String("path", normalizedPathUpstream),
 					)
 
 					return
 				}
+			}
+
+			if mergeSlashesUpstream {
+				normalizedPathUpstream = rxDupSlashes.ReplaceAllString(normalizedPathUpstream, "/")
 			}
 
 			if normalizePathUpstream {
@@ -99,26 +119,6 @@ func EntrypointMiddleware(
 				}
 
 				normalizedPathUpstream = utils.RemovePathDotSegments(normalizedPathUpstream)
-			}
-
-			if !pathEscapedSlashesUpstream {
-				normalizedPathUpstream, err = utils.UnescapePath(normalizedPathUpstream, utils.SlashOnly)
-				if err != nil {
-					logger.Error(
-						"failed unescaping slashes in upstream path",
-						zap.String("path", normalizedPathUpstream),
-					)
-
-					return
-				}
-			}
-
-			if mergeSlashes {
-				normalizedPath = rxDupSlashes.ReplaceAllString(normalizedPath, "/")
-			}
-
-			if mergeSlashesUpstream {
-				normalizedPathUpstream = rxDupSlashes.ReplaceAllString(normalizedPathUpstream, "/")
 			}
 
 			scope.Path = normalizedPathUpstream

@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-jose/go-jose/v4/jwt"
 	resty "github.com/go-resty/resty/v2"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
 	. "github.com/onsi/ginkgo/v2" //nolint:revive //we want to use it for ginkgo
@@ -147,7 +146,7 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 					}
 				}
 
-				tricky := "/.%2e/../%2F/api/v1/%61uth/some"
+				tricky := "/.%2e/../%2F/api/v1/%61uth/some%"
 				rawRequest := "GET " + tricky + " HTTP/1.1\r\n"
 				rawRequest += "Host: localhost\r\n"
 				rawRequest += "Cookie: " + constant.AccessCookie + "=" + accessCookieLogin + "; "
@@ -160,10 +159,12 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 				rawResp := make([]byte, 1024)
 				_, err = conn.Read(rawResp)
 
-				Expect(err).NotTo(HaveOccurred())
-
 				cancel()
 				conn.Close()
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(strings.Contains(string(rawResp), tricky)).To(BeTrue())
+				Expect(strings.Contains(string(rawResp), "200")).To(BeTrue())
 
 				tricky = "/../api/v1/%61uth/some"
 				resp, err = rClient.R().Get(proxyAddress + tricky)
@@ -259,6 +260,7 @@ var _ = Describe("Code Flow login/logout all normalization enabled", func() {
 			"--merge-slashes-upstream=true",
 			"--path-escaped-slashes=false",
 			"--path-escaped-slashes-upstream=false",
+			"--verbose=true",
 		}
 
 		osArgs := make([]string, 0, 1+len(proxyArgs))
@@ -275,6 +277,18 @@ var _ = Describe("Code Flow login/logout all normalization enabled", func() {
 			func(_ context.Context) {
 				var err error
 
+				ctx, cancel := context.WithTimeout(context.Background(), tlsTimeout)
+				dialer := tls.Dialer{
+					Config: &tls.Config{
+						ServerName: "localhost",
+						RootCAs:    caPool,
+						MinVersion: tls.VersionTLS13,
+					},
+				}
+
+				conn, err := dialer.DialContext(ctx, "tcp", ":"+portNum)
+				Expect(err).NotTo(HaveOccurred())
+
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
@@ -287,11 +301,18 @@ var _ = Describe("Code Flow login/logout all normalization enabled", func() {
 
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
-				var accessCookieLogin string
+				var (
+					accessCookieLogin string
+					idCookieLogin     string
+				)
 
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
+					}
+
+					if cook.Name == constant.IDTokenCookie {
+						idCookieLogin = cook.Value
 					}
 				}
 
@@ -310,38 +331,42 @@ var _ = Describe("Code Flow login/logout all normalization enabled", func() {
 				jarURI, err = url.Parse(proxyAddress + tricky)
 				Expect(err).NotTo(HaveOccurred())
 
-				cookiesAfterRefresh := rClient.GetClient().Jar.Cookies(jarURI)
+				cookiesLogin = rClient.GetClient().Jar.Cookies(jarURI)
 
-				var (
-					accessCookieAfterRefresh string
-					testCookie               string
-				)
-
-				for _, cook := range cookiesAfterRefresh {
+				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
-						accessCookieAfterRefresh = cook.Value
+						accessCookieLogin = cook.Value
 					}
 
-					if cook.Name == testCookieValue {
-						testCookie = cook.Value
+					if cook.Name == constant.IDTokenCookie {
+						idCookieLogin = cook.Value
 					}
 				}
 
-				Expect(testCookie).To(Equal("test_value"))
+				tricky = "/.%2e/../%2F/api/v1/%61uth/some%"
+				rawRequest := "GET " + tricky + " HTTP/1.1\r\n"
+				rawRequest += "Host: localhost\r\n"
+				rawRequest += "Cookie: " + constant.AccessCookie + "=" + accessCookieLogin + "; "
+				rawRequest += constant.IDTokenCookie + "=" + idCookieLogin
+				rawRequest += "\r\n\r\n"
 
-				_, err = jwt.ParseSigned(accessCookieAfterRefresh, constant.SignatureAlgs[:])
+				to := time.Now().Add(10 * time.Second)
+				err = conn.SetDeadline(to)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
 
-				resp, err = rClient.R().Get(proxyAddress + anyURI)
+				_, err = conn.Write([]byte(rawRequest))
 				Expect(err).NotTo(HaveOccurred())
-				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
-				body = resp.Body()
-				By(string(body))
-				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
-				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
-				Expect(body).To(ContainSubstring(`"X-Auth-Email-Verified":["true"]`))
-				Expect(body).To(ContainSubstring(`"X-Auth-Email":["somebody@somewhere.com"]`))
+
+				rawResp := make([]byte, 1024)
+				_, err = conn.Read(rawResp)
+
+				Expect(err).NotTo(HaveOccurred())
+
+				cancel()
+				conn.Close()
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(strings.Contains(string(rawResp), "400")).To(BeTrue())
 
 				tricky = "/../api/v1/%61uth/some"
 				resp, err = rClient.R().Get(proxyAddress + tricky)

@@ -20,6 +20,7 @@ package utils_test
 import (
 	"bytes"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -550,5 +551,102 @@ func BenchmarkMaxSize(bench *testing.B) {
 
 	for bench.Loop() {
 		_ = utils.CheckMaxSize(reader, 900)
+	}
+}
+
+func BenchmarkUnascapePath(bench *testing.B) {
+	data := "/f%5B%2f%56%2F%7C%5c%5C/b"
+	for bench.Loop() {
+		_, _ = utils.UnescapePath(data, utils.SlashOmit)
+	}
+}
+
+func TestUnascapePath(t *testing.T) {
+	tests := []struct {
+		Name         string
+		Path         string
+		ExpectedPath string
+		Mode         utils.UnescapeMode
+		ExpectedErr  error
+	}{
+		{
+			Name:         "LastPercentChar",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  utils.UnescapeError("%"),
+			Path:         "/a/b/%",
+			ExpectedPath: "",
+		},
+		{
+			Name:         "LastInvalidHex",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  utils.UnescapeError("%2"),
+			Path:         "/a/b/%2",
+			ExpectedPath: "",
+		},
+		{
+			Name:         "InnderInvalidHex",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  utils.UnescapeError("%6/"),
+			Path:         "/a/%6/%2",
+			ExpectedPath: "",
+		},
+		{
+			Name:         "FirstPercentChar",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  utils.UnescapeError("%/a"),
+			Path:         "%/a/b/",
+			ExpectedPath: "",
+		},
+		{
+			Name:         "EncodedCharsLast",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  nil,
+			Path:         "/a/b%5B%56%7C",
+			ExpectedPath: "/a/b[V|",
+		},
+		{
+			Name:         "EncodedCharsFirst",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  nil,
+			Path:         "%5B%56%7C/a/b",
+			ExpectedPath: "[V|/a/b",
+		},
+		{
+			Name:         "OmitSlashes",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  nil,
+			Path:         "/a%5B%2f%56%2F%7C%5c%5C/b",
+			ExpectedPath: "/a[%2fV%2F|%5c%5C/b",
+		},
+		{
+			Name:         "SlashOnly",
+			Mode:         utils.SlashOnly,
+			ExpectedErr:  nil,
+			Path:         "/ca%5B%2f%56%2F%7C%5c%5C/b",
+			ExpectedPath: `/ca%5B/%56/%7C\\/b`,
+		},
+	}
+
+	for _, testCase := range tests {
+		path, err := utils.UnescapePath(testCase.Path, testCase.Mode)
+		if testCase.ExpectedErr != nil && !errors.Is(err, testCase.ExpectedErr) {
+			t.Fatalf("testcase: %s, expected error, got: %v", testCase.Name, err)
+		}
+
+		if testCase.ExpectedErr == nil && err != nil {
+			t.Fatalf("testcase: %s, didn't expect error, got: %v", testCase.Name, err)
+		}
+
+		if testCase.ExpectedPath != "" {
+			require.NoError(t, err, "Expected no error, testcase: %s", testCase.Name)
+			assert.Equal(
+				t,
+				testCase.ExpectedPath,
+				path,
+				"Expected path: %s, got: %s",
+				testCase.ExpectedPath,
+				path,
+			)
+		}
 	}
 }
