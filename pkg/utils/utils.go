@@ -982,3 +982,37 @@ func RemovePathDotSegments(path string) string {
 
 	return path
 }
+
+func NormalizePath(
+	pathEscapedSlashes bool,
+	mergeSlashes bool,
+	normalizePath bool,
+	rxDupSlashes *regexp.Regexp,
+	path string,
+) (string, error) {
+	var err error
+
+	if len(path) > 0 {
+		if !pathEscapedSlashes {
+			path, err = UnescapePath(path, SlashOnly)
+			if err != nil {
+				return "", err
+			}
+		}
+
+		if mergeSlashes {
+			path = rxDupSlashes.ReplaceAllString(path, "/")
+		}
+
+		if normalizePath {
+			path, err = UnescapePath(path, SlashOmit)
+			if err != nil {
+				return "", err
+			}
+
+			path = RemovePathDotSegments(path)
+		}
+	}
+
+	return path, nil
+}

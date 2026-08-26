@@ -38,6 +38,14 @@ func EntrypointMiddleware(
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		rxDupSlashes := regexp.MustCompile(`/{2,}`)
+		internalEqUpstream := false
+		isMergeSame := mergeSlashes == mergeSlashesUpstream
+		isNormalizeSame := normalizePath == normalizePathUpstream
+		isPathEscapeSame := pathEscapedSlashes == pathEscapedSlashesUpstream
+
+		if isMergeSame && isNormalizeSame && isPathEscapeSame {
+			internalEqUpstream = true
+		}
 
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
 			// @step: create a context for the request
@@ -59,66 +67,42 @@ func EntrypointMiddleware(
 			logger.Debug("Original, received path", zap.String("path", originalPath))
 			logger.Debug("OriginalRawPath, received raw path", zap.String("path", originalRawPath))
 
-			var err error
+			normalizedPath, err := utils.NormalizePath(
+				pathEscapedSlashes,
+				mergeSlashes,
+				normalizePath,
+				rxDupSlashes,
+				normalizedPath,
+			)
+			if err != nil {
+				logger.Error(
+					"failed normalizing path",
+					zap.String("path", normalizedPath),
+					zap.Error(err),
+				)
 
-			if !pathEscapedSlashes {
-				normalizedPath, err = utils.UnescapePath(normalizedPath, utils.SlashOnly)
-				if err != nil {
-					logger.Error(
-						"failed unescaping slashes in path",
-						zap.String("path", normalizedPath),
-					)
-
-					return
-				}
+				return
 			}
 
-			if mergeSlashes {
-				normalizedPath = rxDupSlashes.ReplaceAllString(normalizedPath, "/")
-			}
-
-			if normalizePath {
-				normalizedPath, err = utils.UnescapePath(normalizedPath, utils.SlashOmit)
+			if internalEqUpstream {
+				normalizedPathUpstream = normalizedPath
+			} else {
+				normalizedPathUpstream, err = utils.NormalizePath(
+					pathEscapedSlashes,
+					mergeSlashes,
+					normalizePath,
+					rxDupSlashes,
+					normalizedPathUpstream,
+				)
 				if err != nil {
 					logger.Error(
-						"failed path unescaping",
-						zap.String("path", normalizedPath),
-					)
-
-					return
-				}
-
-				normalizedPath = utils.RemovePathDotSegments(normalizedPath)
-			}
-
-			if !pathEscapedSlashesUpstream {
-				normalizedPathUpstream, err = utils.UnescapePath(normalizedPathUpstream, utils.SlashOnly)
-				if err != nil {
-					logger.Error(
-						"failed unescaping slashes in upstream path",
+						"failed normalizing upstream path",
 						zap.String("path", normalizedPathUpstream),
+						zap.Error(err),
 					)
 
 					return
 				}
-			}
-
-			if mergeSlashesUpstream {
-				normalizedPathUpstream = rxDupSlashes.ReplaceAllString(normalizedPathUpstream, "/")
-			}
-
-			if normalizePathUpstream {
-				normalizedPathUpstream, err = utils.UnescapePath(normalizedPathUpstream, utils.SlashOmit)
-				if err != nil {
-					logger.Error(
-						"failed upstream path unescaping",
-						zap.String("path", normalizedPathUpstream),
-					)
-
-					return
-				}
-
-				normalizedPathUpstream = utils.RemovePathDotSegments(normalizedPathUpstream)
 			}
 
 			scope.Path = normalizedPathUpstream

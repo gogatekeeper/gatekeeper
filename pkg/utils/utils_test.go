@@ -26,6 +26,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -648,5 +649,20 @@ func TestUnascapePath(t *testing.T) {
 				path,
 			)
 		}
+	}
+}
+
+func BenchmarkNormalizePath(bench *testing.B) {
+	rxDupSlashes := regexp.MustCompile(`/{2,}`)
+	data := "/f%5B%2f%56%2F%7C%5c%5C/b"
+
+	for bench.Loop() {
+		_, _ = utils.NormalizePath(
+			false,
+			true,
+			true,
+			rxDupSlashes,
+			data,
+		)
 	}
 }
