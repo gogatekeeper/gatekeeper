@@ -65,6 +65,7 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 			"--skip-access-token-issuer-check=true",
 			"--enable-idp-session-check=false",
 			"--enable-default-deny=false",
+			"--resources=uri=" + postLoginRedirectPath + "|roles=uma_authorization,offline_access",
 			"--resources=uri=/|roles=uma_authorization,offline_access",
 			"--resources=uri=/.%2e/../%2F/api/v1/%61uth/some*|roles=uma_authorization,offline_access",
 			"--resources=uri=" + anyURI + "|roles=uma_authorization,offline_access",
@@ -73,7 +74,6 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 			"--enable-refresh-tokens=true",
 			"--encryption-key=" + testKey,
 			"--secure-cookie=false",
-			"--post-login-redirect-path=" + postLoginRedirectPath,
 			"--enable-register-handler=true",
 			"--enable-encrypted-token=false",
 			"--enable-id-token-claims=true",
@@ -121,14 +121,15 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 				conn, err := dialer.DialContext(ctx, "tcp", ":"+portNum)
 				Expect(err).NotTo(HaveOccurred())
 
+				loginPath := proxyAddress + postLoginRedirectPath + "?param=val1"
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
-				resp := codeFlowLogin(rClient, proxyAddress, http.StatusOK, testUser, testPass)
+				resp := codeFlowLogin(rClient, loginPath, http.StatusOK, testUser, testPass)
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body := resp.Body()
-				Expect(strings.Contains(string(body), postLoginRedirectPath)).To(BeTrue())
+				Expect(strings.Contains(string(body), postLoginRedirectPath+"?param=val1")).To(BeTrue())
 
-				jarURI, err := url.Parse(proxyAddress)
+				jarURI, err := url.Parse(proxyAddress + postLoginRedirectPath)
 				Expect(err).NotTo(HaveOccurred())
 
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
@@ -156,6 +157,10 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 				repeatRaw += "\r\n\r\n"
 				rawRequest += repeatRaw
 
+				to := time.Now().Add(60 * time.Second)
+				err = conn.SetDeadline(to)
+				Expect(err).NotTo(HaveOccurred())
+
 				_, err = conn.Write([]byte(rawRequest))
 				Expect(err).NotTo(HaveOccurred())
 
@@ -174,6 +179,27 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				tricky = "//"
+				rawRequest = "GET " + tricky + " HTTP/1.1\r\n"
+				rawRequest += repeatRaw
+
+				_, err = conn.Write([]byte(rawRequest))
+				Expect(err).NotTo(HaveOccurred())
+
+				rawResp = make([]byte, 1024)
+				_, err = conn.Read(rawResp)
+
+				cancel()
+				conn.Close()
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(strings.Contains(string(rawResp), tricky)).To(BeTrue())
+				Expect(strings.Contains(string(rawResp), "200")).To(BeTrue())
+
+				ctx, cancel = context.WithTimeout(context.Background(), tlsTimeout)
+				conn, err = dialer.DialContext(ctx, "tcp", ":"+portNum)
+				Expect(err).NotTo(HaveOccurred())
+
+				tricky = "//really%2e///tricky//"
 				rawRequest = "GET " + tricky + " HTTP/1.1\r\n"
 				rawRequest += repeatRaw
 
@@ -370,10 +396,11 @@ var _ = Describe("Code Flow login/logout all normalization enabled", func() {
 
 				tricky = "/.%2e/../%2F/api/v1/%61uth/some%"
 				rawRequest := "GET " + tricky + " HTTP/1.1\r\n"
-				rawRequest += "Host: localhost\r\n"
-				rawRequest += "Cookie: " + constant.AccessCookie + "=" + accessCookieLogin + "; "
-				rawRequest += constant.IDTokenCookie + "=" + idCookieLogin
-				rawRequest += "\r\n\r\n"
+				repeatRaw := "Host: localhost\r\n"
+				repeatRaw += "Cookie: " + constant.AccessCookie + "=" + accessCookieLogin + "; "
+				repeatRaw += constant.IDTokenCookie + "=" + idCookieLogin
+				repeatRaw += "\r\n\r\n"
+				rawRequest += repeatRaw
 
 				to := time.Now().Add(10 * time.Second)
 				err = conn.SetDeadline(to)
@@ -401,6 +428,28 @@ var _ = Describe("Code Flow login/logout all normalization enabled", func() {
 				Expect(strings.Contains(string(body), normalized)).To(BeTrue())
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(err).NotTo(HaveOccurred())
+
+				ctx, cancel = context.WithTimeout(context.Background(), tlsTimeout)
+				conn, err = dialer.DialContext(ctx, "tcp", ":"+portNum)
+				Expect(err).NotTo(HaveOccurred())
+
+				tricky = "//really/tricky"
+				normalized = "/really/tricky"
+				rawRequest = "GET " + tricky + " HTTP/1.1\r\n"
+				rawRequest += repeatRaw
+
+				_, err = conn.Write([]byte(rawRequest))
+				Expect(err).NotTo(HaveOccurred())
+
+				rawResp = make([]byte, 1024)
+				_, err = conn.Read(rawResp)
+
+				cancel()
+				conn.Close()
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(strings.Contains(string(rawResp), normalized)).To(BeTrue())
+				Expect(strings.Contains(string(rawResp), "200")).To(BeTrue())
 
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())

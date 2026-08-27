@@ -26,7 +26,6 @@ import (
 	"net/url"
 	"os"
 	"reflect"
-	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -653,16 +652,169 @@ func TestUnascapePath(t *testing.T) {
 }
 
 func BenchmarkNormalizePath(bench *testing.B) {
-	rxDupSlashes := regexp.MustCompile(`/{2,}`)
-	data := "/f%5B%2f%56%2F%7C%5c%5C/b"
+	data := "/af%5B%2f%56%2F%7C%5c%5C/b"
 
 	for bench.Loop() {
 		_, _ = utils.NormalizePath(
 			false,
 			true,
 			true,
-			rxDupSlashes,
 			data,
+		)
+	}
+}
+
+func BenchmarkRemovePathDotSegments(bench *testing.B) {
+	data := "/a/../b/./../c/d/../f/g/h"
+
+	for bench.Loop() {
+		_ = utils.RemovePathDotSegments(data)
+	}
+}
+
+// func TestRemovePathDotSegment(t *testing.T) {
+// 	tests := []struct {
+// 		Name           string
+// 		Input          string
+// 		ExpectedOutput string
+// 	}{
+// 		{
+// 			Name:           "NotDots",
+// 			Input:          "/a/b//c/d///", //nolint:goconst
+// 			ExpectedOutput: "/a/b//c/d///",
+// 		},
+// 		{
+// 			Name:           "OneDot",
+// 			Input:          "/a/b/./c/d",
+// 			ExpectedOutput: "/a/b/c/d",
+// 		},
+// 		{
+// 			Name:           "OneDotWithChar",
+// 			Input:          "/a/b/.c/d",
+// 			ExpectedOutput: "/a/b/.c/d",
+// 		},
+// 		{
+// 			Name:           "TwoDot",
+// 			Input:          "/a/b/../c/d",
+// 			ExpectedOutput: "/a/c/d",
+// 		},
+// 		{
+// 			Name:           "TwoDotWithChar",
+// 			Input:          "/a/b/..c/d",
+// 			ExpectedOutput: "/a/b/..c/d",
+// 		},
+// 		{
+// 			Name:           "MultipleOneDots",
+// 			Input:          "/a/b/./c/./d",
+// 			ExpectedOutput: "/a/b/c/d",
+// 		},
+// 		{
+// 			Name:           "MultipleTwoDots",
+// 			Input:          "/a/../b/c/../d/e",
+// 			ExpectedOutput: "/d/e",
+// 		},
+// 		{
+// 			Name:           "OneDotFirst",
+// 			Input:          "./a/b/c",
+// 			ExpectedOutput: "/a/b/c",
+// 		},
+// 		{
+// 			Name:           "OneDotLast",
+// 			Input:          "/a/b/c/.",
+// 			ExpectedOutput: "/a/b/c/./",
+// 		},
+// 		{
+// 			Name:           "TowDotFirst",
+// 			Input:          "../a/b/c",
+// 			ExpectedOutput: "/a/b/c",
+// 		},
+// 		{
+// 			Name:           "TwoDotLast",
+// 			Input:          "/a/b/c/..",
+// 			ExpectedOutput: "/a/b/c/",
+// 		},
+// 	}
+
+// 	for _, testCase := range tests {
+// 		output := utils.RemovePathDotSegmentsNew(testCase.Input)
+// 		assert.Equal(
+// 			t,
+// 			testCase.ExpectedOutput,
+// 			output,
+// 			"Case: %s, expected output: %s, got: %s",
+// 			testCase.Name,
+// 			testCase.ExpectedOutput,
+// 			output,
+// 		)
+// 	}
+// }
+
+func TestReplaceDuplicateChar(t *testing.T) {
+	tests := []struct {
+		Name           string
+		ReplaceChar    byte
+		Input          string
+		ExpectedOutput string
+	}{
+		{
+			Name:           "OnlyOneSlash",
+			ReplaceChar:    '/',
+			Input:          "test/onlyoneslash", //nolint:goconst
+			ExpectedOutput: "test/onlyoneslash",
+		},
+		{
+			Name:           "MultipleOneSlash",
+			ReplaceChar:    '/',
+			Input:          "test/multiple/one/slash", //nolint:goconst
+			ExpectedOutput: "test/multiple/one/slash",
+		},
+		{
+			Name:           "OneSlashAtStartAndEnd",
+			ReplaceChar:    '/',
+			Input:          "/test/start/one/slash/end/", //nolint:goconst
+			ExpectedOutput: "/test/start/one/slash/end/",
+		},
+		{
+			Name:           "DoubleOneSlash",
+			ReplaceChar:    '/',
+			Input:          "test//onlyoneslash",
+			ExpectedOutput: "test/onlyoneslash",
+		},
+		{
+			Name:           "TripleOneSlash",
+			ReplaceChar:    '/',
+			Input:          "test///onlyoneslash",
+			ExpectedOutput: "test/onlyoneslash",
+		},
+		{
+			Name:           "MultipleDoubleSlash",
+			ReplaceChar:    '/',
+			Input:          "test//multiple//one//slash",
+			ExpectedOutput: "test/multiple/one/slash",
+		},
+		{
+			Name:           "MultipleSlashAtStartAndEnd",
+			ReplaceChar:    '/',
+			Input:          "///test/start/one/slash/end//",
+			ExpectedOutput: "/test/start/one/slash/end/",
+		},
+		{
+			Name:           "MixedMultipleSlash",
+			ReplaceChar:    '/',
+			Input:          "///test//start/one///slash/end/",
+			ExpectedOutput: "/test/start/one/slash/end/",
+		},
+	}
+
+	for _, testCase := range tests {
+		output := utils.ReplaceDuplicateChar(testCase.Input, testCase.ReplaceChar)
+		assert.Equal(
+			t,
+			testCase.ExpectedOutput,
+			output,
+			"Expected output: %s, got: %s",
+			testCase.ExpectedOutput,
+			output,
 		)
 	}
 }

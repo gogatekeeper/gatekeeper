@@ -7,7 +7,6 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
-	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -37,7 +36,6 @@ func EntrypointMiddleware(
 	pathEscapedSlashesUpstream bool,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		rxDupSlashes := regexp.MustCompile(`/{2,}`)
 		internalEqUpstream := false
 		isMergeSame := mergeSlashes == mergeSlashesUpstream
 		isNormalizeSame := normalizePath == normalizePathUpstream
@@ -71,7 +69,6 @@ func EntrypointMiddleware(
 				pathEscapedSlashes,
 				mergeSlashes,
 				normalizePath,
-				rxDupSlashes,
 				normalizedPath,
 			)
 			if err != nil {
@@ -88,10 +85,9 @@ func EntrypointMiddleware(
 				normalizedPathUpstream = normalizedPath
 			} else {
 				normalizedPathUpstream, err = utils.NormalizePath(
-					pathEscapedSlashes,
-					mergeSlashes,
-					normalizePath,
-					rxDupSlashes,
+					pathEscapedSlashesUpstream,
+					mergeSlashesUpstream,
+					normalizePathUpstream,
 					normalizedPathUpstream,
 				)
 				if err != nil {
@@ -105,11 +101,20 @@ func EntrypointMiddleware(
 				}
 			}
 
+			if !strings.HasPrefix(normalizedPath, "/") {
+				normalizedPath = "/" + normalizedPath
+			}
+
+			if !strings.HasPrefix(normalizedPathUpstream, "/") {
+				normalizedPathUpstream = "/" + normalizedPathUpstream
+			}
+
 			scope.Path = normalizedPathUpstream
 			scope.RawPath = normalizedPathUpstream
+			scope.Opaque = normalizedPathUpstream
 
-			if normalizedPathUpstream != constant.DoubleSlash {
-				scope.Opaque = normalizedPathUpstream
+			if strings.HasPrefix(normalizedPathUpstream, constant.DoubleSlash) {
+				scope.Opaque = "//fakeHost" + normalizedPathUpstream
 			}
 
 			logger.Debug("Upstream, normalized path", zap.String("path", scope.Path))
@@ -120,16 +125,6 @@ func EntrypointMiddleware(
 
 			logger.Debug("Internal, normalized path", zap.String("path", req.URL.Path))
 			logger.Debug("Internal, normalized raw path", zap.String("path", req.URL.RawPath))
-
-			// ensure we have a slash in the url
-			if !strings.HasPrefix(req.URL.Path, "/") {
-				req.URL.Path = "/" + req.URL.Path
-			}
-
-			// ensure we have a slash in the url
-			if !strings.HasPrefix(req.URL.RawPath, "/") {
-				req.URL.RawPath = "/" + req.URL.RawPath
-			}
 
 			resp := middleware.NewWrapResponseWriter(wrt, 1)
 			start := time.Now()
@@ -481,10 +476,7 @@ func ProxyMiddleware(
 			if scope != nil {
 				req.URL.Path = scope.Path
 				req.URL.RawPath = scope.RawPath
-
-				if scope.Opaque != constant.DoubleSlash {
-					req.URL.Opaque = scope.Opaque
-				}
+				req.URL.Opaque = scope.Opaque
 			}
 
 			if v := req.Header.Get("Host"); v != "" {

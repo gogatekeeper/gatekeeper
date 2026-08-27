@@ -392,11 +392,13 @@ func startAndWaitTestUpstream(
 		}
 	}
 
-	//nolint:gosec
 	server := &http.Server{
-		Addr:      listener.Addr().String(),
-		Handler:   handler,
-		TLSConfig: tlsConfig,
+		Addr:              listener.Addr().String(),
+		Handler:           handler,
+		TLSConfig:         tlsConfig,
+		WriteTimeout:      30 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 30 * time.Second,
 	}
 
 	errGroup.Go(func() error {

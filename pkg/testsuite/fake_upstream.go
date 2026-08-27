@@ -107,10 +107,6 @@ func (f *FakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Reque
 		}
 
 		content, err := json.Marshal(&FakeUpstreamResponse{
-			// r.RequestURI is what was received by the proxy.
-			// r.URL.String() is what is actually sent to the upstream service.
-			// KEYCLOAK-10864, KEYCLOAK-11276, KEYCLOAK-13315
-			// URI:     req.URL.String(),
 			URI:     uri,
 			RawURI:  req.URL.RawPath,
 			Method:  req.Method,

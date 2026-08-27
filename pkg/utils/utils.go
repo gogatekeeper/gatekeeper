@@ -945,6 +945,58 @@ func unhex(c byte) byte {
 	return 9*(c>>6) + (c & 15)
 }
 
+// func RemovePathDotSegmentsNew(path string) string {
+// 	if len(path) > 0 {
+// 		var out strings.Builder
+// 		out.Grow(len(path))
+
+// 		const defaultCapacity = 10
+
+// 		numDots := 0
+// 		dots := make([]byte, 0, defaultCapacity)
+// 		previousSection := make([]byte, 0, defaultCapacity)
+// 		currentSection := make([]byte, 0, defaultCapacity)
+
+// 		for idx, char := range path {
+// 			switch char {
+// 			case '.':
+// 				dots = append(dots, path[idx])
+// 				numDots++
+// 			case '/':
+// 				if numDots != 2 {
+// 					out.Write(previousSection)
+
+// 					if numDots != 1 {
+// 						out.WriteByte(path[idx])
+// 					}
+// 				}
+
+// 				previousSection = currentSection
+// 				currentSection = currentSection[:0]
+// 				numDots = 0
+// 				dots = dots[:0]
+// 			default:
+// 				currentSection = append(currentSection, path[idx])
+
+// 				numDots = 0
+// 				dots = dots[:0]
+// 			}
+// 		}
+
+// 		if numDots > 0 {
+// 			out.Write(dots)
+// 			out.WriteByte('/')
+// 		}
+
+// 		path = out.String()
+// 		if path[0] != '/' {
+// 			path = "/" + path
+// 		}
+// 	}
+
+// 	return path
+// }
+
 func RemovePathDotSegments(path string) string {
 	if len(path) > 0 {
 		var (
@@ -970,12 +1022,12 @@ func RemovePathDotSegments(path string) string {
 		}
 
 		path = strings.Join(dotFree, "/")
-		if !strings.HasPrefix(path, "/") {
+		if path[0] != '/' {
 			path = "/" + path
 		}
 
 		// Special case if the last segment was a dot, make sure the path ends with a slash
-		if lastIsDot && !strings.HasSuffix(path, "/") {
+		if lastIsDot && path[len(path)-1] != '/' {
 			path += "/"
 		}
 	}
@@ -987,7 +1039,6 @@ func NormalizePath(
 	pathEscapedSlashes bool,
 	mergeSlashes bool,
 	normalizePath bool,
-	rxDupSlashes *regexp.Regexp,
 	path string,
 ) (string, error) {
 	var err error
@@ -1001,7 +1052,7 @@ func NormalizePath(
 		}
 
 		if mergeSlashes {
-			path = rxDupSlashes.ReplaceAllString(path, "/")
+			path = ReplaceDuplicateChar(path, '/')
 		}
 
 		if normalizePath {
@@ -1015,4 +1066,33 @@ func NormalizePath(
 	}
 
 	return path, nil
+}
+
+func ReplaceDuplicateChar(path string, replacedChar byte) string {
+	var out strings.Builder
+	out.Grow(len(path))
+
+	tmp := 0
+
+	for idx := range path {
+		switch path[idx] {
+		case replacedChar:
+			tmp++
+			continue
+		default:
+			if tmp > 0 {
+				out.WriteByte(replacedChar)
+
+				tmp = 0
+			}
+
+			out.WriteByte(path[idx])
+		}
+	}
+
+	if tmp > 0 {
+		out.WriteByte(replacedChar)
+	}
+
+	return out.String()
 }
