@@ -187,7 +187,7 @@ func LoggingMiddleware(
 			if verbose {
 				requestLogger := logger.With(
 					zap.Any("headers", req.Header),
-					zap.String("path", req.URL.Path),
+					zap.String("normalized path", req.URL.Path),
 					zap.String("method", req.Method),
 					zap.String("client_ip", addr),
 				)
@@ -203,7 +203,7 @@ func LoggingMiddleware(
 					zap.Int("bytes", resp.BytesWritten()),
 					zap.String("remote_addr", req.RemoteAddr),
 					zap.String("method", req.Method),
-					zap.String("path", req.URL.Path))
+					zap.String("normalized path", req.URL.Path))
 			} else {
 				scope.Logger.Info("client request",
 					zap.Duration("latency", time.Since(start)),
@@ -211,8 +211,8 @@ func LoggingMiddleware(
 					zap.Int("bytes", resp.BytesWritten()),
 					zap.String("remote_addr", req.RemoteAddr),
 					zap.String("method", req.Method),
-					zap.String("path", req.URL.Path),
-					zap.String("raw path", req.URL.RawPath))
+					zap.String("normalized path", req.URL.Path),
+					zap.String("normalized raw path", req.URL.RawPath))
 			}
 		})
 	}

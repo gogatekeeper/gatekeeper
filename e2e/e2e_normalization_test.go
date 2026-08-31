@@ -3,6 +3,9 @@ package e2e_test
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
+	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -11,6 +14,7 @@ import (
 
 	resty "github.com/go-resty/resty/v2"
 	"github.com/gogatekeeper/gatekeeper/pkg/constant"
+	"github.com/gogatekeeper/gatekeeper/pkg/proxy/models"
 	. "github.com/onsi/ginkgo/v2" //nolint:revive //we want to use it for ginkgo
 	. "github.com/onsi/gomega"    //nolint:revive //we want to use it for gomega
 	"golang.org/x/sync/errgroup"
@@ -21,6 +25,7 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 		portNum      string
 		proxyAddress string
 		server       *http.Server
+		rawServer    *net.Listener
 	)
 
 	errGroup, _ := errgroup.WithContext(context.Background())
@@ -28,6 +33,11 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 	AfterEach(func() {
 		if server != nil {
 			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+
+		if rawServer != nil {
+			err := (*rawServer).Close()
 			Expect(err).NotTo(HaveOccurred())
 		}
 
@@ -44,6 +54,7 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 		)
 
 		server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
+
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 
@@ -149,7 +160,11 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 					}
 				}
 
-				tricky := "/.%2e/../%2F/api/v1/%61uth/some"
+				to := time.Now().Add(60 * time.Second)
+				err = conn.SetDeadline(to)
+				Expect(err).NotTo(HaveOccurred())
+
+				tricky := "//"
 				rawRequest := "GET " + tricky + " HTTP/1.1\r\n"
 				repeatRaw := "Host: localhost\r\n"
 				repeatRaw += "Cookie: " + constant.AccessCookie + "=" + accessCookieLogin + "; "
@@ -157,35 +172,10 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 				repeatRaw += "\r\n\r\n"
 				rawRequest += repeatRaw
 
-				to := time.Now().Add(60 * time.Second)
-				err = conn.SetDeadline(to)
-				Expect(err).NotTo(HaveOccurred())
-
 				_, err = conn.Write([]byte(rawRequest))
 				Expect(err).NotTo(HaveOccurred())
 
 				rawResp := make([]byte, 1024)
-				_, err = conn.Read(rawResp)
-
-				cancel()
-				conn.Close()
-
-				Expect(err).NotTo(HaveOccurred())
-				Expect(strings.Contains(string(rawResp), tricky)).To(BeTrue())
-				Expect(strings.Contains(string(rawResp), "200")).To(BeTrue())
-
-				ctx, cancel = context.WithTimeout(context.Background(), tlsTimeout)
-				conn, err = dialer.DialContext(ctx, "tcp", ":"+portNum)
-				Expect(err).NotTo(HaveOccurred())
-
-				tricky = "//"
-				rawRequest = "GET " + tricky + " HTTP/1.1\r\n"
-				rawRequest += repeatRaw
-
-				_, err = conn.Write([]byte(rawRequest))
-				Expect(err).NotTo(HaveOccurred())
-
-				rawResp = make([]byte, 1024)
 				_, err = conn.Read(rawResp)
 
 				cancel()
@@ -231,6 +221,160 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 				rClient.SetRedirectPolicy(resty.NoRedirectPolicy())
 				resp, _ = rClient.R().Get(proxyAddress)
 				Expect(resp.StatusCode()).To(Equal(http.StatusSeeOther))
+			},
+		)
+	})
+})
+
+var _ = Describe("Code Flow login/logout all normalization disabled precise encoded output", func() {
+	var (
+		portNum string
+		// proxyAddress string
+		server    *http.Server
+		rawServer *net.Listener
+	)
+
+	errGroup, _ := errgroup.WithContext(context.Background())
+
+	AfterEach(func() {
+		if server != nil {
+			err := server.Shutdown(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+		}
+
+		if rawServer != nil {
+			err := (*rawServer).Close()
+			Expect(err).NotTo(HaveOccurred())
+		}
+
+		if errGroup != nil {
+			err := errGroup.Wait()
+			Expect(err).NotTo(HaveOccurred())
+		}
+	})
+
+	BeforeEach(func() {
+		var (
+			err error
+			// upstreamSvcPort    string
+			rawUpstreamSvcPort string
+		)
+
+		// server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
+		rawServer, rawUpstreamSvcPort = startAndWaitTestRawUpstream(errGroup, false)
+
+		portNum, err = generateRandomPort()
+		Expect(err).NotTo(HaveOccurred())
+
+		// proxyAddress = localURI + portNum
+
+		//nolint:goconst
+		proxyArgs := []string{
+			"--discovery-url=" + idpRealmURI,
+			"--openid-provider-timeout=300s",
+			"--tls-openid-provider-ca-certificate=" + tlsCaCertificate,
+			"--tls-openid-provider-client-certificate=" + tlsCertificate,
+			"--tls-openid-provider-client-private-key=" + tlsPrivateKey,
+			"--listen=" + allInterfaces + portNum,
+			"--client-id=" + testClient,
+			"--client-secret=" + testClientSecret,
+			"--upstream-url=" + localURI + rawUpstreamSvcPort,
+			"--no-redirects=false",
+			"--skip-access-token-clientid-check=true",
+			"--skip-access-token-issuer-check=true",
+			"--enable-idp-session-check=false",
+			"--enable-default-deny=false",
+			"--resources=uri=" + postLoginRedirectPath + "|roles=uma_authorization,offline_access",
+			"--resources=uri=/|roles=uma_authorization,offline_access",
+			"--resources=uri=/.%2e/../%2F/api/v1/%61uth/some*|roles=uma_authorization,offline_access",
+			"--resources=uri=" + anyURI + "|roles=uma_authorization,offline_access",
+			"--resources=uri=/../api/v1/%61uth/some|roles=non-existent",
+			"--openid-provider-retry-count=30",
+			"--enable-refresh-tokens=true",
+			"--encryption-key=" + testKey,
+			"--secure-cookie=false",
+			"--enable-register-handler=true",
+			"--enable-encrypted-token=false",
+			"--enable-id-token-claims=false",
+			"--enable-id-token-cookie=false",
+			"--enable-user-info-claims=false",
+			"--add-claims=email_verified",
+			"--add-claims=email",
+			"--enable-pkce=false",
+			"--tls-cert=" + tlsCertificate,
+			"--tls-private-key=" + tlsPrivateKey,
+			"--upstream-ca=" + tlsCaCertificate,
+			"--normalize-path=false",
+			"--normalize-path-upstream=false",
+			"--merge-slashes=false",
+			"--merge-slashes-upstream=false",
+			"--path-escaped-slashes=true",
+			"--path-escaped-slashes-upstream=true",
+			"--enable-logging=true",
+			"--verbose=true",
+		}
+
+		osArgs := make([]string, 0, 1+len(proxyArgs))
+		osArgs = append(osArgs, os.Args[0])
+		osArgs = append(osArgs, proxyArgs...)
+		startAndWait(portNum, osArgs)
+	})
+
+	When("Performing standard login", func() {
+		It(
+			"should login with user/password and logout successfully",
+			Label("code_flow"),
+			Label("basic_case"),
+			Label("normalization_disabled"),
+			func(_ context.Context) {
+				var err error
+
+				rClient := resty.New()
+				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
+				rClient.FormData.Add("client_secret", testClientSecret)
+				rClient.FormData.Add("client_id", testClient)
+				rClient.FormData.Add("grant_type", "client_credentials")
+				resp, err := rClient.R().Post(idpRealmURI + "/protocol/openid-connect/token")
+				Expect(err).NotTo(HaveOccurred())
+
+				tokenResp := &models.TokenResponse{}
+				err = json.Unmarshal(resp.Body(), tokenResp)
+				Expect(err).NotTo(HaveOccurred())
+
+				ctx, cancel := context.WithTimeout(context.Background(), tlsTimeout)
+				dialer := tls.Dialer{
+					Config: &tls.Config{
+						ServerName: "localhost",
+						RootCAs:    caPool,
+						MinVersion: tls.VersionTLS13,
+					},
+				}
+
+				conn, err := dialer.DialContext(ctx, "tcp", ":"+portNum)
+				Expect(err).NotTo(HaveOccurred())
+
+				tricky := "/.%2e/../%2F/api/v1/%61uth/some"
+				rawRequest := "GET %s HTTP/1.1\r\n"
+				rawRequest += "Host: localhost\r\n"
+				rawRequest += "Cookie: %s=%s; "
+				rawRequest += "\r\n\r\n"
+
+				to := time.Now().Add(60 * time.Second)
+				err = conn.SetDeadline(to)
+				Expect(err).NotTo(HaveOccurred())
+
+				_, err = fmt.Fprintf(conn, rawRequest, tricky, constant.AccessCookie, tokenResp.AccessToken)
+				Expect(err).NotTo(HaveOccurred())
+
+				rawResp := make([]byte, 4096)
+				_, err = conn.Read(rawResp)
+
+				cancel()
+				conn.Close()
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(strings.Contains(string(rawResp), tricky)).To(BeTrue())
+				Expect(strings.Contains(string(rawResp), "200")).To(BeTrue())
 			},
 		)
 	})
@@ -310,6 +454,7 @@ var _ = Describe("Code Flow login/logout all normalization enabled", func() {
 			"--merge-slashes-upstream=true",
 			"--path-escaped-slashes=false",
 			"--path-escaped-slashes-upstream=false",
+			"--enable-logging=true",
 			"--verbose=true",
 		}
 

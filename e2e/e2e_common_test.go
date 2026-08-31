@@ -6,6 +6,8 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"errors"
+	"fmt"
+	"io"
 	"math/big"
 	"net"
 	"net/http"
@@ -392,13 +394,14 @@ func startAndWaitTestUpstream(
 		}
 	}
 
+	testTimeout := 30 * time.Second
 	server := &http.Server{
 		Addr:              listener.Addr().String(),
 		Handler:           handler,
 		TLSConfig:         tlsConfig,
-		WriteTimeout:      30 * time.Second,
-		ReadTimeout:       30 * time.Second,
-		ReadHeaderTimeout: 30 * time.Second,
+		WriteTimeout:      testTimeout,
+		ReadTimeout:       testTimeout,
+		ReadHeaderTimeout: testTimeout,
 	}
 
 	errGroup.Go(func() error {
@@ -438,4 +441,118 @@ func startAndWaitTestUpstream(
 	}, timeout, tlsTimeout).Should(Succeed())
 
 	return server, port
+}
+
+func startAndWaitTestRawUpstream(
+	errGroup *errgroup.Group,
+	clientAuth bool,
+) (*net.Listener, string) {
+	//nolint:gosec
+	listener, err := net.Listen("tcp", "0.0.0.0:0")
+	Expect(err).NotTo(HaveOccurred())
+
+	tlsCert, err := tls.LoadX509KeyPair(tlsCertificate, tlsPrivateKey)
+	Expect(err).NotTo(HaveOccurred())
+
+	tlsConfig := &tls.Config{
+		Certificates:             []tls.Certificate{tlsCert},
+		PreferServerCipherSuites: false,
+		NextProtos:               []string{"http/1.1"},
+		MinVersion:               tls.VersionTLS13,
+	}
+
+	// to simplify and don't have separate key, cert for server and separate key, cert for client
+	// we use same key, cert for server side and also for client auth
+	clientPair := tlsCert
+
+	if clientAuth {
+		tlsConfig.ClientCAs = caPool
+		tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+	}
+
+	listener = tls.NewListener(listener, tlsConfig)
+
+	errGroup.Go(func() error {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				if errors.Is(err, net.ErrClosed) {
+					return nil
+				}
+
+				return err
+			}
+
+			defer conn.Close()
+
+			err = conn.SetDeadline(time.Now().Add(60 * time.Second))
+			if err != nil {
+				return err
+			}
+
+			var out []byte
+
+			for {
+				buf := make([]byte, 1024)
+
+				numBytes, err := conn.Read(buf)
+				if err != nil && !errors.Is(err, io.EOF) {
+					return err
+				}
+
+				out = append(out, buf...)
+
+				if numBytes < 1024 {
+					break
+				}
+
+				if errors.Is(err, io.EOF) {
+					break
+				}
+			}
+
+			_, err = fmt.Fprintf(
+				conn,
+				"HTTP/1.1 200 OK\r\nContent-Length: %d\r\nContent-Type: application/text\r\n\r\n%s",
+				len(string(out)),
+				string(out),
+			)
+			if err != nil {
+				return err
+			}
+
+			conn.Close()
+		}
+	})
+
+	netParts := strings.Split(listener.Addr().String(), ":")
+	port := netParts[len(netParts)-1]
+
+	Eventually(func(_ Gomega) error {
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		dialer := tls.Dialer{
+			Config: &tls.Config{
+				ServerName: "localhost",
+				RootCAs:    caPool,
+				MinVersion: tls.VersionTLS13,
+			},
+		}
+
+		if clientAuth {
+			dialer.Config.Certificates = []tls.Certificate{clientPair}
+		}
+
+		conn, err := dialer.DialContext(ctx, "tcp", ":"+port)
+
+		Expect(err).NotTo(HaveOccurred())
+		_, err = fmt.Fprintf(conn, "ping\n")
+		Expect(err).NotTo(HaveOccurred())
+
+		cancel()
+		conn.Close()
+
+		return nil
+	}, timeout, tlsTimeout).Should(Succeed())
+
+	return &listener, port
 }
