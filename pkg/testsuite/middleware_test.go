@@ -427,7 +427,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"user"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"//"`,
+					ExpectedContentContains: `"raw_uri":"//"`,
 				},
 				{
 					URI:                     "/api/v1/auth/ok",
@@ -436,7 +436,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/ok"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/ok"`,
 				},
 				{
 					URI:                     "/.%2e/../%2F/%5c/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
@@ -445,7 +445,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/.%2e/../%2F/%5c/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/.%2e/../%2F/%5c/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
 				},
 				//nolint:lll
 				{
@@ -455,7 +455,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"user"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"uri":"/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/"`,
+					ExpectedContentContains: `"raw_uri":"/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/"`,
 				},
 				{
 					URI:                     "/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png",
@@ -464,7 +464,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"user"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"uri":"/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png"`,
+					ExpectedContentContains: `"raw_uri":"/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png"`,
 				},
 				{
 					URI:          "/../api/v1/%61uth/some",
@@ -543,7 +543,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/ok"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/ok"`,
 				},
 				{
 					URI:                     "/.%2e/../%2F/%5C/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
@@ -552,7 +552,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/%2F/%5C/api/v1/auth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/%2F/%5C/api/v1/auth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
 				},
 				{
 					URI:                     "/../api/v1/%61uth/some",
@@ -561,7 +561,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/some"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/some"`,
 				},
 				{
 					URI:                     "/.%2e/api/v1/%61uth/some",
@@ -570,7 +570,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/some"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/some"`,
 				},
 				{
 					URI:                     "/help/../api/v1/%61uth/some",
@@ -579,7 +579,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/some"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/some"`,
 				},
 				{
 					URI:                     "/help/.%2e/api/v1/%61uth/some",
@@ -588,7 +588,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/some"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/some"`,
 				},
 				{
 					URI:          "/api/v1/%2F/%61uth/some",
@@ -646,7 +646,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/ok"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/ok"`,
 				},
 				{
 					URI:                     "/.%2e/..///%2F//api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
@@ -655,7 +655,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
 				},
 				{
 					URI:          "/../api/v1/%61uth/some",
@@ -727,7 +727,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/ok"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/ok"`,
 				},
 				{
 					URI:                     "/.%2e/..//%2F//api%5c/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
@@ -736,7 +736,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/.%2e/../////api\\/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/.%2e/../////api\\/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
 				},
 				{
 					URI:          "/../api/v1/%61uth/some",
@@ -808,7 +808,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/ok"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/ok"`,
 				},
 				{
 					URI:                     "/api/v1/auth/ok",
@@ -817,7 +817,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/ok"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/ok"`,
 				},
 				{
 					URI:                     "/.%2e/..//%2F%2e.%2F//api//v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
@@ -826,7 +826,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
 				},
 				{
 					URI:                     "/a//..//%2F%2e.%2F//api//v1/%61uth/some",
@@ -835,7 +835,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/some"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/some"`,
 				},
 				{
 					URI:          "/../api/v1/%61uth/some",
@@ -933,7 +933,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/ok"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/ok"`,
 				},
 				{
 					URI:                     "/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
@@ -942,7 +942,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
 				},
 				//nolint:lll
 				{
@@ -952,7 +952,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"user"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"uri":"/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/"`,
+					ExpectedContentContains: `"raw_uri":"/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/"`,
 				},
 				{
 					URI:                     "/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png",
@@ -961,7 +961,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"user"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"uri":"/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png"`,
+					ExpectedContentContains: `"raw_uri":"/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png"`,
 				},
 				{
 					URI:          "/../api/v1/%61uth/some",
@@ -1040,7 +1040,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/ok"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/ok"`,
 				},
 				{
 					URI:                     "/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
@@ -1049,7 +1049,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/%2F/api/v1/auth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/%2F/api/v1/auth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
 				},
 				{
 					URI:                     "/../api/v1/%61uth/some",
@@ -1058,7 +1058,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/some"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/some"`,
 				},
 				{
 					URI:                     "/.%2e/api/v1/%61uth/some",
@@ -1067,7 +1067,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/some"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/some"`,
 				},
 				{
 					URI:                     "/help/../api/v1/%61uth/some",
@@ -1076,7 +1076,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/some"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/some"`,
 				},
 				{
 					URI:                     "/help/.%2e/api/v1/%61uth/some",
@@ -1085,7 +1085,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/some"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/some"`,
 				},
 				{
 					URI:          "/api/v1/%2F/%61uth/some",
@@ -1143,7 +1143,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/ok"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/ok"`,
 				},
 				{
 					URI:                     "/.%2e/..///%2F//api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
@@ -1152,7 +1152,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
 				},
 				{
 					URI:          "/../api/v1/%61uth/some",
@@ -1224,7 +1224,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/ok"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/ok"`,
 				},
 				{
 					URI:                     "/.%2e/..//%2F//api//v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
@@ -1233,7 +1233,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/.%2e/../////api//v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/.%2e/../////api//v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
 				},
 				{
 					URI:          "/../api/v1/%61uth/some",
@@ -1305,7 +1305,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"admin"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/ok"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/ok"`,
 				},
 				{
 					URI:                     "/.%2e/..//%2F//api//v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
@@ -1314,7 +1314,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"/api/v1/auth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/api/v1/auth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
 				},
 				{
 					URI:          "/../api/v1/%61uth/some",
