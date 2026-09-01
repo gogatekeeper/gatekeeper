@@ -570,6 +570,20 @@ func TestUnascapePath(t *testing.T) {
 		ExpectedErr  error
 	}{
 		{
+			Name:         "NoUnescapes",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  nil,
+			Path:         "/a/b/c",
+			ExpectedPath: `/a/b/c`,
+		},
+		{
+			Name:         "OnlySlashes",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  nil,
+			Path:         "/a/b%2F/%5c",
+			ExpectedPath: "/a/b%2F/%5c",
+		},
+		{
 			Name:         "LastPercentChar",
 			Mode:         utils.SlashOmit,
 			ExpectedErr:  utils.UnescapeError("%"),
@@ -624,6 +638,13 @@ func TestUnascapePath(t *testing.T) {
 			ExpectedErr:  nil,
 			Path:         "/ca%5B%2f%56%2F%7C%5c%5C/b",
 			ExpectedPath: `/ca%5B/%56/%7C\\/b`,
+		},
+		{
+			Name:         "UnascapeAll",
+			Mode:         utils.UnescapeAll,
+			ExpectedErr:  nil,
+			Path:         "/a%5B%2f%56%2F%7C%5c%5C/db",
+			ExpectedPath: `/a[/V/|\\/db`,
 		},
 	}
 
@@ -759,19 +780,19 @@ func TestReplaceDuplicateChar(t *testing.T) {
 		{
 			Name:           "OnlyOneSlash",
 			ReplaceChar:    '/',
-			Input:          "test/onlyoneslash", //nolint:goconst
+			Input:          "test/onlyoneslash",
 			ExpectedOutput: "test/onlyoneslash",
 		},
 		{
 			Name:           "MultipleOneSlash",
 			ReplaceChar:    '/',
-			Input:          "test/multiple/one/slash", //nolint:goconst
+			Input:          "test/multiple/one/slash",
 			ExpectedOutput: "test/multiple/one/slash",
 		},
 		{
 			Name:           "OneSlashAtStartAndEnd",
 			ReplaceChar:    '/',
-			Input:          "/test/start/one/slash/end/", //nolint:goconst
+			Input:          "/test/start/one/slash/end/",
 			ExpectedOutput: "/test/start/one/slash/end/",
 		},
 		{

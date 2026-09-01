@@ -848,8 +848,9 @@ func LoadX509KeyPairFromRoot(fileRoot, certFile, keyFile string) (tls.Certificat
 type UnescapeMode int
 
 const (
-	SlashOmit UnescapeMode = iota
-	SlashOnly UnescapeMode = iota
+	SlashOmit   UnescapeMode = iota
+	SlashOnly   UnescapeMode = iota
+	UnescapeAll UnescapeMode = iota
 )
 
 //nolint:cyclop
@@ -874,11 +875,13 @@ func UnescapePath(path string, mode UnescapeMode) (string, error) {
 				return "", UnescapeError(path)
 			}
 
-			isSlash := path[idx+1] == '2' && (path[idx+2] == 'F' || path[idx+2] == 'f')
-			isBackSlash := path[idx+1] == '5' && (path[idx+2] == 'C' || path[idx+2] == 'c')
+			if mode == SlashOmit {
+				isSlash := path[idx+1] == '2' && (path[idx+2] == 'F' || path[idx+2] == 'f')
+				isBackSlash := path[idx+1] == '5' && (path[idx+2] == 'C' || path[idx+2] == 'c')
 
-			if isSlash || isBackSlash {
-				slashCount++
+				if isSlash || isBackSlash {
+					slashCount++
+				}
 			}
 
 			idx += escapeSeqLen
@@ -921,6 +924,8 @@ func UnescapePath(path string, mode UnescapeMode) (string, error) {
 				default:
 					out.WriteString(hexSeq)
 				}
+			case UnescapeAll:
+				out.WriteByte(unhex(path[idx+1])<<4 | unhex(path[idx+2]))
 			}
 
 			idx += 2

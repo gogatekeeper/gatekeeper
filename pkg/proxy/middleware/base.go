@@ -109,13 +109,19 @@ func EntrypointMiddleware(
 				normalizedPathUpstream = "/" + normalizedPathUpstream
 			}
 
-			scope.Path = normalizedPathUpstream
-			scope.RawPath = normalizedPathUpstream
-			scope.Opaque = normalizedPathUpstream
+			unescapedPath, err := utils.UnescapePath(normalizedPathUpstream, utils.UnescapeAll)
+			if err != nil {
+				logger.Error(
+					"failed unescaping normalized upstream path",
+					zap.String("path", normalizedPathUpstream),
+					zap.Error(err),
+				)
 
-			if strings.HasPrefix(normalizedPathUpstream, constant.DoubleSlash) {
-				scope.Opaque = "//fakeHost" + normalizedPathUpstream
+				return
 			}
+
+			scope.RawPath = normalizedPathUpstream
+			scope.Path = unescapedPath
 
 			logger.Debug("Upstream, normalized path", zap.String("path", scope.Path))
 			logger.Debug("Upstream, normalized raw path", zap.String("path", scope.RawPath))
@@ -476,7 +482,6 @@ func ProxyMiddleware(
 			if scope != nil {
 				req.URL.Path = scope.Path
 				req.URL.RawPath = scope.RawPath
-				req.URL.Opaque = scope.Opaque
 			}
 
 			if v := req.Header.Get("Host"); v != "" {

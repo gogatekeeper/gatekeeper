@@ -443,6 +443,7 @@ func startAndWaitTestUpstream(
 	return server, port
 }
 
+//nolint:cyclop
 func startAndWaitTestRawUpstream(
 	errGroup *errgroup.Group,
 	clientAuth bool,
@@ -456,7 +457,7 @@ func startAndWaitTestRawUpstream(
 
 	tlsConfig := &tls.Config{
 		Certificates:             []tls.Certificate{tlsCert},
-		PreferServerCipherSuites: false,
+		PreferServerCipherSuites: true,
 		NextProtos:               []string{"http/1.1"},
 		MinVersion:               tls.VersionTLS13,
 	}

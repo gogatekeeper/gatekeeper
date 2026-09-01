@@ -260,13 +260,10 @@ var _ = Describe("Code Flow login/logout all normalization disabled precise enco
 			rawUpstreamSvcPort string
 		)
 
-		// server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
 		rawServer, rawUpstreamSvcPort = startAndWaitTestRawUpstream(errGroup, false)
 
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
-
-		// proxyAddress = localURI + portNum
 
 		//nolint:goconst
 		proxyArgs := []string{
@@ -353,7 +350,7 @@ var _ = Describe("Code Flow login/logout all normalization disabled precise enco
 				conn, err := dialer.DialContext(ctx, "tcp", ":"+portNum)
 				Expect(err).NotTo(HaveOccurred())
 
-				tricky := "/.%2e/../%2F/api/v1/%61uth/some"
+				tricky := "//.%2e/../%2F/api/v1/%61uth/some"
 				rawRequest := "GET %s HTTP/1.1\r\n"
 				rawRequest += "Host: localhost\r\n"
 				rawRequest += "Cookie: %s=%s; "
@@ -374,6 +371,7 @@ var _ = Describe("Code Flow login/logout all normalization disabled precise enco
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(strings.Contains(string(rawResp), tricky)).To(BeTrue())
+				Expect(strings.Contains(string(rawResp), "GET https://")).NotTo(BeTrue())
 				Expect(strings.Contains(string(rawResp), "200")).To(BeTrue())
 			},
 		)
