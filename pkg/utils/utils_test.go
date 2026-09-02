@@ -544,7 +544,7 @@ func TestBufferPool(t *testing.T) {
 }
 
 func BenchmarkMaxSize(bench *testing.B) {
-	data, err := utils.GetRandomString(1000000)
+	data, err := utils.GetRandomString(1000000, utils.LetterCorpus())
 	require.NoError(bench, err, "generating string data should not fail")
 
 	reader := bytes.NewReader([]byte(data))
@@ -559,6 +559,40 @@ func BenchmarkUnascapePath(bench *testing.B) {
 	for bench.Loop() {
 		_, _ = utils.UnescapePath(data, utils.SlashOmit)
 	}
+}
+
+func FuzzUnascapePath(f *testing.F) {
+	for range 1000 {
+		path, err := utils.GetRandomString(50, utils.UnescapePathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
+
+		f.Add(path)
+	}
+
+	for range 60 {
+		path, err := utils.GetRandomString(3, utils.UnescapePathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
+
+		f.Add(path)
+	}
+
+	for range 60 {
+		path, err := utils.GetRandomString(5, utils.UnescapePathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
+
+		f.Add(path)
+	}
+
+	for range 60 {
+		path, err := utils.GetRandomString(6, utils.UnescapePathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
+
+		f.Add(path)
+	}
+
+	f.Fuzz(func(_ *testing.T, path string) {
+		_, _ = utils.UnescapePath(path, utils.UnescapeAll)
+	})
 }
 
 func TestUnascapePath(t *testing.T) {
@@ -693,82 +727,146 @@ func BenchmarkRemovePathDotSegments(bench *testing.B) {
 	}
 }
 
-// func TestRemovePathDotSegment(t *testing.T) {
-// 	tests := []struct {
-// 		Name           string
-// 		Input          string
-// 		ExpectedOutput string
-// 	}{
-// 		{
-// 			Name:           "NotDots",
-// 			Input:          "/a/b//c/d///", //nolint:goconst
-// 			ExpectedOutput: "/a/b//c/d///",
-// 		},
-// 		{
-// 			Name:           "OneDot",
-// 			Input:          "/a/b/./c/d",
-// 			ExpectedOutput: "/a/b/c/d",
-// 		},
-// 		{
-// 			Name:           "OneDotWithChar",
-// 			Input:          "/a/b/.c/d",
-// 			ExpectedOutput: "/a/b/.c/d",
-// 		},
-// 		{
-// 			Name:           "TwoDot",
-// 			Input:          "/a/b/../c/d",
-// 			ExpectedOutput: "/a/c/d",
-// 		},
-// 		{
-// 			Name:           "TwoDotWithChar",
-// 			Input:          "/a/b/..c/d",
-// 			ExpectedOutput: "/a/b/..c/d",
-// 		},
-// 		{
-// 			Name:           "MultipleOneDots",
-// 			Input:          "/a/b/./c/./d",
-// 			ExpectedOutput: "/a/b/c/d",
-// 		},
-// 		{
-// 			Name:           "MultipleTwoDots",
-// 			Input:          "/a/../b/c/../d/e",
-// 			ExpectedOutput: "/d/e",
-// 		},
-// 		{
-// 			Name:           "OneDotFirst",
-// 			Input:          "./a/b/c",
-// 			ExpectedOutput: "/a/b/c",
-// 		},
-// 		{
-// 			Name:           "OneDotLast",
-// 			Input:          "/a/b/c/.",
-// 			ExpectedOutput: "/a/b/c/./",
-// 		},
-// 		{
-// 			Name:           "TowDotFirst",
-// 			Input:          "../a/b/c",
-// 			ExpectedOutput: "/a/b/c",
-// 		},
-// 		{
-// 			Name:           "TwoDotLast",
-// 			Input:          "/a/b/c/..",
-// 			ExpectedOutput: "/a/b/c/",
-// 		},
-// 	}
+func FuzzRemovePathDotSegment(f *testing.F) {
+	for range 1000 {
+		path, err := utils.GetRandomString(50, utils.DotPathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
 
-// 	for _, testCase := range tests {
-// 		output := utils.RemovePathDotSegmentsNew(testCase.Input)
-// 		assert.Equal(
-// 			t,
-// 			testCase.ExpectedOutput,
-// 			output,
-// 			"Case: %s, expected output: %s, got: %s",
-// 			testCase.Name,
-// 			testCase.ExpectedOutput,
-// 			output,
-// 		)
-// 	}
-// }
+		f.Add(path)
+	}
+
+	for range 60 {
+		path, err := utils.GetRandomString(3, utils.DotPathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
+
+		f.Add(path)
+	}
+
+	for range 60 {
+		path, err := utils.GetRandomString(5, utils.DotPathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
+
+		f.Add(path)
+	}
+
+	for range 60 {
+		path, err := utils.GetRandomString(6, utils.DotPathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
+
+		f.Add(path)
+	}
+
+	f.Fuzz(func(_ *testing.T, path string) {
+		_ = utils.RemovePathDotSegments(path)
+	})
+}
+
+func TestRemovePathDotSegment(t *testing.T) {
+	tests := []struct {
+		Name           string
+		Input          string
+		ExpectedOutput string
+	}{
+		{
+			Name:           "NotDots",
+			Input:          "/a/b//c/d///", //nolint:goconst
+			ExpectedOutput: "/a/b//c/d///",
+		},
+		{
+			Name:           "OneDot",
+			Input:          "/a/b/./c/d",
+			ExpectedOutput: "/a/b/c/d",
+		},
+		{
+			Name:           "OneDotWithChar",
+			Input:          "/a/b/.c/d",
+			ExpectedOutput: "/a/b/.c/d",
+		},
+		{
+			Name:           "TwoDot",
+			Input:          "/a/b/../c/d",
+			ExpectedOutput: "/a/c/d",
+		},
+		{
+			Name:           "TwoDotWithChar",
+			Input:          "/a/b/..c/d",
+			ExpectedOutput: "/a/b/..c/d",
+		},
+		{
+			Name:           "MultipleOneDots",
+			Input:          "/a/b/./c/./d",
+			ExpectedOutput: "/a/b/c/d",
+		},
+		{
+			Name:           "MultipleTwoDots",
+			Input:          "/a/../b/c/../d/e",
+			ExpectedOutput: "/b/d/e",
+		},
+		{
+			Name:           "OneDotFirst",
+			Input:          "./a/b/c",
+			ExpectedOutput: "/a/b/c",
+		},
+		{
+			Name:           "OneDotLast",
+			Input:          "/a/b/c/d/.",
+			ExpectedOutput: "/a/b/c/d/",
+		},
+		{
+			Name:           "TowDotFirst",
+			Input:          "../a/b/c",
+			ExpectedOutput: "/a/b/c",
+		},
+		{
+			Name:           "TwoDotLast",
+			Input:          "/a/b/c/..",
+			ExpectedOutput: "/a/b/",
+		},
+		{
+			Name:           "LongSegments",
+			Input:          "/this/is/my/beloved/api",
+			ExpectedOutput: "/this/is/my/beloved/api",
+		},
+		{
+			Name:           "AllCasesMixed",
+			Input:          "../this/././//.././././../.././is/../my//beloved/api/.",
+			ExpectedOutput: "/my//beloved/api/",
+		},
+		{
+			Name:           "ShortDots",
+			Input:          "../.",
+			ExpectedOutput: "/",
+		},
+		{
+			Name:           "ReverseShortDots",
+			Input:          "./..",
+			ExpectedOutput: "/",
+		},
+		{
+			Name:           "AloneDot",
+			Input:          ".",
+			ExpectedOutput: "/",
+		},
+		{
+			Name:           "AloneTwoDot",
+			Input:          "..",
+			ExpectedOutput: "/",
+		},
+	}
+
+	for _, testCase := range tests {
+		output := utils.RemovePathDotSegments(testCase.Input)
+		assert.Equal(
+			t,
+			testCase.ExpectedOutput,
+			output,
+			"Case: %s, expected output: %s, got: %s",
+			testCase.Name,
+			testCase.ExpectedOutput,
+			output,
+		)
+	}
+}
 
 func TestReplaceDuplicateChar(t *testing.T) {
 	tests := []struct {

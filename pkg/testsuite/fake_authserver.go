@@ -497,7 +497,7 @@ func (r *fakeAuthServer) authHandler(wrt http.ResponseWriter, req *http.Request)
 		state = "/"
 	}
 
-	randString, err := utils.GetRandomString(OAuthCodeLength)
+	randString, err := utils.GetRandomString(OAuthCodeLength, utils.LetterCorpus())
 	if err != nil {
 		wrt.WriteHeader(http.StatusInternalServerError)
 		return

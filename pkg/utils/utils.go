@@ -787,17 +787,29 @@ func CheckMaxSize(reader io.Reader, maxSize int) error {
 	}
 }
 
-func GetRandomString(n int) (string, error) {
-	letterRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+type RandomCorpus []rune
 
+func LetterCorpus() RandomCorpus {
+	return []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+}
+
+func DotPathCorpus() RandomCorpus {
+	return []rune("aBcD/.")
+}
+
+func UnescapePathCorpus() RandomCorpus {
+	return []rune(`aBcDf52%\/.`)
+}
+
+func GetRandomString(n int, corpus RandomCorpus) (string, error) {
 	runes := make([]rune, n)
 	for idx := range runes {
-		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letterRunes))))
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(corpus))))
 		if err != nil {
 			return "", err
 		}
 
-		runes[idx] = letterRunes[num.Int64()]
+		runes[idx] = corpus[num.Int64()]
 	}
 
 	return string(runes), nil
@@ -951,50 +963,84 @@ func unhex(c byte) byte {
 }
 
 // func RemovePathDotSegmentsNew(path string) string {
-// 	if len(path) > 0 {
-// 		var out strings.Builder
-// 		out.Grow(len(path))
+// 	pathLen := len(path)
+// 	lastIndex := pathLen - 1
 
-// 		const defaultCapacity = 10
+// 	// `/../`
+// 	// `/./`
+// 	// `/..`
+// 	// `/.`
+// 	// `../`
+// 	// `./`
 
-// 		numDots := 0
-// 		dots := make([]byte, 0, defaultCapacity)
-// 		previousSection := make([]byte, 0, defaultCapacity)
-// 		currentSection := make([]byte, 0, defaultCapacity)
+// 	if pathLen > 0 {
+// 		current := make([]byte, 0, 10)
+// 		out := make([]byte, 0, pathLen)
 
-// 		for idx, char := range path {
-// 			switch char {
-// 			case '.':
-// 				dots = append(dots, path[idx])
-// 				numDots++
-// 			case '/':
-// 				if numDots != 2 {
-// 					out.Write(previousSection)
-
-// 					if numDots != 1 {
-// 						out.WriteByte(path[idx])
-// 					}
-// 				}
-
-// 				previousSection = currentSection
-// 				currentSection = currentSection[:0]
-// 				numDots = 0
-// 				dots = dots[:0]
-// 			default:
-// 				currentSection = append(currentSection, path[idx])
-
-// 				numDots = 0
-// 				dots = dots[:0]
+// 		for idx := 0; idx < len(path); {
+// 			if idx == 0 && idx+1 <= lastIndex && (path[0] == '.' && path[idx+1] == '/') {
+// 				idx += 2
+// 				continue
 // 			}
+// 			if idx == 0 && idx+2 <= lastIndex && (path[0] == '.' && path[idx+1] == '.' && path[idx+2] == '/') {
+// 				idx += 3
+// 				continue
+// 			}
+// 			if idx+2 == lastIndex && path[idx+1] == '/' && path[idx+2] == '.' {
+// 				current = append(current, path[idx], '/')
+// 				out = append(out, current...)
+// 				break
+// 			}
+// 			if idx+3 == lastIndex && path[idx+1] == '/' && path[idx+2] == '.' && path[idx+3] == '.' {
+// 				current = current[:0]
+// 				break
+// 			}
+// 			if idx == 0 && idx+3 <= lastIndex && (path[0] == '/' && path[idx+1] == '.' && path[idx+2] == '.' && path[idx+3] == '/') {
+// 				idx += 4
+// 				continue
+// 			}
+// 			if idx == 0 && idx+2 <= lastIndex && (path[0] == '/' && path[idx+1] == '.' && path[idx+2] == '/') {
+// 				idx += 3
+// 				continue
+// 			}
+// 			if idx+4 <= lastIndex && path[idx+1] == '/' && path[idx+2] == '.' && path[idx+3] == '.' && path[idx+4] == '/' {
+// 				current = current[:0]
+// 				idx += 5
+// 				continue
+// 			}
+// 			if idx+3 <= lastIndex && path[idx+1] == '/' && path[idx+2] == '.' && path[idx+3] == '/' {
+// 				current = append(current, path[idx], '/')
+// 				// out = append(out, current...)
+// 				idx += 3
+// 				// current = current[:0]
+// 				continue
+// 			}
+// 			if idx+1 <= lastIndex && path[idx-1] == '/' && path[idx+1] == '/' && path[idx] == '.' {
+// 				current = append(current, path[idx], '/')
+// 				// out = append(out, current...)
+// 				idx += 2
+// 				// current = current[:0]
+// 				continue
+// 			}
+// 			if idx+1 <= lastIndex && path[idx+1] == '/' {
+// 				current = append(current, path[idx], '/')
+// 				out = append(out, current...)
+// 				current = current[:0]
+// 				idx += 2
+// 				continue
+// 			}
+// 			if idx == lastIndex {
+// 				out = append(out, current...)
+// 				out = append(out, path[idx])
+// 				break
+// 			}
+
+// 			current = append(current, path[idx])
+// 			idx++
 // 		}
 
-// 		if numDots > 0 {
-// 			out.Write(dots)
-// 			out.WriteByte('/')
-// 		}
-
-// 		path = out.String()
-// 		if path[0] != '/' {
+// 		path = string(out)
+// 		if !strings.HasPrefix(path, "/") {
 // 			path = "/" + path
 // 		}
 // 	}
@@ -1027,12 +1073,12 @@ func RemovePathDotSegments(path string) string {
 		}
 
 		path = strings.Join(dotFree, "/")
-		if path[0] != '/' {
+		if !strings.HasPrefix(path, "/") {
 			path = "/" + path
 		}
 
 		// Special case if the last segment was a dot, make sure the path ends with a slash
-		if lastIsDot && path[len(path)-1] != '/' {
+		if lastIsDot && !strings.HasSuffix(path, "/") {
 			path += "/"
 		}
 	}
