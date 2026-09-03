@@ -3209,7 +3209,6 @@ func TestRolesAdmissionHandlerClaims(t *testing.T) {
 	}
 }
 
-//nolint:goconst
 func TestGzipCompression(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	server := httptest.NewServer(&FakeUpstreamService{})
@@ -3329,7 +3328,6 @@ func TestGzipCompression(t *testing.T) {
 	}
 }
 
-//nolint:goconst
 func TestEnableUma(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 
@@ -3535,7 +3533,6 @@ func TestEnableUma(t *testing.T) {
 	}
 }
 
-//nolint:goconst
 func TestLogRealIP(t *testing.T) {
 	testCases := []struct {
 		Headers    map[string]string
