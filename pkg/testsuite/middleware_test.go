@@ -652,7 +652,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"raw_uri":"/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`, //nolint:lll
 				},
 				{
 					URI:          "/../api/v1/%61uth/some",
@@ -733,7 +733,7 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"raw_uri":"/.%2e/../////api\\/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/.%2e/../////api\\/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`, //nolint:lll
 				},
 				{
 					URI:          "/../api/v1/%61uth/some",
@@ -939,7 +939,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"raw_uri":"/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`, //nolint:lll
 				},
 				//nolint:lll
 				{
@@ -958,7 +958,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"user"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"raw_uri":"/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png"`,
+					ExpectedContentContains: `"raw_uri":"/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png"`, //nolint:lll
 				},
 				{
 					URI:          "/../api/v1/%61uth/some",
@@ -1230,7 +1230,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"raw_uri":"/.%2e/../////api//v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/.%2e/../////api//v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`, //nolint:lll
 				},
 				{
 					URI:          "/../api/v1/%61uth/some",
@@ -1363,7 +1363,6 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 	}
 }
 
-//nolint:goconst
 func TestStrangeRoutingError(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.Resources = []*core.Resource{
@@ -1994,7 +1993,6 @@ func TestHeaderPermissionsMiddleware(t *testing.T) {
 	}
 }
 
-//nolint:goconst
 func TestGroupPermissionsMiddleware(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.NoRedirects = true
@@ -2121,7 +2119,7 @@ func TestGroupPermissionsMiddleware(t *testing.T) {
 	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
 }
 
-//nolint:funlen,goconst
+//nolint:funlen
 func TestRolePermissionsMiddleware(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.Resources = []*core.Resource{
@@ -2377,7 +2375,6 @@ func TestRolePermissionsMiddleware(t *testing.T) {
 	}
 }
 
-//nolint:goconst
 func TestCrossSiteHandler(t *testing.T) {
 	cases := []struct {
 		Cors    cors.Options
@@ -3623,7 +3620,7 @@ func TestLogRealIP(t *testing.T) {
 	}
 }
 
-//nolint:funlen,goconst
+//nolint:funlen
 func TestEnableOpa(t *testing.T) {
 	upstreamService := httptest.NewServer(&FakeUpstreamService{})
 	upstreamURL := upstreamService.URL
