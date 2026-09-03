@@ -852,6 +852,11 @@ func TestRemovePathDotSegment(t *testing.T) {
 			Input:          "..",
 			ExpectedOutput: "/",
 		},
+		{
+			Name:           "AllCasesMixed",
+			Input:          "../this/././//.././././../.././is/../my//beloved/api/./../.././.",
+			ExpectedOutput: "/my/",
+		},
 	}
 
 	for _, testCase := range tests {
