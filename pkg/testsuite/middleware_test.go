@@ -1149,7 +1149,7 @@ func TestPathNormalizationNoRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"raw_uri":"/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/.%2e/../%2F/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`, //nolint:lll
 				},
 				{
 					URI:          "/../api/v1/%61uth/some",
@@ -2764,7 +2764,6 @@ func TestAccessTokenEncryption(t *testing.T) {
 	}
 }
 
-//nolint:goconst
 func TestCustomHeadersHandler(t *testing.T) {
 	requests := []struct {
 		Match         []string
@@ -2965,8 +2964,6 @@ func TestAdmissionHandlerRoles(t *testing.T) {
 }
 
 // check to see if custom headers are hitting the upstream.
-//
-//nolint:goconst
 func TestCustomHeaders(t *testing.T) {
 	requests := []struct {
 		Headers map[string]string
@@ -3021,7 +3018,6 @@ func TestCustomHeaders(t *testing.T) {
 	}
 }
 
-//nolint:goconst
 func TestRolesAdmissionHandlerClaims(t *testing.T) {
 	requests := []struct {
 		Matches map[string]string
