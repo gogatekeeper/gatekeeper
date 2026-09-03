@@ -564,6 +564,8 @@ var _ = Describe("Code Flow login/logout all normalization enabled", func() {
 				Expect(strings.Contains(string(rawResp), "400")).To(BeTrue())
 
 				tricky = "/../api/v1/%61uthh/some"
+				normalized = "/api/v1/authh/some"
+
 				resp, err = rClient.R().Get(proxyAddress + tricky)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
