@@ -60,7 +60,6 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 
 		proxyAddress = localURI + portNum
 
-		//nolint:goconst
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
@@ -255,8 +254,7 @@ var _ = Describe("Code Flow login/logout all normalization disabled precise enco
 
 	BeforeEach(func() {
 		var (
-			err error
-			// upstreamSvcPort    string
+			err                error
 			rawUpstreamSvcPort string
 		)
 
@@ -265,7 +263,6 @@ var _ = Describe("Code Flow login/logout all normalization disabled precise enco
 		portNum, err = generateRandomPort()
 		Expect(err).NotTo(HaveOccurred())
 
-		//nolint:goconst
 		proxyArgs := []string{
 			"--discovery-url=" + idpRealmURI,
 			"--openid-provider-timeout=300s",
