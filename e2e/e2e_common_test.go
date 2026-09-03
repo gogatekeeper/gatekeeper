@@ -74,6 +74,9 @@ const (
 	testCompressionType     = "deflate"
 	testCookieValue         = "test-cookie"
 
+	httpLocalHostHeader = "Host: localhost\r\n"
+	httpBodySeparator   = "\r\n\r\n"
+
 	//nolint:gosec
 	otpSecret = "NE4VKZJYKVDDSYTIK5CVOOLVOFDFE2DC"
 	redisUser = "default"

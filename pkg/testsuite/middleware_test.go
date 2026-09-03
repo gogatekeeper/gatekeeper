@@ -49,7 +49,6 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-//nolint:goconst
 func TestMetricsMiddleware(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.EnableMetrics = true
@@ -109,7 +108,6 @@ func TestMetricsMiddleware(t *testing.T) {
 	p.RunTests(t, requests)
 }
 
-//nolint:goconst
 func TestOauthRequests(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	requests := []fakeRequest{
@@ -132,7 +130,7 @@ func TestOauthRequests(t *testing.T) {
 	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
 }
 
-//nolint:cyclop,goconst
+//nolint:cyclop
 func TestAdminListener(t *testing.T) {
 	testCases := []struct {
 		Name              string
@@ -381,7 +379,7 @@ func TestMethodExclusions(t *testing.T) {
 	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
 }
 
-//nolint:funlen,goconst
+//nolint:funlen
 func TestPathNormalizationRedirects(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.EnableLogging = true
@@ -445,26 +443,25 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"raw_uri":"/.%2e/../%2F/%5c/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/.%2e/../%2F/%5c/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`, //nolint:lll
 				},
-				//nolint:lll
 				{
-					URI:                     "/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/",
+					URI:                     "/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/", //nolint:lll
 					HasToken:                true,
 					Redirects:               true,
 					Roles:                   []string{"user"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"raw_uri":"/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/"`,
+					ExpectedContentContains: `"raw_uri":"/administrativeMonitor/hudson.diagnosis.ReverseProxySetupMonitor/testForReverseProxySetup/https%3A%2F%2Flocalhost%3A6001%2Fmanage/"`, //nolint:lll
 				},
 				{
-					URI:                     "/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png",
+					URI:                     "/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png", //nolint:lll
 					HasToken:                true,
 					Redirects:               true,
 					Roles:                   []string{"user"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"raw_uri":"/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png"`,
+					ExpectedContentContains: `"raw_uri":"/iiif/2/edepot_local:ST%2F00001%2FST00005_00001.jpg/full/1000,/0/default.png"`, //nolint:lll
 				},
 				{
 					URI:          "/../api/v1/%61uth/some",
@@ -546,13 +543,13 @@ func TestPathNormalizationRedirects(t *testing.T) {
 					ExpectedContentContains: `"raw_uri":"/api/v1/auth/ok"`,
 				},
 				{
-					URI:                     "/.%2e/../%2F/%5C/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth",
+					URI:                     "/.%2e/../%2F/%5C/api/v1/%61uth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth", //nolint:lll
 					HasToken:                true,
 					Redirects:               true,
 					Roles:                   []string{"dev"},
 					ExpectedProxy:           true,
 					ExpectedCode:            http.StatusOK,
-					ExpectedContentContains: `"raw_uri":"/%2F/%5C/api/v1/auth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`,
+					ExpectedContentContains: `"raw_uri":"/%2F/%5C/api/v1/auth/some?referer=https%3A%2F%2Fwww.example.com%2Fauth"`, //nolint:lll
 				},
 				{
 					URI:                     "/../api/v1/%61uth/some",
@@ -1474,7 +1471,7 @@ func TestStrangeRoutingError(t *testing.T) {
 
 const testAdminURI = "/admin/test"
 
-//nolint:funlen,goconst
+//nolint:funlen
 func TestWhiteListedRequests(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.Resources = []*core.Resource{
@@ -1765,7 +1762,7 @@ func TestRequireAnyRoles(t *testing.T) {
 	newFakeProxy(cfg, &fakeAuthConfig{}).RunTests(t, requests)
 }
 
-//nolint:funlen,goconst
+//nolint:funlen
 func TestHeaderPermissionsMiddleware(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 

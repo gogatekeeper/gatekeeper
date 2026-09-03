@@ -811,7 +811,7 @@ func TestRemovePathDotSegment(t *testing.T) {
 	}{
 		{
 			Name:           "NotDots",
-			Input:          "/a/b//c/d///", //nolint:goconst
+			Input:          "/a/b//c/d///",
 			ExpectedOutput: "/a/b//c/d///",
 		},
 		{

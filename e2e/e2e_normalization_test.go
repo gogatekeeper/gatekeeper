@@ -166,10 +166,10 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 
 				tricky := "//"
 				rawRequest := "GET " + tricky + " HTTP/1.1\r\n"
-				repeatRaw := "Host: localhost\r\n"
+				repeatRaw := httpLocalHostHeader
 				repeatRaw += "Cookie: " + constant.AccessCookie + "=" + accessCookieLogin + "; "
 				repeatRaw += constant.IDTokenCookie + "=" + idCookieLogin
-				repeatRaw += "\r\n\r\n"
+				repeatRaw += httpBodySeparator
 				rawRequest += repeatRaw
 
 				_, err = conn.Write([]byte(rawRequest))
@@ -352,9 +352,9 @@ var _ = Describe("Code Flow login/logout all normalization disabled precise enco
 
 				tricky := "//.%2e/../%2F/api/v1/%61uth/some"
 				rawRequest := "GET %s HTTP/1.1\r\n"
-				rawRequest += "Host: localhost\r\n"
+				rawRequest += httpLocalHostHeader
 				rawRequest += "Cookie: %s=%s; "
-				rawRequest += "\r\n\r\n"
+				rawRequest += httpBodySeparator
 
 				to := time.Now().Add(60 * time.Second)
 				err = conn.SetDeadline(to)
@@ -539,10 +539,10 @@ var _ = Describe("Code Flow login/logout all normalization enabled", func() {
 
 				tricky = "/.%2e/../%2F/api/v1/%61uth/some%"
 				rawRequest := "GET " + tricky + " HTTP/1.1\r\n"
-				repeatRaw := "Host: localhost\r\n"
+				repeatRaw := httpLocalHostHeader
 				repeatRaw += "Cookie: " + constant.AccessCookie + "=" + accessCookieLogin + "; "
 				repeatRaw += constant.IDTokenCookie + "=" + idCookieLogin
-				repeatRaw += "\r\n\r\n"
+				repeatRaw += httpBodySeparator
 				rawRequest += repeatRaw
 
 				to := time.Now().Add(10 * time.Second)
@@ -563,7 +563,7 @@ var _ = Describe("Code Flow login/logout all normalization enabled", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(strings.Contains(string(rawResp), "400")).To(BeTrue())
 
-				tricky = "/../api/v1/%61uth/some"
+				tricky = "/../api/v1/%61uthh/some"
 				resp, err = rClient.R().Get(proxyAddress + tricky)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
