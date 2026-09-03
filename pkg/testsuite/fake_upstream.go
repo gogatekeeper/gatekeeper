@@ -101,13 +101,18 @@ func (f *FakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Reque
 		wrt.Header().Set(constant.HeaderContentType, "application/json")
 		wrt.Header().Add("Set-Cookie", "test-cookie=test_value")
 
+		uri := req.URL.Path
+		if req.URL.RawQuery != "" {
+			uri += "?" + req.URL.RawQuery
+		}
+
 		rawURI := req.URL.RawPath
 		if req.URL.RawQuery != "" {
 			rawURI += "?" + req.URL.RawQuery
 		}
 
 		content, err := json.Marshal(&FakeUpstreamResponse{
-			URI:     req.URL.Path,
+			URI:     uri,
 			RawURI:  rawURI,
 			Method:  req.Method,
 			Address: req.RemoteAddr,

@@ -123,8 +123,7 @@ func EntrypointMiddleware(
 			scope.RawPath = normalizedPathUpstream
 			scope.Path = unescapedPath
 
-			logger.Debug("Upstream, normalized path", zap.String("path", scope.Path))
-			logger.Debug("Upstream, normalized raw path", zap.String("path", scope.RawPath))
+			logger.Debug("Upstream, normalized path", zap.String("path", scope.RawPath))
 
 			req.URL.RawPath = normalizedPath
 			req.URL.Path = normalizedPath
