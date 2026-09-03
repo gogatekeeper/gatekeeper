@@ -680,6 +680,48 @@ func TestUnascapePath(t *testing.T) {
 			Path:         "/a%5B%2f%56%2F%7C%5c%5C/db",
 			ExpectedPath: `/a[/V/|\\/db`,
 		},
+		{
+			Name:         "EncodedPercentUpper",
+			Mode:         utils.UnescapeAll,
+			ExpectedErr:  nil,
+			Path:         "/a%252F",
+			ExpectedPath: "/a%2F",
+		},
+		{
+			Name:         "EncodedPercentLower",
+			Mode:         utils.UnescapeAll,
+			ExpectedErr:  nil,
+			Path:         "/a%252f",
+			ExpectedPath: "/a%2f",
+		},
+		{
+			Name:         "TwoEscapedSlash",
+			Mode:         utils.UnescapeAll,
+			ExpectedErr:  nil,
+			Path:         "/a%2F%2F",
+			ExpectedPath: "/a//",
+		},
+		{
+			Name:         "TwoDotsLower",
+			Mode:         utils.UnescapeAll,
+			ExpectedErr:  nil,
+			Path:         "/%2e/%2e%2e/a",
+			ExpectedPath: "/./../a",
+		},
+		{
+			Name:         "TwoDotsUpper",
+			Mode:         utils.UnescapeAll,
+			ExpectedErr:  nil,
+			Path:         "/%2E%2E/a",
+			ExpectedPath: "/../a",
+		},
+		{
+			Name:         "Plus",
+			Mode:         utils.UnescapeAll,
+			ExpectedErr:  nil,
+			Path:         "/a/+/%2b",
+			ExpectedPath: "/a/+/+",
+		},
 	}
 
 	for _, testCase := range tests {
@@ -941,4 +983,30 @@ func TestReplaceDuplicateChar(t *testing.T) {
 			output,
 		)
 	}
+}
+
+func FuzzNormalizePath(f *testing.F) {
+	seeds := []string{
+		"/a/b/c",
+		"/a/../b",
+		"//a///b",
+		"/%2e%2e/admin",
+		"/%2F/%5C",
+		"/a%252Fb",
+		"//.%2e/../%2F/api",
+	}
+
+	for _, seed := range seeds {
+		f.Add(seed)
+	}
+
+	f.Fuzz(func(t *testing.T, path string) {
+		_, err := utils.NormalizePath(false, true, true, path)
+		if err != nil {
+			_, ok := errors.AsType[utils.UnescapeError](err)
+			if !ok {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		}
+	})
 }

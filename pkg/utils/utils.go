@@ -910,45 +910,44 @@ func UnescapePath(path string, mode UnescapeMode) (string, error) {
 
 	var unescapedPlusSign byte = '+'
 
-	var out strings.Builder
-	out.Grow(escapeCount)
+	out := make([]byte, 0, len(path))
 
 	for idx := 0; idx < len(path); idx++ {
 		switch path[idx] {
 		case '%':
-			hexSeq := path[idx : idx+3]
+			hexSeq := []byte(path[idx : idx+3])
 			isSlash := path[idx+1] == '2' && (path[idx+2] == 'F' || path[idx+2] == 'f')
 			isBackSlash := path[idx+1] == '5' && (path[idx+2] == 'C' || path[idx+2] == 'c')
 
 			switch mode {
 			case SlashOmit:
 				if isSlash || isBackSlash {
-					out.WriteString(hexSeq)
+					out = append(out, hexSeq...)
 				} else {
-					out.WriteByte(unhex(path[idx+1])<<4 | unhex(path[idx+2]))
+					out = append(out, unhex(path[idx+1])<<4|unhex(path[idx+2]))
 				}
 			case SlashOnly:
 				switch {
 				case isSlash:
-					out.WriteByte('/')
+					out = append(out, '/')
 				case isBackSlash:
-					out.WriteByte('\\')
+					out = append(out, '\\')
 				default:
-					out.WriteString(hexSeq)
+					out = append(out, hexSeq...)
 				}
 			case UnescapeAll:
-				out.WriteByte(unhex(path[idx+1])<<4 | unhex(path[idx+2]))
+				out = append(out, unhex(path[idx+1])<<4|unhex(path[idx+2]))
 			}
 
 			idx += 2
 		case '+':
-			out.WriteByte(unescapedPlusSign)
+			out = append(out, unescapedPlusSign)
 		default:
-			out.WriteByte(path[idx])
+			out = append(out, path[idx])
 		}
 	}
 
-	return out.String(), nil
+	return string(out), nil
 }
 
 func ishex(c byte) bool {
