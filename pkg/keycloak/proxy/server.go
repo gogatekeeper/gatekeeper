@@ -320,6 +320,10 @@ func (r *OauthProxy) useDefaultStack(
 		engine.MethodNotAllowed(handlers.EmptyHandler)
 	}
 
+	if r.Config.MaxHeaders > 0 {
+		engine.Use(gmiddleware.MaxHeadersMiddleware(r.Log, r.Config.MaxHeaders))
+	}
+
 	if r.Config.MaxBodySize > 0 {
 		engine.Use(gmiddleware.MaxBodySizeMiddleware(r.Log, r.Config.MaxBodySize))
 	}

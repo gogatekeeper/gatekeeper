@@ -101,6 +101,7 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 			"--merge-slashes-upstream=false",
 			"--path-escaped-slashes=true",
 			"--path-escaped-slashes-upstream=true",
+			"--allow-escaped-slashes-path=true",
 			"--enable-logging=true",
 		}
 
@@ -304,6 +305,7 @@ var _ = Describe("Code Flow login/logout all normalization disabled precise enco
 			"--merge-slashes-upstream=false",
 			"--path-escaped-slashes=true",
 			"--path-escaped-slashes-upstream=true",
+			"--allow-escaped-slashes-path=true",
 			"--enable-logging=true",
 			"--verbose=true",
 		}
@@ -449,6 +451,7 @@ var _ = Describe("Code Flow login/logout all normalization enabled", func() {
 			"--merge-slashes-upstream=true",
 			"--path-escaped-slashes=false",
 			"--path-escaped-slashes-upstream=false",
+			"--allow-escaped-slashes-path=true",
 			"--enable-logging=true",
 			"--verbose=true",
 		}

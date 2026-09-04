@@ -662,3 +662,23 @@ func MaxBodySizeMiddleware(
 		})
 	}
 }
+
+func MaxHeadersMiddleware(
+	logger *zap.Logger,
+	maxHeaders int,
+) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		logger.Info("enabling max headers middleware")
+
+		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
+			if len(req.Header) > maxHeaders {
+				logger.Warn("maxHeaders reached, too many headers")
+				wrt.WriteHeader(http.StatusForbidden)
+
+				return
+			}
+
+			next.ServeHTTP(wrt, req)
+		})
+	}
+}

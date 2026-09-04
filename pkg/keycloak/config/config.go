@@ -142,6 +142,7 @@ type Config struct {
 	SelfSignedTLSExpiration            time.Duration     `env:"SELF_SIGNED_TLS_EXPIRATION" json:"self-signed-tls-expiration,omitempty" usage:"the expiration of the certificate before rotation" yaml:"self-signed-tls-expiration"`
 	MaxTokenSize                       int               `env:"MAX_TOKEN_SIZE" json:"max-token-size,omitempty" usage:"maximum size of token in bytes" yaml:"max-token-size"`
 	MaxBodySize                        int               `env:"MAX_BODY_SIZE" json:"max-body-size,omitempty" usage:"maximum body size in bytes" yaml:"max-body-size"`
+	MaxHeaders                         int               `env:"MAX_HEADERS" json:"max-headers,omitempty" usage:"maximum number of headers in request" yaml:"max-headers"`
 	MaxHeaderSize                      int               `env:"MAX_HEADER_SIZE" json:"max-header-size,omitempty" usage:"maximum total headers size in bytes" yaml:"max-header-size"`
 	LogSamplingInitial                 int               `env:"LOG_SAMPLING_INITIAL" json:"log-sampling-initial" usage:"initial number of messages logged, after that sampling turns on" yaml:"log-sampling-initial"`
 	LogSamplingAfter                   int               `env:"LOG_SAMPLING_AFTER" json:"log-sampling-after" usage:"each n-th number message is logged, after initial messages logged" yaml:"log-sampling-after"`
@@ -296,7 +297,7 @@ func NewDefaultConfig() *Config {
 		MergeSlashesUpstream:             true,
 		PathEscapedSlashes:               false,
 		PathEscapedSlashesUpstream:       false,
-		AllowEscapedSlashesPath:          true,
+		AllowEscapedSlashesPath:          false,
 	}
 }
 
@@ -703,6 +704,7 @@ func (r *Config) isReverseProxySettingsValid() error {
 			r.isEnableIDTokenClaimsValid,
 			r.isExcludeClaimsValid,
 			r.isMaxTokenSizeValid,
+			r.isMaxHeadersValid,
 		}
 
 		for _, validationFunc := range validationRegistry {
@@ -1267,6 +1269,14 @@ func (r *Config) isMaxBodySizeValid() error {
 func (r *Config) isLogSamplingValid() error {
 	if r.LogSamplingInitial < 0 || r.LogSamplingAfter < 0 {
 		return apperrors.ErrInvalidLogSampling
+	}
+
+	return nil
+}
+
+func (r *Config) isMaxHeadersValid() error {
+	if r.MaxHeaders < 0 {
+		return apperrors.ErrInvalidMaxHeaders
 	}
 
 	return nil
