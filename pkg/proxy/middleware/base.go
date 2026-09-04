@@ -34,6 +34,8 @@ func EntrypointMiddleware(
 	mergeSlashesUpstream bool,
 	pathEscapedSlashes bool,
 	pathEscapedSlashesUpstream bool,
+	allowEscapedSlashesPath bool,
+	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		internalEqUpstream := false
@@ -48,12 +50,25 @@ func EntrypointMiddleware(
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
 			// @step: create a context for the request
 			scope := &models.RequestScope{}
+
 			// Save the exact formatting of the incoming request so we can use it later
 			originalPath := req.URL.Path
 			originalRawPath := req.URL.RawPath
 			originalOpaque := req.URL.Opaque
 			normalizedPath := req.URL.RawPath
 			normalizedPathUpstream := req.URL.RawPath
+
+			if !allowEscapedSlashesPath {
+				hasLowerBackSlash := strings.Contains(req.URL.RawPath, constant.LowerBackSlash)
+				hasUpperBackSlash := strings.Contains(req.URL.RawPath, constant.UpperBackSlash)
+				hasLowerSlash := strings.Contains(req.URL.RawPath, constant.LowerSlash)
+				hasUpperSlash := strings.Contains(req.URL.RawPath, constant.UpperSlash)
+
+				if hasLowerBackSlash || hasUpperBackSlash || hasLowerSlash || hasUpperSlash {
+					accessForbidden(wrt, req)
+					return
+				}
+			}
 
 			if req.URL.RawPath == "" {
 				normalizedPathUpstream = req.URL.Path

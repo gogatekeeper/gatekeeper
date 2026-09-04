@@ -345,6 +345,8 @@ func (r *OauthProxy) useDefaultStack(
 		r.Config.MergeSlashesUpstream,
 		r.Config.PathEscapedSlashes,
 		r.Config.PathEscapedSlashesUpstream,
+		r.Config.AllowEscapedSlashesPath,
+		accessForbidden,
 	))
 
 	if r.Config.NoProxy {

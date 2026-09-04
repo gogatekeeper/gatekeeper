@@ -708,6 +708,7 @@ func newFakeKeycloakConfig() *config.Config {
 		SkipUpstreamTLSVerify:       false,
 		Scopes:                      []string{},
 		Verbose:                     false,
+		AllowEscapedSlashesPath:     true,
 		Resources: []*core.Resource{
 			{
 				URL:     FakeAdminAllURL,

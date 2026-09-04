@@ -145,7 +145,11 @@ const (
 
 	IdentityHeaderEncoding = "UTF-8"
 
-	DoubleSlash = "//"
+	DoubleSlash    = "//"
+	LowerBackSlash = "%5c"
+	UpperBackSlash = "%5C"
+	LowerSlash     = "%2f"
+	UpperSlash     = "%2F"
 )
 
 //nolint:gochecknoglobals

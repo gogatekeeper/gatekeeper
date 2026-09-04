@@ -147,6 +147,7 @@ type Config struct {
 	LogSamplingAfter                   int               `env:"LOG_SAMPLING_AFTER" json:"log-sampling-after" usage:"each n-th number message is logged, after initial messages logged" yaml:"log-sampling-after"`
 	OpenIDProviderRetryCount           int               `env:"OPENID_PROVIDER_RETRY_COUNT" json:"openid-provider-retry-count,omitempty" usage:"number of retries for retrieving openid configuration" yaml:"openid-provider-retry-count"`
 	OpenIDProviderTimeout              time.Duration     `env:"OPENID_PROVIDER_TIMEOUT" json:"openid-provider-timeout,omitempty" usage:"timeout for openid configuration on .well-known/openid-configuration" yaml:"openid-provider-timeout"`
+	AllowEscapedSlashesPath            bool              `env:"ALLOW_ESCAPED_SLASHES_PATH" json:"allow-escaped-slashes-path" usage:"this allows/dissallows escaped slashes in request path" yaml:"allow-escaped-slashes-path"`
 	NormalizePath                      bool              `env:"NORMALIZE_PATH" json:"normalize-path" usage:"normalizes path according RFC 3986, except slashes, at start of processing chain, used in internal chains" yaml:"normalize-path"`
 	NormalizePathUpstream              bool              `env:"NORMALIZE_PATH_UPSTREAM" json:"normalize-path-upstream" usage:"normalizes path for upstream according RFC 3986, except slashes" yaml:"normalize-path-upstream"`
 	MergeSlashes                       bool              `env:"MERGE_SLASHES" json:"merge-slashes" usage:"merges slashes at start of processing, at start of processing chain, used in internal chains" yaml:"merge-slashes"`
@@ -295,6 +296,7 @@ func NewDefaultConfig() *Config {
 		MergeSlashesUpstream:             true,
 		PathEscapedSlashes:               false,
 		PathEscapedSlashesUpstream:       false,
+		AllowEscapedSlashesPath:          true,
 	}
 }
 
