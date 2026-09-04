@@ -20,6 +20,7 @@ package utils_test
 import (
 	"bytes"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -543,7 +544,7 @@ func TestBufferPool(t *testing.T) {
 }
 
 func BenchmarkMaxSize(bench *testing.B) {
-	data, err := utils.GetRandomString(1000000)
+	data, err := utils.GetRandomString(1000000, utils.LetterCorpus())
 	require.NoError(bench, err, "generating string data should not fail")
 
 	reader := bytes.NewReader([]byte(data))
@@ -551,4 +552,461 @@ func BenchmarkMaxSize(bench *testing.B) {
 	for bench.Loop() {
 		_ = utils.CheckMaxSize(reader, 900)
 	}
+}
+
+func BenchmarkUnascapePath(bench *testing.B) {
+	data := "/f%5B%2f%56%2F%7C%5c%5C/b"
+	for bench.Loop() {
+		_, _ = utils.UnescapePath(data, utils.SlashOmit)
+	}
+}
+
+func FuzzUnascapePath(f *testing.F) {
+	for range 1000 {
+		path, err := utils.GetRandomString(50, utils.UnescapePathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
+
+		f.Add(path)
+	}
+
+	for range 60 {
+		path, err := utils.GetRandomString(3, utils.UnescapePathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
+
+		f.Add(path)
+	}
+
+	for range 60 {
+		path, err := utils.GetRandomString(5, utils.UnescapePathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
+
+		f.Add(path)
+	}
+
+	for range 60 {
+		path, err := utils.GetRandomString(6, utils.UnescapePathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
+
+		f.Add(path)
+	}
+
+	f.Fuzz(func(_ *testing.T, path string) {
+		_, _ = utils.UnescapePath(path, utils.UnescapeAll)
+	})
+}
+
+func TestUnascapePath(t *testing.T) {
+	tests := []struct {
+		Name         string
+		Path         string
+		ExpectedPath string
+		Mode         utils.UnescapeMode
+		ExpectedErr  error
+	}{
+		{
+			Name:         "NoUnescapes",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  nil,
+			Path:         "/a/b/c",
+			ExpectedPath: `/a/b/c`,
+		},
+		{
+			Name:         "OnlySlashes",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  nil,
+			Path:         "/a/b%2F/%5c",
+			ExpectedPath: "/a/b%2F/%5c",
+		},
+		{
+			Name:         "LastPercentChar",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  utils.UnescapeError("%"),
+			Path:         "/a/b/%",
+			ExpectedPath: "",
+		},
+		{
+			Name:         "LastInvalidHex",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  utils.UnescapeError("%2"),
+			Path:         "/a/b/%2",
+			ExpectedPath: "",
+		},
+		{
+			Name:         "InnderInvalidHex",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  utils.UnescapeError("%6/"),
+			Path:         "/a/%6/%2",
+			ExpectedPath: "",
+		},
+		{
+			Name:         "FirstPercentChar",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  utils.UnescapeError("%/a"),
+			Path:         "%/a/b/",
+			ExpectedPath: "",
+		},
+		{
+			Name:         "EncodedCharsLast",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  nil,
+			Path:         "/a/b%5B%56%7C",
+			ExpectedPath: "/a/b[V|",
+		},
+		{
+			Name:         "EncodedCharsFirst",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  nil,
+			Path:         "%5B%56%7C/a/b",
+			ExpectedPath: "[V|/a/b",
+		},
+		{
+			Name:         "OmitSlashes",
+			Mode:         utils.SlashOmit,
+			ExpectedErr:  nil,
+			Path:         "/a%5B%2f%56%2F%7C%5c%5C/b",
+			ExpectedPath: "/a[%2fV%2F|%5c%5C/b",
+		},
+		{
+			Name:         "SlashOnly",
+			Mode:         utils.SlashOnly,
+			ExpectedErr:  nil,
+			Path:         "/ca%5B%2f%56%2F%7C%5c%5C/b",
+			ExpectedPath: `/ca%5B/%56/%7C\\/b`,
+		},
+		{
+			Name:         "UnascapeAll",
+			Mode:         utils.UnescapeAll,
+			ExpectedErr:  nil,
+			Path:         "/a%5B%2f%56%2F%7C%5c%5C/db",
+			ExpectedPath: `/a[/V/|\\/db`,
+		},
+		{
+			Name:         "EncodedPercentUpper",
+			Mode:         utils.UnescapeAll,
+			ExpectedErr:  nil,
+			Path:         "/a%252F",
+			ExpectedPath: "/a%2F",
+		},
+		{
+			Name:         "EncodedPercentLower",
+			Mode:         utils.UnescapeAll,
+			ExpectedErr:  nil,
+			Path:         "/a%252f",
+			ExpectedPath: "/a%2f",
+		},
+		{
+			Name:         "TwoEscapedSlash",
+			Mode:         utils.UnescapeAll,
+			ExpectedErr:  nil,
+			Path:         "/a%2F%2F",
+			ExpectedPath: "/a//",
+		},
+		{
+			Name:         "TwoDotsLower",
+			Mode:         utils.UnescapeAll,
+			ExpectedErr:  nil,
+			Path:         "/%2e/%2e%2e/a",
+			ExpectedPath: "/./../a",
+		},
+		{
+			Name:         "TwoDotsUpper",
+			Mode:         utils.UnescapeAll,
+			ExpectedErr:  nil,
+			Path:         "/%2E%2E/a",
+			ExpectedPath: "/../a",
+		},
+		{
+			Name:         "Plus",
+			Mode:         utils.UnescapeAll,
+			ExpectedErr:  nil,
+			Path:         "/a/+/%2b",
+			ExpectedPath: "/a/+/+",
+		},
+	}
+
+	for _, testCase := range tests {
+		path, err := utils.UnescapePath(testCase.Path, testCase.Mode)
+		if testCase.ExpectedErr != nil && !errors.Is(err, testCase.ExpectedErr) {
+			t.Fatalf("testcase: %s, expected error, got: %v", testCase.Name, err)
+		}
+
+		if testCase.ExpectedErr == nil && err != nil {
+			t.Fatalf("testcase: %s, didn't expect error, got: %v", testCase.Name, err)
+		}
+
+		if testCase.ExpectedPath != "" {
+			require.NoError(t, err, "Expected no error, testcase: %s", testCase.Name)
+			assert.Equal(
+				t,
+				testCase.ExpectedPath,
+				path,
+				"Expected path: %s, got: %s",
+				testCase.ExpectedPath,
+				path,
+			)
+		}
+	}
+}
+
+func BenchmarkNormalizePath(bench *testing.B) {
+	data := "/af%5B%2f%56%2F%7C%5c%5C/b"
+
+	for bench.Loop() {
+		_, _ = utils.NormalizePath(
+			false,
+			true,
+			true,
+			data,
+		)
+	}
+}
+
+func BenchmarkRemovePathDotSegments(bench *testing.B) {
+	data := "/a/../b/./../c/d/../f/g/h"
+
+	for bench.Loop() {
+		_ = utils.RemovePathDotSegments(data)
+	}
+}
+
+func FuzzRemovePathDotSegment(f *testing.F) {
+	for range 1000 {
+		path, err := utils.GetRandomString(50, utils.DotPathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
+
+		f.Add(path)
+	}
+
+	for range 60 {
+		path, err := utils.GetRandomString(3, utils.DotPathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
+
+		f.Add(path)
+	}
+
+	for range 60 {
+		path, err := utils.GetRandomString(5, utils.DotPathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
+
+		f.Add(path)
+	}
+
+	for range 60 {
+		path, err := utils.GetRandomString(6, utils.DotPathCorpus())
+		require.NoError(f, err, "error not expected, %v", err)
+
+		f.Add(path)
+	}
+
+	f.Fuzz(func(_ *testing.T, path string) {
+		_ = utils.RemovePathDotSegments(path)
+	})
+}
+
+func TestRemovePathDotSegment(t *testing.T) {
+	tests := []struct {
+		Name           string
+		Input          string
+		ExpectedOutput string
+	}{
+		{
+			Name:           "NotDots",
+			Input:          "/a/b//c/d///",
+			ExpectedOutput: "/a/b//c/d///",
+		},
+		{
+			Name:           "OneDot",
+			Input:          "/a/b/./c/d",
+			ExpectedOutput: "/a/b/c/d",
+		},
+		{
+			Name:           "OneDotWithChar",
+			Input:          "/a/b/.c/d",
+			ExpectedOutput: "/a/b/.c/d",
+		},
+		{
+			Name:           "TwoDot",
+			Input:          "/a/b/../c/d",
+			ExpectedOutput: "/a/c/d",
+		},
+		{
+			Name:           "TwoDotWithChar",
+			Input:          "/a/b/..c/d",
+			ExpectedOutput: "/a/b/..c/d",
+		},
+		{
+			Name:           "MultipleOneDots",
+			Input:          "/a/b/./c/./d",
+			ExpectedOutput: "/a/b/c/d",
+		},
+		{
+			Name:           "MultipleTwoDots",
+			Input:          "/a/../b/c/../d/e",
+			ExpectedOutput: "/b/d/e",
+		},
+		{
+			Name:           "OneDotFirst",
+			Input:          "./a/b/c",
+			ExpectedOutput: "/a/b/c",
+		},
+		{
+			Name:           "OneDotLast",
+			Input:          "/a/b/c/d/.",
+			ExpectedOutput: "/a/b/c/d/",
+		},
+		{
+			Name:           "TowDotFirst",
+			Input:          "../a/b/c",
+			ExpectedOutput: "/a/b/c",
+		},
+		{
+			Name:           "TwoDotLast",
+			Input:          "/a/b/c/..",
+			ExpectedOutput: "/a/b/",
+		},
+		{
+			Name:           "LongSegments",
+			Input:          "/this/is/my/beloved/api",
+			ExpectedOutput: "/this/is/my/beloved/api",
+		},
+		{
+			Name:           "AllCasesMixed",
+			Input:          "../this/././//.././././../.././is/../my//beloved/api/.",
+			ExpectedOutput: "/my//beloved/api/",
+		},
+		{
+			Name:           "ShortDots",
+			Input:          "../.",
+			ExpectedOutput: "/",
+		},
+		{
+			Name:           "ReverseShortDots",
+			Input:          "./..",
+			ExpectedOutput: "/",
+		},
+		{
+			Name:           "AloneDot",
+			Input:          ".",
+			ExpectedOutput: "/",
+		},
+		{
+			Name:           "AloneTwoDot",
+			Input:          "..",
+			ExpectedOutput: "/",
+		},
+		{
+			Name:           "AllCasesMixed",
+			Input:          "../this/././//.././././../.././is/../my//beloved/api/./../.././.",
+			ExpectedOutput: "/my/",
+		},
+	}
+
+	for _, testCase := range tests {
+		output := utils.RemovePathDotSegments(testCase.Input)
+		assert.Equal(
+			t,
+			testCase.ExpectedOutput,
+			output,
+			"Case: %s, expected output: %s, got: %s",
+			testCase.Name,
+			testCase.ExpectedOutput,
+			output,
+		)
+	}
+}
+
+func TestReplaceDuplicateChar(t *testing.T) {
+	tests := []struct {
+		Name           string
+		ReplaceChar    byte
+		Input          string
+		ExpectedOutput string
+	}{
+		{
+			Name:           "OnlyOneSlash",
+			ReplaceChar:    '/',
+			Input:          "test/onlyoneslash",
+			ExpectedOutput: "test/onlyoneslash",
+		},
+		{
+			Name:           "MultipleOneSlash",
+			ReplaceChar:    '/',
+			Input:          "test/multiple/one/slash",
+			ExpectedOutput: "test/multiple/one/slash",
+		},
+		{
+			Name:           "OneSlashAtStartAndEnd",
+			ReplaceChar:    '/',
+			Input:          "/test/start/one/slash/end/",
+			ExpectedOutput: "/test/start/one/slash/end/",
+		},
+		{
+			Name:           "DoubleOneSlash",
+			ReplaceChar:    '/',
+			Input:          "test//onlyoneslash",
+			ExpectedOutput: "test/onlyoneslash",
+		},
+		{
+			Name:           "TripleOneSlash",
+			ReplaceChar:    '/',
+			Input:          "test///onlyoneslash",
+			ExpectedOutput: "test/onlyoneslash",
+		},
+		{
+			Name:           "MultipleDoubleSlash",
+			ReplaceChar:    '/',
+			Input:          "test//multiple//one//slash",
+			ExpectedOutput: "test/multiple/one/slash",
+		},
+		{
+			Name:           "MultipleSlashAtStartAndEnd",
+			ReplaceChar:    '/',
+			Input:          "///test/start/one/slash/end//",
+			ExpectedOutput: "/test/start/one/slash/end/",
+		},
+		{
+			Name:           "MixedMultipleSlash",
+			ReplaceChar:    '/',
+			Input:          "///test//start/one///slash/end/",
+			ExpectedOutput: "/test/start/one/slash/end/",
+		},
+	}
+
+	for _, testCase := range tests {
+		output := utils.ReplaceDuplicateChar(testCase.Input, testCase.ReplaceChar)
+		assert.Equal(
+			t,
+			testCase.ExpectedOutput,
+			output,
+			"Expected output: %s, got: %s",
+			testCase.ExpectedOutput,
+			output,
+		)
+	}
+}
+
+func FuzzNormalizePath(f *testing.F) {
+	seeds := []string{
+		"/a/b/c",
+		"/a/../b",
+		"//a///b",
+		"/%2e%2e/admin",
+		"/%2F/%5C",
+		"/a%252Fb",
+		"//.%2e/../%2F/api",
+	}
+
+	for _, seed := range seeds {
+		f.Add(seed)
+	}
+
+	f.Fuzz(func(t *testing.T, path string) {
+		_, err := utils.NormalizePath(false, true, true, path)
+		if err != nil {
+			_, ok := errors.AsType[utils.UnescapeError](err)
+			if !ok {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		}
+	})
 }

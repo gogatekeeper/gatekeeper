@@ -403,7 +403,7 @@ func (r *fakeAuthServer) ResourceHandler(wrt http.ResponseWriter, _ *http.Reques
 		OwnerManagedAccess: false,
 		Attributes:         struct{}{},
 		ID:                 "6ef1b62e-0fd4-47f2-81fc-eead97a01c22",
-		URIS:               []string{"/*"},
+		URIS:               []string{constant.AllPath},
 		ResourceScopes: []struct {
 			Name string `json:"name"`
 		}{{Name: "test"}},
@@ -497,7 +497,7 @@ func (r *fakeAuthServer) authHandler(wrt http.ResponseWriter, req *http.Request)
 		state = "/"
 	}
 
-	randString, err := utils.GetRandomString(OAuthCodeLength)
+	randString, err := utils.GetRandomString(OAuthCodeLength, utils.LetterCorpus())
 	if err != nil {
 		wrt.WriteHeader(http.StatusInternalServerError)
 		return

@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PuerkitoBio/purell"
 	"github.com/elazarl/goproxy"
 	"github.com/go-chi/chi/v5/middleware"
 	uuid "github.com/gofrs/uuid"
@@ -26,30 +25,111 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	normalizeFlags purell.NormalizationFlags = purell.FlagRemoveDotSegments | purell.FlagRemoveDuplicateSlashes
-)
-
-func EntrypointMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
+//nolint:cyclop
+func EntrypointMiddleware(
+	logger *zap.Logger,
+	normalizePath bool,
+	normalizePathUpstream bool,
+	mergeSlashes bool,
+	mergeSlashesUpstream bool,
+	pathEscapedSlashes bool,
+	pathEscapedSlashesUpstream bool,
+) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
+		internalEqUpstream := false
+		isMergeSame := mergeSlashes == mergeSlashesUpstream
+		isNormalizeSame := normalizePath == normalizePathUpstream
+		isPathEscapeSame := pathEscapedSlashes == pathEscapedSlashesUpstream
+
+		if isMergeSame && isNormalizeSame && isPathEscapeSame {
+			internalEqUpstream = true
+		}
+
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
 			// @step: create a context for the request
 			scope := &models.RequestScope{}
 			// Save the exact formatting of the incoming request so we can use it later
-			scope.Path = req.URL.Path
-			scope.RawPath = req.URL.RawPath
-			scope.Logger = logger
+			originalPath := req.URL.Path
+			originalRawPath := req.URL.RawPath
+			originalOpaque := req.URL.Opaque
+			normalizedPath := req.URL.RawPath
+			normalizedPathUpstream := req.URL.RawPath
 
-			// We want to Normalize the URL so that we can more easily and accurately
-			// parse it to apply resource protection rules.
-			purell.NormalizeURL(req.URL, normalizeFlags)
-
-			// ensure we have a slash in the url
-			if !strings.HasPrefix(req.URL.Path, "/") {
-				req.URL.Path = "/" + req.URL.Path
+			if req.URL.RawPath == "" {
+				normalizedPathUpstream = req.URL.Path
+				normalizedPath = req.URL.Path
 			}
 
-			req.URL.RawPath = req.URL.EscapedPath()
+			scope.Logger = logger
+
+			logger.Debug("Original, received path", zap.String("path", originalPath))
+			logger.Debug("OriginalRawPath, received raw path", zap.String("path", originalRawPath))
+
+			normalizedPath, err := utils.NormalizePath(
+				pathEscapedSlashes,
+				mergeSlashes,
+				normalizePath,
+				normalizedPath,
+			)
+			if err != nil {
+				logger.Error(
+					"failed normalizing path",
+					zap.String("path", normalizedPath),
+					zap.Error(err),
+				)
+
+				return
+			}
+
+			if internalEqUpstream {
+				normalizedPathUpstream = normalizedPath
+			} else {
+				normalizedPathUpstream, err = utils.NormalizePath(
+					pathEscapedSlashesUpstream,
+					mergeSlashesUpstream,
+					normalizePathUpstream,
+					normalizedPathUpstream,
+				)
+				if err != nil {
+					logger.Error(
+						"failed normalizing upstream path",
+						zap.String("path", normalizedPathUpstream),
+						zap.Error(err),
+					)
+
+					return
+				}
+			}
+
+			if !strings.HasPrefix(normalizedPath, "/") {
+				normalizedPath = "/" + normalizedPath
+			}
+
+			if !strings.HasPrefix(normalizedPathUpstream, "/") {
+				normalizedPathUpstream = "/" + normalizedPathUpstream
+			}
+
+			unescapedPath, err := utils.UnescapePath(normalizedPathUpstream, utils.UnescapeAll)
+			if err != nil {
+				logger.Error(
+					"failed unescaping normalized upstream path",
+					zap.String("path", normalizedPathUpstream),
+					zap.Error(err),
+				)
+
+				return
+			}
+
+			scope.RawPath = normalizedPathUpstream
+			scope.Path = unescapedPath
+
+			logger.Debug("Upstream, normalized path", zap.String("path", scope.RawPath))
+
+			req.URL.RawPath = normalizedPath
+			req.URL.Path = normalizedPath
+
+			logger.Debug("Internal, normalized path", zap.String("path", req.URL.Path))
+			logger.Debug("Internal, normalized raw path", zap.String("path", req.URL.RawPath))
 
 			resp := middleware.NewWrapResponseWriter(wrt, 1)
 			start := time.Now()
@@ -62,8 +142,9 @@ func EntrypointMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 			metrics.StatusMetric.WithLabelValues(strconv.Itoa(resp.Status()), req.Method).Inc()
 
 			// place back the original uri for any later consumers
-			req.URL.Path = scope.Path
-			req.URL.RawPath = scope.RawPath
+			req.URL.Path = originalPath
+			req.URL.RawPath = originalRawPath
+			req.URL.Opaque = originalOpaque
 		})
 	}
 }
@@ -111,7 +192,7 @@ func LoggingMiddleware(
 			if verbose {
 				requestLogger := logger.With(
 					zap.Any("headers", req.Header),
-					zap.String("path", req.URL.Path),
+					zap.String("normalized path", req.URL.Path),
 					zap.String("method", req.Method),
 					zap.String("client_ip", addr),
 				)
@@ -127,7 +208,7 @@ func LoggingMiddleware(
 					zap.Int("bytes", resp.BytesWritten()),
 					zap.String("remote_addr", req.RemoteAddr),
 					zap.String("method", req.Method),
-					zap.String("path", req.URL.Path))
+					zap.String("normalized path", req.URL.Path))
 			} else {
 				scope.Logger.Info("client request",
 					zap.Duration("latency", time.Since(start)),
@@ -135,8 +216,8 @@ func LoggingMiddleware(
 					zap.Int("bytes", resp.BytesWritten()),
 					zap.String("remote_addr", req.RemoteAddr),
 					zap.String("method", req.Method),
-					zap.String("path", req.URL.Path),
-					zap.String("raw path", req.URL.RawPath))
+					zap.String("normalized path", req.URL.Path),
+					zap.String("normalized raw path", req.URL.RawPath))
 			}
 		})
 	}

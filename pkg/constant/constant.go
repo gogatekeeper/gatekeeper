@@ -144,6 +144,8 @@ const (
 	NegateRegexChar = "!"
 
 	IdentityHeaderEncoding = "UTF-8"
+
+	DoubleSlash = "//"
 )
 
 //nolint:gochecknoglobals

@@ -34,6 +34,7 @@ import (
 	"os"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -66,7 +67,38 @@ var (
 		http.MethodTrace,
 	}
 	symbolsFilter = regexp.MustCompilePOSIX("[_$><\\[\\].,\\+-/'%^&*()!\\\\]+")
+
+	hexCharsTable = [256]bool{
+		'0': true,
+		'1': true,
+		'2': true,
+		'3': true,
+		'4': true,
+		'5': true,
+		'6': true,
+		'7': true,
+		'8': true,
+		'9': true,
+		'A': true,
+		'B': true,
+		'C': true,
+		'D': true,
+		'E': true,
+		'F': true,
+		'a': true,
+		'b': true,
+		'c': true,
+		'd': true,
+		'e': true,
+		'f': true,
+	}
 )
+
+type UnescapeError string
+
+func (e UnescapeError) Error() string {
+	return "problem unescaping string: " + strconv.Quote(string(e))
+}
 
 func GetRequestHostURL(req *http.Request) string {
 	scheme := constant.UnsecureScheme
@@ -755,17 +787,29 @@ func CheckMaxSize(reader io.Reader, maxSize int) error {
 	}
 }
 
-func GetRandomString(n int) (string, error) {
-	letterRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+type RandomCorpus []rune
 
+func LetterCorpus() RandomCorpus {
+	return []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+}
+
+func DotPathCorpus() RandomCorpus {
+	return []rune("aBcD/.")
+}
+
+func UnescapePathCorpus() RandomCorpus {
+	return []rune(`aBcDf52%\/.`)
+}
+
+func GetRandomString(n int, corpus RandomCorpus) (string, error) {
 	runes := make([]rune, n)
 	for idx := range runes {
-		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letterRunes))))
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(corpus))))
 		if err != nil {
 			return "", err
 		}
 
-		runes[idx] = letterRunes[num.Int64()]
+		runes[idx] = corpus[num.Int64()]
 	}
 
 	return string(runes), nil
@@ -811,4 +855,208 @@ func LoadX509KeyPairFromRoot(fileRoot, certFile, keyFile string) (tls.Certificat
 	}
 
 	return tls.X509KeyPair(certPEMBlock, keyPEMBlock)
+}
+
+type UnescapeMode int
+
+const (
+	SlashOmit   UnescapeMode = iota
+	SlashOnly   UnescapeMode = iota
+	UnescapeAll UnescapeMode = iota
+)
+
+//nolint:cyclop
+func UnescapePath(path string, mode UnescapeMode) (string, error) {
+	// Count %, check that they're well-formed.
+	escapeCount := 0
+	escapeSeqLen := 3
+	slashCount := 0
+
+	for idx := 0; idx < len(path); {
+		switch path[idx] {
+		case '%':
+			escapeCount++
+
+			invalidHex := idx+2 >= len(path) || !ishex(path[idx+1]) || !ishex(path[idx+2])
+			if invalidHex {
+				path = path[idx:]
+				if len(path) > escapeSeqLen {
+					path = path[:escapeSeqLen]
+				}
+
+				return "", UnescapeError(path)
+			}
+
+			if mode == SlashOmit {
+				isSlash := path[idx+1] == '2' && (path[idx+2] == 'F' || path[idx+2] == 'f')
+				isBackSlash := path[idx+1] == '5' && (path[idx+2] == 'C' || path[idx+2] == 'c')
+
+				if isSlash || isBackSlash {
+					slashCount++
+				}
+			}
+
+			idx += escapeSeqLen
+		case '+':
+			idx++
+		default:
+			idx++
+		}
+	}
+
+	if escapeCount == 0 || (mode == SlashOmit && escapeCount == slashCount) {
+		return path, nil
+	}
+
+	var unescapedPlusSign byte = '+'
+
+	out := make([]byte, 0, len(path))
+
+	for idx := 0; idx < len(path); idx++ {
+		switch path[idx] {
+		case '%':
+			hexSeq := []byte(path[idx : idx+3])
+			isSlash := path[idx+1] == '2' && (path[idx+2] == 'F' || path[idx+2] == 'f')
+			isBackSlash := path[idx+1] == '5' && (path[idx+2] == 'C' || path[idx+2] == 'c')
+
+			switch mode {
+			case SlashOmit:
+				if isSlash || isBackSlash {
+					out = append(out, hexSeq...)
+				} else {
+					out = append(out, unhex(path[idx+1])<<4|unhex(path[idx+2]))
+				}
+			case SlashOnly:
+				switch {
+				case isSlash:
+					out = append(out, '/')
+				case isBackSlash:
+					out = append(out, '\\')
+				default:
+					out = append(out, hexSeq...)
+				}
+			case UnescapeAll:
+				out = append(out, unhex(path[idx+1])<<4|unhex(path[idx+2]))
+			}
+
+			idx += 2
+		case '+':
+			out = append(out, unescapedPlusSign)
+		default:
+			out = append(out, path[idx])
+		}
+	}
+
+	return string(out), nil
+}
+
+func ishex(c byte) bool {
+	return hexCharsTable[c]
+}
+
+// Precondition: ishex(c) is true.
+//
+//nolint:mnd
+func unhex(c byte) byte {
+	return 9*(c>>6) + (c & 15)
+}
+
+func RemovePathDotSegments(path string) string {
+	if len(path) > 0 {
+		var (
+			dotFree   []string
+			lastIsDot bool
+		)
+
+		const (
+			dot    = "."
+			twoDot = ".."
+		)
+
+		for section := range strings.SplitSeq(path, "/") {
+			if section == twoDot {
+				if len(dotFree) > 0 {
+					dotFree = dotFree[:len(dotFree)-1]
+				}
+			} else if section != "." {
+				dotFree = append(dotFree, section)
+			}
+
+			lastIsDot = (section == dot || section == twoDot)
+		}
+
+		path = strings.Join(dotFree, "/")
+		if !strings.HasPrefix(path, "/") {
+			path = "/" + path
+		}
+
+		// Special case if the last segment was a dot, make sure the path ends with a slash
+		if lastIsDot && !strings.HasSuffix(path, "/") {
+			path += "/"
+		}
+	}
+
+	return path
+}
+
+func NormalizePath(
+	pathEscapedSlashes bool,
+	mergeSlashes bool,
+	normalizePath bool,
+	path string,
+) (string, error) {
+	var err error
+
+	if len(path) > 0 {
+		if !pathEscapedSlashes {
+			path, err = UnescapePath(path, SlashOnly)
+			if err != nil {
+				return "", err
+			}
+		}
+
+		if mergeSlashes {
+			path = ReplaceDuplicateChar(path, '/')
+		}
+
+		if normalizePath {
+			path, err = UnescapePath(path, SlashOmit)
+			if err != nil {
+				return "", err
+			}
+
+			path = RemovePathDotSegments(path)
+		}
+	}
+
+	return path, nil
+}
+
+func ReplaceDuplicateChar(path string, replacedChar byte) string {
+	var out strings.Builder
+	out.Grow(len(path))
+
+	tmp := 0
+
+	for idx := range path {
+		switch path[idx] {
+		case replacedChar:
+			tmp++
+			continue
+		default:
+			if tmp > 0 {
+				out.WriteByte(replacedChar)
+
+				tmp = 0
+			}
+
+			out.WriteByte(path[idx])
+		}
+	}
+
+	if tmp > 0 {
+		out.WriteByte(replacedChar)
+	}
+
+	return out.String()
 }
