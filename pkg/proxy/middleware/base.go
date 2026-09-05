@@ -257,7 +257,7 @@ func DenyMiddleware(
 	accessForbidden func(wrt http.ResponseWriter, req *http.Request) context.Context,
 ) func(http.Handler) http.Handler {
 	return func(_ http.Handler) http.Handler {
-		logger.Info("enabling the deny middleware")
+		logger.Debug("enabling the deny middleware")
 
 		return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
 			accessForbidden(wrt, req)

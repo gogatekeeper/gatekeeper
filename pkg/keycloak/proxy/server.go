@@ -866,140 +866,68 @@ func (r *OauthProxy) CreateReverseProxy() error {
 			zap.String("resource", res.String()),
 		)
 
-		authFailMiddleware := redToAuthMiddleware
-		if res.NoRedirect || r.Config.NoRedirects {
-			authFailMiddleware = noredToAuthMiddleware
-		}
-
-		admissionMiddleware := gmiddleware.AdmissionMiddleware(
-			r.Log,
-			res,
-			r.Config.MatchClaims,
-			accessForbidden,
+		var (
+			signMid func(http.Handler) http.Handler
+			hRouter chi.Router
+			eProt   chi.Router
 		)
 
-		identityMiddleware := gmiddleware.IdentityHeadersMiddleware(
-			r.Log,
-			r.Config.AddClaims,
-			r.Config.ExcludeClaims,
-			r.Config.CookieAccessName,
-			r.Config.CookieRefreshName,
-			r.Config.NoProxy,
-			r.Config.EnableTokenHeader,
-			r.Config.EnableAuthorizationHeader,
-			r.Config.EnableAuthorizationCookies,
-			r.Config.EnableHeaderEncoding,
-			r.Config.EnableIDTokenClaims,
-			r.Config.EnableUserInfoClaims,
-		)
+		if !res.Deny {
+			authFailMiddleware := redToAuthMiddleware
+			if res.NoRedirect || r.Config.NoRedirects {
+				authFailMiddleware = noredToAuthMiddleware
+			}
 
-		middlewares := []func(http.Handler) http.Handler{
-			authMid,
-			authFailMiddleware,
-			admissionMiddleware,
-		}
-
-		if r.Config.EnableLoA && res.NoRedirect {
-			r.Log.Warn(
-				"disabling LoA for resource, no-redirect=true for resource",
-				zap.String("resource", res.URL),
-			)
-		}
-
-		var loAMid func(http.Handler) http.Handler
-
-		if r.Config.EnableLoA && !res.NoRedirect {
-			loAMid = levelOfAuthenticationMiddleware(
+			admissionMiddleware := gmiddleware.AdmissionMiddleware(
 				r.Log,
-				r.Config.Scopes,
-				r.Config.EnablePKCE,
-				r.Config.SignInPage,
-				r.Cm,
-				newOAuth2Config,
-				getRedirectionURL,
-				customSignInPage,
 				res,
+				r.Config.MatchClaims,
 				accessForbidden,
 			)
-			middlewares = append(
-				middlewares,
-				loAMid,
-			)
-		}
 
-		middlewares = append(
-			middlewares,
-			identityMiddleware,
-		)
-
-		var signMid func(http.Handler) http.Handler
-		if r.Config.EnableSigning && !r.Config.NoProxy {
-			signMid = SigningMiddleware(
+			identityMiddleware := gmiddleware.IdentityHeadersMiddleware(
 				r.Log,
-				r.pat,
-				r.Config.ForwardingDomains,
+				r.Config.AddClaims,
+				r.Config.ExcludeClaims,
+				r.Config.CookieAccessName,
+				r.Config.CookieRefreshName,
+				r.Config.NoProxy,
+				r.Config.EnableTokenHeader,
+				r.Config.EnableAuthorizationHeader,
+				r.Config.EnableAuthorizationCookies,
+				r.Config.EnableHeaderEncoding,
+				r.Config.EnableIDTokenClaims,
+				r.Config.EnableUserInfoClaims,
 			)
-			middlewares = append(
-				middlewares,
-				signMid,
-			)
-		}
 
-		if res.URL == constant.AllPath && !res.WhiteListed && enableDefaultDenyStrict {
-			middlewares = []func(http.Handler) http.Handler{
-				gmiddleware.DenyMiddleware(r.Log, accessForbidden),
-				gmiddleware.ProxyDenyMiddleware(r.Log),
+			middlewares := []func(http.Handler) http.Handler{
+				authMid,
+				authFailMiddleware,
+				admissionMiddleware,
 			}
-		}
 
-		if r.Config.EnableUma || r.Config.EnableOpa {
-			enableUma := r.Config.EnableUma
-			if r.Config.EnableUma && res.NoRedirect {
-				enableUma = false
-
+			if r.Config.EnableLoA && res.NoRedirect {
 				r.Log.Warn(
-					"disabling EnableUma for resource, no-redirect=true for resource",
+					"disabling LoA for resource, no-redirect=true for resource",
 					zap.String("resource", res.URL),
 				)
 			}
 
-			authzMiddleware := authorizationMiddleware(
-				r.Log,
-				enableUma,
-				r.Config.EnableUmaMethodScope,
-				r.Config.CookieUMAName,
-				r.Config.NoProxy,
-				r.pat,
-				r.Provider,
-				r.IdpClient,
-				r.Config.OpenIDProviderTimeout,
-				r.Config.Realm,
-				r.Config.EnableEncryptedToken,
-				r.Config.ForceEncryptedCookie,
-				r.Config.EncryptionKey,
-				r.Cm,
-				r.Config.EnableOpa,
-				r.Config.OpaTimeout,
-				r.Config.OpaAuthzURL,
-				r.Config.DiscoveryURI,
-				r.Config.ClientID,
-				r.Config.SkipAccessTokenClientIDCheck,
-				r.Config.SkipAccessTokenIssuerCheck,
-				r.Config.EnableCompressToken,
-				r.Config.CompressTokenOnlyAuthScheme,
-				compressTokenPool,
-				getIdentity,
-				accessForbidden,
-			)
-
-			middlewares = []func(http.Handler) http.Handler{
-				authMid,
-				authFailMiddleware,
-				authzMiddleware,
-				admissionMiddleware,
-			}
+			var loAMid func(http.Handler) http.Handler
 
 			if r.Config.EnableLoA && !res.NoRedirect {
+				loAMid = levelOfAuthenticationMiddleware(
+					r.Log,
+					r.Config.Scopes,
+					r.Config.EnablePKCE,
+					r.Config.SignInPage,
+					r.Cm,
+					newOAuth2Config,
+					getRedirectionURL,
+					customSignInPage,
+					res,
+					accessForbidden,
+				)
 				middlewares = append(
 					middlewares,
 					loAMid,
@@ -1010,29 +938,114 @@ func (r *OauthProxy) CreateReverseProxy() error {
 				middlewares,
 				identityMiddleware,
 			)
+
+			if r.Config.EnableSigning && !r.Config.NoProxy {
+				signMid = SigningMiddleware(
+					r.Log,
+					r.pat,
+					r.Config.ForwardingDomains,
+				)
+				middlewares = append(
+					middlewares,
+					signMid,
+				)
+			}
+
+			if r.Config.EnableUma || r.Config.EnableOpa {
+				enableUma := r.Config.EnableUma
+				if r.Config.EnableUma && res.NoRedirect {
+					enableUma = false
+
+					r.Log.Warn(
+						"disabling EnableUma for resource, no-redirect=true for resource",
+						zap.String("resource", res.URL),
+					)
+				}
+
+				authzMiddleware := authorizationMiddleware(
+					r.Log,
+					enableUma,
+					r.Config.EnableUmaMethodScope,
+					r.Config.CookieUMAName,
+					r.Config.NoProxy,
+					r.pat,
+					r.Provider,
+					r.IdpClient,
+					r.Config.OpenIDProviderTimeout,
+					r.Config.Realm,
+					r.Config.EnableEncryptedToken,
+					r.Config.ForceEncryptedCookie,
+					r.Config.EncryptionKey,
+					r.Cm,
+					r.Config.EnableOpa,
+					r.Config.OpaTimeout,
+					r.Config.OpaAuthzURL,
+					r.Config.DiscoveryURI,
+					r.Config.ClientID,
+					r.Config.SkipAccessTokenClientIDCheck,
+					r.Config.SkipAccessTokenIssuerCheck,
+					r.Config.EnableCompressToken,
+					r.Config.CompressTokenOnlyAuthScheme,
+					compressTokenPool,
+					getIdentity,
+					accessForbidden,
+				)
+
+				middlewares = []func(http.Handler) http.Handler{
+					authMid,
+					authFailMiddleware,
+					authzMiddleware,
+					admissionMiddleware,
+				}
+
+				if r.Config.EnableLoA && !res.NoRedirect {
+					middlewares = append(
+						middlewares,
+						loAMid,
+					)
+				}
+
+				middlewares = append(
+					middlewares,
+					identityMiddleware,
+				)
+			}
+
+			if res.URL == constant.AllPath && !res.WhiteListed && enableDefaultDenyStrict {
+				middlewares = []func(http.Handler) http.Handler{
+					gmiddleware.DenyMiddleware(r.Log, accessForbidden),
+					gmiddleware.ProxyDenyMiddleware(r.Log),
+				}
+			}
+
+			eProt = engine.With(middlewares...)
+			headerRouterMiddleware := gmiddleware.RouteHeaders().
+				SetMatchingType(gmiddleware.RouteHeadersContainsMatcher).
+				Route(
+					constant.AuthorizationHeader,
+					constant.AuthorizationType,
+					eProt.Middlewares().Handler,
+				).
+				Route(
+					"Cookie",
+					r.Config.CookieAccessName+"=",
+					eProt.Middlewares().Handler,
+				).
+				Handler
+
+			hRouter = engine.With(headerRouterMiddleware)
 		}
-
-		eProt := engine.With(middlewares...)
-		headerRouterMiddleware := gmiddleware.RouteHeaders().
-			SetMatchingType(gmiddleware.RouteHeadersContainsMatcher).
-			Route(
-				constant.AuthorizationHeader,
-				constant.AuthorizationType,
-				eProt.Middlewares().Handler,
-			).
-			Route(
-				"Cookie",
-				r.Config.CookieAccessName+"=",
-				eProt.Middlewares().Handler,
-			).
-			Handler
-
-		p := engine.With(headerRouterMiddleware)
 
 		for _, method := range res.Methods {
 			switch {
+			case res.Deny:
+				middlewares := []func(http.Handler) http.Handler{
+					gmiddleware.DenyMiddleware(r.Log, accessForbidden),
+				}
+				denyEngine := engine.With(middlewares...)
+				denyEngine.MethodFunc(method, res.URL, handlers.EmptyHandler)
 			case res.WhiteListedAnon:
-				p.MethodFunc(method, res.URL, handlers.EmptyHandler)
+				hRouter.MethodFunc(method, res.URL, handlers.EmptyHandler)
 			case res.WhiteListed:
 				if r.Config.EnableSigning && !r.Config.NoProxy {
 					signMid = SigningMiddleware(

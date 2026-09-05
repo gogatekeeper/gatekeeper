@@ -2129,6 +2129,211 @@ func TestWhiteListedRequests(t *testing.T) {
 	}
 }
 
+func TestResourceDeny(t *testing.T) {
+	cfg := newFakeKeycloakConfig()
+	cfg.Resources = []*core.Resource{
+		{
+			URL:     constant.AllPath,
+			Methods: utils.AllHTTPMethods,
+			Roles:   []string{"default"}, // this role is in our fakeauth server
+		},
+		{
+			URL:     "/deny*",
+			Methods: utils.AllHTTPMethods,
+			Deny:    true,
+		},
+		{
+			URL:     "/deny/not*",
+			Methods: utils.AllHTTPMethods,
+			Roles:   []string{"default"},
+		},
+	}
+
+	testCases := []struct {
+		Name              string
+		ProxySettings     func(c *config.Config)
+		ExecutionSettings []fakeRequest
+	}{
+		{
+			Name: "TestDenyNoRedirects",
+			ProxySettings: func(conf *config.Config) {
+				conf.NoRedirects = true
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:           "/alll",
+					HasToken:      true,
+					ExpectedCode:  http.StatusOK,
+					Roles:         []string{"default"},
+					ExpectedProxy: true,
+					Redirects:     false,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "all")
+						assert.Contains(t, body, "method")
+					},
+				},
+				{
+					URI:           "/deny/mustt",
+					HasToken:      true,
+					ExpectedCode:  http.StatusForbidden,
+					ExpectedProxy: false,
+					Redirects:     false,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "")
+					},
+				},
+				{
+					URI:           "/deny/not/testt",
+					HasToken:      true,
+					Roles:         []string{"not"},
+					ExpectedCode:  http.StatusForbidden,
+					ExpectedProxy: false,
+					Redirects:     false,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "")
+					},
+				},
+				{
+					URI:           "/deny/not/test",
+					HasToken:      true,
+					Roles:         []string{"default"},
+					ExpectedCode:  http.StatusOK,
+					ExpectedProxy: true,
+					Redirects:     false,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "not/test")
+						assert.Contains(t, body, "method")
+					},
+				},
+				{
+					URI:          FakeTestURL,
+					HasToken:     true,
+					Roles:        []string{"nothing"},
+					ExpectedCode: http.StatusForbidden,
+					Redirects:    false,
+				},
+				{
+					URI:          "/",
+					ExpectedCode: http.StatusUnauthorized,
+					Redirects:    false,
+				},
+				{
+					URI:           "/",
+					HasToken:      true,
+					ExpectedProxy: true,
+					Roles:         []string{"default"},
+					ExpectedCode:  http.StatusOK,
+					Redirects:     false,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "method")
+					},
+				},
+			},
+		},
+		{
+			Name: "TestDenyRedirects",
+			ProxySettings: func(conf *config.Config) {
+				conf.NoRedirects = false
+				conf.EnableRefreshTokens = true
+				conf.EnableEncryptedToken = false // we don't have encrypt token functionality in our fake
+				conf.Verbose = true
+				conf.EnableLogging = true
+				conf.EncryptionKey = TestEncryptionKey
+			},
+			ExecutionSettings: []fakeRequest{
+				{
+					URI:            "/all",
+					HasToken:       true,
+					HasCookieToken: true,
+					ExpectedCode:   http.StatusOK,
+					Roles:          []string{"default"},
+					ExpectedProxy:  true,
+					Redirects:      true,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "all")
+						assert.Contains(t, body, "method")
+					},
+				},
+				{
+					URI:            "/deny/must",
+					HasToken:       true,
+					HasCookieToken: true,
+					ExpectedCode:   http.StatusForbidden,
+					ExpectedProxy:  false,
+					Redirects:      true,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "")
+					},
+				},
+				{
+					URI:            "/deny/not/test",
+					HasToken:       true,
+					HasCookieToken: true,
+					Roles:          []string{"no"},
+					ExpectedCode:   http.StatusForbidden,
+					ExpectedProxy:  false,
+					Redirects:      true,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "")
+					},
+				},
+				{
+					URI:            "/deny/not/test",
+					HasToken:       true,
+					HasCookieToken: true,
+					Roles:          []string{"default"},
+					ExpectedCode:   http.StatusOK,
+					ExpectedProxy:  true,
+					Redirects:      true,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "not/test")
+						assert.Contains(t, body, "method")
+					},
+				},
+				{
+					URI:            FakeTestURL,
+					HasToken:       true,
+					HasCookieToken: true,
+					Roles:          []string{"nothing"},
+					ExpectedCode:   http.StatusForbidden,
+					Redirects:      true,
+				},
+				{
+					URI:          "/",
+					ExpectedCode: http.StatusSeeOther,
+					Redirects:    true,
+				},
+				{
+					URI:            "/",
+					HasToken:       true,
+					HasCookieToken: true,
+					ExpectedProxy:  true,
+					Roles:          []string{"default"},
+					ExpectedCode:   http.StatusOK,
+					Redirects:      true,
+					ExpectedContent: func(body string, _ int) {
+						assert.Contains(t, body, "method")
+					},
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		cfgCopy := *cfg
+		conf := &cfgCopy
+
+		t.Run(
+			testCase.Name,
+			func(t *testing.T) {
+				testCase.ProxySettings(conf)
+				p := newFakeProxy(conf, &fakeAuthConfig{})
+				p.RunTests(t, testCase.ExecutionSettings)
+			},
+		)
+	}
+}
+
 func TestRequireAnyRoles(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	cfg.NoRedirects = true
