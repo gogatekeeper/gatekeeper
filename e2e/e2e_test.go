@@ -215,6 +215,9 @@ var _ = Describe("Code Flow login/logout", func() {
 			"--enable-idp-session-check=false",
 			"--enable-default-deny=false",
 			"--resources=uri=/*|roles=uma_authorization,offline_access",
+			"--resources=uri=/deny*|methods=POST|deny=true",
+			"--resources=uri=/deny*|methods=GET|roles=uma_authorization,offline_access",
+			"--resources=uri=/deny/not*|roles=uma_authorization,offline_access",
 			"--openid-provider-retry-count=30",
 			"--enable-refresh-tokens=true",
 			"--encryption-key=" + testKey,
@@ -309,6 +312,34 @@ var _ = Describe("Code Flow login/logout", func() {
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(body).To(ContainSubstring(`"X-Auth-Email-Verified":["true"]`))
 				Expect(body).To(ContainSubstring(`"X-Auth-Email":["somebody@somewhere.com"]`))
+
+				resp, err = rClient.R().Get(proxyAddress + "/deny/not/me")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				body = resp.Body()
+				By(string(body))
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+				Expect(strings.Contains(string(body), "/deny/not/me")).To(BeTrue())
+				Expect(body).To(ContainSubstring(`"X-Auth-Email-Verified":["true"]`))
+				Expect(body).To(ContainSubstring(`"X-Auth-Email":["somebody@somewhere.com"]`))
+
+				resp, err = rClient.R().Get(proxyAddress + "/deny/get")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+				body = resp.Body()
+				By(string(body))
+				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+				Expect(strings.Contains(string(body), "/deny/get")).To(BeTrue())
+				Expect(body).To(ContainSubstring(`"X-Auth-Email-Verified":["true"]`))
+				Expect(body).To(ContainSubstring(`"X-Auth-Email":["somebody@somewhere.com"]`))
+
+				resp, err = rClient.R().Post(proxyAddress + "/deny/post")
+				Expect(err).NotTo(HaveOccurred())
+
+				body = resp.Body()
+				By(string(body))
+				Expect(resp.StatusCode()).To(Equal(http.StatusForbidden))
+				Expect(strings.Contains(string(body), "")).To(BeTrue())
 
 				resp, err = rClient.R().Get(proxyAddress + logoutURI)
 				Expect(err).NotTo(HaveOccurred())

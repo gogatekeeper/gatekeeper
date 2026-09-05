@@ -39,6 +39,7 @@ type Resource struct {
 	WhiteListedAnon bool     `json:"white-listed-anon" yaml:"white-listed-anon"`
 	NoRedirect      bool     `json:"no-redirect" yaml:"no-redirect"`
 	RequireAnyRole  bool     `json:"require-any-role" yaml:"require-any-role"`
+	Deny            bool     `json:"deny" yaml:"deny"`
 }
 
 func NewResource() *Resource {
@@ -130,6 +131,16 @@ func (r *Resource) Parse(resource string) (*Resource, error) {
 			}
 
 			r.NoRedirect = value
+		case "deny":
+			value, err := strconv.ParseBool(keyPair[1])
+			if err != nil {
+				return nil, errors.New(
+					"value of deny must be " +
+						"true|TRUE|T or it's false equivalent",
+				)
+			}
+
+			r.Deny = value
 		case "acr":
 			r.Acr = strings.Split(keyPair[1], ",")
 		default:
@@ -159,6 +170,20 @@ func (r *Resource) Valid() error {
 
 	if r.URL == "" {
 		return errors.New("resource does not have url")
+	}
+
+	if r.Deny && (r.WhiteListed || r.WhiteListedAnon) || r.RequireAnyRole {
+		return fmt.Errorf(
+			"you cannot enable deny and white-listed or white-liste-anon or require-any-role at the same time: %s",
+			r.URL,
+		)
+	}
+
+	if r.Deny && (len(r.Groups) > 0 || len(r.Roles) > 0) {
+		return fmt.Errorf(
+			"you cannot define deny on resource and also specify groups or roles",
+			r.URL,
+		)
 	}
 
 	if r.WhiteListed && r.WhiteListedAnon {
@@ -209,16 +234,25 @@ func (r *Resource) GetHeaders() string {
 
 // String returns a string representation of the resource.
 func (r *Resource) String() string {
+	methods := constant.AnyMethod
+
+	if len(r.Methods) > 0 {
+		methods = strings.Join(r.Methods, ",")
+	}
+
 	if r.WhiteListed {
-		return fmt.Sprintf("uri: %s, white-listed", r.URL)
+		return fmt.Sprintf("uri: %s, white-listed, methods: %s", r.URL, methods)
 	}
 
 	if r.WhiteListedAnon {
-		return fmt.Sprintf("uri: %s, white-listed-anon", r.URL)
+		return fmt.Sprintf("uri: %s, white-listed-anon, methods: %s", r.URL, methods)
+	}
+
+	if r.Deny {
+		return fmt.Sprintf("uri: %s, deny, methods: %s", r.URL, methods)
 	}
 
 	roles := "authentication only"
-	methods := constant.AnyMethod
 
 	if len(r.Roles) > 0 {
 		roles = strings.Join(r.Roles, ",")
@@ -226,10 +260,6 @@ func (r *Resource) String() string {
 
 	if len(r.Acr) > 0 {
 		roles = strings.Join(r.Acr, ",")
-	}
-
-	if len(r.Methods) > 0 {
-		methods = strings.Join(r.Methods, ",")
 	}
 
 	return fmt.Sprintf("uri: %s, methods: %s, required: %s", r.URL, methods, roles)

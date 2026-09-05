@@ -126,6 +126,15 @@ func TestResourceParseOk(t *testing.T) {
 			Ok: true,
 		},
 		{
+			Option: "uri=/allow_me_anon|deny=true",
+			Resource: &core.Resource{
+				URL:     "/allow_me_anon",
+				Deny:    true,
+				Methods: utils.AllHTTPMethods,
+			},
+			Ok: true,
+		},
+		{
 			Option: "uri=/*|methods=any",
 			Resource: &core.Resource{
 				URL:     constant.AllPath,
@@ -198,6 +207,59 @@ func TestIsValid(t *testing.T) {
 		{
 			Resource: &core.Resource{URL: "/", Methods: utils.AllHTTPMethods},
 			Ok:       true,
+		},
+		{
+			Resource: &core.Resource{
+				URL:     "/",
+				Methods: utils.AllHTTPMethods,
+				Deny:    true,
+			},
+			Ok: true,
+		},
+		{
+			Resource: &core.Resource{
+				URL:         "/",
+				Methods:     utils.AllHTTPMethods,
+				Deny:        true,
+				WhiteListed: true,
+			},
+			Ok: false,
+		},
+		{
+			Resource: &core.Resource{
+				URL:             "/",
+				Methods:         utils.AllHTTPMethods,
+				Deny:            true,
+				WhiteListedAnon: true,
+			},
+			Ok: false,
+		},
+		{
+			Resource: &core.Resource{
+				URL:            "/",
+				Methods:        utils.AllHTTPMethods,
+				Deny:           true,
+				RequireAnyRole: true,
+			},
+			Ok: false,
+		},
+		{
+			Resource: &core.Resource{
+				URL:     "/",
+				Methods: utils.AllHTTPMethods,
+				Deny:    true,
+				Roles:   []string{"deny_role"},
+			},
+			Ok: false,
+		},
+		{
+			Resource: &core.Resource{
+				URL:     "/",
+				Methods: utils.AllHTTPMethods,
+				Deny:    true,
+				Groups:  []string{"deny_group"},
+			},
+			Ok: false,
 		},
 		{
 			Resource: &core.Resource{URL: "/admin/", Methods: utils.AllHTTPMethods},

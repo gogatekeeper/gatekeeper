@@ -2185,6 +2185,103 @@ func TestIsResourceValid(t *testing.T) {
 			},
 			Valid: false,
 		},
+		{
+			Name: "InValidResourceDenyWithWhiteListedConflict",
+			Config: &Config{
+				Resources: []*core.Resource{
+					{
+						URL:         fakeAdminRoleURL,
+						Methods:     []string{"GET"},
+						Deny:        true,
+						WhiteListed: true,
+					},
+				},
+			},
+			Valid: false,
+		},
+		{
+			Name: "InValidResourceDenyWithWhiteListedAnonConflict",
+			Config: &Config{
+				Resources: []*core.Resource{
+					{
+						URL:             fakeAdminRoleURL,
+						Methods:         []string{"GET"},
+						Deny:            true,
+						WhiteListedAnon: true,
+					},
+				},
+			},
+			Valid: false,
+		},
+		{
+			Name: "InValidResourceDenyWithRequiredAnyRoleConflict",
+			Config: &Config{
+				Resources: []*core.Resource{
+					{
+						URL:            fakeAdminRoleURL,
+						Methods:        []string{"GET"},
+						Deny:           true,
+						RequireAnyRole: true,
+					},
+				},
+			},
+			Valid: false,
+		},
+		{
+			Name: "InValidResourceDenyWithRequiredAnyRoleConflict",
+			Config: &Config{
+				Resources: []*core.Resource{
+					{
+						URL:            fakeAdminRoleURL,
+						Methods:        []string{"GET"},
+						Deny:           true,
+						RequireAnyRole: true,
+					},
+				},
+			},
+			Valid: false,
+		},
+		{
+			Name: "InValidResourceDenyWithRolesConflict",
+			Config: &Config{
+				Resources: []*core.Resource{
+					{
+						URL:     fakeAdminRoleURL,
+						Methods: []string{"GET"},
+						Deny:    true,
+						Roles:   []string{fakeAdminRole},
+					},
+				},
+			},
+			Valid: false,
+		},
+		{
+			Name: "InValidResourceDenyWithRolesConflict",
+			Config: &Config{
+				Resources: []*core.Resource{
+					{
+						URL:     fakeAdminRoleURL,
+						Methods: []string{"GET"},
+						Deny:    true,
+						Groups:  []string{fakeAdminRole},
+					},
+				},
+			},
+			Valid: false,
+		},
+		{
+			Name: "ValidResourceDeny",
+			Config: &Config{
+				Resources: []*core.Resource{
+					{
+						URL:     fakeAdminRoleURL,
+						Methods: []string{"GET"},
+						Deny:    true,
+					},
+				},
+			},
+			Valid: true,
+		},
 	}
 
 	for _, testCase := range testCases {
