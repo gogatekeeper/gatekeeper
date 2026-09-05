@@ -181,7 +181,7 @@ func (r *Resource) Valid() error {
 
 	if r.Deny && (len(r.Groups) > 0 || len(r.Roles) > 0) {
 		return fmt.Errorf(
-			"you cannot define deny on resource and also specify groups or roles",
+			"you cannot define deny on resource and also specify groups or roles: %s",
 			r.URL,
 		)
 	}

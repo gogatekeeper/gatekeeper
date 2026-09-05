@@ -868,7 +868,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 
 		var (
 			signMid func(http.Handler) http.Handler
-			p       chi.Router
+			hRouter chi.Router
 			eProt   chi.Router
 		)
 
@@ -1033,7 +1033,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 				).
 				Handler
 
-			p = engine.With(headerRouterMiddleware)
+			hRouter = engine.With(headerRouterMiddleware)
 		}
 
 		for _, method := range res.Methods {
@@ -1045,7 +1045,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 				denyEngine := engine.With(middlewares...)
 				denyEngine.MethodFunc(method, res.URL, handlers.EmptyHandler)
 			case res.WhiteListedAnon:
-				p.MethodFunc(method, res.URL, handlers.EmptyHandler)
+				hRouter.MethodFunc(method, res.URL, handlers.EmptyHandler)
 			case res.WhiteListed:
 				if r.Config.EnableSigning && !r.Config.NoProxy {
 					signMid = SigningMiddleware(
