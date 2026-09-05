@@ -2067,6 +2067,7 @@ func TestIsStoreURLValid(t *testing.T) {
 	}
 }
 
+//nolint:funlen
 func TestIsResourceValid(t *testing.T) {
 	testCases := []struct {
 		Config *Config
