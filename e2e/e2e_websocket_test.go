@@ -67,6 +67,8 @@ var _ = Describe("NoRedirects Websocket login/logout", func() {
 			"--upstream-url=" + localURI + upstreamSvcPort,
 			"--no-redirects=true",
 			"--enable-default-deny=false",
+			"--enable-default-deny-strict=false",
+			"--resources=uri=/*|roles=uma_authorization,offline_access",
 			"--skip-access-token-clientid-check=true",
 			"--skip-access-token-issuer-check=true",
 			"--openid-provider-retry-count=30",
@@ -192,6 +194,9 @@ var _ = Describe("NoRedirects Websocket login/logout", func() {
 				rClient = resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
 
+				respToken, err = conf.Token(oidcLibCtx)
+				Expect(err).NotTo(HaveOccurred())
+
 				request := rClient.SetRedirectPolicy(
 					resty.NoRedirectPolicy(),
 				).R().SetAuthToken(respToken.AccessToken)
@@ -254,6 +259,7 @@ var _ = Describe("Code Flow websocket login/logout", func() {
 			"--skip-access-token-issuer-check=true",
 			"--enable-idp-session-check=false",
 			"--enable-default-deny=false",
+			"--enable-default-deny-strict=false",
 			"--resources=uri=/*|roles=uma_authorization,offline_access",
 			"--openid-provider-retry-count=30",
 			"--enable-refresh-tokens=true",

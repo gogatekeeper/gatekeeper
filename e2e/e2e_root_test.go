@@ -73,6 +73,7 @@ var _ = Describe("Code Flow login/logout compression and encryption Auth Scheme 
 			"--skip-access-token-issuer-check=true",
 			"--enable-idp-session-check=false",
 			"--enable-default-deny=false",
+			"--enable-default-deny-strict=false",
 			"--resources=uri=/*|roles=uma_authorization,offline_access",
 			"--resources=uri=" + testPath + "|no-redirect=true",
 			"--openid-provider-retry-count=30",
