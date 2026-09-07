@@ -6,6 +6,7 @@ linters:
   - dupl
   - err113
   - exhaustruct
+  - exhaustruct_v5
   - gocognit
   - ireturn
   - maintidx

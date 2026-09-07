@@ -2,7 +2,7 @@ package metrics
 
 import "github.com/prometheus/client_golang/prometheus"
 
-//nolint:gochecknoglobals
+//nolint:gochecknoglobals,goconst
 var (
 	CertificateRotationMetric = prometheus.NewCounter(
 		prometheus.CounterOpts{

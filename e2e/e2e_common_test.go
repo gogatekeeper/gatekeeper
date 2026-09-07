@@ -1,3 +1,4 @@
+//nolint:goconst
 package e2e_test
 
 import (
@@ -366,10 +367,9 @@ func startAndWaitTestUpstream(
 	Expect(err).NotTo(HaveOccurred())
 
 	tlsConfig := &tls.Config{
-		Certificates:             []tls.Certificate{tlsCert},
-		PreferServerCipherSuites: true,
-		NextProtos:               []string{"h2", "http/1.1"},
-		MinVersion:               tls.VersionTLS13,
+		Certificates: []tls.Certificate{tlsCert},
+		NextProtos:   []string{"h2", "http/1.1"},
+		MinVersion:   tls.VersionTLS13,
 	}
 
 	// to simplify and don't have separate key, cert for server and separate key, cert for client
@@ -459,10 +459,9 @@ func startAndWaitTestRawUpstream(
 	Expect(err).NotTo(HaveOccurred())
 
 	tlsConfig := &tls.Config{
-		Certificates:             []tls.Certificate{tlsCert},
-		PreferServerCipherSuites: true,
-		NextProtos:               []string{"http/1.1"},
-		MinVersion:               tls.VersionTLS13,
+		Certificates: []tls.Certificate{tlsCert},
+		NextProtos:   []string{"http/1.1"},
+		MinVersion:   tls.VersionTLS13,
 	}
 
 	// to simplify and don't have separate key, cert for server and separate key, cert for client

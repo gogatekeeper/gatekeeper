@@ -1,3 +1,4 @@
+//nolint:goconst
 package session_test
 
 import (
@@ -23,14 +24,14 @@ func TestGetRefreshTokenFromCookie(t *testing.T) {
 			Cookies: &http.Cookie{},
 		},
 		{
-			Cookies: &http.Cookie{
+			Cookies: &http.Cookie{ //nolint:gosec
 				Name:   "not_a_session_cookie",
 				Path:   "/",
 				Domain: "127.0.0.1",
 			},
 		},
 		{
-			Cookies: &http.Cookie{
+			Cookies: &http.Cookie{ //nolint:gosec
 				Name:   "kc-state",
 				Path:   "/",
 				Domain: "127.0.0.1",

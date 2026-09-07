@@ -15,6 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//nolint:goconst
 package testsuite_test
 
 import (
@@ -1956,8 +1957,8 @@ func TestDisableAuthorizationCookie(t *testing.T) {
 		{
 			URI: FakeAdminTestURL,
 			Cookies: []*http.Cookie{
-				{Name: cfg.CookieAccessName, Value: signed},
-				{Name: "mycookie", Value: "myvalue"},
+				{Name: cfg.CookieAccessName, Value: signed}, //nolint:gosec
+				{Name: "mycookie", Value: "myvalue"},        //nolint:gosec
 			},
 			HasToken:                true,
 			ExpectedContentContains: "kc-access=censored; mycookie=myvalue",

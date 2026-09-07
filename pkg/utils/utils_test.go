@@ -15,6 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//nolint:goconst
 package utils_test
 
 import (
@@ -203,7 +204,7 @@ func TestEncryptedText(t *testing.T) {
 
 func TestFindCookie(t *testing.T) {
 	cookies := []*http.Cookie{
-		{Name: "cookie_there"},
+		{Name: "cookie_there"}, //nolint:gosec
 	}
 	assert.NotNil(t, cookie.FindCookie("cookie_there", cookies))
 	assert.Nil(t, cookie.FindCookie("not_there", cookies))

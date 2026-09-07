@@ -70,7 +70,7 @@ import (
 
 //nolint:gochecknoinits
 func init() {
-	_, err := memlimit.SetGoMemLimitWithOpts(
+	_, err := memlimit.Set(
 		memlimit.WithProvider(
 			memlimit.ApplyFallback(
 				memlimit.FromCgroup,
@@ -1617,14 +1617,12 @@ func (r *OauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 			getCertificate = rotate.GetCertificate
 		}
 
-		//nolint:gosec
 		tlsConfig := &tls.Config{
 			GetCertificate: getCertificate,
 			// Causes servers to use Go's default ciphersuite preferences,
 			// which are tuned to avoid attacks. Does nothing on clients.
-			PreferServerCipherSuites: true,
-			NextProtos:               []string{"h2", "http/1.1"},
-			MinVersion:               config.minTLSVersion,
+			NextProtos: []string{"h2", "http/1.1"},
+			MinVersion: config.minTLSVersion,
 		}
 
 		listener = tls.NewListener(listener, tlsConfig)
@@ -1653,7 +1651,7 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 	dialer := (&net.Dialer{
 		KeepAlive: r.Config.UpstreamKeepaliveTimeout,
 		Timeout:   r.Config.UpstreamTimeout,
-	}).Dial
+	}).DialContext
 
 	// are we using a unix socket?
 	if upstream != nil && upstream.Scheme == "unix" {
@@ -1663,7 +1661,7 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 		)
 
 		socketPath := fmt.Sprintf("%s%s", upstream.Host, upstream.Path)
-		dialer = func(_, _ string) (net.Conn, error) {
+		dialer = func(_ context.Context, _, _ string) (net.Conn, error) {
 			return net.Dial("unix", socketPath)
 		}
 
@@ -1742,7 +1740,7 @@ func (r *OauthProxy) createUpstreamProxy(upstream *url.URL) error {
 	}
 
 	proxy.Tr = &http.Transport{
-		Dial:                  dialer,
+		DialContext:           dialer,
 		Proxy:                 upstreamProxyFunc,
 		DisableKeepAlives:     !r.Config.UpstreamKeepalives,
 		ExpectContinueTimeout: r.Config.UpstreamExpectContinueTimeout,
@@ -1951,7 +1949,6 @@ func (r *OauthProxy) NewOpenIDProvider() (*oidc3.Provider, *keycloak_client.Clie
 
 	retryType := backoff.WithBackOff(backoff.NewExponentialBackOff())
 
-	//nolint:gosec
 	countOption := backoff.WithMaxTries(uint(r.Config.OpenIDProviderRetryCount))
 	notifyOption := backoff.WithNotify(notify)
 

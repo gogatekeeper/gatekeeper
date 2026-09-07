@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//nolint:goconst
 package testsuite_test
 
 import (
@@ -335,7 +336,7 @@ func TestGetTokenInRequest(t *testing.T) {
 			if testCase.AuthScheme != "" {
 				req.Header.Set(constant.AuthorizationHeader, testCase.AuthScheme+" "+testCase.Token)
 			} else {
-				req.AddCookie(&http.Cookie{
+				req.AddCookie(&http.Cookie{ //nolint:gosec
 					Name:   defaultName,
 					Path:   req.URL.Path,
 					Domain: req.Host,
