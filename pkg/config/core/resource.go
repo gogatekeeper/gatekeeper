@@ -172,7 +172,7 @@ func (r *Resource) Valid() error {
 		return errors.New("resource does not have url")
 	}
 
-	if r.Deny && (r.WhiteListed || r.WhiteListedAnon) || r.RequireAnyRole {
+	if r.Deny && (r.WhiteListed || r.WhiteListedAnon || r.RequireAnyRole) {
 		return fmt.Errorf(
 			"you cannot enable deny and white-listed or white-liste-anon or require-any-role at the same time: %s",
 			r.URL,
