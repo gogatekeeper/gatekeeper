@@ -146,7 +146,6 @@ func refreshPAT(
 		}
 
 		retryType := backoff.WithBackOff(backoff.NewConstantBackOff(patRetryInterval))
-		//nolint:gosec
 		countOption := backoff.WithMaxTries(uint(patRetryCount))
 		notifyOption := backoff.WithNotify(notify)
 

@@ -1,3 +1,4 @@
+//nolint:goconst
 package encryption_test
 
 import (

@@ -10,7 +10,7 @@ jobs:
     # Test the latest release of Go
     strategy:
       matrix:
-        go: [ "1.26" ]
+        go: [ "1.27" ]
     steps:
     # Setup the workflow to use the specific version of Go
     - name: Set up Go 1.x
@@ -154,7 +154,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: [ "1.26" ]
+        go: [ "1.27" ]
     steps:
     - uses: actions/setup-go@v6
       with:
@@ -164,7 +164,7 @@ jobs:
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v7
       with:
-        version: v2.11.4
+        version: v2.13.2
         args: "--timeout=3m"
         github-token: "${{ secrets.GITHUB_TOKEN }}"
     - name: Check Golang sources with Aligo

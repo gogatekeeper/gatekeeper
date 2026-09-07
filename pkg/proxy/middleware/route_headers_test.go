@@ -1,3 +1,4 @@
+//nolint:goconst
 package middleware_test
 
 import (

@@ -470,7 +470,7 @@ func AuthenticationMiddleware(
 				}
 			}
 
-			*req = *(req.WithContext(ctx))
+			*req = *req.WithContext(ctx)
 			next.ServeHTTP(wrt, req)
 		})
 	}

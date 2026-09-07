@@ -349,8 +349,9 @@ func levelOfAuthenticationMiddleware(
 			) {
 				lLog.Info("token doesn't match required level of authentication")
 
-				allowedQueryParams := map[string]string{"acr_values": resource.Acr[0]}
-				defaultAllowedQueryParams := map[string]string{"acr_values": resource.Acr[0]}
+				acrKey := "acr_values"
+				allowedQueryParams := map[string]string{acrKey: resource.Acr[0]}
+				defaultAllowedQueryParams := map[string]string{acrKey: resource.Acr[0]}
 				uuid := cookManager.DropStateParameterCookie(req, wrt)
 				query := req.URL.Query()
 				query.Add("state", uuid)

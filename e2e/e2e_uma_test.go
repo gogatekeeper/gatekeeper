@@ -1,3 +1,4 @@
+//nolint:goconst
 package e2e_test
 
 import (

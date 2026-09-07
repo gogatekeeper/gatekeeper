@@ -67,7 +67,7 @@ func (cm *Manager) DropCookie(
 		path = cm.BaseURI
 	}
 
-	cookie := &http.Cookie{
+	cookie := &http.Cookie{ //nolint:gosec
 		Domain:   domain,
 		HttpOnly: cm.HTTPOnlyCookie,
 		Name:     name,
@@ -285,7 +285,7 @@ func FilterCookies(req *http.Request, filter []string) error {
 		// @step: does this cookie match our filter?
 		for _, n := range filter {
 			if strings.HasPrefix(cookie.Name, n) {
-				req.AddCookie(&http.Cookie{Name: cookie.Name, Value: "censored"})
+				req.AddCookie(&http.Cookie{Name: cookie.Name, Value: "censored"}) //nolint:gosec
 
 				found = true
 

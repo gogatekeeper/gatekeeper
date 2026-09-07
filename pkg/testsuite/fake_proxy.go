@@ -1,6 +1,8 @@
+//nolint:goconst
 package testsuite_test
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -157,12 +159,10 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 		client := resty.New()
 
 		if reqCfg.TLSMin != 0 {
-			//nolint:gosec
 			client.SetTLSClientConfig(&tls.Config{MinVersion: reqCfg.TLSMin})
 		}
 
 		if reqCfg.TLSMax != 0 {
-			//nolint:gosec
 			client.SetTLSClientConfig(&tls.Config{MaxVersion: reqCfg.TLSMax})
 		}
 
@@ -170,7 +170,7 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 
 		if reqCfg.ProxyProtocol != "" {
 			client.SetTransport(&http.Transport{
-				Dial: func(_, addr string) (net.Conn, error) {
+				DialContext: func(_ context.Context, _, addr string) (net.Conn, error) {
 					conn, err := net.Dial("tcp", addr)
 					if err != nil {
 						return nil, err
@@ -610,7 +610,7 @@ func (f *fakeProxy) performUserLogin(reqCfg *fakeRequest) error {
 
 	for _, cookie := range resp.Cookies() {
 		if _, ok := userCookies[cookie.Name]; ok {
-			f.cookies[cookie.Name] = &http.Cookie{
+			f.cookies[cookie.Name] = &http.Cookie{ //nolint:gosec
 				Name:   cookie.Name,
 				Path:   "/",
 				Domain: "127.0.0.1",
@@ -650,7 +650,7 @@ func setRequestAuthentication(
 		}
 
 		if !present {
-			client.SetCookie(&http.Cookie{
+			client.SetCookie(&http.Cookie{ //nolint:gosec
 				Name:  cfg.CookieAccessName,
 				Path:  "/",
 				Value: token,
