@@ -246,6 +246,14 @@ func TestIsValid(t *testing.T) {
 		},
 		{
 			Resource: &core.Resource{
+				URL:            "/",
+				Methods:        utils.AllHTTPMethods,
+				RequireAnyRole: true,
+			},
+			Ok: true,
+		},
+		{
+			Resource: &core.Resource{
 				URL:     "/",
 				Methods: utils.AllHTTPMethods,
 				Deny:    true,
