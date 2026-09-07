@@ -70,7 +70,7 @@ import (
 
 //nolint:gochecknoinits
 func init() {
-	_, err := memlimit.SetGoMemLimitWithOpts(
+	_, err := memlimit.Set(
 		memlimit.WithProvider(
 			memlimit.ApplyFallback(
 				memlimit.FromCgroup,
