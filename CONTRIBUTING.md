@@ -2,6 +2,10 @@
 
 Details for building from source and working with the codebase are provided in the [building and working with the code base](docs/building.md) guide.
 
+## AI and LLMs
+
+AI agents and LLMs are not allowed to submit any PRs and issues. PRs and issues can be submitted only by humans. PRs submitted by humans and created with AI assistance will be only accepted if contributor deeply understands problem and changes in PR. When submitting issues which were found by human developer with AI assistance it is always preferable to provide logs and output of errors which happened prior to submitting any AI generated suggestions about where problem happens.
+
 ## Contributing to Gatekeeper
 
 Gatekeeper is an Open Source community-driven project and we welcome contributions as well as feedback from the community.

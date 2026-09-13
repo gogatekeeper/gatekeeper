@@ -26,6 +26,13 @@ weight: 2
 |    \--openid-provider-timeout value         | timeout for openid configuration on .well-known/openid-configuration | 30s | PROXY_OPENID_PROVIDER_TIMEOUT
 |    \--openid-provider-retry-count value     | number of retries for retrieving openid configuration | 3 | PROXY_OPENID_PROVIDER_RETRY_COUNT
 |    \--openid-provider-headers value         | http headers sent to idp provider | |
+|    \--allow-escaped-slashes-path            | allows/disallows escaped slashes in request path | false | PROXY_ALLOW_ESCAPED_SLASHES_PATH
+|    \--normalize-path                        | normalizes path according RFC 3986, except slashes, at start of processing chain, used in internal chains | true | PROXY_NORMALIZE_PATH 
+|    \--normalize-path-upstream               | normalizes path for upstream according RFC 3986, except slashes | true | PROXY_NORMALIZE_PATH_UPSTREAM
+|    \--merge-slashes                         | merges slashes in path at start of processing, at start of processing chain, used in internal chains | true | PROXY_MERGE_SLASHES
+|    \--merge-slashes-upstream                | merges slashes for path to upstream | true | PROXY_MERGE_SLASHES_UPSTREAM
+|    \--path-escaped-slashes                  | escape slashes in path, means preserve hex encoding, at start of processing chain, used in internal chains | false | PROXY_ESCAPED_SLASHES
+|    \--path-escaped-slashes-upstream         | escape slashes, means preserve hex encoding for path sent upstream | false | PROXY_ESCAPED_SLASHES_UPSTREAM
 |    \--upstream-proxy                        | proxy for communication with upstream | | PROXY_UPSTREAM_PROXY
 |    \--upstream-no-proxy                     | list of upstream destinations which should be not proxied | | PROXY_UPSTREAM_NO_PROXY
 |    \--base-uri value                        | common prefix for all URIs | | PROXY_BASE_URI
@@ -53,8 +60,8 @@ weight: 2
 |    \--log-sampling-after                    | each n-th number message is logged, after initial messages logged | 100 | PROXY_LOG_SAMPLING_AFTER
 |    \--enable-request-id                     | indicates we should add a request id if none found | false | PROXY_ENABLE_REQUEST_ID |
 |    \--enable-logout-redirect                | indicates we should redirect to the identity provider for logging out | false | PROXY_ENABLE_LOGOUT_REDIRECT
-|    \--enable-default-deny                   | enables a default denial on all requests, requests with valid token are permitted, you have to explicitly say what is permitted | true | PROXY_ENABLE_DEFAULT_DENY
-|    \--enable-default-deny-strict            | enables a default denial on all requests, requests with valid token are denied, you have to explicitly say what is permitted (recommended) | false | PROXY_ENABLE_DEFAULT_DENY_STRICT
+|    \--enable-default-deny                   | enables a default denial on all requests, requests with valid token are permitted, you have to explicitly say what is permitted | false | PROXY_ENABLE_DEFAULT_DENY
+|    \--enable-default-deny-strict            | enables a default denial on all requests, requests with valid token are denied, you have to explicitly say what is permitted (recommended) | true | PROXY_ENABLE_DEFAULT_DENY_STRICT
 |    \--enable-encrypted-token                | enable encryption for the access tokens | true | PROXY_ENABLE_ENCRYPTED_TOKEN
 |    \--force-encrypted-cookie                | force encryption for the access tokens in cookies | false | PROXY_FORCE_ENCRYPTED_COOKIE
 |    \--enable-logging                        | enable http logging of the requests | false | PROXY_ENABLE_LOGGING

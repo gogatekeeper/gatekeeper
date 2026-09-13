@@ -124,6 +124,10 @@ resources:
 - uri: /admin/*
   methods:
   - GET
+  deny: true # in 5.0.0 deny attribute was added, always denies, without any further checks
+- uri: /admin/*
+  methods:
+  - POST
   roles:
   - openvpn:vpn-user
   - openvpn:commons-prod-vpn
@@ -239,18 +243,18 @@ actually usually all security rules should follow main rule: forbbid everything 
 and be as much explicit as possible. Of course this is not always possible due to limitations on application side
 but try to follow it as much as you can. This implies several things when configuring gatekeeper:
 
-1. Match all rule `/*` should be defined as much restrictive as possible as it will catch all cases which you even don't think of right now, don't just use `--enable-default-deny` this is only convenient flag for starting working with gatekeeper, not serious protection, best is to use `--enable-default-deny-strict` (it will be new default in next major release) + proper resource rules
-
+1. Match all rule `/*` should be defined as much restrictive as possible as it will catch all cases which you even don't think of right now, from 5.0.0 `--enable-default-deny-strict=true` is default which adds rule for `/*` denying everything, instead of `--enable-default-deny=true`, which somewhat improves default configuration, but for serious
+cases always define your own and exact rules for your situation. In 5.0.0 `deny` property was added to the `resource`
+so this is the best option if you need to deny everything, you don't need now to create any "deny_all" unused roles
+for this functionality.
 2. point 1. also applies to nested wildcards/catch alls, e.g.:
 
   ```yaml
     resources:
       - uri: /*
-        roles:
-          - DENY_ROLE # role which is not assigned to anyone
+        deny: true # deny attribute was added to resource in 5.0.0 version and it is better alternative than using non- used role for denying everything
       - uri: /app/*
-        roles:
-          - ONLY_APP_SUPERUSER # only most privileged user or just user role which is not assigned to anyone
+        deny: true
       - uri: /app/admin # this will allow access to admin page only to admin role
         roles:
           - ONLY_ADMIN
@@ -305,6 +309,29 @@ resources:
 
 If you have roles listed in some custom claim, please see [custom claim matching](#claim-matching)
 
+## Path normalization
+
+Path normalization is important security topics so please study what it is and how it applies to your use case.
+Specific and improved path normalization was introduced in 5.0.0, which is also breaking change from previous versions.
+Right now several configuration settings are related to path normalization:
+
+`--allow-escaped-slashes-path` - is by default `false` and disallows escaped slashes in path, so if present in request, it will be forbidden
+
+`--normalize-path` - property unescapes hex encoded characters (except slashes) and removes dot segments, used internally, e.g. in authorization resource rules etc..., please read RFC 3986
+
+`--normalize-path-upstream` - same as above but to path sent upstream
+
+`--merge-slashes` - property enables mergin of slashes in path, see RFC 3986
+
+`--merge-slashes-upstream` - same as above to path sent upstream
+
+`--path-escaped-slashes` - by default `false`, escape slashes in path
+
+`--path-escaped-slashes-upstream` - by default `false`, escape slashes in path sent upstream
+
+**IMPORTANT**: usually you want to use `--allow-escaped-slashes-path=false`, in special cases you might need to set it to `true`. In these special cases you usually will want to keep internal and upstream properties (e.g. `--normalize-path=true` and `--normalize-path-upstream=true`) with same bool value, because you want to match authorization rules on same path as you are sending upstream. There might be very rare cases when
+you need these properties to be different value, in these cases be please very careful and know what you are doing, test it thoroughly.
+
 ## Authentication flows
 
 You can use gatekeeper to protect APIs, frontend server applications, frontend client applications.
@@ -350,12 +377,13 @@ resources:
 
 **IMPORTANT**: please check [best practices](#resources-best-practices)
 
+`--enable-default-deny-strict` (recommended and from 5.0.0 default) - option blocks all requests (including valid token) unless
+specific path with requirements specified in resources (this option is by default false), this is convenient default, for production use please always define precise and explicit rules for your use case.
+
 `--enable-default-deny` - option blocks all requests without valid token on all basic HTTP methods,
 (DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, TRACE). **WARNING:** There are no additional requirements on
 the token, it isn't checked for some claims or roles, groups etc...(this is by default true)
 
-`--enable-default-deny-strict` (recommended) - option blocks all requests (including valid token) unless
-specific path with requirements specified in resources (this option is by default false)
 
 ## Upstream Host Proxy and OpenID Provider Proxy
 
@@ -626,7 +654,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:4.11.0
+  image: quay.io/gogatekeeper/gatekeeper:5.0.0
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -653,7 +681,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:4.11.0
+  image: quay.io/gogatekeeper/gatekeeper:5.0.0
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
@@ -984,7 +1012,7 @@ will successfully match
 }
 ```
 
-From version 4.11.0 it is possible to negate match by using `!` mark at the beginning of match regex.
+From version 4.11 it is possible to negate match by using `!` mark at the beginning of match regex.
 
 ```yaml
 match-claims:
