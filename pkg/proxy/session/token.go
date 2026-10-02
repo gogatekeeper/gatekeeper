@@ -503,7 +503,7 @@ func CompressToken(token string, pool *utils.LimitedBufferPool) (string, error) 
 		return "", apperrors.ErrTokenParts
 	}
 
-	info, err := base64.RawStdEncoding.DecodeString(parts[1])
+	info, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
 		return "", err
 	}
@@ -523,7 +523,7 @@ func CompressToken(token string, pool *utils.LimitedBufferPool) (string, error) 
 
 	gzWr.Close()
 
-	compInfo := base64.RawStdEncoding.EncodeToString(compBuffer.Bytes())
+	compInfo := base64.RawURLEncoding.EncodeToString(compBuffer.Bytes())
 
 	return fmt.Sprintf("%s.%s.%s", parts[0], compInfo, parts[2]), nil
 }
@@ -534,7 +534,7 @@ func DecompressToken(compressedToken string) (string, error) {
 		return "", apperrors.ErrTokenParts
 	}
 
-	info, err := base64.RawStdEncoding.DecodeString(parts[1])
+	info, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
 		return "", err
 	}
@@ -555,7 +555,7 @@ func DecompressToken(compressedToken string) (string, error) {
 
 	gzR.Close()
 
-	compInfo := base64.RawStdEncoding.EncodeToString(result)
+	compInfo := base64.RawURLEncoding.EncodeToString(result)
 
 	return fmt.Sprintf("%s.%s.%s", parts[0], compInfo, parts[2]), nil
 }
@@ -566,7 +566,7 @@ func EncryptAndCompressToken(token string, encryptionKey string, pool *utils.Lim
 		return "", apperrors.ErrTokenParts
 	}
 
-	info, err := base64.RawStdEncoding.DecodeString(parts[1])
+	info, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
 		return "", err
 	}
@@ -641,7 +641,7 @@ func DecryptAndDecompressToken(token string, encryptionKey string) (string, erro
 
 	gzR.Close()
 
-	info := base64.RawStdEncoding.EncodeToString(result)
+	info := base64.RawURLEncoding.EncodeToString(result)
 
 	return fmt.Sprintf("%s.%s.%s", compHeader, info, compSignature), nil
 }

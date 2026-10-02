@@ -152,3 +152,41 @@ func BenchmarkDecryptDecompressToken(b *testing.B) {
 		_, _ = session.DecryptAndDecompressToken(compressedToken, testsuite_test.TestEncryptionKey)
 	}
 }
+
+// nonASCIIClaimValue guarantees a '-'/'_' character in the payload's base64url
+// encoding, regardless of how many bytes precede it in the JSON claims: "oé" is
+// a multiple of 3 bytes, so the "x" separators are needed to shift each
+// occurrence to a different byte offset modulo 3, covering all three cases.
+const nonASCIIClaimValue = "oéxoéxoé"
+
+func TestCompressAndDecompressTokenWithNonASCIIClaims(t *testing.T) {
+	tokenGenerator := testsuite_test.NewTestToken("doesntmatter")
+	tokenGenerator.Claims.GivenName = nonASCIIClaimValue
+	token, err := tokenGenerator.GetToken()
+	require.NoError(t, err)
+
+	bufPool := utils.NewLimitedBufferPool(100)
+	compressedToken, err := session.CompressToken(token, bufPool)
+	assert.NotEmpty(t, compressedToken)
+	require.NoError(t, err)
+	decompressedToken, err := session.DecompressToken(compressedToken)
+	assert.NotEmpty(t, decompressedToken)
+	require.NoError(t, err)
+	assert.Equal(t, token, decompressedToken)
+}
+
+func TestCompressEncryptAndDecompressEncryptedTokenWithNonASCIIClaims(t *testing.T) {
+	tokenGenerator := testsuite_test.NewTestToken("doesntmatter")
+	tokenGenerator.Claims.GivenName = nonASCIIClaimValue
+	token, err := tokenGenerator.GetToken()
+	require.NoError(t, err)
+
+	bufPool := utils.NewLimitedBufferPool(100)
+	compressedToken, err := session.EncryptAndCompressToken(token, testsuite_test.TestEncryptionKey, bufPool)
+	assert.NotEmpty(t, compressedToken)
+	require.NoError(t, err)
+	decompressedToken, err := session.DecryptAndDecompressToken(compressedToken, testsuite_test.TestEncryptionKey)
+	assert.NotEmpty(t, decompressedToken)
+	require.NoError(t, err)
+	assert.Equal(t, token, decompressedToken)
+}
