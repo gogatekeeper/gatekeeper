@@ -69,18 +69,76 @@ func TestGetRefreshTokenFromCookie(t *testing.T) {
 }
 
 func TestCompressAndDecompressToken(t *testing.T) {
-	tokenGenerator := testsuite_test.NewTestToken("doesntmatter")
-	token, err := tokenGenerator.GetToken()
-	require.NoError(t, err)
+	const nonASCIIClaimValue = "oéxoéxoé"
 
-	bufPool := utils.NewLimitedBufferPool(100)
-	compressedToken, err := session.CompressToken(token, bufPool)
-	assert.NotEmpty(t, compressedToken)
-	require.NoError(t, err)
-	decompressedToken, err := session.DecompressToken(compressedToken)
-	assert.NotEmpty(t, decompressedToken)
-	require.NoError(t, err)
-	assert.Equal(t, token, decompressedToken)
+	tests := []struct {
+		Name       string
+		NameClaim  string
+		Encryption bool
+	}{
+		{
+			Name:       "CompressStandardToken",
+			NameClaim:  "",
+			Encryption: false,
+		},
+		{
+			Name:       "CompressTokenWithNONASCIISpecialClaim",
+			NameClaim:  nonASCIIClaimValue,
+			Encryption: false,
+		},
+		{
+			Name:       "CompressWithEncryptionStandardToken",
+			NameClaim:  "",
+			Encryption: true,
+		},
+		{
+			Name:       "CompressWithEncryptionTokenWithNONASCIISpecialClaim",
+			NameClaim:  nonASCIIClaimValue,
+			Encryption: true,
+		},
+	}
+
+	for _, testCase := range tests {
+		t.Run(testCase.Name, func(t *testing.T) {
+			tokenGenerator := testsuite_test.NewTestToken("doesntmatter")
+			tokenGenerator.Claims.GivenName = testCase.NameClaim
+			token, err := tokenGenerator.GetToken()
+			require.NoError(t, err)
+
+			var (
+				compressedToken   string
+				decompressedToken string
+			)
+
+			bufPool := utils.NewLimitedBufferPool(100)
+
+			if testCase.Encryption {
+				compressedToken, err = session.EncryptAndCompressToken(
+					token,
+					testsuite_test.TestEncryptionKey,
+					bufPool,
+				)
+			} else {
+				compressedToken, err = session.CompressToken(token, bufPool)
+			}
+
+			assert.NotEmpty(t, compressedToken)
+			require.NoError(t, err)
+
+			if testCase.Encryption {
+				decompressedToken, err = session.DecryptAndDecompressToken(
+					compressedToken,
+					testsuite_test.TestEncryptionKey,
+				)
+			} else {
+				decompressedToken, err = session.DecompressToken(compressedToken)
+			}
+
+			assert.NotEmpty(t, decompressedToken)
+			require.NoError(t, err)
+			assert.Equal(t, token, decompressedToken)
+		})
+	}
 }
 
 func BenchmarkCompressToken(b *testing.B) {
@@ -110,21 +168,6 @@ func BenchmarkDecompressToken(b *testing.B) {
 	}
 }
 
-func TestCompressEncryptAndDecompressEncryptedToken(t *testing.T) {
-	tokenGenerator := testsuite_test.NewTestToken("doesntmatter")
-	token, err := tokenGenerator.GetToken()
-	require.NoError(t, err)
-
-	bufPool := utils.NewLimitedBufferPool(100)
-	compressedToken, err := session.EncryptAndCompressToken(token, testsuite_test.TestEncryptionKey, bufPool)
-	assert.NotEmpty(t, compressedToken)
-	require.NoError(t, err)
-	decompressedToken, err := session.DecryptAndDecompressToken(compressedToken, testsuite_test.TestEncryptionKey)
-	assert.NotEmpty(t, decompressedToken)
-	require.NoError(t, err)
-	assert.Equal(t, token, decompressedToken)
-}
-
 func BenchmarkEncryptCompressToken(b *testing.B) {
 	tokenGenerator := testsuite_test.NewTestToken("doesntmatter")
 	token, err := tokenGenerator.GetToken()
@@ -151,42 +194,4 @@ func BenchmarkDecryptDecompressToken(b *testing.B) {
 	for b.Loop() {
 		_, _ = session.DecryptAndDecompressToken(compressedToken, testsuite_test.TestEncryptionKey)
 	}
-}
-
-// nonASCIIClaimValue guarantees a '-'/'_' character in the payload's base64url
-// encoding, regardless of how many bytes precede it in the JSON claims: "oé" is
-// a multiple of 3 bytes, so the "x" separators are needed to shift each
-// occurrence to a different byte offset modulo 3, covering all three cases.
-const nonASCIIClaimValue = "oéxoéxoé"
-
-func TestCompressAndDecompressTokenWithNonASCIIClaims(t *testing.T) {
-	tokenGenerator := testsuite_test.NewTestToken("doesntmatter")
-	tokenGenerator.Claims.GivenName = nonASCIIClaimValue
-	token, err := tokenGenerator.GetToken()
-	require.NoError(t, err)
-
-	bufPool := utils.NewLimitedBufferPool(100)
-	compressedToken, err := session.CompressToken(token, bufPool)
-	assert.NotEmpty(t, compressedToken)
-	require.NoError(t, err)
-	decompressedToken, err := session.DecompressToken(compressedToken)
-	assert.NotEmpty(t, decompressedToken)
-	require.NoError(t, err)
-	assert.Equal(t, token, decompressedToken)
-}
-
-func TestCompressEncryptAndDecompressEncryptedTokenWithNonASCIIClaims(t *testing.T) {
-	tokenGenerator := testsuite_test.NewTestToken("doesntmatter")
-	tokenGenerator.Claims.GivenName = nonASCIIClaimValue
-	token, err := tokenGenerator.GetToken()
-	require.NoError(t, err)
-
-	bufPool := utils.NewLimitedBufferPool(100)
-	compressedToken, err := session.EncryptAndCompressToken(token, testsuite_test.TestEncryptionKey, bufPool)
-	assert.NotEmpty(t, compressedToken)
-	require.NoError(t, err)
-	decompressedToken, err := session.DecryptAndDecompressToken(compressedToken, testsuite_test.TestEncryptionKey)
-	assert.NotEmpty(t, decompressedToken)
-	require.NoError(t, err)
-	assert.Equal(t, token, decompressedToken)
 }
