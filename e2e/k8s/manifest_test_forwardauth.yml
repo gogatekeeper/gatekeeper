@@ -2438,7 +2438,7 @@ spec:
     spec:
       containers:
       - name: keycloak
-        image: quay.io/keycloak/keycloak:26.2.3
+        image: quay.io/keycloak/keycloak:26.8.0
         command:
         - /opt/keycloak/bin/kc.sh
         - start-dev
