@@ -164,7 +164,7 @@ jobs:
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v7
       with:
-        version: v2.13.2
+        version: v2.14.0
         args: "--timeout=3m"
         github-token: "${{ secrets.GITHUB_TOKEN }}"
     - name: Check Golang sources with Aligo
