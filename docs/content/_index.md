@@ -654,7 +654,7 @@ in Keycloak, providing granular role controls over issue tokens.
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:5.0.0
+  image: quay.io/gogatekeeper/gatekeeper:5.0.1
   args:
   - --enable-forwarding=true
   - --forwarding-username=projecta
@@ -681,7 +681,7 @@ Example setup client credentials grant:
 
 ``` yaml
 - name: gatekeeper
-  image: quay.io/gogatekeeper/gatekeeper:5.0.0
+  image: quay.io/gogatekeeper/gatekeeper:5.0.1
   args:
   - --enable-forwarding=true
   - --forwarding-domains=projecta.svc.cluster.local
