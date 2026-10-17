@@ -1032,30 +1032,30 @@ func NormalizePath(
 	return path, nil
 }
 
-func ReplaceDuplicateChar(path string, replacedChar byte) string {
+func ReplaceDuplicateChar(path string, replacedChar rune) string {
 	var out strings.Builder
 	out.Grow(len(path))
 
 	tmp := 0
 
-	for idx := range path {
-		switch path[idx] {
+	for _, runeEl := range path {
+		switch runeEl {
 		case replacedChar:
 			tmp++
 			continue
 		default:
 			if tmp > 0 {
-				out.WriteByte(replacedChar)
+				out.WriteRune(replacedChar)
 
 				tmp = 0
 			}
 
-			out.WriteByte(path[idx])
+			out.WriteRune(runeEl)
 		}
 	}
 
 	if tmp > 0 {
-		out.WriteByte(replacedChar)
+		out.WriteRune(replacedChar)
 	}
 
 	return out.String()
