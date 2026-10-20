@@ -770,14 +770,6 @@ func BenchmarkRemovePathDotSegments(bench *testing.B) {
 	}
 }
 
-func BenchmarkReplaceDuplicateChar(bench *testing.B) {
-	data := "/a/../b/./../c/d/../f/g/h"
-
-	for bench.Loop() {
-		_ = utils.ReplaceDuplicateChar(data, '/')
-	}
-}
-
 func FuzzRemovePathDotSegment(f *testing.F) {
 	for range 1000 {
 		path, err := utils.GetRandomString(50, utils.DotPathCorpus())
@@ -927,7 +919,7 @@ func TestRemovePathDotSegment(t *testing.T) {
 func TestReplaceDuplicateChar(t *testing.T) {
 	tests := []struct {
 		Name           string
-		ReplaceChar    rune
+		ReplaceChar    byte
 		Input          string
 		ExpectedOutput string
 	}{
@@ -988,7 +980,7 @@ func TestReplaceDuplicateChar(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		output := utils.ReplaceDuplicateChar(testCase.Input, testCase.ReplaceChar)
+		output := utils.ReplaceDuplicateByte(testCase.Input, testCase.ReplaceChar)
 		assert.Equal(
 			t,
 			testCase.ExpectedOutput,

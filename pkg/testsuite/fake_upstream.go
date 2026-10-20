@@ -14,12 +14,13 @@ import (
 
 // FakeUpstreamResponse is the response from fake upstream.
 type FakeUpstreamResponse struct {
-	URI     string      `json:"uri"`
-	RawURI  string      `json:"raw_uri"`
-	Method  string      `json:"method"`
-	Address string      `json:"address"`
-	Headers http.Header `json:"headers"`
-	Body    string      `json:"body"`
+	URI        string      `json:"uri"`
+	RawURI     string      `json:"raw_uri"`
+	RequestURI string      `json:"request_uri"`
+	Method     string      `json:"method"`
+	Address    string      `json:"address"`
+	Headers    http.Header `json:"headers"`
+	Body       string      `json:"body"`
 }
 
 // FakeUpstreamService acts as a fake upstream service, returns the headers and request.
@@ -112,12 +113,13 @@ func (f *FakeUpstreamService) ServeHTTP(wrt http.ResponseWriter, req *http.Reque
 		}
 
 		content, err := json.Marshal(&FakeUpstreamResponse{
-			URI:     uri,
-			RawURI:  rawURI,
-			Method:  req.Method,
-			Address: req.RemoteAddr,
-			Headers: req.Header,
-			Body:    string(reqBody),
+			URI:        uri,
+			RawURI:     rawURI,
+			RequestURI: req.RequestURI,
+			Method:     req.Method,
+			Address:    req.RemoteAddr,
+			Headers:    req.Header,
+			Body:       string(reqBody),
 		})
 		if err != nil {
 			wrt.WriteHeader(http.StatusInternalServerError)

@@ -1016,7 +1016,7 @@ func NormalizePath(
 		}
 
 		if mergeSlashes {
-			path = ReplaceDuplicateChar(path, '/')
+			path = ReplaceDuplicateByte(path, '/')
 		}
 
 		if normalizePath {
@@ -1032,31 +1032,30 @@ func NormalizePath(
 	return path, nil
 }
 
-func ReplaceDuplicateChar(path string, replacedChar rune) string {
-	var out strings.Builder
-	out.Grow(len(path))
+func ReplaceDuplicateByte(path string, replacedChar byte) string {
+	out := make([]byte, 0, len(path))
 
 	tmp := 0
 
-	for _, runeEl := range path {
-		switch runeEl {
+	for idx := range len(path) {
+		switch path[idx] {
 		case replacedChar:
 			tmp++
 			continue
 		default:
 			if tmp > 0 {
-				out.WriteRune(replacedChar)
+				out = append(out, replacedChar)
 
 				tmp = 0
 			}
 
-			out.WriteRune(runeEl)
+			out = append(out, path[idx])
 		}
 	}
 
 	if tmp > 0 {
-		out.WriteRune(replacedChar)
+		out = append(out, replacedChar)
 	}
 
-	return out.String()
+	return string(out)
 }
