@@ -592,6 +592,7 @@ func (r *OauthProxy) CreateReverseProxy() error {
 		r.Config.CompressTokenOnlyAuthScheme,
 		r.Config.EnableIDTokenClaims,
 		r.Config.EnableUserInfoClaims,
+		r.Config.EnableIDTokenCookie,
 		compressTokenPool,
 	)
 

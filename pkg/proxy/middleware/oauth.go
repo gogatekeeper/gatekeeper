@@ -51,6 +51,7 @@ func AuthenticationMiddleware(
 	compressTokenOnlyAuthScheme string,
 	enableIDTokenClaims bool,
 	enableUserInfoClaims bool,
+	enableIDTokenCookie bool,
 	compressTokenPool *utils.LimitedBufferPool,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -131,7 +132,8 @@ func AuthenticationMiddleware(
 					return
 				}
 
-				if !strings.Contains(err.Error(), "token is expired") {
+				_, ok := errors.AsType[*oidc3.TokenExpiredError](err)
+				if !ok {
 					lLog.Error(
 						apperrors.ErrAccTokenVerifyFailure.Error(),
 						zap.Error(err),
@@ -232,11 +234,12 @@ func AuthenticationMiddleware(
 					zap.String("refresh token", refresh),
 				)
 
-				_, newRawAccToken, newRefreshToken, accessExpiresAt, refreshExpiresIn, err := utils.GetRefreshedToken(
+				_, newRawAccToken, newIDToken, newRefreshToken, accessExpiresAt, refreshExpiresIn, err := utils.GetRefreshedToken(
 					ctx,
 					conf,
 					httpClient,
 					refresh,
+					enableIDTokenCookie,
 				)
 				if err != nil {
 					switch {
@@ -266,18 +269,8 @@ func AuthenticationMiddleware(
 					zap.String("new refresh token", newRefreshToken),
 				)
 
-				accessExpiresIn := time.Until(accessExpiresAt)
-
-				lLog.Info(
-					"injecting the refreshed access token cookie",
-					zap.Duration("cookie_refresh_expires_in", refreshExpiresIn),
-					zap.Duration("cookie_access_expires_in", refreshExpiresIn),
-					zap.Duration("access_expires_in", accessExpiresIn),
-				)
-
-				accessToken := newRawAccToken
 				// update the with the new access token and inject into the context
-				newUser, err := session.ExtractIdentity(accessToken)
+				newUser, err := session.ExtractIdentity(newRawAccToken)
 				if err != nil {
 					lLog.Error(err.Error())
 					accessForbidden(wrt, req)
@@ -289,78 +282,44 @@ func AuthenticationMiddleware(
 					enableCompressToken = false
 				}
 
-				if enableEncryptedToken || forceEncryptedCookie {
-					if enableCompressToken {
-						accessToken, err = session.EncryptAndCompressToken(accessToken, encryptionKey, compressTokenPool)
-						if err != nil {
-							lLog.Error(
-								apperrors.ErrEncryptAndCompressAccToken.Error(),
-								zap.Error(err),
-							)
-							accessForbidden(wrt, req)
+				accessToken, idToken, encryptedRefreshToken, err := EncryptAndCompressTokens(
+					newRawAccToken,
+					newIDToken,
+					newRefreshToken,
+					encryptionKey,
+					compressTokenPool,
+					enableEncryptedToken,
+					forceEncryptedCookie,
+					enableCompressToken,
+					enableIDTokenCookie,
+				)
+				if err != nil {
+					lLog.Error(err.Error())
+					accessForbidden(wrt, req)
 
-							return
-						}
-					} else {
-						accessToken, err = encryption.EncodeText(accessToken, encryptionKey)
-						if err != nil {
-							lLog.Error(
-								apperrors.ErrEncryptAccToken.Error(),
-								zap.Error(err),
-							)
-							accessForbidden(wrt, req)
-
-							return
-						}
-					}
-				} else {
-					if enableCompressToken {
-						accessToken, err = session.CompressToken(accessToken, compressTokenPool)
-						if err != nil {
-							lLog.Error(
-								apperrors.ErrCompressAccessToken.Error(),
-								zap.Error(err),
-							)
-							accessForbidden(wrt, req)
-
-							return
-						}
-					}
+					return
 				}
+
+				accessExpiresIn := time.Until(accessExpiresAt)
+
+				lLog.Info(
+					"injecting the refreshed access token cookie",
+					zap.Duration("cookie_refresh_expires_in", refreshExpiresIn),
+					zap.Duration("cookie_access_expires_in", refreshExpiresIn),
+					zap.Duration("access_expires_in", accessExpiresIn),
+				)
 
 				// step: inject the refreshed access token
 				cookMgr.DropAccessTokenCookie(req.WithContext(ctx), wrt, accessToken, refreshExpiresIn)
+
+				if enableIDTokenCookie {
+					cookMgr.DropIDTokenCookie(req.WithContext(ctx), wrt, idToken, refreshExpiresIn)
+				}
 
 				lLog.Debug(
 					"renew refresh cookie with new refresh token",
 					zap.Duration("refresh_expires_in", refreshExpiresIn),
 				)
-
-				var encryptedRefreshToken string
-
-				if enableCompressToken {
-					encryptedRefreshToken, err = session.EncryptAndCompressToken(newRefreshToken, encryptionKey, compressTokenPool)
-					if err != nil {
-						lLog.Error(
-							apperrors.ErrEncryptRefreshToken.Error(),
-							zap.Error(err),
-						)
-						wrt.WriteHeader(http.StatusInternalServerError)
-
-						return
-					}
-				} else {
-					encryptedRefreshToken, err = encryption.EncodeText(newRefreshToken, encryptionKey)
-					if err != nil {
-						lLog.Error(
-							apperrors.ErrEncryptRefreshToken.Error(),
-							zap.Error(err),
-						)
-						wrt.WriteHeader(http.StatusInternalServerError)
-
-						return
-					}
-				}
 
 				if store != nil {
 					go func(ctx context.Context, id string, newID string, encrypted string) {
@@ -586,4 +545,93 @@ func NoRedirectToAuthorizationMiddleware(
 			next.ServeHTTP(wrt, req)
 		})
 	}
+}
+
+//nolint:cyclop
+func EncryptAndCompressTokens(
+	newAccessToken string,
+	newIDToken string,
+	newRefreshToken string,
+	encryptionKey string,
+	compressTokenPool *utils.LimitedBufferPool,
+	enableEncryptedToken bool,
+	forceEncryptedCookie bool,
+	enableCompressToken bool,
+	enableIDTokenCookie bool,
+) (string, string, string, error) {
+	var (
+		accessToken  string
+		idToken      string
+		err          error
+		refreshToken string
+	)
+
+	encrypt := enableEncryptedToken || forceEncryptedCookie
+	encryptAndCompress := enableCompressToken && encrypt
+	encryptOnly := !enableCompressToken && encrypt
+	compressOnly := enableCompressToken && !encrypt
+
+	switch {
+	case encryptAndCompress:
+		accessToken, err = session.EncryptAndCompressToken(newAccessToken, encryptionKey, compressTokenPool)
+		if err != nil {
+			err = errors.Join(apperrors.ErrEncryptAndCompressAccToken, err)
+			return "", "", "", err
+		}
+
+		if enableIDTokenCookie {
+			idToken, err = session.EncryptAndCompressToken(newIDToken, encryptionKey, compressTokenPool)
+			if err != nil {
+				err = errors.Join(apperrors.ErrEncryptAndCompressIDToken, err)
+				return "", "", "", err
+			}
+		}
+	case encryptOnly:
+		accessToken, err = encryption.EncodeText(newAccessToken, encryptionKey)
+		if err != nil {
+			err = errors.Join(apperrors.ErrEncryptAccToken, err)
+			return "", "", "", err
+		}
+
+		if enableIDTokenCookie {
+			idToken, err = encryption.EncodeText(newIDToken, encryptionKey)
+			if err != nil {
+				err = errors.Join(apperrors.ErrEncryptAccToken, err)
+				return "", "", "", err
+			}
+		}
+	case compressOnly:
+		accessToken, err = session.CompressToken(newAccessToken, compressTokenPool)
+		if err != nil {
+			err = errors.Join(apperrors.ErrCompressAccessToken, err)
+			return "", "", "", err
+		}
+
+		if enableIDTokenCookie {
+			idToken, err = session.CompressToken(newIDToken, compressTokenPool)
+			if err != nil {
+				err = errors.Join(apperrors.ErrCompressAccessToken, err)
+				return "", "", "", err
+			}
+		}
+	default:
+		accessToken = newAccessToken
+		idToken = newIDToken
+	}
+
+	if enableCompressToken {
+		refreshToken, err = session.EncryptAndCompressToken(newRefreshToken, encryptionKey, compressTokenPool)
+		if err != nil {
+			err = errors.Join(apperrors.ErrEncryptRefreshToken, err)
+			return "", "", "", err
+		}
+	} else {
+		refreshToken, err = encryption.EncodeText(newRefreshToken, encryptionKey)
+		if err != nil {
+			err = errors.Join(apperrors.ErrEncryptRefreshToken, err)
+			return "", "", "", err
+		}
+	}
+
+	return accessToken, idToken, refreshToken, nil
 }

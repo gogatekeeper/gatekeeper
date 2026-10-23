@@ -252,7 +252,11 @@ var _ = Describe("Code Flow login/logout", func() {
 			Label("code_flow"),
 			Label("basic_case"),
 			func(_ context.Context) {
-				var err error
+				var (
+					err               error
+					accessCookieLogin string
+					idCookieLogin     string
+				)
 
 				rClient := resty.New()
 				rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
@@ -266,11 +270,13 @@ var _ = Describe("Code Flow login/logout", func() {
 
 				cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
 
-				var accessCookieLogin string
-
 				for _, cook := range cookiesLogin {
 					if cook.Name == constant.AccessCookie {
 						accessCookieLogin = cook.Value
+					}
+
+					if cook.Name == constant.IDTokenCookie {
+						idCookieLogin = cook.Value
 					}
 				}
 
@@ -288,12 +294,17 @@ var _ = Describe("Code Flow login/logout", func() {
 
 				var (
 					accessCookieAfterRefresh string
+					idCookieAfterRefresh     string
 					testCookie               string
 				)
 
 				for _, cook := range cookiesAfterRefresh {
 					if cook.Name == constant.AccessCookie {
 						accessCookieAfterRefresh = cook.Value
+					}
+
+					if cook.Name == constant.IDTokenCookie {
+						idCookieAfterRefresh = cook.Value
 					}
 
 					if cook.Name == testCookieValue {
@@ -305,13 +316,17 @@ var _ = Describe("Code Flow login/logout", func() {
 
 				_, err = jwt.ParseSigned(accessCookieAfterRefresh, constant.SignatureAlgs[:])
 				Expect(err).NotTo(HaveOccurred())
+
+				_, err = jwt.ParseSigned(idCookieAfterRefresh, constant.SignatureAlgs[:])
+				Expect(err).NotTo(HaveOccurred())
 				Expect(accessCookieLogin).NotTo(Equal(accessCookieAfterRefresh))
+				Expect(idCookieLogin).NotTo(Equal(idCookieAfterRefresh))
 
 				resp, err = rClient.R().Get(proxyAddress + anyURI)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
 				body = resp.Body()
-				By(string(body))
+
 				Expect(resp.StatusCode()).To(Equal(http.StatusOK))
 				Expect(strings.Contains(string(body), anyURI)).To(BeTrue())
 				Expect(body).To(ContainSubstring(`"X-Auth-Email-Verified":["true"]`))

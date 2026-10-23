@@ -478,14 +478,18 @@ func GetRefreshedToken(
 	conf *oauth2.Config,
 	httpClient *http.Client,
 	oldRefreshToken string,
-) (jwt.JSONWebToken, string, string, time.Time, time.Duration, error) {
+	enableIDTokenCookie bool,
+) (jwt.JSONWebToken, string, string, string, time.Time, time.Duration, error) {
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, httpClient)
 	start := time.Now()
+
+	var idTokenRaw string
 
 	tkn, err := conf.TokenSource(ctx, &oauth2.Token{RefreshToken: oldRefreshToken}).Token()
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid_grant") {
 			return jwt.JSONWebToken{},
+				"",
 				"",
 				"",
 				time.Time{},
@@ -494,6 +498,7 @@ func GetRefreshedToken(
 		}
 
 		return jwt.JSONWebToken{},
+			"",
 			"",
 			"",
 			time.Time{},
@@ -511,14 +516,42 @@ func GetRefreshedToken(
 		return jwt.JSONWebToken{},
 			"",
 			"",
+			"",
 			time.Time{},
 			time.Duration(0),
 			err
 	}
 
+	if enableIDTokenCookie {
+		var ok bool
+
+		idTokenRaw, ok = tkn.Extra("id_token").(string)
+		if !ok {
+			return jwt.JSONWebToken{},
+				"",
+				"",
+				"",
+				time.Time{},
+				time.Duration(0),
+				apperrors.ErrAssertionFailed
+		}
+
+		_, err = jwt.ParseSigned(idTokenRaw, constant.SignatureAlgs[:])
+		if err != nil {
+			return jwt.JSONWebToken{},
+				"",
+				"",
+				"",
+				time.Time{},
+				time.Duration(0),
+				err
+		}
+	}
+
 	refreshToken, err := jwt.ParseSigned(tkn.RefreshToken, constant.SignatureAlgs[:])
 	if err != nil {
 		return jwt.JSONWebToken{},
+			"",
 			"",
 			"",
 			time.Time{},
@@ -533,6 +566,7 @@ func GetRefreshedToken(
 		return jwt.JSONWebToken{},
 			"",
 			"",
+			"",
 			time.Time{},
 			time.Duration(0),
 			err
@@ -545,6 +579,7 @@ func GetRefreshedToken(
 		return jwt.JSONWebToken{},
 			"",
 			"",
+			"",
 			time.Time{},
 			time.Duration(0),
 			err
@@ -554,6 +589,7 @@ func GetRefreshedToken(
 
 	return *token,
 		tkn.AccessToken,
+		idTokenRaw,
 		tkn.RefreshToken,
 		stdClaims.Expiry.Time(),
 		refreshExpiresIn,
@@ -647,23 +683,24 @@ func VerifyOIDCTokens(
 	skipIssuerCheck bool,
 ) (*oidc3.IDToken, *oidc3.IDToken, error) {
 	var (
-		oIDToken  *oidc3.IDToken
 		oAccToken *oidc3.IDToken
 		err       error
 	)
 
-	oIDToken, err = VerifyToken(ctx, provider, rawIDToken, clientID, false, false)
-	if err != nil {
+	oIDToken, idErr := VerifyToken(ctx, provider, rawIDToken, clientID, false, false)
+
+	_, ok := errors.AsType[*oidc3.TokenExpiredError](idErr)
+	if idErr != nil && !ok {
 		return nil, nil, errors.Join(apperrors.ErrVerifyIDToken, err)
 	}
 
 	// check https://openid.net/specs/openid-connect-core-1_0.html#ImplicitIDToken - at_hash
 	// keycloak seems doesnt support yet at_hash
 	// https://stackoverflow.com/questions/60818373/configure-keycloak-to-include-an-at-hash-claim-in-the-id-token
-	if oIDToken.AccessTokenHash != "" {
+	if oIDToken != nil && oIDToken.AccessTokenHash != "" {
 		err = oIDToken.VerifyAccessToken(rawAccessToken)
 		if err != nil {
-			return nil, nil, errors.Join(apperrors.ErrAccTokenVerifyFailure, err)
+			return nil, nil, errors.Join(apperrors.ErrAccTokenVerifyFailure, err, idErr)
 		}
 	}
 
@@ -676,7 +713,7 @@ func VerifyOIDCTokens(
 		skipIssuerCheck,
 	)
 	if err != nil {
-		return nil, nil, errors.Join(apperrors.ErrAccTokenVerifyFailure, err)
+		return nil, nil, errors.Join(apperrors.ErrAccTokenVerifyFailure, err, idErr)
 	}
 
 	return oAccToken, oIDToken, nil
