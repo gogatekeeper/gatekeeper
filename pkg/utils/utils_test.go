@@ -757,6 +757,8 @@ func BenchmarkNormalizePath(bench *testing.B) {
 			false,
 			true,
 			true,
+			false,
+			false,
 			data,
 		)
 	}
@@ -1008,7 +1010,7 @@ func FuzzNormalizePath(f *testing.F) {
 	}
 
 	f.Fuzz(func(t *testing.T, path string) {
-		_, err := utils.NormalizePath(false, true, true, path)
+		_, err := utils.NormalizePath(false, true, true, false, false, path)
 		if err != nil {
 			_, ok := errors.AsType[utils.UnescapeError](err)
 			if !ok {
@@ -1016,4 +1018,161 @@ func FuzzNormalizePath(f *testing.F) {
 			}
 		}
 	})
+}
+
+func TestNormalizePath(t *testing.T) {
+	tests := []struct {
+		Name                    string
+		NormalizePath           bool
+		NormalizationPathParams bool
+		StripPathParams         bool
+		PathEscapedSlashes      bool
+		Path                    string
+		ExpectedOutput          string
+	}{
+		{
+			Name:                    "NormalizeKeepEscapedSlashes",
+			NormalizePath:           true,
+			NormalizationPathParams: false,
+			StripPathParams:         false,
+			PathEscapedSlashes:      true,
+			Path:                    "/gtweb%2F%2e.%2F..%2Fpublic///signin.html",
+			ExpectedOutput:          "/gtweb%2F..%2F..%2Fpublic/signin.html",
+		},
+		{
+			Name:                    "Normalize",
+			NormalizePath:           true,
+			NormalizationPathParams: false,
+			StripPathParams:         false,
+			Path:                    "/gtweb%2F%2e.%2F..%2Fpublic///signin.html",
+			ExpectedOutput:          "/public/signin.html",
+		},
+		{
+			Name:                    "NormalizeWithSlashesOnly",
+			NormalizePath:           false,
+			NormalizationPathParams: false,
+			StripPathParams:         false,
+			Path:                    "/gtweb%2F%2e.%2F..%2Fpublic///signin.html",
+			ExpectedOutput:          "/gtweb/%2e./../public/signin.html",
+		},
+		{
+			Name:                    "EncodedSlashInParam",
+			NormalizePath:           true,
+			NormalizationPathParams: true,
+			StripPathParams:         true,
+			Path:                    "/gtweb;x%2F..%2F..%2Fpublic/signin.html",
+			ExpectedOutput:          "/gtweb/signin.html",
+		},
+		{
+			Name:                    "EncodedTwodotsEncodedSlashInParam",
+			NormalizePath:           true,
+			NormalizationPathParams: false,
+			StripPathParams:         true,
+			Path:                    "/private/%2e%2e;/gtweb;x%2F..%2F..%2Fpublic/signin.html",
+			ExpectedOutput:          "/gtweb/signin.html",
+		},
+		{
+			Name:                    "EncodedTwodotsEncodedSlashInParam",
+			NormalizePath:           true,
+			NormalizationPathParams: true,
+			StripPathParams:         false,
+			Path:                    "/private/%2e%2e;/gtweb;x%2F..%2F..%2Fpublic/signin.html",
+			ExpectedOutput:          "/gtweb;x%2F..%2F..%2Fpublic/signin.html",
+		},
+		{
+			Name:                    "EncodedSemicolonKept",
+			NormalizePath:           true,
+			NormalizationPathParams: false,
+			StripPathParams:         false,
+			Path:                    "/gtweb%3Bx/a",
+			ExpectedOutput:          "/gtweb;x/a",
+		},
+		{
+			Name:                    "WithoutStripEmptyPathParamSegmentMerged",
+			NormalizePath:           true,
+			NormalizationPathParams: true,
+			StripPathParams:         false,
+			Path:                    "/;/gtweb",
+			ExpectedOutput:          "/gtweb",
+		},
+		{
+			Name:                    "WithStripEmptyPathParamSegmentMerged",
+			NormalizePath:           true,
+			NormalizationPathParams: false,
+			StripPathParams:         true,
+			Path:                    "/;/gtweb",
+			ExpectedOutput:          "/gtweb",
+		},
+		{
+			Name:                    "WithoutStripEmptyPathParamOneCharSegmentMerged",
+			NormalizePath:           true,
+			NormalizationPathParams: true,
+			StripPathParams:         false,
+			Path:                    "/;x/gtweb",
+			ExpectedOutput:          "/gtweb",
+		},
+		{
+			Name:                    "WithStripEmptyPathParamOneCharSegmentMerged",
+			NormalizePath:           true,
+			NormalizationPathParams: false,
+			StripPathParams:         true,
+			Path:                    "/;x/gtweb",
+			ExpectedOutput:          "/gtweb",
+		},
+		{
+			Name:                    "WithStripEmptyPathParamDotSegmentMerged",
+			NormalizePath:           true,
+			NormalizationPathParams: false,
+			StripPathParams:         true,
+			Path:                    "/.;x/gtweb",
+			ExpectedOutput:          "/gtweb",
+		},
+		{
+			Name:                    "WithStripEmptyPathParamTwoDotSegmentMerged",
+			NormalizePath:           true,
+			NormalizationPathParams: false,
+			StripPathParams:         true,
+			Path:                    "/..;x/gtweb",
+			ExpectedOutput:          "/gtweb",
+		},
+		{
+			Name:                    "WithoutStripEmptyPathParamDotSegmentMerged",
+			NormalizePath:           true,
+			NormalizationPathParams: true,
+			StripPathParams:         false,
+			Path:                    "/.;x/gtweb",
+			ExpectedOutput:          "/gtweb",
+		},
+		{
+			Name:                    "WithoutStripEmptyPathParamTwoDotSegmentMerged",
+			NormalizePath:           true,
+			NormalizationPathParams: true,
+			StripPathParams:         false,
+			Path:                    "/.;x/gtweb",
+			ExpectedOutput:          "/gtweb",
+		},
+		{
+			Name:                    "WithoutNormalizePath",
+			NormalizePath:           false,
+			NormalizationPathParams: false,
+			StripPathParams:         true,
+			Path:                    "/app;jsessionid=X;test=val/admin",
+			ExpectedOutput:          "/app/admin",
+		},
+	}
+
+	for _, testCase := range tests {
+		t.Run(testCase.Name, func(t *testing.T) {
+			output, err := utils.NormalizePath(
+				testCase.PathEscapedSlashes,
+				true,
+				testCase.NormalizePath,
+				testCase.NormalizationPathParams,
+				testCase.StripPathParams,
+				testCase.Path,
+			)
+			require.NoError(t, err)
+			require.Equal(t, testCase.ExpectedOutput, output)
+		})
+	}
 }

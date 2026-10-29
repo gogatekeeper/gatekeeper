@@ -350,6 +350,10 @@ func (r *OauthProxy) useDefaultStack(
 		r.Config.PathEscapedSlashes,
 		r.Config.PathEscapedSlashesUpstream,
 		r.Config.AllowEscapedSlashesPath,
+		r.Config.NormalizationPathParams,
+		r.Config.StripPathParams,
+		r.Config.NormalizationPathParamsUpstream,
+		r.Config.StripPathParamsUpstream,
 		accessForbidden,
 	))
 
