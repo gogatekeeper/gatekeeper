@@ -548,3 +548,336 @@ var _ = Describe("Code Flow login/logout all normalization enabled", func() {
 		)
 	})
 })
+
+var _ = Describe(
+	"Code Flow login/logout path parameters, standard normalization + strip path +normalize upstream path",
+	func() {
+		var (
+			portNum      string
+			proxyAddress string
+			server       *http.Server
+		)
+
+		errGroup, _ := errgroup.WithContext(context.Background())
+
+		AfterEach(func() {
+			if server != nil {
+				err := server.Shutdown(context.Background())
+				Expect(err).NotTo(HaveOccurred())
+			}
+
+			if errGroup != nil {
+				err := errGroup.Wait()
+				Expect(err).NotTo(HaveOccurred())
+			}
+		})
+
+		BeforeEach(func() {
+			var (
+				err             error
+				upstreamSvcPort string
+			)
+
+			server, upstreamSvcPort = startAndWaitTestUpstream(errGroup, false, false, false)
+			portNum, err = generateRandomPort()
+			Expect(err).NotTo(HaveOccurred())
+
+			proxyAddress = localURI + portNum
+
+			proxyArgs := []string{
+				"--discovery-url=" + idpRealmURI,
+				"--openid-provider-timeout=300s",
+				"--tls-openid-provider-ca-certificate=" + tlsCaCertificate,
+				"--tls-openid-provider-client-certificate=" + tlsCertificate,
+				"--tls-openid-provider-client-private-key=" + tlsPrivateKey,
+				"--listen=" + allInterfaces + portNum,
+				"--client-id=" + testClient,
+				"--client-secret=" + testClientSecret,
+				"--upstream-url=" + localURI + upstreamSvcPort,
+				"--no-redirects=false",
+				"--skip-access-token-clientid-check=true",
+				"--skip-access-token-issuer-check=true",
+				"--enable-idp-session-check=false",
+				"--enable-default-deny=false",
+				"--enable-default-deny-strict=true",
+				"--resources=uri=/two|roles=uma_authorization,offline_access",
+				"--resources=uri=/Ärger|roles=uma_authorization,offline_access",
+				// /first/param;vava=%2e%2Fcar;shoes=lala/param1;tata=stand/;%2e%2F/super.html
+				"--resources=uri=/first/param/param1/super.html|roles=uma_authorization,offline_access",
+				"--resources=uri=/really/tricky|roles=uma_authorization,offline_access",
+				"--resources=uri=/api/v1/auth/some*|roles=uma_authorization,offline_access",
+				"--resources=uri=/api/v1/authh/some*|roles=uma_authorization,offline_access",
+				"--resources=uri=" + anyURI + "|roles=uma_authorization,offline_access",
+				"--resources=uri=/../api/v1/%61uth/some|roles=non-existent",
+				"--openid-provider-retry-count=30",
+				"--enable-refresh-tokens=true",
+				"--encryption-key=" + testKey,
+				"--secure-cookie=false",
+				"--post-login-redirect-path=" + postLoginRedirectPath,
+				"--enable-register-handler=true",
+				"--enable-encrypted-token=false",
+				"--enable-id-token-claims=true",
+				"--enable-id-token-cookie=true",
+				"--enable-user-info-claims=true",
+				"--add-claims=email_verified",
+				"--add-claims=email",
+				"--enable-pkce=false",
+				"--tls-cert=" + tlsCertificate,
+				"--tls-private-key=" + tlsPrivateKey,
+				"--upstream-ca=" + tlsCaCertificate,
+				"--normalize-path=true",
+				"--normalize-path-upstream=true",
+				"--merge-slashes=true",
+				"--merge-slashes-upstream=true",
+				"--path-escaped-slashes=false",
+				"--path-escaped-slashes-upstream=false",
+				"--allow-escaped-slashes-path=true",
+				"--normalization-path-params=false",
+				"--normalization-path-params-upstream=true",
+				"--strip-path-params=true",
+				"--strip-path-params-upstream=false",
+				"--enable-logging=true",
+				"--verbose=true",
+			}
+
+			osArgs := make([]string, 0, 1+len(proxyArgs))
+			osArgs = append(osArgs, os.Args[0])
+			osArgs = append(osArgs, proxyArgs...)
+			startAndWait(portNum, osArgs)
+		})
+
+		When("Performing standard login", func() {
+			It(
+				"should login with user/password and logout successfully",
+				Label("code_flow"),
+				Label("basic_case"),
+				Label("normalization_enabled"),
+				Label("path_parameters"),
+				func(_ context.Context) {
+					var err error
+
+					ctx, cancel := context.WithTimeout(context.Background(), tlsTimeout)
+					dialer := tls.Dialer{
+						Config: &tls.Config{
+							ServerName: "localhost",
+							RootCAs:    caPool,
+							MinVersion: tls.VersionTLS13,
+						},
+					}
+
+					conn, err := dialer.DialContext(ctx, "tcp", ":"+portNum)
+					Expect(err).NotTo(HaveOccurred())
+
+					rClient := resty.New()
+					rClient.SetTLSClientConfig(&tls.Config{RootCAs: caPool, MinVersion: tls.VersionTLS13})
+					resp := codeFlowLogin(rClient, proxyAddress+"/two", http.StatusOK, testUser, testPass)
+					Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+					body := resp.Body()
+					Expect(strings.Contains(string(body), "/two")).To(BeTrue())
+
+					jarURI, err := url.Parse(proxyAddress)
+					Expect(err).NotTo(HaveOccurred())
+
+					cookiesLogin := rClient.GetClient().Jar.Cookies(jarURI)
+
+					var (
+						accessCookieLogin string
+						idCookieLogin     string
+					)
+
+					for _, cook := range cookiesLogin {
+						if cook.Name == constant.AccessCookie {
+							accessCookieLogin = cook.Value
+						}
+
+						if cook.Name == constant.IDTokenCookie {
+							idCookieLogin = cook.Value
+						}
+					}
+
+					time.Sleep(testAccessTokenExp)
+
+					tricky := "/.%2e/../%2F/api/v1/%61uth/some"
+					normalized := "/api/v1/auth/some"
+					resp, err = rClient.R().Get(proxyAddress + tricky)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+					body = resp.Body()
+					Expect(strings.Contains(string(body), normalized)).To(BeTrue())
+					Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+					Expect(err).NotTo(HaveOccurred())
+
+					jarURI, err = url.Parse(proxyAddress + tricky)
+					Expect(err).NotTo(HaveOccurred())
+
+					cookiesLogin = rClient.GetClient().Jar.Cookies(jarURI)
+
+					for _, cook := range cookiesLogin {
+						if cook.Name == constant.AccessCookie {
+							accessCookieLogin = cook.Value
+						}
+
+						if cook.Name == constant.IDTokenCookie {
+							idCookieLogin = cook.Value
+						}
+					}
+
+					tricky = "/.%2e/../%2F/api/v1/%61uth/some%"
+					rawRequest := "GET " + tricky + " HTTP/1.1\r\n"
+					repeatRaw := httpLocalHostHeader
+					repeatRaw += "Cookie: " + constant.AccessCookie + "=" + accessCookieLogin + "; "
+					repeatRaw += constant.IDTokenCookie + "=" + idCookieLogin
+					repeatRaw += httpBodySeparator
+					rawRequest += repeatRaw
+
+					to := time.Now().Add(10 * time.Second)
+					err = conn.SetDeadline(to)
+					Expect(err).NotTo(HaveOccurred())
+
+					_, err = conn.Write([]byte(rawRequest))
+					Expect(err).NotTo(HaveOccurred())
+
+					rawResp := make([]byte, 1024)
+					_, err = conn.Read(rawResp)
+
+					Expect(err).NotTo(HaveOccurred())
+
+					cancel()
+					conn.Close()
+
+					Expect(err).NotTo(HaveOccurred())
+					Expect(strings.Contains(string(rawResp), "400 Bad Request")).To(BeTrue())
+
+					time.Sleep(testAccessTokenExp)
+
+					tricky = "/.%2e/../%2F/api/v1/%61uth/some"
+					normalized = "/api/v1/auth/some"
+					resp, err = rClient.R().Get(proxyAddress + tricky)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(resp.Header().Get("Proxy-Accepted")).To(Equal("true"))
+					body = resp.Body()
+					Expect(strings.Contains(string(body), normalized)).To(BeTrue())
+					Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+					Expect(err).NotTo(HaveOccurred())
+
+					jarURI, err = url.Parse(proxyAddress + tricky)
+					Expect(err).NotTo(HaveOccurred())
+
+					cookiesLogin = rClient.GetClient().Jar.Cookies(jarURI)
+
+					for _, cook := range cookiesLogin {
+						if cook.Name == constant.AccessCookie {
+							accessCookieLogin = cook.Value
+						}
+
+						if cook.Name == constant.IDTokenCookie {
+							idCookieLogin = cook.Value
+						}
+					}
+
+					ctx, cancel = context.WithTimeout(context.Background(), tlsTimeout)
+					conn, err = dialer.DialContext(ctx, "tcp", ":"+portNum)
+					Expect(err).NotTo(HaveOccurred())
+
+					tricky = "//really/tricky"
+					normalized = "/really/tricky"
+					rawRequest = "GET " + tricky + " HTTP/1.1\r\n"
+					repeatRaw = httpLocalHostHeader
+					repeatRaw += "Cookie: " + constant.AccessCookie + "=" + accessCookieLogin + "; "
+					repeatRaw += constant.IDTokenCookie + "=" + idCookieLogin
+					repeatRaw += httpBodySeparator
+					rawRequest += repeatRaw
+
+					_, err = conn.Write([]byte(rawRequest))
+					Expect(err).NotTo(HaveOccurred())
+
+					rawResp = make([]byte, 1024)
+					_, err = conn.Read(rawResp)
+
+					cancel()
+					conn.Close()
+
+					Expect(err).NotTo(HaveOccurred())
+					Expect(strings.Contains(string(rawResp), normalized)).To(BeTrue())
+					Expect(strings.Contains(string(rawResp), "200")).To(BeTrue())
+
+					ctx, cancel = context.WithTimeout(context.Background(), tlsTimeout)
+					conn, err = dialer.DialContext(ctx, "tcp", ":"+portNum)
+					Expect(err).NotTo(HaveOccurred())
+
+					tricky = "/.%2e/../%2F/api/v1/%61uth/some"
+					_, err = rClient.R().Get(proxyAddress + tricky)
+					Expect(err).NotTo(HaveOccurred())
+
+					jarURI, err = url.Parse(proxyAddress + tricky)
+					Expect(err).NotTo(HaveOccurred())
+
+					cookiesLogin = rClient.GetClient().Jar.Cookies(jarURI)
+
+					for _, cook := range cookiesLogin {
+						if cook.Name == constant.AccessCookie {
+							accessCookieLogin = cook.Value
+						}
+
+						if cook.Name == constant.IDTokenCookie {
+							idCookieLogin = cook.Value
+						}
+					}
+
+					repeatRaw = httpLocalHostHeader
+					repeatRaw += "Cookie: " + constant.AccessCookie + "=" + accessCookieLogin + "; "
+					repeatRaw += constant.IDTokenCookie + "=" + idCookieLogin
+					repeatRaw += httpBodySeparator
+
+					tricky = "/%C3%84rger"
+					normalized = "/Ärger"
+					rawRequest = "GET " + tricky + " HTTP/1.1\r\n"
+					rawRequest += repeatRaw
+
+					_, err = conn.Write([]byte(rawRequest))
+					Expect(err).NotTo(HaveOccurred())
+
+					rawResp = make([]byte, 1024)
+					_, err = conn.Read(rawResp)
+
+					cancel()
+					conn.Close()
+
+					Expect(err).NotTo(HaveOccurred())
+					Expect(strings.Contains(string(rawResp), normalized)).To(BeTrue())
+					Expect(strings.Contains(string(rawResp), "200")).To(BeTrue())
+
+					ctx, cancel = context.WithTimeout(context.Background(), tlsTimeout)
+					conn, err = dialer.DialContext(ctx, "tcp", ":"+portNum)
+					Expect(err).NotTo(HaveOccurred())
+
+					tricky = "/first//param;vava=%2e%2Fcar;shoes=lala/param1;tata=stand/;%2e%2F/super.html"
+					normalized = "/first/param;vava=.%2Fcar;shoes=lala/param1;tata=stand/super.html"
+					rawRequest = "GET " + tricky + " HTTP/1.1\r\n"
+					rawRequest += repeatRaw
+
+					_, err = conn.Write([]byte(rawRequest))
+					Expect(err).NotTo(HaveOccurred())
+
+					rawResp = make([]byte, 1024)
+					_, err = conn.Read(rawResp)
+
+					cancel()
+					conn.Close()
+
+					Expect(err).NotTo(HaveOccurred())
+					Expect(strings.Contains(string(rawResp), normalized)).To(BeTrue())
+					Expect(strings.Contains(string(rawResp), "200")).To(BeTrue())
+
+					resp, err = rClient.R().Get(proxyAddress + logoutURI)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(resp.StatusCode()).To(Equal(http.StatusOK))
+
+					rClient.SetRedirectPolicy(resty.NoRedirectPolicy())
+					resp, _ = rClient.R().Get(proxyAddress)
+					Expect(resp.StatusCode()).To(Equal(http.StatusForbidden))
+				},
+			)
+		})
+	},
+)

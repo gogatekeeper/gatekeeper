@@ -1036,20 +1036,51 @@ func RemovePathDotSegments(path string) string {
 	return path
 }
 
+//nolint:cyclop
 func NormalizePath(
 	pathEscapedSlashes bool,
 	mergeSlashes bool,
 	normalizePath bool,
+	normalizationPathParams bool,
+	stripPathParams bool,
 	path string,
 ) (string, error) {
 	var err error
 
+	if stripPathParams {
+		path = RemovePathParams(path)
+	}
+
 	if len(path) > 0 {
 		if !pathEscapedSlashes {
-			path, err = UnescapePath(path, SlashOnly)
-			if err != nil {
-				return "", err
+			if normalizationPathParams {
+				segments := strings.Split(path, "/")
+				for idx, seg := range segments {
+					before, after, found := strings.Cut(seg, ";")
+
+					beforeUnescaped, err := UnescapePath(before, SlashOnly)
+					if err != nil {
+						return "", err
+					}
+
+					if found {
+						segments[idx] = beforeUnescaped + ";" + after
+					} else {
+						segments[idx] = before
+					}
+				}
+
+				path = strings.Join(segments, "/")
+			} else {
+				path, err = UnescapePath(path, SlashOnly)
+				if err != nil {
+					return "", err
+				}
 			}
+		}
+
+		if normalizationPathParams {
+			path = RemoveOrphanedPathParams(path)
 		}
 
 		if mergeSlashes {
@@ -1060,6 +1091,14 @@ func NormalizePath(
 			path, err = UnescapePath(path, SlashOmit)
 			if err != nil {
 				return "", err
+			}
+
+			if stripPathParams {
+				path = RemovePathParams(path)
+			}
+
+			if normalizationPathParams {
+				path = RemoveOrphanedPathParams(path)
 			}
 
 			path = RemovePathDotSegments(path)
@@ -1095,4 +1134,43 @@ func ReplaceDuplicateByte(path string, replacedChar byte) string {
 	}
 
 	return string(out)
+}
+
+func RemovePathParams(path string) string {
+	if path == "" {
+		return path
+	}
+
+	segments := strings.Split(path, "/")
+
+	for i, segment := range segments {
+		before, _, _ := strings.Cut(segment, ";")
+		segments[i] = before
+	}
+
+	return strings.Join(segments, "/")
+}
+
+func RemoveOrphanedPathParams(path string) string {
+	if path == "" {
+		return path
+	}
+
+	segments := strings.Split(path, "/")
+	for idx, seg := range segments {
+		if len(seg) > 0 {
+			switch {
+			case seg[0] == ';':
+				segments[idx] = ""
+			case len(seg) > 1 && seg[0:2] == ".;":
+				segments[idx] = "."
+			case len(seg) > 2 && seg[0:3] == "..;":
+				segments[idx] = ".."
+			}
+		}
+	}
+
+	path = strings.Join(segments, "/")
+
+	return path
 }
