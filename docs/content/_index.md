@@ -131,6 +131,12 @@ resources:
   roles:
   - openvpn:vpn-user
   - openvpn:commons-prod-vpn
+  # as gatekeeper is based on chi framework, you can use also patterns to match path
+  # please be aware that patterns containing `=` sign can be only used in yaml config
+  # because in cmd line parameters `=` is separator
+- uri: "/date/{yyyy:\\d\\d\\d\\d}/{mm:\\d\\d}/{dd:\\d\\d}"
+  roles:
+  - myrole
 ```
 
 Options issued at the command line have a higher priority and will
