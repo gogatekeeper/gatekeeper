@@ -723,6 +723,41 @@ func TestUnascapePath(t *testing.T) {
 			Path:         "/a/+/%2b",
 			ExpectedPath: "/a/+/+",
 		},
+		{
+			Name:         "EncodedPercentLowerEscape",
+			Mode:         utils.PercentOnly,
+			ExpectedErr:  nil,
+			Path:         "/a%252f%2e",
+			ExpectedPath: "/a%2f%2e",
+		},
+		{
+			Name:         "EncodedPercentLowerEscapeMultiple",
+			Mode:         utils.PercentOnly,
+			ExpectedErr:  nil,
+			Path:         "/a%2525252ftest%25252elala%2e",
+			ExpectedPath: "/a%2ftest%2elala%2e",
+		},
+		{
+			Name:         "EncodedPercentLowerEscapeMultipleEnd",
+			Mode:         utils.PercentOnly,
+			ExpectedErr:  nil,
+			Path:         "/a%2525252ftest%2e%2525",
+			ExpectedPath: "/a%2ftest%2e%",
+		},
+		{
+			Name:         "EncodedPercentLowerEscapeMultipleStartEnd",
+			Mode:         utils.PercentOnly,
+			ExpectedErr:  nil,
+			Path:         "%2525252ftest%2e%2525",
+			ExpectedPath: "%2ftest%2e%",
+		},
+		{
+			Name:         "EncodedPercentLowerEscapeMultipleRepeat",
+			Mode:         utils.PercentOnly,
+			ExpectedErr:  nil,
+			Path:         "/a%2525%25252ftest%2e%2525",
+			ExpectedPath: "/a%%2ftest%2e%",
+		},
 	}
 
 	for _, testCase := range tests {
@@ -1029,6 +1064,7 @@ func TestNormalizePath(t *testing.T) {
 		PathEscapedSlashes      bool
 		Path                    string
 		ExpectedOutput          string
+		ExpectedErrMsg          string
 	}{
 		{
 			Name:                    "NormalizeKeepEscapedSlashes",
@@ -1044,8 +1080,32 @@ func TestNormalizePath(t *testing.T) {
 			NormalizePath:           true,
 			NormalizationPathParams: false,
 			StripPathParams:         false,
-			Path:                    "/gtweb%2F%2e.%2F..%2Fpublic///signin.html",
+			Path:                    "/gtweb%2f%2e.%2f..%2fpublic///signin.html",
 			ExpectedOutput:          "/public/signin.html",
+		},
+		{
+			Name:                    "NormalizeHidePercent",
+			NormalizePath:           true,
+			NormalizationPathParams: false,
+			StripPathParams:         false,
+			Path:                    "/gtweb%252f%2e.%2f%252e.%252fpublic///signin.html",
+			ExpectedOutput:          "/public/signin.html",
+		},
+		{
+			Name:                    "NormalizeMultipleHidePercent",
+			NormalizePath:           true,
+			NormalizationPathParams: false,
+			StripPathParams:         false,
+			Path:                    "/gtweb%25252f%2e.%2f%25252e.%252525252fpublic///signin.html",
+			ExpectedOutput:          "/public/signin.html",
+		},
+		{
+			Name:                    "NormalizeMultipleHidePercentRepeat",
+			NormalizePath:           true,
+			NormalizationPathParams: false,
+			StripPathParams:         false,
+			Path:                    "/gtweb%2525%25252f%2e.%2f%25252e.%252525252fpublic///signin.html",
+			ExpectedErrMsg:          `problem unescaping string: "%%2"`,
 		},
 		{
 			Name:                    "NormalizeWithSlashesOnly",
@@ -1171,8 +1231,22 @@ func TestNormalizePath(t *testing.T) {
 				testCase.StripPathParams,
 				testCase.Path,
 			)
-			require.NoError(t, err)
-			require.Equal(t, testCase.ExpectedOutput, output)
+
+			if testCase.ExpectedErrMsg != "" {
+				require.Equal(
+					t,
+					testCase.ExpectedErrMsg,
+					err.Error(),
+					"expected error msg: %s, got: %s",
+					testCase.ExpectedErrMsg,
+					err.Error(),
+				)
+
+				require.Empty(t, testCase.ExpectedOutput, output)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, testCase.ExpectedOutput, output)
+			}
 		})
 	}
 }

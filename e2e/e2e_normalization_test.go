@@ -77,6 +77,7 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 			"--resources=uri=" + postLoginRedirectPath + "|roles=uma_authorization,offline_access",
 			"--resources=uri=//two|roles=uma_authorization,offline_access",
 			"--resources=uri=/Ärger|roles=uma_authorization,offline_access",
+			"--resources=uri=/gtweb%25252f%2e.%2f%25252e.%252525252fpublic///signin.html|roles=uma_authorization,offline_access",
 			"--resources=uri=/.%2e/../%2F/api/v1/%61uth/some*|roles=uma_authorization,offline_access",
 			"--resources=uri=//really%2e///tricky|roles=uma_authorization,offline_access",
 			"--resources=uri=" + anyURI + "|roles=uma_authorization,offline_access",
@@ -228,6 +229,27 @@ var _ = Describe("Code Flow login/logout all normalization disabled", func() {
 				Expect(strings.Contains(string(rawResp), tricky)).To(BeTrue())
 				Expect(strings.Contains(string(rawResp), "200")).To(BeTrue())
 
+				ctx, cancel = context.WithTimeout(context.Background(), tlsTimeout)
+				conn, err = dialer.DialContext(ctx, "tcp", ":"+portNum)
+				Expect(err).NotTo(HaveOccurred())
+
+				tricky = "/gtweb%25252f%2e.%2f%25252e.%252525252fpublic///signin.html"
+				rawRequest = "GET " + tricky + " HTTP/1.1\r\n"
+				rawRequest += repeatRaw
+
+				_, err = conn.Write([]byte(rawRequest))
+				Expect(err).NotTo(HaveOccurred())
+
+				rawResp = make([]byte, 1024)
+				_, err = conn.Read(rawResp)
+
+				cancel()
+				conn.Close()
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(strings.Contains(string(rawResp), tricky)).To(BeTrue())
+				Expect(strings.Contains(string(rawResp), "200")).To(BeTrue())
+
 				tricky = "/../api/v1/%61uth/some"
 				resp, err = rClient.R().Get(proxyAddress + tricky)
 				Expect(err).NotTo(HaveOccurred())
@@ -299,6 +321,7 @@ var _ = Describe("Code Flow login/logout all normalization enabled", func() {
 			"--enable-default-deny-strict=true",
 			"--resources=uri=/two|roles=uma_authorization,offline_access",
 			"--resources=uri=/Ärger|roles=uma_authorization,offline_access",
+			"--resources=uri=/public/signin.html|roles=uma_authorization,offline_access",
 			"--resources=uri=/really/tricky|roles=uma_authorization,offline_access",
 			"--resources=uri=/api/v1/auth/some*|roles=uma_authorization,offline_access",
 			"--resources=uri=/api/v1/authh/some*|roles=uma_authorization,offline_access",
@@ -521,6 +544,28 @@ var _ = Describe("Code Flow login/logout all normalization enabled", func() {
 
 				tricky = "/%C3%84rger"
 				normalized = "/Ärger"
+				rawRequest = "GET " + tricky + " HTTP/1.1\r\n"
+				rawRequest += repeatRaw
+
+				_, err = conn.Write([]byte(rawRequest))
+				Expect(err).NotTo(HaveOccurred())
+
+				rawResp = make([]byte, 20000)
+				_, err = conn.Read(rawResp)
+
+				cancel()
+				conn.Close()
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(strings.Contains(string(rawResp), normalized)).To(BeTrue())
+				Expect(strings.Contains(string(rawResp), "200")).To(BeTrue())
+
+				ctx, cancel = context.WithTimeout(context.Background(), tlsTimeout)
+				conn, err = dialer.DialContext(ctx, "tcp", ":"+portNum)
+				Expect(err).NotTo(HaveOccurred())
+
+				tricky = "/gtweb%25252f%2e.%2f%25252e.%252525252fpublic///signin.html"
+				normalized = "/public/signin.html"
 				rawRequest = "GET " + tricky + " HTTP/1.1\r\n"
 				rawRequest += repeatRaw
 

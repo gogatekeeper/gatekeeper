@@ -899,6 +899,7 @@ type UnescapeMode int
 const (
 	SlashOmit   UnescapeMode = iota
 	SlashOnly   UnescapeMode = iota
+	PercentOnly UnescapeMode = iota
 	UnescapeAll UnescapeMode = iota
 )
 
@@ -941,7 +942,8 @@ func UnescapePath(path string, mode UnescapeMode) (string, error) {
 		}
 	}
 
-	if escapeCount == 0 || (mode == SlashOmit && escapeCount == slashCount) {
+	earlySlashExit := (mode == SlashOmit && escapeCount == slashCount)
+	if escapeCount == 0 || earlySlashExit {
 		return path, nil
 	}
 
@@ -955,6 +957,7 @@ func UnescapePath(path string, mode UnescapeMode) (string, error) {
 			hexSeq := []byte(path[idx : idx+3])
 			isSlash := path[idx+1] == '2' && (path[idx+2] == 'F' || path[idx+2] == 'f')
 			isBackSlash := path[idx+1] == '5' && (path[idx+2] == 'C' || path[idx+2] == 'c')
+			isPercent := path[idx+1] == '2' && path[idx+2] == '5'
 
 			switch mode {
 			case SlashOmit:
@@ -963,6 +966,8 @@ func UnescapePath(path string, mode UnescapeMode) (string, error) {
 				} else {
 					out = append(out, unhex(path[idx+1])<<4|unhex(path[idx+2]))
 				}
+
+				idx += 2
 			case SlashOnly:
 				switch {
 				case isSlash:
@@ -972,11 +977,41 @@ func UnescapePath(path string, mode UnescapeMode) (string, error) {
 				default:
 					out = append(out, hexSeq...)
 				}
+
+				idx += 2
+			case PercentOnly:
+				if isPercent {
+					limit := 100
+					for repeat := range limit {
+						numChars := 2
+						next := idx + numChars + (2*repeat + 1)
+
+						if repeat == limit-1 {
+							return "", UnescapeError("too many hidden percent hex encodings, path: " + path)
+						}
+
+						repeatedPercent := false
+						if len(path)-1 >= next+1 {
+							repeatedPercent = path[next] == '2' && path[next+1] == '5'
+						}
+
+						if repeatedPercent {
+							continue
+						}
+
+						out = append(out, '%')
+						idx = next - 1
+
+						break
+					}
+				} else {
+					out = append(out, hexSeq...)
+					idx += 2
+				}
 			case UnescapeAll:
 				out = append(out, unhex(path[idx+1])<<4|unhex(path[idx+2]))
+				idx += 2
 			}
-
-			idx += 2
 		case '+':
 			out = append(out, unescapedPlusSign)
 		default:
@@ -1052,6 +1087,13 @@ func NormalizePath(
 	}
 
 	if len(path) > 0 {
+		if normalizePath {
+			path, err = UnescapePath(path, PercentOnly)
+			if err != nil {
+				return "", err
+			}
+		}
+
 		if !pathEscapedSlashes {
 			if normalizationPathParams {
 				segments := strings.Split(path, "/")
