@@ -135,7 +135,7 @@ const (
 	RedisScheme    = "redis"
 
 	HTTPStatusHeaderLen = 42
-	SwitchProtoHeader   = "HTTP/1.1 101 Switching Protocols"
+	SwitchProtoHeader   = "HTTP/1.1 101"
 	CRLF                = "\r\n\r\n"
 
 	Cookie AuthScheme = "cookie"
