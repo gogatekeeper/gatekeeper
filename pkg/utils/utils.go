@@ -913,17 +913,23 @@ func UnescapePath(path string, mode UnescapeMode) (string, error) {
 	for idx := 0; idx < len(path); {
 		switch path[idx] {
 		case '%':
-			escapeCount++
-
 			invalidHex := idx+2 >= len(path) || !ishex(path[idx+1]) || !ishex(path[idx+2])
 			if invalidHex {
-				path = path[idx:]
-				if len(path) > escapeSeqLen {
-					path = path[:escapeSeqLen]
+				if mode == PercentOnly {
+					path = path[idx:]
+					if len(path) > escapeSeqLen {
+						path = path[:escapeSeqLen]
+					}
+
+					return "", UnescapeError(path)
 				}
 
-				return "", UnescapeError(path)
+				idx++
+
+				continue
 			}
+
+			escapeCount++
 
 			if mode == SlashOmit {
 				isSlash := path[idx+1] == '2' && (path[idx+2] == 'F' || path[idx+2] == 'f')
@@ -954,6 +960,12 @@ func UnescapePath(path string, mode UnescapeMode) (string, error) {
 	for idx := 0; idx < len(path); idx++ {
 		switch path[idx] {
 		case '%':
+			invalidHex := idx+2 >= len(path) || !ishex(path[idx+1]) || !ishex(path[idx+2])
+			if invalidHex {
+				out = append(out, path[idx])
+				continue
+			}
+
 			hexSeq := []byte(path[idx : idx+3])
 			isSlash := path[idx+1] == '2' && (path[idx+2] == 'F' || path[idx+2] == 'f')
 			isBackSlash := path[idx+1] == '5' && (path[idx+2] == 'C' || path[idx+2] == 'c')
@@ -982,21 +994,39 @@ func UnescapePath(path string, mode UnescapeMode) (string, error) {
 			case PercentOnly:
 				if isPercent {
 					limit := 100
+					numChars := 2
+					next := idx + 1
+
 					for repeat := range limit {
-						numChars := 2
-						next := idx + numChars + (2*repeat + 1)
+						next += numChars
 
 						if repeat == limit-1 {
 							return "", UnescapeError("too many hidden percent hex encodings, path: " + path)
 						}
 
 						repeatedPercent := false
+
 						if len(path)-1 >= next+1 {
-							repeatedPercent = path[next] == '2' && path[next+1] == '5'
+							n := path[next]
+							n1 := path[next+1]
+
+							repeatedPercent = n == '2' && n1 == '5'
+							if repeatedPercent {
+								numChars = 2
+								continue
+							}
 						}
 
-						if repeatedPercent {
-							continue
+						if !repeatedPercent && len(path)-1 >= next+2 {
+							n := path[next]
+							n1 := path[next+1]
+							n2 := path[next+2]
+
+							repeatedPercent = n == '%' && n1 == '2' && n2 == '5'
+							if repeatedPercent {
+								numChars = 3
+								continue
+							}
 						}
 
 						out = append(out, '%')
