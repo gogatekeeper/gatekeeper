@@ -102,7 +102,8 @@ func EntrypointMiddleware(
 					zap.Error(err),
 				)
 
-				return
+				accessForbidden(wrt, req)
+				return //nolint:wsl_v5
 			}
 
 			if internalEqUpstream {
@@ -123,7 +124,8 @@ func EntrypointMiddleware(
 						zap.Error(err),
 					)
 
-					return
+					accessForbidden(wrt, req)
+					return //nolint:wsl_v5
 				}
 			}
 
@@ -143,7 +145,8 @@ func EntrypointMiddleware(
 					zap.Error(err),
 				)
 
-				return
+				accessForbidden(wrt, req)
+				return //nolint:wsl_v5
 			}
 
 			scope.RawPath = normalizedPathUpstream

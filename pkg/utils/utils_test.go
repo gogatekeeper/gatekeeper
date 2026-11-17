@@ -596,7 +596,7 @@ func FuzzUnascapePath(f *testing.F) {
 	})
 }
 
-func TestUnascapePath(t *testing.T) {
+func TestUnescapePath(t *testing.T) {
 	tests := []struct {
 		Name         string
 		Path         string
@@ -620,28 +620,28 @@ func TestUnascapePath(t *testing.T) {
 		},
 		{
 			Name:         "LastPercentChar",
-			Mode:         utils.SlashOmit,
+			Mode:         utils.PercentOnly,
 			ExpectedErr:  utils.UnescapeError("%"),
 			Path:         "/a/b/%",
 			ExpectedPath: "",
 		},
 		{
 			Name:         "LastInvalidHex",
-			Mode:         utils.SlashOmit,
+			Mode:         utils.PercentOnly,
 			ExpectedErr:  utils.UnescapeError("%2"),
 			Path:         "/a/b/%2",
 			ExpectedPath: "",
 		},
 		{
-			Name:         "InnderInvalidHex",
-			Mode:         utils.SlashOmit,
+			Name:         "InnerInvalidHex",
+			Mode:         utils.PercentOnly,
 			ExpectedErr:  utils.UnescapeError("%6/"),
 			Path:         "/a/%6/%2",
 			ExpectedPath: "",
 		},
 		{
 			Name:         "FirstPercentChar",
-			Mode:         utils.SlashOmit,
+			Mode:         utils.PercentOnly,
 			ExpectedErr:  utils.UnescapeError("%/a"),
 			Path:         "%/a/b/",
 			ExpectedPath: "",
@@ -756,7 +756,7 @@ func TestUnascapePath(t *testing.T) {
 			Mode:         utils.PercentOnly,
 			ExpectedErr:  nil,
 			Path:         "/a%2525%25252ftest%2e%2525",
-			ExpectedPath: "/a%%2ftest%2e%",
+			ExpectedPath: "/a%2ftest%2e%",
 		},
 	}
 
@@ -1055,6 +1055,7 @@ func FuzzNormalizePath(f *testing.F) {
 	})
 }
 
+//nolint:funlen
 func TestNormalizePath(t *testing.T) {
 	tests := []struct {
 		Name                    string
@@ -1105,7 +1106,39 @@ func TestNormalizePath(t *testing.T) {
 			NormalizationPathParams: false,
 			StripPathParams:         false,
 			Path:                    "/gtweb%2525%25252f%2e.%2f%25252e.%252525252fpublic///signin.html",
+			ExpectedOutput:          "/public/signin.html",
+		},
+		{
+			Name:                    "NormalizeMultipleHidePercentRepeatNormalPercentEnd",
+			NormalizePath:           true,
+			NormalizationPathParams: false,
+			StripPathParams:         false,
+			Path:                    "/gtweb%25%25252f%2e.%2f%25252e.%2525%25252f%25%25",
+			ExpectedOutput:          "/%",
+		},
+		{
+			Name:                    "NormalizeMultipleHidePercentRepeatNormalPercentStart",
+			NormalizePath:           true,
+			NormalizationPathParams: false,
+			StripPathParams:         false,
+			Path:                    "/%25gtweb%25%25%252f%25%25",
+			ExpectedOutput:          "/%gtweb/%",
+		},
+		{
+			Name:                    "NormalizeMultipleHidePercentRepeatInvalidEscape",
+			NormalizePath:           true,
+			NormalizationPathParams: false,
+			StripPathParams:         false,
+			Path:                    "/gtweb%%25%25252f%2e.%2f%25252e.%252525252fpublic///signin.html",
 			ExpectedErrMsg:          `problem unescaping string: "%%2"`,
+		},
+		{
+			Name:                    "NormalizeMultipleHidePercentRepeatInvalidEscape",
+			NormalizePath:           true,
+			NormalizationPathParams: false,
+			StripPathParams:         false,
+			Path:                    "/gtweb%25%25%Z2f%2e.%2f%25252e.%252525252fpublic///signin.html",
+			ExpectedErrMsg:          `problem unescaping string: "%Z2"`,
 		},
 		{
 			Name:                    "NormalizeWithSlashesOnly",
