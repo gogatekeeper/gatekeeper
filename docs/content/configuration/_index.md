@@ -31,8 +31,12 @@ weight: 2
 |    \--normalize-path-upstream               | normalizes path for upstream according RFC 3986, except slashes | true | PROXY_NORMALIZE_PATH_UPSTREAM
 |    \--merge-slashes                         | merges slashes in path at start of processing, at start of processing chain, used in internal chains | true | PROXY_MERGE_SLASHES
 |    \--merge-slashes-upstream                | merges slashes for path to upstream | true | PROXY_MERGE_SLASHES_UPSTREAM
-|    \--path-escaped-slashes                  | escape slashes in path, means preserve hex encoding, at start of processing chain, used in internal chains | false | PROXY_ESCAPED_SLASHES
-|    \--path-escaped-slashes-upstream         | escape slashes, means preserve hex encoding for path sent upstream | false | PROXY_ESCAPED_SLASHES_UPSTREAM
+|    \--path-escaped-slashes                  | escape slashes in path, means preserve hex encoding, at start of processing chain, used in internal chains | false | PROXY_PATH_ESCAPED_SLASHES
+|    \--path-escaped-slashes-upstream         | escape slashes, means preserve hex encoding for path sent upstream | false | PROXY_PATH_ESCAPED_SLASHES_UPSTREAM
+|    \--strip-path-params                     | strips path parameters like in e.g. /example;v=1 to /example from path to enable simple matching | false | PROXY_STRIP_PATH_PARAMS
+|    \--strip-path-params-upstream            | strips path parameters for upstream like in e.g. /example;v=1 to /example from path | false | PROXY_STRIP_PATH_PARAMS_UPSTREAM
+|    \--normalization-path-params             | normalize path taking into account path parameters | false | PROXY_NORMALIZATION_PATH_PARAMS
+|    \--normalization-path-params-upstream    | normalize path taking into account path parameters | false | PROXY_NORMALIZATION_PATH_PARAMS_UPSTREAM
 |    \--upstream-proxy                        | proxy for communication with upstream | | PROXY_UPSTREAM_PROXY
 |    \--upstream-no-proxy                     | list of upstream destinations which should be not proxied | | PROXY_UPSTREAM_NO_PROXY
 |    \--base-uri value                        | common prefix for all URIs | | PROXY_BASE_URI
